@@ -1,0 +1,29 @@
+sudo apt-get install postgresql postgesql-contrib
+sudo -u postgres createdb garagesale
+sudo -u postgres psql garagesale
+
+garagesale=# CREATE USER garagesaleweb PASSWORD '7RWrbJ18tZ';
+
+#  Fine and Edit hba.conf file
+garagesale=# SHOW hba_file;
+/etc/postgresql/14/main/pg_hba.conf ( or similar)
+
+\q
+$ sudo -u postgres nano /etc/postgresql/14/main/pg_hba.conf
+
+Add line
+local garagesale garagesaleweb password
+
+above local all all peer
+
+^X
+
+# Restart postgre server and confirm
+
+$ sudo systemctl restart postgresql
+$ sudo systemctl status postgresql
+
+# Test DB connection
+
+$ psql geragesale -U garagesaleWeb
+Password for user garagesaleweb:

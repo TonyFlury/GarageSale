@@ -2,3 +2,9 @@
 GarageSale/__pycache__/
 
 *.pyc
+
+.idea/
+
+media/
+
+static/

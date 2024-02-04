@@ -1,0 +1,13 @@
+<div style="padding-top:0.5em;">
+    {{text}}
+</div>
+<div class="form">
+    <form method="GET" action="{% url 'Billboard:apply' %}" >
+        {% csrf_token %}
+        <input type="hidden" name='redirect' value="{{ request.path }}">
+        <input type="hidden" name='action' value="{{ action }}">
+        <div class="buttons">
+            <input type="submit" value="{{ button }}">
+        </div>
+    </form>
+</div>

@@ -31,11 +31,14 @@ def home( incoming_request: request ) -> TemplateResponse:
 #    t = TemplateResponse(incoming_request, template="register.html", context={})
 #    return t
 
-def logoff(request):
-    user = get_user(request)
+
+def logoff(incoming_request: request):
+    redirect_path = incoming_request.GET['redirect']
+    user = get_user(incoming_request)
     if not user.is_authenticated:
         return HttpResponseServerError()
     else:
-        logout(request)
+        logout(incoming_request)
 
-    return redirect(reverse(""))
+    return redirect(reverse(redirect_path))
+

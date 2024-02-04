@@ -159,8 +159,17 @@ div.form .buttons input{
     margin : 15px;
 }
 
+
+
 div.form .buttons input:active {
     box-shadow: 2px 2px 2px 2px rgba(1,1,1,1) inset;
+}
+
+div.form input[type='text']:disabled, input[type='email']:disabled
+{
+    box-shadow:none;
+    border:none;
+    font-weight:bold;
 }
 
 div.notes{

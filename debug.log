@@ -1,0 +1,65 @@
+user registration received
+user registration received
+user registration received for foo@bar.com
+user registration received
+user registration received for foo@bar.com
+email includes http://testserver/user_management/verify/a2879fd0-b6be-11ee-814b-49276deb605a?redirect=<function redirect at 0x7f9fa084c9d0>
+redirect from user submission to register-waiting
+http://testserver/user_management/verify/a2879fd0-b6be-11ee-814b-49276deb605a
+user registration received
+user registration received for foo@bar.com
+user registration received
+user registration received for foo@bar.com
+email includes http://testserver/user_management/verify/f12259d2-b6be-11ee-814b-49276deb605a?redirect=<HttpResponseRedirect status_code=302, "text/html; charset=utf-8", url="/">
+redirect from user submission to register-waiting
+http://testserver/user_management/verify/f12259d2-b6be-11ee-814b-49276deb605a
+user registration received
+user registration received for foo@bar.com
+email includes http://testserver/user_management/verify/fc75204e-b6be-11ee-814b-49276deb605a?redirect=/
+redirect from user submission to register-waiting
+http://testserver/user_management/verify/fc75204e-b6be-11ee-814b-49276deb605a
+user registration received
+user registration received for foo@bar.com
+email includes http://testserver/user_management/verify/0f801fb8-b6bf-11ee-814b-49276deb605a?redirect=/
+redirect from user submission to register-waiting
+http://testserver/user_management/verify/0f801fb8-b6bf-11ee-814b-49276deb605a
+user registration received
+user registration received for foo@bar.com
+email includes http://testserver/user_management/verify/9e242520-b6bf-11ee-814b-49276deb605a?redirect=/
+redirect from user submission to register-waiting
+http://testserver/user_management/verify/9e242520-b6bf-11ee-814b-49276deb605a?redirect=/
+user registration received
+user registration received
+user registration received for foo@barbar.com
+email includes http://testserver/user_management/verify/c94e31e0-b6c5-11ee-814b-49276deb605a?redirect=/
+redirect from user submission to register-waiting
+sending : c94e31e0-b6c5-11ee-814b-49276deb605a
+verify url : /user_management/verify/c94e31e0-b6c5-11ee-814b-49276deb605a
+user-verify received uuid : c94e31e0-b6c5-11ee-814b-49276deb605a
+ this record belongs too : foo@barbar.com
+user registration received
+user registration received for foo@barbar.com
+email includes http://testserver/user_management/verify/0442e962-b6c6-11ee-814b-49276deb605a?redirect=/
+redirect from user submission to register-waiting
+sending : 0442e962-b6c6-11ee-814b-49276deb605a
+verify url : /user_management/verify/0442e962-b6c6-11ee-814b-49276deb605a
+user-verify received uuid : 0442e962-b6c6-11ee-814b-49276deb605a
+ this record belongs too : foo@barbar.com
+register_user_form invoked waitingregister-waiting, email_template:email/verify_email.html, redirect:
+user registration received
+user registration received for foo@bar.com
+email includes http://testserver/user_management/verify/e1b58418-b869-11ee-b63a-27e6b04f7f1a?redirect=/
+redirect from user submission to register-waiting
+http://testserver/user_management/verify/e1b58418-b869-11ee-b63a-27e6b04f7f1a?redirect=/
+user registration received
+user registration received for foo@barbar.com
+email includes http://testserver/user_management/verify/f4d8b0d8-b869-11ee-b63a-27e6b04f7f1a?redirect=/
+redirect from user submission to register-waiting
+sending : f4d8b0d8-b869-11ee-b63a-27e6b04f7f1a
+verify url : /user_management/verify/f4d8b0d8-b869-11ee-b63a-27e6b04f7f1a
+user-verify received uuid : f4d8b0d8-b869-11ee-b63a-27e6b04f7f1a
+ this record belongs too : foo@barbar.com
+register_user_form invoked waitingregister-waiting, email_template:email/verify_email.html, redirect:/login
+register_user_form invoked waitingregister-waiting, email_template:email/verify_email.html, redirect:/
+register_user_form invoked waitingregister-waiting, email_template:email/verify_email.html, redirect:/
+register_user_form invoked waitingregister-waiting, email_template:email/verify_email.html, redirect:/

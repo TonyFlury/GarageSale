@@ -1,0 +1,17 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block body %}
+<style>
+
+</style>
+
+<div class="form">
+        <form method=POST action='{{action}}'>
+              <table>
+            {{ form }}
+              </table>
+        </form>
+</div>
+{% endblock %}

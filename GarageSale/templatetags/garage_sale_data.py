@@ -18,9 +18,43 @@ from django import template
 from django.core import exceptions
 from ..models import EventData, MOTD  # should be able to get this from the request context
 
+from django.utils.dateformat import DateFormat
+
 from datetime import date
 
 register = template.Library()
+
+
+def feature_date(feature, state, date_format):
+    """Generalised helper to extract date for a given state"""
+    feature_to_field = {
+        'billboard': {'open': 'open_billboard_bookings', 'close': 'close_billboard_bookings'},
+        'sales': {'open': 'open_sales_bookings', 'close': 'close_sales_bookings'}
+    }
+
+    fields = feature_to_field.get(feature,None)
+    if not fields:
+        return format(date.today(), date_format)
+
+    try:
+        event_data = EventData.get_current()
+    except exceptions.ObjectDoesNotExist:
+        return format(date.today(), date_format)
+
+    df = DateFormat(getattr(event_data, fields[state]) )
+
+    return df.format(date_format)
+
+
+@register.simple_tag
+def feature_open_from( feature, date_format='D j M Y' ):
+    return feature_date(feature, 'open', date_format)
+
+
+@register.simple_tag
+def feature_closed_from( feature, date_format='D j M Y' ):
+    return feature_date(feature, 'close', date_format)
+
 
 @register.simple_tag
 def feature_allowed( feature ):

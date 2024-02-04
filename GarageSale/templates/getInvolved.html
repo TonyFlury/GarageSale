@@ -1,7 +1,9 @@
 {% extends "_base_with_toolbar.html" %}
 {% load static %}
+{% load user_management_tags %}
 {% load newsletter_tags %}
 {% load event_data_tags %}
+{% load billboard_tags %}
 
 <!---- Need to load some tags here -->
 
@@ -55,11 +57,18 @@
         <div class="widget" >
             <div class="widget-content">
             <h3>Advertising Board</h3>
-                {% feature_allowed 'billboard' as billboard_allowed %}
-                {% if billboard_allowed %}
-                    Billboard bookings are allowed
+                {% if request.user.is_authenticated %}
+                    {% feature_allowed 'billboard' as billboard_allowed %}
+                    {% if billboard_allowed %}
+                        Billboard bookings are now open until {% feature_closed_from 'billboard' %}
+                        {% billboard_application %}
+                    {% else %}
+                        Billboard bookings are open from {% feature_open_from 'billboard' %}
+                    {% endif %}
                 {% else %}
-                    Billboard bookings are not allowed
+                    To sign up for a billboard you will need to
+                    {% login_form_link request.path %} if you have already registered or
+                    <a href="{% url 'user_management:register' %}?redirect={{request.path}}">Register</a>
                 {% endif %}
             </div>
         </div>

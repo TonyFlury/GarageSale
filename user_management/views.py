@@ -2,7 +2,7 @@ from uuid import uuid1
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login as login_user
-from django.http import HttpResponseServerError
+from django.http import HttpResponseServerError, HttpResponse
 from django.core.mail import send_mail
 from django.shortcuts import redirect, reverse
 from django.template.response import TemplateResponse
@@ -107,6 +107,9 @@ def user_verify(request, uuid=None):
 
 
 def login(request):
+    if request.method == 'GET':
+        return HttpResponse('login_form.html')
+
     """Deal with a request from a login form"""
     if request.method != "POST":
         return HttpResponseServerError(request)

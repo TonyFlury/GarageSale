@@ -86,8 +86,9 @@ TEMPLATES = [
         'OPTIONS': {
             'libraries': {
                 'event_data_tags': "GarageSale.templatetags.garage_sale_data",
-                'user_managementTags': "user_management.templatetags.extras",
-                'newsletter_tags': "News.templatetags.extras"
+                'user_management_tags': "user_management.templatetags.extras",
+                'newsletter_tags': "News.templatetags.extras",
+                'billboard_tags': 'Billboard.templatetags.extras',
             },
             'context_processors': [
                 'django.template.context_processors.debug',
