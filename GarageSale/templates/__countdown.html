@@ -1,0 +1,36 @@
+<script>
+    var countDownDate = new Date( '{{ time_str }}' ).getTime();
+    var oneday = 1000 * 60 * 60 * 24;
+    var myfunc;
+
+    function set_msg() {
+        var now = new Date().getTime();
+        var days_left = Math.ceil((countDownDate-now) / oneday);
+
+        if (days_left > 2) {
+            var weeks = Math.floor(days_left / 7);
+            var days = days_left % 7;
+            message = "The Garage Sale is in ";
+            if (weeks > 0)
+                message += weeks + ((weeks>1)?" weeks ":" week");
+            if (days >= 1)
+                message += ((weeks>0)?" and ":"") + days + ((days>1)?" days ":" day ");
+        }
+        if (days_left == 1)
+        {
+            message = "The Garage Sale is Tomorrow";
+        }
+        if (days_left == 0) {
+            message = "The Garage Sale is Today";
+        }
+        if (days_left < 0) {
+            message = "The Garage Sale for 2024 has already happened. Watch for news on the 2025 event";
+            clearInterval(myfunc);
+        }
+
+        document.getElementById( '{{ html_id }}' ).innerHTML = message ;
+    }
+
+    var myfunc = setInterval( set_msg ,1000 );
+
+</script>

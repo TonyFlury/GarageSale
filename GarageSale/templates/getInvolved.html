@@ -1,0 +1,73 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load newsletter_tags %}
+{% load event_data_tags %}
+
+<!---- Need to load some tags here -->
+
+{% block additionalStyles%}
+<link rel="stylesheet" href="{% static 'GarageSale/styles/getinvolved.css' %}">
+
+{% endblock %}
+
+{% block PageHeading %}
+    {% if request.user.is_authenticated %}
+        Welcome back {{request.user.first_name}}
+    {% else %}
+        Get Involved
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+<div style="width:85%; margin:auto;">
+    <div class="row">
+        <div class="widget" >
+            <div class="widget-content">
+                <h3>News letter</h3>
+                    {% if request.user.is_authenticated %}
+                            {% newsletter_enrol %}
+                    {% else %}
+                        To receive our regular newsletter keeping you up-to-date with all things to do
+                        with the Garage Sale - make sure you Register for an account.
+                        Once Registered all of your involvement in the Sale can be managed in one-place.
+                    {% endif %}
+            </div>
+        </div>
+        <div class="widget" >
+            <div class="widget-content">
+            <h3>Donate</h3>
+             You can donate directly to the Garage Sale Fund using BACS from any UK bank account :
+
+                <ul>
+                    <li>Account Type : <b>Business</b></li>
+                    <li>Name : <b>Brantham Garage Sale Foundation</b></li>
+                    <li>Acc # : <b>26992063</b></li>
+                    <li>Sort Code : <b>30 99 50</b></li>
+                </ul>
+                <div>
+                    Note : If you are hosting a sale site, you will have been given a reference
+                    number to use when paying through BACS
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="widget" >
+            <div class="widget-content">
+            <h3>Advertising Board</h3>
+                {% feature_allowed 'billboard' as billboard_allowed %}
+                {% if billboard_allowed %}
+                    Billboard bookings are allowed
+                {% else %}
+                    Billboard bookings are not allowed
+                {% endif %}
+            </div>
+        </div>
+        <div class="widget" >
+            <div class="widget-content">
+            <h3>Sale Location</h3>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

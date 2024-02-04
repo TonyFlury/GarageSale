@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+
+{% load static %}
+<link rel="stylesheet" href="{% static 'GarageSale/styles/style.css' %}">
+<link rel="stylesheet" media="screen and (min-width:600px)" href="{% static 'GarageSale/styles/largescreen.css' %}">
+<link rel="stylesheet" media="screen and (max-width:600px)" href="{% static 'GarageSale/styles/smallscreen.css' %}">
+
+<link rel="apple-touch-icon" sizes="180x180" href="{%static 'GarageSale/images/icons/faveicons/apple-touch-icon.png' %}">
+<link rel="icon" type="image/png" sizes="32x32" href="{%static 'GarageSale/images/icons/faveicons//favicon-32x32.png' %}">
+<link rel="icon" type="image/png" sizes="16x16" href="{%static 'GarageSale/images/icons/faveicons//favicon-16x16.png' %}">
+<link rel="manifest" href="{%static 'GarageSale/images/icons/faveicons//site.webmanifest' %}">
+{% block additionalStyles%}
+    <!--- Include any additional style sheets here -->
+{% endblock %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    {% include 'django_quill/media.html' %}
+    <title>{% block Title %}Basic Title{% endblock %}</title>
+    {% block head-extra %}{% endblock%}
+</head>
+<body>
+{% block body-extra %}{% endblock %}
+<div class="TopBar">
+    <H1>{% block PageHeading %}Page Title{% endblock %}</h1>
+    <div class="ToolBar" id="ToolBar">
+    {% block ToolBar %}Tool Bar goes here{% endblock %}
+</div>
+</div>
+<div class="body">
+{% block body %}Body Content{% endblock%}
+</div>
+</body>
+</html>

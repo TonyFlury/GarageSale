@@ -1,0 +1,12 @@
+<div>
+    {{ text }}
+</div>
+<div class="form">
+    <form method="post" action="{% url 'News:subscribe' %} ">
+        {% csrf_token %}
+        <input type="hidden" name='action' value="{{ action }}">
+        <div class="buttons">
+            <input type="submit" value="{{ label }}">
+        </div>
+    </form>
+</div>

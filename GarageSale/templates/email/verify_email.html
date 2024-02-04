@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<!-- Template for email to be sent to end user_management -->
+
+<html>
+
+{% load static %}
+<link rel="stylesheet" href="{{ base_url }}{% static 'GarageSale/styles/style.css' %}">
+<style>
+    div.buttons {
+        width: 75% ;
+        margin: auto ;
+        display:flex;
+        align-items:center;}
+
+    div.form {
+    width:97%;margin:auto}
+
+    div.form form input[type="submit"] {
+        padding:0.5em 1em; font-size:150%;margin-left:auto;margin-right:auto;}
+
+    div.center-text { text-align: center }
+
+    a {
+        font-weight: bold;
+        text-decoration-line: underline;
+    }
+
+    a:hover {
+        font-style: italic ;
+    }
+</style>
+
+<body>
+    <div style="padding:1em;">
+        <div style="font-size:120%; font-weight:bold; width:100%; text-align:center; margin-bottom:1em">
+            Thank you for registering for an account on <a href="{{base_url}}">Brantham Garage Sale</a> website.
+        </div>
+    </div>
+    <div style="width:50; text-align:center;margin-bottom:1em;">
+        You are nearly there - you just need to click the button below to verify your email and start getting the
+        benefits of being a registered user.
+    </div>
+    <div class="form" >
+        <form method="GET" action="{{ url }}">
+            {% csrf_token %}
+            <div class="buttons" >
+                <input type="submit" value="Verify my email" >
+            </div>
+        </form>
+            <div class="center-text">
+                If the button doesn't work (or isn't visible) you can use <a herf="{{url}}"> this link</a> to the same effect.
+            </div>
+        </div>
+    <div class="center-text" style="font-style:italic;margin:1em;">
+        If you did not attempt to register with the website, you can ignore this message.
+    </div>
+</body>
+
+
+</html>

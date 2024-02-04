@@ -1,0 +1,291 @@
+:root {
+  --ToolbarHeight: 40px;
+  --BackGroundColor: #4444FF;
+  --fontColor : lightgrey;
+  --PaperColor : #CCCB9D;
+}
+
+body { background : var(--BackGroundColor) ;
+color : var(--fontColor);
+font-size:20px;
+}
+
+h1 { text-align: center;
+    color : white ;
+    }
+
+div#ToolBar {padding : 1em 1em 1em 1em;
+          margin: auto;
+          width : 95%;
+/*         height : var(--ToolbarHeight); */
+          }
+
+div#clock {
+	padding-bottom: 0.5em;
+	color: white;
+	font-size: 120%;
+	line-height: var(--ToolbarHeight);
+	max-height: var(--ToolbarHeight);
+	width: 50%;
+	display: inline-block;
+	/* left: 0; */
+	/* right: 0; */
+	/* justify-content: center; */
+	text-align: center;
+	margin-left: 25%;
+	margin-right: 25%;
+}
+
+span#Ticker {
+	margin: auto;
+	padding-left: 1em;
+	padding-right: 1em;
+	color: white;
+	border: solid thin white;
+	border-radius: 2em;
+	line-height: var(--ToolbarHeight);
+	max-height: var(--ToolbarHeight);
+	overflow: hidden;
+	float: left;
+	width: 70%;
+	font-size: 75%;
+	margin-left: 250px;
+	display: none;
+}
+
+div.TopBar img.logo {
+float: left;
+  top: 40px;
+  position: absolute;
+  display: inline;
+  left: 0;
+  height: 175px;
+  top: 5px;
+}
+
+span#Buttons {
+    position: absolute ;
+    right: 30px;
+}
+
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right : -10px;
+  background-color: var(--BackGroundColor);
+  color : white ;
+  min-width: auto;
+  box-shadow: 0px 8px 16px 0px rgba(1,1,1,1);
+  z-index: 1;
+  padding : 0.1em ;
+}
+
+/* Links inside the dropdown */
+.dropdown-content ul {
+padding-left : 10px;
+padding-right : 5px;
+list-style-type: None;
+list-style-position: inside;}
+
+.dropdown-content ul li {
+padding-bottom : 2px;
+padding-left : 5px;}
+
+.dropdown-content ul li:last-child {
+padding-bottom : 0px; }
+
+.dropdown-content a {
+  color: white;
+  font-weight: bold;
+  padding: 0.25em 16px;
+  text-decoration: None;
+  display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {font-style:italic; text-decoration: underline;}
+
+/* Show the dropdown menu on hover */
+.dropdown:hover .dropdown-content {display: block;}
+
+/* Change the background color of the dropdown button when the dropdown content is shown */
+/* .dropdown:hover .dropbtn {background-color: #3e8e41;} */
+
+.body {padding: 1em;
+        margin:1em;
+       font-size : 15px;
+       display:block;
+/*       background: lightblue; */
+}
+
+div.form {
+    border:thin white solid;
+    border-radius:30px;
+    padding:20px;
+    color:white;
+    width : 80%;
+ /*   margin:auto; */
+}
+
+div.form input[type="text"], input[type="password"], input[type="email"]
+{
+    color : var(--fontColor);
+    background: var(--BackGroundColor);
+    font-size: 20px;
+    border-radius: 10px;
+    padding-left: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin:5px;
+    box-shadow: 2px 2px 2px rgba(1,1,1,1) inset;
+}
+
+div.form .buttons input{
+    background : var(--BackGroundColor);
+    font-size: 20px;
+    padding : 5px ;
+    color : white ;
+    border : 3px solid white;
+    border-radius : 5px ;
+    box-shadow: 5px 5px 2px 2px rgba(1,1,1,1);
+    margin : 15px;
+}
+
+div.form .buttons input:active {
+    box-shadow: 2px 2px 2px 2px rgba(1,1,1,1) inset;
+}
+
+div.notes{
+
+}
+
+.menubar a {
+    color : var(--fontColor);
+    text-decoration: none;
+}
+
+.menubar a:hover {
+    font-style : italic;
+    text-decoration : none;
+    font-weight: bold;
+}
+
+div.TopBar {
+    position:sticky;
+    top:0;
+    background: rgba(68, 68, 255, 1.0);
+    opacity:1;
+    z-index:1;
+    height : 200px;
+}
+
+div.TopBar:after {
+  content: "";
+  width: 85%;
+  left: 0;
+  right: 0;
+  margin: auto;
+  border-bottom: dotted thin lightgrey;
+  position: absolute;
+  bottom: 10px;
+}
+
+
+div.MOTD {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top:0em;
+    margin-bottom: 2em;
+    width: 80%;
+    font-size : 150%;
+}
+
+div.MOTD:after {
+    width:50%;
+    content:"";
+    border-bottom: thin solid lightgrey;
+    position:absolute;
+    margin:auto;
+    left:0;
+    right:0;
+}
+
+div#Front-page-news {
+      padding-top: 2em;
+      width:80%
+}
+
+h2#Front-page-headline {
+    font-size: 200%;
+    width: 75% ;
+    margin: auto;
+    text-align: center;
+    padding-bottom:1em;
+}
+
+div.front-page-news {
+    margin:auto;
+    height:auto;
+    border:thin solid black;
+    width:75%;
+    border-radius:50px;
+    padding:1em;
+    height:5em;
+    overflow:none;
+    color: black;
+    background: var(--PaperColor);
+    box-shadow: 5px 5px 5px;
+    font-size:100%;
+}
+
+div.front-page-news a.headline {
+    margin-left:0.5em;
+    margin-right:0.5em;
+    font-size:200%;
+    font-weight:bold;
+    colour:black;
+    text-decoration:none;
+}
+
+div.front-page-news a.headline:hover {
+    text-style: italic;
+}
+
+div.front-page-news a.headline:visited {
+    color:black;
+}
+
+div.front-page-news span.footnote {
+    font-size:100%;
+    position:relative;
+    float:right;
+    bottom:5px;
+    right:5px;
+    border:thin solid black;
+    border-radius:40%;
+    padding:5px;
+    padding-left:10px;
+    padding-right:10px;
+    box-shadow:2px 2px black;
+    font-weight:bold;
+}
+
+a.footnote {
+    text-decoration:none;
+}
+
+a.footnote:hover {
+    text-style: italic;
+}
+
+a.footnote:visited {
+    color: black;
+}

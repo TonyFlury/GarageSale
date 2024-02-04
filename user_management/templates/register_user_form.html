@@ -1,0 +1,12 @@
+<h2>User Registration</h2>
+
+<form method="post" action="{% url 'user_management:register' %}">
+    {% csrf_token %}
+    <table>
+        {{ form }}
+    </table>
+    <div class="buttons">
+        <input type="submit" value="Register">
+    </div>
+</form>
+

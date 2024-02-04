@@ -1,0 +1,9 @@
+{% if not request.user.is_authenticated %}
+    <li><a href="{% url 'login' %}?redirect={{request.path}}">Login</a></li>
+    <li><a href="{% url 'register' %}?redirect={{request.path}}">Register</a></li>
+{% elif request.user.is_active %}
+    <li><a href="{{profile}}">Profile</a></li>
+    <li><a href="{% url 'logoff' %}?redirect={{request.path}}">Logoff</a></li>
+{% else %}
+    <li>Waiting for email confirmation</li>
+{%endif%}

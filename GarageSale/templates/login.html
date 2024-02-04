@@ -1,0 +1,9 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_managementTags %}
+
+{% block body %}
+    <div class="form">
+        {% LoginForm %}
+    </div>
+{% endblock %}

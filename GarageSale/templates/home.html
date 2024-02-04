@@ -1,0 +1,28 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_managementTags %}
+{% load event_data_tags %}
+
+{% block Title %}
+Brantham Garage Sale - Home Page
+{% endblock %}
+
+{% block PageHeading %}Brantham Garage Sale{% endblock %}
+
+{% block body %}
+    <div class="MOTD">
+        {% MOTD %}
+    </div>
+    <div id="Font-page-news">
+    <h2 id="Front-page-headline">Headlines</h2>
+    {% for item in articles %}
+    <div class="front-page-news">
+        <div>
+            <a class="headline" href="{% url 'News:article' item.slug %}">{{item.headline}}</a>
+            {{item.synopsis }}
+        </div>
+        <span class="footnote"><a class="footnote" href="{% url 'News:article' item.slug %}">See More ...</a></span>
+    </div>
+    {% endfor %}
+    </div>
+{% endblock %}

@@ -1,0 +1,69 @@
+
+span#Buttons .mobile {
+    display : none ; }
+
+span#Buttons {
+    position: absolute ;
+    right: 30px;
+}
+
+span#Buttons img.Button {
+    height:32px;
+    width:32px;
+    padding: 4px;
+    border: none;
+}
+
+span#Buttons img.Button.Animate:hover {
+  /* Start the shake animation and make the animation last for 0.5 seconds */
+  animation: shake 0.5s;
+
+  /* When the animation is finished, start again */
+  animation-iteration-count: infinite;
+}
+
+@keyframes shake {
+  0% { transform: rotate(0deg); }
+  20% { transform: rotate(-15deg); }
+  40% { transform: rotate(0deg); }
+  60% { transform: rotate(15deg); }
+  80% { transform: rotate(0deg); }
+ }
+
+div#ToolBar div.menubar.browser {
+  display: block;
+  padding-top: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 75%;
+}
+
+div#ToolBar div.menubar.browser div.wrapper {
+    margin:auto;
+    width : 70%;
+}
+div#ToolBar div.menubar.browser ul{
+    margin: auto;
+    padding: 0px;
+    width: 90%;
+    display: flex;
+    justify-content: space-between;
+}
+
+div#ToolBar div.menubar.browser ul li{
+    display: inline;
+    color : white;
+    font-weight: bold;
+    margin-right : 10px;
+    padding-right : 0px;
+}
+
+div.Topline {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top:0em;
+    margin-bottom: 2em;
+    width: 80%;
+    font-size : 150%;
+}
+
