@@ -103,7 +103,7 @@ class TestUserCreation(TestCase):
         """
 
         c = Client()
-        response = c.post('/user_management/register',
+        response = c.post('/user/register',
                           {'email': 'foo@bar.com', 'first_name': 'foo',
                            'last_name': 'bar', 'password': 'blah',
                            'next': 'register-waiting',
@@ -160,7 +160,7 @@ class TestUserCreation(TestCase):
         # Have to submit a user, and find the verification url
 
         c = Client()
-        response = c.post('/user_management/register',
+        response = c.post('/user/register',
                           {'email': 'foo@barbar.com', 'first_name': 'foo',
                            'last_name': 'barbar', 'password': 'blah',
                            'next': 'register-waiting',
@@ -188,5 +188,76 @@ class TestUserCreation(TestCase):
     def test_0110_confirm_login_form(self):
         """Test the login form has the fields as expected"""
         c = Client()
-        response = c.get('/login')
+        response = c.get('/user/login')
         self.assertEqual(response.status_code, 200)
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Confirm you get the expected form inputs
+        inputs = {(tag['type'], tag['name']) for tag in
+                  soup.select('form input[type="text"], input[type="email"], input[type="password"]')}
+        self.assertEqual({('email', 'email'), ('password', 'password')}, inputs)
+
+        buttons = {(tag['type'], tag.attrs.get('value', 'no-name')) for tag in
+                   soup.select('form input[type="submit"], input[type="button"]')}
+        self.assertEqual({('button', 'Cancel'), ('submit', 'Login')}, buttons)
+
+    def test_0120_test_user_login(self):
+        """Test that a login authenticates a user and then redirects"""
+        self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
+                                             first_name='harry', last_name='test', password='blah',
+                                             is_active=True)
+        c = Client()
+        response = c.post('/user/login?redirect=/', data={'email': 'harry@test.com',
+                                                          'password': 'blah'}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.request['PATH_INFO'], '/')
+        self.assertTrue(self.user.is_authenticated)
+        self.assertTrue(self.user.is_active)
+
+    def test_0125_test_user_existing(self):
+        """Test that a login authenticates am in_active user and then redirects"""
+        self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
+                                             first_name='harry', last_name='test', password=None,
+                                             is_active=False)
+        c = Client()
+        response = c.post('/user/login?redirect=/', data={'email': 'harry@test.com',
+                                                          'password': 'blah'}, follow=True)
+
+        # get the user object again
+        user = User.objects.filter(username='harry@test.com').all()
+        user = user[0]
+
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        self.assertTrue(user.check_password('blah'))
+        self.assertEqual(response.request['PATH_INFO'], '/')
+        self.assertTrue(user.is_authenticated)
+        self.assertTrue(user.is_active)
+
+    def test_0130_test_user_pwd_change(self):
+        """Test that a login authenticates am in_active user and then redirects"""
+        self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
+                                             first_name='harry', last_name='test', password='blip',
+                                             is_active=False)
+        c = Client()
+        c.force_login(self.user)
+        response = c.post('/user/pwd_change?redirect=/',
+                          data={'old_password': 'blip',
+                          'new_password1': 'blah',
+                          'mew_password2': 'blah'},
+                          follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.request['PATH_INFO'], '/')
+
+        # get the user object again
+        user = User.objects.filter(username='harry@test.com').all()
+        user = user[0]
+
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        self.assertTrue(user.check_password('blah'))
+        self.assertEqual(response.request['PATH_INFO'], '/')
+        self.assertTrue(user.is_authenticated)
+        self.assertTrue(user.is_active)

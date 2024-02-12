@@ -56,7 +56,7 @@ class TestBillboard_Create(test.TestCase):
                                )
         self.event.save()
 
-    def test_0100_blank_form_served(self):
+    def test_0200_blank_form_served(self):
         """Is the empty form rendered as expected"
             pre-conditions : No BillBoard entry
                              No Saved location for this user
@@ -94,7 +94,7 @@ class TestBillboard_Create(test.TestCase):
         self.assertEqual( { ('action','Reset'), ('action', 'Save')}, buttons)
 
 # ToDo - Popups on Delete and Save are not tested.
-    def test_0110_save_form(self):
+    def test_0210_save_form(self):
         """is a filled in form saved correctly
             Pre : existing Event and User
             Post : new Location and BillboardLocation records
@@ -187,7 +187,7 @@ class Test_BillboardEdit(test.TestCase):
                                             event=self.event)
         self.billboard.save()
 
-    def test_0150_edit_form_filled(self):
+    def test_0250_edit_form_filled(self):
         """Test that form is prefilled as expected
             Billboard and Location already exist
         """
@@ -221,7 +221,7 @@ class Test_BillboardEdit(test.TestCase):
                             ('action', 'Save'),
                             ('action', 'Delete')}, buttons)
 
-    def test_0160_edit_form_Location_only(self):
+    def test_0260_edit_form_Location_only(self):
         """Test that form is prefilled as expected
            Location already exists
            Billboard doesn't
@@ -258,7 +258,7 @@ class Test_BillboardEdit(test.TestCase):
         self.assertEqual({('action', 'Reset'),
                             ('action', 'Save'), }, buttons)
 
-    def test_0170_edit_form_save(self):
+    def test_0270_edit_form_save(self):
         """Test that form is prefilled as expected
            Billboard and Location already exist
         """
@@ -319,7 +319,7 @@ class Test_BillboardDelete(test.TestCase):
                                             event=self.event)
         self.billboard.save()
 
-    def test_0180_delete_data(self):
+    def test_0280_delete_data(self):
         """Test that the form acts on delete correctly
 
             Expect that the location still exists but the BillboardLocation instance doesn't.
@@ -364,7 +364,7 @@ class TestCreateAnonymous(test.TestCase):
                                )
         self.event.save()
 
-    def test_0190_blank_form_served(self):
+    def test_0290_blank_form_served(self):
         """Is the empty form rendered as expected"
             No User, No Location
         """
@@ -400,7 +400,7 @@ class TestCreateAnonymous(test.TestCase):
                      tag['type'] in {'submit','reset'} }
         self.assertEqual( { ('action','Reset'),  ('action', 'Save')}, buttons)
 
-    def test_0195_anonymous_request_saved(self):
+    def test_0295_anonymous_request_saved(self):
         _data = {'email':'harry@test.com',
                       'name': 'harry test',
                       'house_number': '1',

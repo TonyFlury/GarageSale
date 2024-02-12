@@ -16,7 +16,7 @@ import datetime
 
 from django import test
 from time import sleep
-from ..models import  PageVisit
+from PageVisits.models import  PageVisit
 from django.contrib.auth.models import User
 
 

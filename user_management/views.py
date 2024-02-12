@@ -1,9 +1,8 @@
 from uuid import uuid1
 
-from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login as login_user
-from django.http import HttpResponseServerError, HttpResponse
+from django.http import HttpResponseServerError, HttpResponse, HttpRequest
 from django.core.mail import send_mail
 from django.shortcuts import redirect, reverse
 from django.template.response import TemplateResponse
@@ -11,12 +10,11 @@ from django.utils.html import escape
 from django.db import transaction
 from django.shortcuts import render, resolve_url
 from django.views.generic import View
-from django.http import request
 
-from .forms import Registration, LoginForm
+from .forms import Registration, LoginForm, PasswordChangeForm
 from .models import UserVerification
 from .apps import appsettings, settings
-from django.contrib.auth import get_user, logout
+from django.contrib.auth import get_user, logout, update_session_auth_hash
 
 import logging
 
@@ -26,7 +24,10 @@ handler.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
 
-def logoff(incoming_request: request):
+# ToDo - show password Help on registration, and validate password format
+
+
+def logoff(incoming_request: HttpRequest):
     redirect_path = incoming_request.GET['redirect']
     user = get_user(incoming_request)
     if not user.is_authenticated:
@@ -41,7 +42,7 @@ class UserRegistration(View):
     def get(self, incoming_request):
         redirect_url = incoming_request.GET['redirect']
         form = Registration()
-        return render(incoming_request, 'register.html', {'form': form, 'redirect':redirect_url})
+        return render(incoming_request, 'register.html', {'form': form, 'redirect': redirect_url})
 
     def post(self, incoming_request):
 
@@ -120,42 +121,106 @@ def user_verify(request, uuid=None):
 
     user = User.objects.get(email=verify.email)
     user.is_active = True
-    user._save()
+    user.save()
     verify.delete()
 
     return redirect(reverse("home"))
 
 
 class Login(View):
-    def get(self,request):
+    def get(self, request):
         """Render a new blank form"""
+
+        redirect_url = request.GET.get('redirect', '/')
         form = LoginForm()
         return render(request, 'login.html',
                       context={'form': form,
-                               'redirect': request.GET['redirect']})
+                               'redirect': redirect_url})
 
     def post(self, request):
         """deal with the submitted form"""
-        redirect_url = request.GET['redirect']
+        redirect_url = request.GET.get('redirect', '/')
         form_inst = LoginForm(request.POST)
         if not form_inst.is_valid():
-            return render(request, 'login.html',
-                          context={'form': form_inst,
-                                   'redirect': redirect_url})
+            return TemplateResponse(request, 'login.html',
+                                    context={'form': form_inst,
+                                             'redirect': redirect_url})
 
+        try:
+            user_inst = User.objects.get(email=form_inst.cleaned_data['email'])
+        except User.DoesNotExist:
+            form_inst.add_error(None, 'Invalid User/password combination')
+            return TemplateResponse(request, 'login.html',
+                                    context={'form': form_inst,
+                                             'redirect': redirect_url})
+
+        # If the user is inactive this has been added as the result of an 'anonymous' application
+        if not user_inst.is_active:
+            user_inst.set_password(form_inst.cleaned_data['password'])
+            user_inst.is_active = True
+            user_inst.save()
+
+        # Sign this user in
         user = authenticate(username=form_inst.cleaned_data['email'],
                             password=form_inst.cleaned_data['password'])
 
         if user is None:
             form_inst.add_error(None, 'Invalid User/password combination')
-            return render(request, 'login.html',
-                          context={'form': form_inst,
-                                   'redirect': redirect_url })
+            return TemplateResponse(request, 'login.html',
+                                    context={'form': form_inst,
+                                             'redirect': redirect_url})
         else:
             login_user(request, user)
             return redirect(redirect_url)
 
 
-class ChangePassword(PasswordChangeView):
-    template_name='pwd_change.html'
-    success_url = '/getInvolved'
+class ChangePassword(View):
+    pwd_change_template = 'password_change.html'
+    pwd_change_done = 'password_change_done.html'
+
+    def get(self, request: HttpRequest):
+        redirect_url = request.GET.get('redirect', '/')
+
+        if not request.user.is_authenticated:
+            return redirect(resolve_url('user_management:login') + f'?redirect={redirect_url}')
+
+        form = PasswordChangeForm()
+        return TemplateResponse(request,
+                                template=self.pwd_change_template,
+                                context={'form': form, 'redirect': redirect_url})
+
+    def post(self, request: HttpRequest):
+        redirect_url = request.GET.get('redirect', '/')
+
+        if not request.user.is_authenticated:
+            return redirect(resolve_url('user_management:login') + f'?redirect={redirect_url}')
+
+        form = PasswordChangeForm(request.POST)
+
+        if not form.is_valid():
+            return TemplateResponse(request,
+                                    template=self.pwd_change_template,
+                                    context={'form': form,
+                                             'redirect': redirect_url})
+
+        old_pwd = form.cleaned_data['old_password']
+
+        if not request.user.check_password(old_pwd):
+            form.add_error('old_password', 'Provide the correct current password')
+            return TemplateResponse(request,
+                                    template=self.pwd_change_template,
+                                    context={'form': form,
+                                             'redirect': redirect_url})
+
+        if form.cleaned_data['new_password1'] != form.cleaned_data['new_password2']:
+            form.add_error('new_password2', 'New password entries must be the same')
+            return TemplateResponse(request,
+                                    template=self.pwd_change_template,
+                                    context={'form': form,
+                                             'redirect': redirect_url})
+
+        request.user.set_password(form.cleaned_data['new_password1'])
+        update_session_auth_hash(request, request.user)
+        return TemplateResponse(request,
+                                template=self.pwd_change_done,
+                                context={'redirect': redirect_url})

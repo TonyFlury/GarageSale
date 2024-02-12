@@ -31,3 +31,9 @@ class LoginForm(forms.ModelForm):
         fields = ['email', 'password']
         widgets = {'password': forms.PasswordInput(),
                    'email': forms.EmailInput(attrs={'size': 40, 'required': 'True'}),}
+
+
+class PasswordChangeForm(forms.Form):
+    old_password = forms.CharField( widget=forms.PasswordInput)
+    new_password1 = forms.CharField(widget=forms.PasswordInput)
+    new_password2 = forms.CharField( widget=forms.PasswordInput)

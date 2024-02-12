@@ -136,6 +136,7 @@ if DEBUG:
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -150,7 +151,7 @@ DATABASES = {
         'TEST': {
             'NAME': 'test_garagesale'
         }
-    }
+    },
 }
 
 SESSION_COOKIE_AGE = 365 * 24 * 60 * 60  # 365 days between log ins.

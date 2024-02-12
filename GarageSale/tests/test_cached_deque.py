@@ -4,7 +4,7 @@ import dataclasses
 from dataclasses import asdict
 from django.test import testcases
 
-from ..middleware.pageVisits import CachedDeque, PageVisit
+from PageVisits.middleware.pageVisits import CachedDeque, PageVisit
 
 import unittest
 from unittest import mock
