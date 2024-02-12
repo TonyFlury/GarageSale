@@ -13,11 +13,11 @@ Testable Statements :
     ...
 """
 from django.urls import path, include
-from .views import BillBoardApply, billboard_complete
+from .views import BillBoardApply
 
 app_name = 'Billboard'
 
 urlpatterns = [
     path('apply', BillBoardApply.as_view(), name='apply'),
-    path('__submit', billboard_complete, name='billboard_complete')
+    path('apply/<int:id>/', BillBoardApply.as_view(), name='apply'),
 ]

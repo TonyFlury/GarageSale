@@ -1,17 +1,37 @@
 from django.db import models
-from GarageSale.models import EventData
+from django.contrib.auth.models import User
+from GarageSale.models import EventData, Location
 
 # Create your models here.
 
+class MultipleChoiceField(models.CharField):
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def from_db_value(self, value, expression, connection):
+        if value is None:
+            return []
+
+        return [i for i in value.split(',')]
+
+    def to_python(self, value):
+        if isinstance(value,set):
+            return value
+
+        if value is None:
+            return []
+
+        return [i for i in value.split(',') ]
+
+    def get_prep_value(self, value):
+        return ','.join(i for i in value)
 
 class SaleLocations(models.Model):
+    location = models.ForeignKey( Location, related_name='Sales', on_delete=models.CASCADE, null=True)
     event = models.ForeignKey( EventData, related_name='Sales', on_delete=models.CASCADE, null=True)
-    name = models.CharField(max_length=200)
-    house_number = models.CharField(max_length=80)
-    street_name = models.CharField(max_length=200)
-    town = models.CharField(max_length=100, default='Brantham')
-    postcode = models.CharField(max_length=10)
-    phone = models.CharField(max_length=12)
-    mobile = models.CharField(max_length=12)
-    email = models.EmailField(max_length=80)
+    gift_aid = models.BooleanField('Sign up for GiftAid ?', default=False)
     minimum_paid = models.BooleanField(default=False)
+    category = MultipleChoiceField(max_length=20, default=['Other'], null=True)
+
+    def get_bacs_reference(self):
+        return f'{self.event.event_date.year}-{self.location.postcode}-{self.location.house_number}'.replace(' ','')[0:15]

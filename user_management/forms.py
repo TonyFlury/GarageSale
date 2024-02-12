@@ -23,7 +23,6 @@ class Registration(forms.ModelForm):
 
 
 class LoginForm(forms.ModelForm):
-    redirect = forms.CharField(widget=forms.HiddenInput())
     email = forms.EmailInput(attrs={'size': 40, 'required': 'True'})
     password = forms.PasswordInput()
 

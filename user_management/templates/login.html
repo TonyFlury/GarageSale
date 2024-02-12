@@ -1,0 +1,17 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block body %}
+    <div class="form">
+            <form method="POST" action="{% url 'user_management:login' %}?redirect={{ redirect }}" >
+                {% csrf_token %}
+            <table>
+                {{form.as_table}}
+            </table>
+            <div class="buttons">
+                <input type="submit" value="Login">
+            </div>
+        </form>
+    </div>
+{% endblock %}

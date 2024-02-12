@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'Sponsors.apps.SponsorsConfig',
     'user_management.apps.user_managementConfig',
     'News.apps.NewsConfig',
+    'PageVisits.apps.PageVisitsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -71,6 +72,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'GarageSale.middleware.event.CurrentEvent',
+    'PageVisits.middleware.pageVisits.PageVisitRecorder',
 ]
 
 if DEBUG:
@@ -188,7 +190,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 
-
 QUILL_CONFIGS = {
     'default':{
         'theme': 'snow',
@@ -236,3 +237,6 @@ APPS_SETTINGS= {
         'EMAIL_SENDER': 'BranthamGarageSale@gmail.com'
     }
 }
+
+SITE_NAME = 'Brantham Garage Sale'
+EMAIL_SENDER = 'BranthamGarageSale@gmail.com'

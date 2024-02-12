@@ -1,1 +1,5 @@
-{{ motd.content.html | safe }}
+{% if motd %}
+    {{ motd.content.html | safe }}
+{% else %}
+    <p>Nothing to say</p>
+{% endif %}

@@ -1,0 +1,52 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block body %}
+<h2>Advertising board Application</h2>
+
+<div class="form">
+    <form method=POST action='{{action}}' id="EditBillBoard">
+        <table>
+            {% csrf_token %}
+            {{ form }}
+        </table>
+        <div class="buttons">
+            <input type="button" name='action' onclick="cancel_billboard()" value="Cancel" id="CancelButton">
+            <input type="reset" name='action' value="Reset" id="ResetButton">
+            {% if delete %}
+                <input type="submit" name='action' value="Delete" id="DeleteButton">
+            {% endif %}
+            <input type="submit" name='action' value="Save" id="SaveButton">
+        </div>
+    </form>
+    <script type="text/javascript">
+
+        var saveButton = document.getElementById("SaveButton");
+        saveButton.addEventListener("click", function() {
+            if (confirm('Do you want to Save this Application?')) {
+                document.getElementById("EditBillBoard").submit()
+            } else {
+                event.preventDefault();
+            }
+        });
+
+        var deleteButton = document.getElementById("DeleteButton");
+        if (deleteButton != null) {
+            deleteButton.addEventListener("click", function() {
+                if (confirm('Do you want to Delete this application?')) {
+                    document.getElementById("EditBillBoard").submit()
+                } else {
+                    event.preventDefault();
+                }
+            });
+        }
+
+        function cancel_billboard()
+        {
+            window.location.replace( '{% url "getInvolved" %}' );
+         }
+    </script>
+
+</div>
+{% endblock %}

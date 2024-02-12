@@ -135,7 +135,7 @@ div.form {
  /*   margin:auto; */
 }
 
-div.form input[type="text"], input[type="password"], input[type="email"]
+div.form input[type="text"], input[type="password"], input[type="email"], select
 {
     color : var(--fontColor);
     background: var(--BackGroundColor);
@@ -148,6 +148,23 @@ div.form input[type="text"], input[type="password"], input[type="email"]
     box-shadow: 2px 2px 2px rgba(1,1,1,1) inset;
 }
 
+div.form select[multiple] {
+    accent-colour: lightblue;
+    padding-left: 10px;
+    padding-right:10px;
+}
+
+/*
+div.form select[multiple] option:hover {
+    background: lightblue;
+    color : black;
+}
+
+div.form select[multiple] option:[checked] {
+    background: darkblue;
+    color : white;
+} */
+
 div.form .buttons input{
     background : var(--BackGroundColor);
     font-size: 20px;
@@ -159,7 +176,23 @@ div.form .buttons input{
     margin : 15px;
 }
 
+div.form input[type='checkbox']
+{
+    height:2.5em;
+    outline: 1px solid var(--BackGroundColor);
+    accent-color : var(--BackGroundColor);
+    width:2.5em;
+    background-color: var(--BackGroundColor);
+    border: thin solid black;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px 1px black ;
+    padding:2px;
+}
 
+div.form input[type='checkbox']:checked
+{
+
+}
 
 div.form .buttons input:active {
     box-shadow: 2px 2px 2px 2px rgba(1,1,1,1) inset;
@@ -172,6 +205,14 @@ div.form input[type='text']:disabled, input[type='email']:disabled
     font-weight:bold;
 }
 
+div.form .errorlist {
+    font-size : 125%;
+    color: orange;
+    font-weight: bold;
+}
+div.form .errorlist li{
+    list-style-type: none;
+}
 div.notes{
 
 }
@@ -285,6 +326,20 @@ div.front-page-news span.footnote {
     padding-right:10px;
     box-shadow:2px 2px black;
     font-weight:bold;
+}
+
+div.form th:has(label[for='id_gift_aid']){
+    vertical-align:top;
+    padding-top:10px;
+}
+
+div.form label[for='id_gift_aid']{
+    margin-top:10px;
+}
+div.form .helptext {
+    font-size : 120%;
+    margin-top : 0.5em;
+    display:block;
 }
 
 a.footnote {

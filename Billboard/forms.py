@@ -20,11 +20,17 @@ def validate_phone_number( value ):
 
 
 class BillboardApplicationForm(forms.Form):
-    email = fields.EmailField(disabled=True)
-    name = fields.CharField(max_length=256, disabled=True)
-    house_number = fields.CharField(max_length=80)
-    street_name = fields.CharField(max_length=200)
-    town = fields.CharField(max_length=100)
-    postcode = fields.CharField(max_length=10)
-    phone = fields.CharField(max_length=12, validators=[validate_phone_number])
-    mobile = fields.CharField(max_length=12, validators=[validate_phone_number])
+    email = fields.EmailField(disabled=True,required=False)
+    name = fields.CharField(max_length=256, disabled=True,required=False)
+    house_number = fields.CharField(max_length=80,initial='', label='House Name/Number')
+    street_name = fields.CharField(max_length=200, initial='')
+    town = fields.CharField(max_length=100, initial='Brantham')
+    postcode = fields.CharField(max_length=10,initial='')
+    phone = fields.CharField(max_length=12, validators=[validate_phone_number], initial='')
+    mobile = fields.CharField(max_length=12, validators=[validate_phone_number], initial='')
+
+    def __init__(self, *args, anonymous=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if anonymous:
+            self.fields['email'].disabled = False
+            self.fields['name'].disabled = False

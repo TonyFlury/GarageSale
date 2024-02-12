@@ -13,5 +13,10 @@ Testable Statements :
     ...
 """
 from django.urls import path, include
+from .views import SalesLocationApply
 
-urlpatterns = []
+app_name = "SaleLocation"
+
+urlpatterns = [
+    path('apply', SalesLocationApply.as_view(), name='apply'),
+]

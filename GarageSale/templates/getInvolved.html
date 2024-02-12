@@ -21,7 +21,7 @@
 {% endblock %}
 
 {% block body %}
-<div style="width:85%; margin:auto;">
+<div style="width:95%; margin:auto;">
     <div class="row">
         <div class="widget" >
             <div class="widget-content">
@@ -30,8 +30,10 @@
                             {% newsletter_enrol %}
                     {% else %}
                         To receive our regular newsletter keeping you up-to-date with all things to do
-                        with the Garage Sale - make sure you Register for an account.
+                        with the Garage Sale - make sure you <a href="{% url 'user_management:register' %}?redirect={{request.path}}">Register</a> for an account.
                         Once Registered all of your involvement in the Sale can be managed in one-place.
+                        <br>
+                        If you have already registered, make sure you {% login_form_link request.path %}
                     {% endif %}
             </div>
         </div>
@@ -45,10 +47,17 @@
                     <li>Name : <b>Brantham Garage Sale Foundation</b></li>
                     <li>Acc # : <b>26992063</b></li>
                     <li>Sort Code : <b>30 99 50</b></li>
+                    {% signed_up 'sale' as signed %}
+                    {% if signed %}
+                    <li>Reference : <b>{% bacs_reference %}</b></li>
+                    {% endif %}
                 </ul>
                 <div>
-                    Note : If you are hosting a sale site, you will have been given a reference
-                    number to use when paying through BACS
+                {% signed_up 'sale' as signed %}
+                {% if signed %}
+                    Please use the reference when making donations through BACS can reconcile your donation against
+                    your sale event.
+                {% endif %}
                 </div>
             </div>
         </div>
@@ -56,25 +65,12 @@
     <div class="row">
         <div class="widget" >
             <div class="widget-content">
-            <h3>Advertising Board</h3>
-                {% if request.user.is_authenticated %}
-                    {% feature_allowed 'billboard' as billboard_allowed %}
-                    {% if billboard_allowed %}
-                        Billboard bookings are now open until {% feature_closed_from 'billboard' %}
-                        {% billboard_application %}
-                    {% else %}
-                        Billboard bookings are open from {% feature_open_from 'billboard' %}
-                    {% endif %}
-                {% else %}
-                    To sign up for a billboard you will need to
-                    {% login_form_link request.path %} if you have already registered or
-                    <a href="{% url 'user_management:register' %}?redirect={{request.path}}">Register</a>
-                {% endif %}
+                {% ApplicationWidget 'billboard' %}
             </div>
         </div>
         <div class="widget" >
             <div class="widget-content">
-            <h3>Sale Location</h3>
+                {% ApplicationWidget 'sale' %}
             </div>
         </div>
     </div>

@@ -28,14 +28,12 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("register", TemplateView.as_view(template_name='register.html'), name="register"),
     path("register-waiting", TemplateView.as_view(template_name='register_waiting.html'), name="register-waiting"),
-    path("login", TemplateView.as_view(template_name='login.html'), name='login'),
     path("getInvolved", TemplateView.as_view(template_name="getInvolved.html"), name="getInvolved"),
-    path("logoff", views.logoff, name="logoff"),
     path("__debug__/", include("debug_toolbar.urls")),
     path('news/', include('News.urls')),
-    path('user_management/', include('user_management.urls')),
+    path('user/', include('user_management.urls')),
     path('billboard/', include('Billboard.urls')),
-    path('SaleLocation/', include('SaleLocation.urls')),
+    path('sale_location/', include('SaleLocation.urls')),
     path('Sponsors/', include('Sponsors.urls')),
 ]
 

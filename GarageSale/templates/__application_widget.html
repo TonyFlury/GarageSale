@@ -1,0 +1,22 @@
+{% load user_management_tags %}
+{% load event_data_tags %}
+<h3>{{title}}</h3>
+        {% if allowed %}
+            <b>{{name}}</b> bookings are now open until <br><div style="margin:auto;width:50%;"> {{close_date | date}}</div>
+            <div style="padding-top:0.5em;">
+                {{ text | safe }}
+            </div>
+            <script>
+                function {{feature}}_apply()
+                {
+                    window.location.replace( '{% url destination %}' );
+                }
+            </script>
+            <div class="form">
+                    <div class="buttons">
+                        <input type="submit" onclick="{{feature}}_apply()" value="{{ button }}">
+                    </div>
+            </div>
+        {% else %}
+            <b>{{name}}</b> bookings are open from {{ open_date | date }}
+        {% endif %}
