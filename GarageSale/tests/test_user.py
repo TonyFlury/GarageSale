@@ -224,16 +224,14 @@ class TestUserCreation(TestCase):
         response = c.post('/user/login?redirect=/', data={'email': 'harry@test.com',
                                                           'password': 'blah'}, follow=True)
 
-        # get the user object again
-        user = User.objects.filter(username='harry@test.com').all()
-        user = user[0]
-
+        # registration form should redirect to the login page.
         self.assertEqual(response.status_code, 200)
+
         soup = BeautifulSoup(response.content, 'html.parser')
-        self.assertTrue(user.check_password('blah'))
-        self.assertEqual(response.request['PATH_INFO'], '/')
-        self.assertTrue(user.is_authenticated)
-        self.assertTrue(user.is_active)
+
+        tags = {tag.string for tag in soup.select('ul.errorlist li')}
+
+        self.assertEqual({"This user doesn't exist - did you mean to register instead"}, tags)
 
     def test_0130_test_user_pwd_change(self):
         """Test that a login authenticates am in_active user and then redirects"""
@@ -261,3 +259,6 @@ class TestUserCreation(TestCase):
         self.assertEqual(response.request['PATH_INFO'], '/')
         self.assertTrue(user.is_authenticated)
         self.assertTrue(user.is_active)
+
+
+# ToDo need to implement password forgotten page.

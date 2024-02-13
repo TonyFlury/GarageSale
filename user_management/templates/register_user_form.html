@@ -1,0 +1,28 @@
+<h2>User Registration</h2>
+
+<form method="post" action="{% url 'user_management:register' %}">
+    {% csrf_token %}
+    <table>
+        {{ form }}
+    </table>
+    <div class="buttons">
+        <input type="button" onclick='cancel_registration()' value="Cancel">
+        <input type="reset" value="Reset">
+        <input type="button" onclick='login()' value="Login">
+        <input type="submit" value="Register">
+    </div>
+</form>
+<script>
+        /* Implement cancel button as a simple return to the GetInvolved page */
+        function cancel_registration()
+        {
+            window.location.replace( '{{redirect}}' );
+        }
+
+        /* Implement Login button as a simple return to the GetInvolved page */
+        function login()
+        {
+            window.location.replace( '{% url "user_management:login" %}'?redirect={{redirect}} );
+         }
+</script>
+

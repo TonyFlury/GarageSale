@@ -1,4 +1,28 @@
 
+div#ToolBar h1 {
+	text-align: center;
+	color: white;
+	padding-top: 10px;
+	margin-top: 0;
+	margin-bottom: 5px;
+}
+
+div#clock {
+	padding-bottom: 0.5em;
+	color: white;
+	font-size: 120%;
+	line-height: var(--ToolbarHeight);
+	max-height: var(--ToolbarHeight);
+	width: 50%;
+	display: inline-block;
+	justify-content: center;
+	text-align: center;
+	margin-left: 25%;
+	margin-right: 25%;
+	margin-top: 5px;
+}
+
+
 span#Buttons .mobile {
     display : none ; }
 

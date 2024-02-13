@@ -10,10 +10,18 @@
                 {{form.as_table}}
             </table>
             <div class="buttons">
-                <input type="button" onclick="cancel_login()" value="Cancel"> <input type="submit" value="Login">
+                <input type="button" onclick="cancel_login()" value="Cancel">
+                <input type="button" onclick="register()" value="Register">
+                <input type="submit" value="Login">
             </div>
         </form>
         <script>
+            /* Implement register button */
+            function register()
+            {
+                window.location.replace( '/user/register' );
+            }
+
             /* Implement cancel button as a simple return to the GetInvolved page */
             function cancel_Login()
             {

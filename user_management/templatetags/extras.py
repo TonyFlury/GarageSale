@@ -54,6 +54,7 @@ def register_user_form(context, waiting="", email_template="", redirect="") -> d
                                  'email_template': email_template,
                                        })
     return {'request': context['request'],
+            'redirect': redirect,
             'form': form
             }
 

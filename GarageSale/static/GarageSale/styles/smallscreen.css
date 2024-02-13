@@ -2,6 +2,24 @@
 .browser {
     display : none ; }
 
+body {
+font-size:14pt;
+}
+
+.body {
+    padding: 0em;
+}
+#clock {
+	width: 80%;
+	font-size: 90%;
+	margin-left: 0;
+	text-align: left;
+	margin-right: 0;
+	font-size: 100%;
+	margin-top: 14px;
+	display: inline-block;
+}
+
 span#Buttons {
     position: absolute ;
     right: 30px;
@@ -10,6 +28,52 @@ span#Buttons {
 span#Ticker {
  width: 70%;
  }
+
+div.TopBar h1 {
+    font-size:120%;
+    padding-left: 80px;
+    padding-top : 0px;
+    text-align: left
+	color: white;
+	margin-top: 0;
+	margin-bottom: 5px;
+}
+
+ div.TopBar span.icon img.logo{
+    width:120px;
+    height:auto;
+ }
+
+div.TopBar span.icon {
+    margin-left: 0px;
+    padding-left: 0px;
+}
+
+div.TopBar{
+    height:auto;
+}
+div.MOTD {
+    font-size: 100%;
+    width:100%;
+    height:10em;
+    overflow:scroll;
+}
+div.MOTD:after {
+    display:None;
+}
+
+div.TopBar::after {
+	content: "";
+	width: 85%;
+	left: 0;
+	right: 0;
+	margin: auto;
+	border-bottom-color: lightgray;
+	border-bottom-style: solid;
+	border-width: 2px;
+	position: absolute;
+	bottom: 10px;
+}
 
 /* The container <div> - needed to position the dropdown content */
 .BurgerDropdown {
@@ -58,4 +122,34 @@ padding-bottom : 0px; }
   padding: 0.25em 16px;
   text-decoration: None;
   display: block;
+}
+
+div.front-page-news {
+    height:auto;
+    width:95%;
+    border-radius: 20px;
+    padding: 0.5em;
+}
+
+div.front-page-news span.footnote
+{
+	bottom: 15px;
+	font-size: 75%;
+	background: var(--PaperColor);
+	right: -25px;
+	opacity: 1;
+}
+
+div.front-page-news a.headline {
+	margin-left: 0.5em;
+	margin-right: 0.5em;
+	font-weight: bold;
+	font-size:100%;
+	color: black;
+	text-decoration: none;
+}
+
+.synopsis {
+    height:auto;
+    overflow:scroll;
 }

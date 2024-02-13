@@ -16,7 +16,7 @@ Brantham Garage Sale - Home Page
 
 {% block ToolBar %}
 <div>
-    <span><img src="{{ MEDIA_URL }}{{ request.current_event.event_logo }}" class='logo' /></span>
+    <span class="icon"><img src="{{ MEDIA_URL }}{{ request.current_event.event_logo }}" class='logo' /></span>
     <div id="clock"></div>
     <script>
         set_msg();
@@ -38,9 +38,11 @@ Brantham Garage Sale - Home Page
         <img id=Burger class="Button Animate" src="{% static 'GarageSale/images/icons/burger.png' %}" >
         <span class="BurgerDropdown-content">
             <ul>
+                <li><a href="/">Home</a></li>
                 {% User_menu  register="/register" login="/login" logoff="/logoff" getinvolved="/getinvolved"%}
                 <li><a href="/news">News</a></li>
                 <li><a href="/getInvolved">Get Involved</a></li>
+                <li><a href="/sponsors">Our Sponsors</a></li>
                 <li><a href="/AboutUs">About Us</a></li>
                 <li><a href="/ContactUs">Contact Us</a></li>
             </ul>
@@ -54,6 +56,7 @@ Brantham Garage Sale - Home Page
             <li><a href="{% url 'home' %}">Home</a></li>
             <li><a href="{% url 'News:NewsPage' %}">News</a></li>
             <li><a href="/getInvolved">Get Involved</a></li>
+            <li><a href="/sponsors">Our Sponsors</a></li>
             <li>About Us</li>
             <li>Contact Us</li>
         </ul>

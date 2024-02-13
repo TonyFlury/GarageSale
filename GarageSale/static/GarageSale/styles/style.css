@@ -10,31 +10,12 @@ color : var(--fontColor);
 font-size:20px;
 }
 
-h1 { text-align: center;
-    color : white ;
-    }
 
 div#ToolBar {padding : 1em 1em 1em 1em;
           margin: auto;
           width : 95%;
 /*         height : var(--ToolbarHeight); */
           }
-
-div#clock {
-	padding-bottom: 0.5em;
-	color: white;
-	font-size: 120%;
-	line-height: var(--ToolbarHeight);
-	max-height: var(--ToolbarHeight);
-	width: 50%;
-	display: inline-block;
-	/* left: 0; */
-	/* right: 0; */
-	/* justify-content: center; */
-	text-align: center;
-	margin-left: 25%;
-	margin-right: 25%;
-}
 
 span#Ticker {
 	margin: auto;
@@ -119,6 +100,7 @@ padding-bottom : 0px; }
 /* Change the background color of the dropdown button when the dropdown content is shown */
 /* .dropdown:hover .dropbtn {background-color: #3e8e41;} */
 
+
 .body {padding: 1em;
         margin:1em;
        font-size : 15px;
@@ -126,13 +108,34 @@ padding-bottom : 0px; }
 /*       background: lightblue; */
 }
 
+@media only screen and (max-width: 1200px){
+    .body {
+        margin:0.1em;
+    }
+}
+
+
 div.form {
     border:thin white solid;
-    border-radius:30px;
-    padding:20px;
     color:white;
-    width : 80%;
  /*   margin:auto; */
+}
+@media only screen and (min-width: 1200px){
+    .form{
+        padding:20px;
+        border-radius:30px;
+            width : 80%;
+    }
+}
+
+
+@media only screen and (max-width: 1200px){
+    .form {
+      width:95%;
+      padding:5px;
+      font-size:80%;
+      border-radius:10px;
+    }
 }
 
 div.form input[type="text"], input[type="password"], input[type="email"], select
@@ -154,16 +157,6 @@ div.form select[multiple] {
     padding-right:10px;
 }
 
-/*
-div.form select[multiple] option:hover {
-    background: lightblue;
-    color : black;
-}
-
-div.form select[multiple] option:[checked] {
-    background: darkblue;
-    color : white;
-} */
 
 div.form .buttons input{
     background : var(--BackGroundColor);

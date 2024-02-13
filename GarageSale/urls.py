@@ -34,7 +34,7 @@ urlpatterns = [
     path('user/', include('user_management.urls')),
     path('billboard/', include('Billboard.urls')),
     path('sale_location/', include('SaleLocation.urls')),
-    path('Sponsors/', include('Sponsors.urls')),
+    path('sponsors/', include('Sponsors.urls')),
 ]
 
 if settings.DEBUG:

@@ -25,11 +25,12 @@ SECRET_KEY = 'django-insecure-s$t^ho7^-6ou)$fb)wilo10%l%dcmt7c+*^cq7j-eqxvdl0f4_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["192.168.1.76"]
 
 INTERNAL_IPS = [
     # ...
-    "127.0.0.1",
+ #   "127.0.0.1",
+    "192.168.1.76"
     # ...
 ]
 
@@ -91,6 +92,8 @@ TEMPLATES = [
                 'user_management_tags': "user_management.templatetags.extras",
                 'newsletter_tags': "News.templatetags.extras",
                 'billboard_tags': 'Billboard.templatetags.extras',
+                'sponsor_tags': 'Sponsors.templatetags.extras',
+
             },
             'context_processors': [
                 'django.template.context_processors.debug',

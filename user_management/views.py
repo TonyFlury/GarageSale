@@ -40,14 +40,16 @@ def logoff(incoming_request: HttpRequest):
 
 class UserRegistration(View):
     def get(self, incoming_request):
-        redirect_url = incoming_request.GET['redirect']
+        redirect_url = incoming_request.GET.get('redirect','/')
+
         form = Registration()
         return render(incoming_request, 'register.html', {'form': form, 'redirect': redirect_url})
 
     def post(self, incoming_request):
 
         logger.debug(f"user registration received")
-        redirect_url = incoming_request.GET['redirect']
+        redirect_url = incoming_request.GET.get('redirect','/')
+
         # Build a form instance for validation purposes.
         form = Registration(incoming_request.POST)
 
@@ -55,19 +57,31 @@ class UserRegistration(View):
             return render(incoming_request, 'register.html', {'form': form, 'redirect': redirect_url})
 
         if form.is_valid():
-            # TODO  -Might want to check for duplication here
-
             logger.debug(f"user registration received for {form.cleaned_data['email']}")
 
             # Begin safe with a transaction
             with transaction.atomic():
                 # Create a new but inactive user_management
-                new_user = User.objects.create_user(username=form.cleaned_data['email'],
-                                                    email=form.cleaned_data['email'],
-                                                    first_name=form.cleaned_data['first_name'],
-                                                    last_name=form.cleaned_data['last_name'],
-                                                    password=form.cleaned_data['password'],
-                                                    is_active=False)
+
+                try:
+                    user = User.objects.get(user_name=form.cleaned_data['email'])
+                except User.DoesNotExist:
+                    user = None
+
+                if user and user.is_active:
+                    form.add_error(None, 'This user already exists - did you mean to login in')
+                    return render(incoming_request, 'register.html', {'form': form, 'redirect': redirect_url})
+
+                if user and (not user.is_active):
+                    new_user = user
+                else:
+                    new_user = User.objects.create_user(username=form.cleaned_data['email'],
+                                                        email=form.cleaned_data['email'],
+                                                        first_name=form.cleaned_data['first_name'],
+                                                        last_name=form.cleaned_data['last_name'],
+                                                        password=form.cleaned_data['password'],
+                                                        is_active=False)
+
                 secret = uuid1()
 
                 verify = UserVerification(email=form.cleaned_data['email'], uuid=secret)
@@ -156,9 +170,10 @@ class Login(View):
 
         # If the user is inactive this has been added as the result of an 'anonymous' application
         if not user_inst.is_active:
-            user_inst.set_password(form_inst.cleaned_data['password'])
-            user_inst.is_active = True
-            user_inst.save()
+            form_inst.add_error(None, 'This user doesn\'t exist - did you mean to register instead')
+            return TemplateResponse(request, 'login.html',
+                                    context={'form': form_inst,
+                                             'redirect': redirect_url})
 
         # Sign this user in
         user = authenticate(username=form_inst.cleaned_data['email'],
