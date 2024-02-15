@@ -1,0 +1,46 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block body %}
+<h1>Brantham Garage Sale - About Us</h1>
+
+<div style="margin-left:5em;margin-right:10em;font-size:115%">
+For many years the Brantham Garage Sale has been a feature of the summer Schedule in Brantham, Suffolk. The community
+comes together across the village on one day to host a range of sales on their driveways and front-gardens, with sellers
+donating to the Garage Sale fund and some sellers also donating to good causes close to them.
+<p>
+The Charity sale started in 2003, in tribute to Carla Dawson (a local teenager) and the care she and her family received
+at <a href="https://www.stelizabethhospice.org.uk/">St&nbsp;Elizabeth's&nbsp;Hospice</a> in Ipswich, and the Hospice continues to be
+a significant recipient of the proceeds of the Garage Sale Event.
+<p>
+The Sale event in 2023 was the 20th Anniversary event, and was potentially going to be the last one, due to the current
+organiser stepping down, and with no clear replacement.
+</div>
+<h2>The Brantham Garage Sale Foundation</h2>
+<div style="margin-left:5em;margin-right:10em;font-size:115%">
+In late 2023 the <b>Brantham&nbsp;Garage&nbsp;Sale&nbsp;Foundation</b> was founded as a small charity dedicated to ensuring that the Sale Event
+continued into the future.
+<p>
+The Charity is run by a small committee of trustees (currently 5 members). We abide by the
+Charities Commission rules on how small charities should be run (this includes a double signature bank account for the
+charity funds). We are not currently a registered charity (we don't have a charity number), although that is something
+the trustees keep under regular review.
+<p>
+One benefit from being a charity with a formal set of governing rules, is that we are able to apply to the HMRC for
+gift-aid, further boosting the money we raise for those good causes.
+<p>
+It is the key principle of the charity that 100% of all the proceeds donated by the sellers will be dispersed to the
+designated good causes. Any costs that the charity incur (for instance advertising and other items) will be covered by
+our generous <a href="{% url 'sponsors:sponsor_list'  %}">sponsors</a>, and any surplus sponsorship funds if possible will also
+be dispersed to the same causes.
+</div>
+<h2>The Garage Sale 2024</h2>
+<div style="margin-left:5em;margin-right:10em;font-size:115%">
+The Garage Sale in 2024 is set for Sunday, June 23rd, and we are keeping our fingers and toes crossed for reasonable
+weather for the day.
+<br>
+The 2024 Sale will be raising funds for the <a href="https://www.stelizabethhospice.org.uk/">St&nbsp;Elizabeth's&nbsp;Hospice</a>,
+and the <a href="https://www.facebook.com/1stBranthamScoutGuideGroup/?locale=en_GB">1st&nbsp;Brantham&nbsp;Scout&nbsp;and&nbsp;Guide&nbsp;Group.</a>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block head-extra %}
+    {% if redirect %}
+        <meta http-equiv="refresh" content="10;url={{ redirect }}" />
+    {% endif %}
+{% endblock%}
+
+{% block body %}
+    <div class="msg">
+        {{msg}}
+    </div>
+    {% if redirect %}
+        <div>
+            If this form does not automatically redirect, then click the button below.
+        </div>
+        <form method="GET" action="{{ redirect }}" >
+            <div class="buttons">
+                <input type="submit" value="Continue">
+            </div>
+        </form>
+    {% endif %}
+
+{% endblock %}

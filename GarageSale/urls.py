@@ -26,15 +26,16 @@ from django.views.generic import TemplateView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", views.home, name="home"),
-    path("register", TemplateView.as_view(template_name='register.html'), name="register"),
-    path("register-waiting", TemplateView.as_view(template_name='register_waiting.html'), name="register-waiting"),
     path("getInvolved", TemplateView.as_view(template_name="getInvolved.html"), name="getInvolved"),
+    path('about_us', TemplateView.as_view(template_name='aboutUs.html'), name='AboutUs'),
+    path('contact', TemplateView.as_view(template_name='contact.html'), name='ContactUs'),
     path("__debug__/", include("debug_toolbar.urls")),
     path('news/', include('News.urls')),
     path('user/', include('user_management.urls')),
     path('billboard/', include('Billboard.urls')),
     path('sale_location/', include('SaleLocation.urls')),
     path('sponsors/', include('Sponsors.urls')),
+
 ]
 
 if settings.DEBUG:

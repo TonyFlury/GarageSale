@@ -103,7 +103,6 @@ padding-bottom : 0px; }
 
 .body {padding: 1em;
         margin:1em;
-       font-size : 15px;
        display:block;
 /*       background: lightblue; */
 }
@@ -203,6 +202,7 @@ div.form .errorlist {
     color: orange;
     font-weight: bold;
 }
+
 div.form .errorlist li{
     list-style-type: none;
 }
@@ -210,12 +210,18 @@ div.notes{
 
 }
 
-.menubar a {
+div.post-form {
+    padding-top:0.5em;
+    padding-bottom:0.5em;
+}
+
+a {
     color : var(--fontColor);
+    font-weight: bold;
     text-decoration: none;
 }
 
-.menubar a:hover {
+a:hover {
     font-style : italic;
     text-decoration : none;
     font-weight: bold;

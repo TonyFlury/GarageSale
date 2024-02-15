@@ -12,5 +12,7 @@ urlpatterns = [
     path("verify/<uuid:uuid>", views.user_verify, name='verify'),
     path("login", views.Login.as_view(), name="login"),
     path('logoff', views.logoff, name='logoff'),
-    path('pwd_change', views.ChangePassword.as_view(), name='change_password')
+    path('pwd_change', views.ChangePassword.as_view(), name='change_password'),
+    path('pwd_reset', views.ResetPasswordApply.as_view(), name='reset_password_application'),
+    path( 'reset/<uuid:uuid>', views.PasswordReset.as_view(), name='reset_password'),
 ]

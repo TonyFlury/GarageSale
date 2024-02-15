@@ -1,0 +1,49 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+<script>
+    function fn_name(str)
+    {
+        return str.replace(' ','_').toLowerCase()
+    }
+</script>
+
+{% block body %}
+    {% if form_title %}
+        <h2>{{form_title}}</h2>
+    {% endif %}
+    <div class="form">
+        {% if pre_form %}
+            <div class="pre-form">
+                {{pre_form | safe }}
+             </div>
+        {% endif %}
+        <form method="{{method}}" action="{{action}}">
+            {% csrf_token %}
+            <table>
+                {{form}}
+            </table>
+            <div class="buttons">
+                {% for button in buttons %}
+                    {% if button.redirect %}
+                        <script>
+                            function {{button.name|lower|cut:' '}}_redirect()
+                            {
+                                window.location.replace( '{{button.redirect}}' );
+                            }
+                        </script>
+                        <input type="{{button.type}}" onclick="{{button.name|lower|cut:' '}}_redirect()"  value="{{button.name}}">
+                   {% else %}
+                        <input type="{{button.type}}" value="{{button.name}}">
+                   {% endif %}
+                {% endfor %}
+
+            </div>
+        </form>
+    {% if post_form %}
+        <div class="post-form">
+            {{post_form | safe}}
+        </div>
+    {% endif %}
+    </div>
+{% endblock %}

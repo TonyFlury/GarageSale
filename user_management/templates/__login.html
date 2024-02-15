@@ -6,15 +6,15 @@
     <div class="form">
             <form method="POST" action="{% url 'user_management:login' %}?redirect={{ redirect }}" >
                 {% csrf_token %}
-            <table>
-                {{form.as_table}}
-            </table>
-            <div class="buttons">
-                <input type="button" onclick="cancel_login()" value="Cancel">
-                <input type="button" onclick="register()" value="Register">
-                <input type="submit" value="Login">
-            </div>
-        </form>
+                <table>
+                    {{form.as_table}}
+                </table>
+                <div class="buttons">
+                    <input type="button" onclick="cancel_login()" value="Cancel">
+                    <input type="button" onclick="register()" value="Register">
+                    <input type="submit" value="Login">
+                </div>
+            </form>
         <script>
             /* Implement register button */
             function register()
@@ -28,5 +28,8 @@
                 window.location.replace( '{{redirect}}' );
             }
          </script>
+        <div class="post_form">
+            Problems logging in - do you need to <a href="{%url 'user_management:reset_password_application' %}?redirect={{ redirect }}">Password reset</a> ?.
+        </div>
     </div>
 {% endblock %}

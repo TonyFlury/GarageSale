@@ -1,0 +1,37 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block body %}
+<h1>Contact Us</h1>
+<style>
+    svg.icon
+   {
+	max-height: 32px;
+	max-width: 32px;
+	padding-right: 5px;
+	display: inline-block;
+    }
+
+    ul {
+        list-style-type: none;
+    }
+    li {
+       margin-bottom:0.5em;
+    }
+</style>
+
+<div>
+    <ul>
+        <li><a class="icon" href="mailto:BranthamGarageSale@gmail.com">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="icon bi bi-envelope" viewBox="0 0 16 16"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/></svg>
+            BranthamGarageSale@gmail.com</a>
+        </li>
+        <li><a class="icon" href="https://www.facebook.com/groups/branthamgaragesale?locale=en_GB">
+                <svg aria-hidden="true" focusable="false" data-prefix="fab" data-icon="facebook-f" class="icon svg-inline--fa fa-facebook-f fa-w-10 fa-2x " role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path fill="currentColor" d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z"></path></svg>
+            www.facebook.com/groups/BranthamGarageSale</a>
+        </li>
+    </ul>
+</div>
+
+{% endblock %}
