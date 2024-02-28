@@ -22,6 +22,18 @@
 
 {% block body %}
 <div class="outer">
+        <div class="row">
+        <div class="widget" >
+            <div class="widget-content">
+                {% ApplicationWidget 'billboard' %}
+            </div>
+        </div>
+        <div class="widget" >
+            <div class="widget-content">
+                {% ApplicationWidget 'sale' %}
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="widget" >
             <div class="widget-content">
@@ -59,18 +71,6 @@
                     your sale event.
                 {% endif %}
                 </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="widget" >
-            <div class="widget-content">
-                {% ApplicationWidget 'billboard' %}
-            </div>
-        </div>
-        <div class="widget" >
-            <div class="widget-content">
-                {% ApplicationWidget 'sale' %}
             </div>
         </div>
     </div>

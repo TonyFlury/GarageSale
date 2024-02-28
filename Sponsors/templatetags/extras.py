@@ -28,6 +28,13 @@ social_media_icons ={
     }
 
 
+@register.simple_tag()
+def get_social_icon( social):
+    return format_html(social_media_icons.get(social,
+                           '<img src="{% static  \'/GarageSale/icons/logos/' + social + '.png\' %}">'
+                           ))
+
+
 @register.simple_tag
 def social_media_link( sponsor, social ):
     if not getattr(sponsor, social):

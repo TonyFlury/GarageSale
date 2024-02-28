@@ -45,7 +45,8 @@ class SaleApplicationForm(forms.Form):
                   "<br>We are then able to claim an extra 25p from the tax-man for every £1 you donate.", )
     category = fields.MultipleChoiceField(choices=category_choices, required=True,
                                           label='What will you be selling?',
-                                          help_text='Use Shift-click to select more than one item')
+                                          help_text='Use Shift-click to select more than one item. '
+                                                    'Ctrl-Click to remove an item already selected')
 
     def __init__(self, *args, anonymous=False, **kwargs):
         super().__init__(*args, **kwargs)

@@ -2,13 +2,13 @@ from uuid import uuid1
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login as login_user
-from django.http import HttpResponseServerError, HttpResponse, HttpRequest
+from django.http import HttpResponseServerError, HttpRequest
 from django.core.mail import send_mail
 from django.shortcuts import redirect, reverse
 from django.template.response import TemplateResponse
 from django.utils.html import escape
 from django.db import transaction
-from django.shortcuts import render, resolve_url
+from django.shortcuts import resolve_url
 from django.views.generic import View
 
 from .forms import RegistrationForm, LoginForm, PasswordChangeForm, ResetPasswordApplyForm, PasswordResetForm
@@ -26,6 +26,8 @@ logger.addHandler(handler)
 
 
 # ToDo - show password Help on registration, and validate password format
+# ToDo - test password Reset stuff
+# ToDo - Remove old templates - retest first
 
 
 def logoff(incoming_request: HttpRequest):
@@ -42,7 +44,8 @@ def logoff(incoming_request: HttpRequest):
 class UserRegistration(View):
     email_template = "email/verify_email.html"
 
-    def get(self, incoming_request):
+    @staticmethod
+    def get(incoming_request):
         redirect_url = incoming_request.GET.get('redirect', '/')
 
         form = RegistrationForm()
@@ -146,18 +149,21 @@ def user_verify(request, uuid=None):
 
 
 class Login(View):
-    def get(self, request):
+    @staticmethod
+    def get(request):
         """Render a new blank form"""
 
         redirect_url = request.GET.get('redirect', '/')
         form = LoginForm()
 
-        rest_url = resolve_url('user_management:reset_password_application')
         return TemplateResponse(request,
                                 'generic_with_form.html',
-                                context=form.form_context(redirect_url=redirect_url))
+                                context=form.form_context(
+                                    reset_path='user_management:reset_password_application',
+                                    redirect_url=redirect_url))
 
-    def post(self, request):
+    @staticmethod
+    def post(request):
         """deal with the submitted form"""
         redirect_url = request.GET.get('redirect', '/')
         form_inst = LoginForm(request.POST)
@@ -196,7 +202,8 @@ class Login(View):
 
 
 class ChangePassword(View):
-    def get(self, request: HttpRequest):
+    @staticmethod
+    def get(request: HttpRequest):
         redirect_url = request.GET.get('redirect', '/')
 
         if not request.user.is_authenticated:
@@ -207,7 +214,8 @@ class ChangePassword(View):
                                 'generic_with_form.html',
                                 context=form.form_context(redirect_url=redirect_url))
 
-    def post(self, request: HttpRequest):
+    @staticmethod
+    def post(request: HttpRequest):
         redirect_url = request.GET.get('redirect', '/')
 
         if not request.user.is_authenticated:
@@ -246,14 +254,16 @@ class ChangePassword(View):
 
 
 class ResetPasswordApply(View):
-    def get(self, request):
+    @staticmethod
+    def get(request):
         redirect_url = request.GET.get('redirect', '/')
         form = ResetPasswordApplyForm()
         return TemplateResponse(request,
-                                'generic_response.html',
+                                'generic_with_form.html',
                                 context=form.form_context(redirect_url=redirect_url))
 
-    def post(self, request):
+    @staticmethod
+    def post(request):
         # Send email to the user with a link to the verification view
         email_template = 'email/password_reset_email.html'
         redirect_url = request.GET.get('redirect', '/')
@@ -272,7 +282,7 @@ class ResetPasswordApply(View):
                                     'generic_with_form.html',
                                     context=form.form_context(redirect_url=redirect_url))
 
-        base_url = request.scheme + r'://' + request.get_host()
+        base_url = request.build_absolute_uri('home')
         secret = uuid1()
         url = (request.build_absolute_uri(
             location=reverse("user_management:reset_password", kwargs={"uuid": secret})) +
@@ -302,12 +312,11 @@ class ResetPasswordApply(View):
 
 
 class PasswordReset(View):
-    def get(self, request, uuid):
+    @staticmethod
+    def get(request, uuid):
         redirect_url = request.GET.get('redirect', '/')
 
-        try:
-            application = PasswordResetApplication.objects.get(uuid=uuid)
-        except PasswordResetApplication.DoesNotExist:
+        if not PasswordResetApplication.objects.filter(uuid=uuid).exists():
             return HttpResponseServerError(f'Received a password reset with an unknown uuid {uuid}')
 
         form = PasswordResetForm()
@@ -315,14 +324,15 @@ class PasswordReset(View):
                                 'generic_with_form.html',
                                 context=form.form_context(uuid, redirect_url=redirect_url))
 
-    def post(self, request, uuid):
+    @staticmethod
+    def post(request, uuid):
         redirect_url = request.GET.get('redirect', '/')
 
         form = PasswordResetForm(request.POST)
         if not form.is_valid():
             return TemplateResponse(request,
                                     'generic_with_form.html',
-                                    context=form.form_context(redirect_url=redirect_url))
+                                    context=form.form_context(uuid, redirect_url=redirect_url))
 
         try:
             application = PasswordResetApplication.objects.get(uuid=uuid)
@@ -352,5 +362,3 @@ class PasswordReset(View):
         return TemplateResponse(request, 'generic_response.html',
                                 context={'msg': 'Your password has now been changed.',
                                          'redirect': redirect_url})
-
-# ToDo - Refactor the templates into a Generic form and Generic message type forms

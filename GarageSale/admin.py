@@ -14,11 +14,18 @@ Testable Statements :
 """
 from django.contrib import admin
 from django import forms
-from .models import MOTD, EventData
+from .models import MOTD, EventData, Location
 
 from Billboard import models as billboard_models
 from Sponsors import models as sponsor_models
 from SaleLocation import models as sale_location_models
+
+from django.contrib.auth.models import Permission
+
+from django.contrib import admin
+
+
+admin.site.register(Permission)
 
 
 @admin.register(MOTD)
@@ -45,6 +52,13 @@ class SaleLocationInline(admin.TabularInline):
 class EventDataAdminForm( forms.ModelForm):
     class Meta:
         model = EventData
+        fields = '__all__'
+
+
+@admin.register(Location)
+class LocationAdminForm( admin.ModelAdmin):
+    class Meta:
+        model = Location
         fields = '__all__'
 
 

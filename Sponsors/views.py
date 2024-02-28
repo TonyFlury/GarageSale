@@ -5,11 +5,13 @@ from django.shortcuts import render
 from django.template.response import TemplateResponse
 from .models import Sponsor
 
-#TODO - Link Sponsors page to the main menu
+
+def social_media_items():
+    return ['website','facebook','twitter','instagram']
 
 
 def sponsor_list(request):
     sponsors = Sponsor.objects.filter(event__id = request.current_event.id)
     return TemplateResponse(request,'view_sponsors.html',
                             context={'sponsors': sponsors,
-                                     'socials':['website','facebook','twitter','instagram'] } )
+                                     'socials':social_media_items() } )

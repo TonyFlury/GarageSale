@@ -1,0 +1,56 @@
+<div>
+    <script>
+        function event_select() {
+            select = document.getElementById("id_EventData");
+            value = select.options[select.selectedIndex].value;
+
+            document.getElementById("id_EventGo").disabled = (value=='')?true:false;
+            document.getElementById("id_EventEdit").disabled = (value=='')?true:false;
+            document.getElementById("id_EventDetail").disabled = (value=='')?true:false;
+        }
+        function go_select() {
+            select = document.getElementById("id_EventData");
+            value = select.options[select.selectedIndex].value
+            if (value != '')
+            document.location.replace( '/team_page/event/'+value+'/use/');
+        }
+        function edit_select() {
+            select = document.getElementById("id_EventData");
+            value = select.options[select.selectedIndex].value
+            if (value != '')
+            document.location.replace("/team_page/event/"+value+"/edit/" );
+        }
+        function detail_select() {
+            select = document.getElementById("id_EventData");
+            value = select.options[select.selectedIndex].value
+            if (value != '')
+            document.location.replace('/team_page/event/'+value+'/view/' );
+        }
+        function create_event() {
+            document.location.replace( '/team_page/event/create/');
+        }
+    </script>
+    <label for="id_EventData">Which Event</label>
+    <select id="id_EventData" onchange="event_select()" name="Event Date">
+        <option value="" >Choose an Event</option>
+        {% for event in events %}
+            {% if event.id == event_id %}
+                <option selected value="{{event.id}}">{{event.event_date|date:'D, jS M, Y'}}</option>
+            {% else %}
+                <option value="{{event.id}}">{{event.event_date|date:'D, jS M, Y'}}</option>
+            {% endif %}
+        {% endfor %}
+    </select>
+    <span class=buttons>
+        <input type="button" id="id_EventGo" onclick="go_select()" disabled value='Use'>
+        <input type="button" id="id_EventDetail" onclick="detail_select()" disabled value='View'>
+        <input type="button" id="id_EventEdit" onclick="edit_select()" disabled value='Edit'>
+        <input type="button" onclick="create_event()" value="Create new event">
+    <span>
+</div>
+{% if event_id %}
+<script>
+    /* Enable relevant buttons if necessary */
+    event_select();
+</script>
+{% endif %}

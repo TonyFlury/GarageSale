@@ -18,3 +18,4 @@ class SalesLocationApply(ApplicationBase):
     model = SaleLocations
     form = SaleApplicationForm
     extra_fields = ['gift_aid', 'category']
+    email_fields = {'bacs_reference': 'get_bacs_reference'}

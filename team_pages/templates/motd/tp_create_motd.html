@@ -1,0 +1,26 @@
+{% extends "team_page.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block content %}
+    <div class="form">
+        <script>
+            function cancel_motd() { document.location.replace( "{% url 'TeamPagesRoot' %}" ) };
+        </script>
+        <h2>
+                Create MotD
+        </h2>
+        <form method="post">
+            <table>
+                {%csrf_token%}
+                {{form}}
+            </table>
+            <div class="buttons">
+                    <input type='button' onclick="cancel_event()"  value="Cancel New Event">
+                    <input type='reset'   value="Reset Form">
+                    <input type='submit'   value="Save New MotD">
+            </div>
+        </form>
+    </div>
+{% endblock %}

@@ -6,16 +6,17 @@
 }
 
 body { background : var(--BackGroundColor) ;
-color : var(--fontColor);
-font-size:20px;
+    color : var(--fontColor);
+    font-size:16pt;
 }
 
 
-div#ToolBar {padding : 1em 1em 1em 1em;
-          margin: auto;
-          width : 95%;
-/*         height : var(--ToolbarHeight); */
-          }
+div#ToolBar {
+    padding : 1em 1em 1em 1em;
+    margin: auto;
+    width : 95%;
+    /*         height : var(--ToolbarHeight); */
+    }
 
 span#Ticker {
 	margin: auto;
@@ -101,10 +102,13 @@ padding-bottom : 0px; }
 /* .dropdown:hover .dropbtn {background-color: #3e8e41;} */
 
 
-.body {padding: 1em;
-        margin:1em;
-       display:block;
-/*       background: lightblue; */
+.body {
+	padding: 1em;
+	margin: 1em;
+	display: block;
+	/* background: lightblue; */
+	margin-top: 0em;
+	padding-top: 0.5em;
 }
 
 @media only screen and (max-width: 1200px){
@@ -137,7 +141,11 @@ div.form {
     }
 }
 
-div.form input[type="text"], input[type="password"], input[type="email"], select
+label{
+font-weight:bold;
+}
+
+input[type="text"], input[type="password"], input[type="email"], input[type="url"], textarea, select
 {
     color : var(--fontColor);
     background: var(--BackGroundColor);
@@ -149,9 +157,12 @@ div.form input[type="text"], input[type="password"], input[type="email"], select
     margin:5px;
     box-shadow: 2px 2px 2px rgba(1,1,1,1) inset;
 }
+input[type="url"] {
+    width:25em;
+}
 
 div.form select[multiple] {
-    accent-colour: lightblue;
+    accent-color: lightblue;
     padding-left: 10px;
     padding-right:10px;
 }
@@ -254,7 +265,6 @@ div.MOTD {
     margin-top:0em;
     margin-bottom: 2em;
     width: 80%;
-    font-size : 150%;
 }
 
 div.MOTD:after {
@@ -281,27 +291,35 @@ h2#Front-page-headline {
 }
 
 div.front-page-news {
-    margin:auto;
-    height:auto;
-    border:thin solid black;
-    width:75%;
-    border-radius:50px;
-    padding:1em;
-    height:5em;
-    overflow:none;
-    color: black;
-    background: var(--PaperColor);
-    box-shadow: 5px 5px 5px;
-    font-size:100%;
+	margin: auto;
+	height: auto;
+	border: thin solid black;
+	width: 75%;
+	border-radius: 25px;
+	padding: 1em;
+	max-height: 5em;
+	overflow: hidden;
+	color: black;
+	background: var(--PaperColor);
+	box-shadow: 5px 5px 5px;
+	font-size: 100%;
+	position: relative;
+	margin-top: 0.5em;
+	padding-bottom: 0.2em;
 }
 
 div.front-page-news a.headline {
     margin-left:0.5em;
     margin-right:0.5em;
-    font-size:200%;
+    font-size:150%;
     font-weight:bold;
-    colour:black;
+    color:black;
     text-decoration:none;
+}
+
+div.front-page-news .synopsis {
+    font-size:18px;
+    line-height:30px;
 }
 
 div.front-page-news a.headline:hover {
@@ -312,19 +330,22 @@ div.front-page-news a.headline:visited {
     color:black;
 }
 
+
 div.front-page-news span.footnote {
-    font-size:100%;
-    position:relative;
-    float:right;
-    bottom:5px;
-    right:5px;
-    border:thin solid black;
-    border-radius:40%;
-    padding:5px;
-    padding-left:10px;
-    padding-right:10px;
-    box-shadow:2px 2px black;
-    font-weight:bold;
+	font-size: 100%;
+	position: relative;
+	float: right;
+	border: thin solid black;
+	border-radius: 25px;
+	padding: 5px;
+	padding-left: 10px;
+	padding-right: 10px;
+	box-shadow: 2px 2px black;
+	font-weight: bold;
+	position: relative;
+	bottom: -0.15em;
+	margin: 0px;
+	right: -0.90em;
 }
 
 div.form th:has(label[for='id_gift_aid']){
@@ -343,6 +364,7 @@ div.form .helptext {
 
 a.footnote {
     text-decoration:none;
+    color:black;
 }
 
 a.footnote:hover {

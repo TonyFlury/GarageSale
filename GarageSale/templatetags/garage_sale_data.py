@@ -134,12 +134,10 @@ def render_widget(context, feature):
 
     text = {'billboard': f"You have already applied to have a <b>{name[feature]}</b> "
                          f"at your home. Press the button below to edit/cancel that application"
-    if signed_up else f"By hosting an <b>{name[feature]}</b>, "
-                      f"you will not only help advertise the Garage Sale Event "
-                      f"to the rest of the village, you will also directly be raising money for our charities as "
-                      f"our sponsor pays the charity for every board we put up.<br>"
-                      f"If you want to host an <b>{name[feature]}</b>, "
-                      f"please press the button below and fill out the form",
+            if signed_up else f"By hosting an <b>{name[feature]}</b>, "
+            f"you will help advertise the Garage Sale Event "
+            f"and also be raising money for our charities as "
+            f"our sponsor pays us for every board we put up.<br>",
             'sale': f"You have added your <b>{name[feature]}</b> to our sale list "
                     f"Press the button below to edit/cancel the information"
             if signed_up else f"If you want to inform us of your <b>{name[feature]}</b> at your home "

@@ -14,10 +14,11 @@ Testable Statements :
 """
 import bs4
 
-import unittest
+from .common import TestCaseCommon
+
 from django import test
 
-from django.contrib.auth.models import User, UserManager
+from django.contrib.auth.models import User
 
 from django.shortcuts import reverse
 from django.core import exceptions
@@ -28,17 +29,22 @@ from Billboard.models import BillboardLocations
 
 from datetime import date, timedelta
 from bs4 import BeautifulSoup
-from django.core import mail        # Mail client for testing
+from django.core import mail  # Mail client for testing
 from django.conf import settings
 from Billboard.views import BillBoardApply
 
-from selenium import webdriver
+# Printing errors
+# print([(error.next_sibling, error) for error in BeautifulSoup(response.content, 'html.parser').select('.errorlist')])
+
 
 # ToDo Test against multiple users etc.
 # To Do Test for Anonymous users
+# ToDo Test - direct edit using a Id on the URL
+# ToDO Test - application by Anonymous user
+# ToDo Test email includes relevant URL link.
 
 
-class TestBillboard_Create(test.TestCase):
+class TestBillboardCreate(TestCaseCommon):
 
     def setUp(self):
         """Precondition for all test cases
@@ -57,7 +63,7 @@ class TestBillboard_Create(test.TestCase):
         self.event.save()
 
     def test_0200_blank_form_served(self):
-        """Is the empty form rendered as expected"
+        """Is the empty form rendered as expected
             pre-conditions : No BillBoard entry
                              No Saved location for this user
 
@@ -90,10 +96,10 @@ class TestBillboard_Create(test.TestCase):
 
         # Confirm that only the Reset and save buttons are available
         buttons = {(tag['name'], tag['value']) for tag in soup.find_all('input') if
-                     tag['type'] in {'submit','reset'} }
-        self.assertEqual( { ('action','Reset'), ('action', 'Save')}, buttons)
+                   tag['type'] in {'submit', 'reset'}}
+        self.assertEqual({('action', 'Reset'), ('action', 'Save')}, buttons)
 
-# ToDo - Popups on Delete and Save are not tested.
+    # ToDo - Popups on Delete and Save are not tested.
     def test_0210_save_form(self):
         """is a filled in form saved correctly
             Pre : existing Event and User
@@ -120,10 +126,10 @@ class TestBillboard_Create(test.TestCase):
                           data=form_data, follow=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.request['PATH_INFO'], '/getInvolved')
+
+        self.assertEqual(response.templates[0].name, 'getInvolved.html')
 
         # Confirm a location and Billboard instance have been created with the right data
-        location_inst, billboard_inst = None, None
         try:
             location_inst = Location.objects.get(user=self.user)
         except Model.DoesNotExist:
@@ -154,14 +160,15 @@ class TestBillboard_Create(test.TestCase):
         self.assertEqual(email.from_email, sender)
 
 
-class Test_BillboardEdit(test.TestCase):
+class TestBillboardEdit(TestCaseCommon):
     def setUp(self):
-        """Pre conditions for all test cases :
+        """Pre-conditions for all test cases :
             * An existing user
             * A current event
             * An exiting Location instance for this user
             * An existing billboard for this location
         """
+        super().setUp()
         self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
                                              first_name='harry', last_name='test', password='blah')
         self.event = EventData(event_date=date.today() + timedelta(30),
@@ -187,7 +194,7 @@ class Test_BillboardEdit(test.TestCase):
                                             event=self.event)
         self.billboard.save()
 
-    def test_0250_edit_form_filled(self):
+    def test_0220_edit_form_filled(self):
         """Test that form is prefilled as expected
             Billboard and Location already exist
         """
@@ -208,20 +215,22 @@ class Test_BillboardEdit(test.TestCase):
         self.assertEqual(values - expected, set())
         self.assertEqual(expected - values, set())
 
+        # Check email and name are prefilled
+
         prefilled = {(tag['name'], tag['value']) for tag in soup.find_all('input') if
-                     tag['type'] in {'text','email'} and tag['name'] in {'name', 'email'}}
-        self.assertEqual({ ('name', 'harry test'),
-                           ('email', 'harry@test.com')},
+                     tag['type'] in {'text', 'email'} and 'disabled' in tag.attrs and tag['name'] in {'name', 'email'}}
+        self.assertEqual({('name', 'harry test'),
+                          ('email', 'harry@test.com')},
                          prefilled)
 
         # Confirm the expected buttons appear
         buttons = {(tag['name'], tag['value']) for tag in soup.find_all('input') if
-                     tag['type'] in {'submit','reset'} }
+                   tag['type'] in {'submit', 'reset'}}
         self.assertEqual({('action', 'Reset'),
-                            ('action', 'Save'),
-                            ('action', 'Delete')}, buttons)
+                          ('action', 'Save'),
+                          ('action', 'Delete')}, buttons)
 
-    def test_0260_edit_form_Location_only(self):
+    def test_0230_edit_form_Location_only(self):
         """Test that form is prefilled as expected
            Location already exists
            Billboard doesn't
@@ -247,18 +256,18 @@ class Test_BillboardEdit(test.TestCase):
         self.assertEqual(expected - values, set())
 
         prefilled = {(tag['name'], tag['value']) for tag in soup.find_all('input') if
-                     tag['type'] in {'text','email'} and tag['name'] in {'name', 'email'}}
-        self.assertEqual({ ('name', 'harry test'),
-                           ('email', 'harry@test.com')},
+                     tag['type'] in {'text', 'email'} and tag['name'] in {'name', 'email'}}
+        self.assertEqual({('name', 'harry test'),
+                          ('email', 'harry@test.com')},
                          prefilled)
 
         # Confirm the expected buttons appear
         buttons = {(tag['name'], tag['value']) for tag in soup.find_all('input') if
-                     tag['type'] in {'submit','reset'} }
+                   tag['type'] in {'submit', 'reset'}}
         self.assertEqual({('action', 'Reset'),
-                            ('action', 'Save'), }, buttons)
+                          ('action', 'Save'), }, buttons)
 
-    def test_0270_edit_form_save(self):
+    def test_0240_edit_form_save(self):
         """Test that form is prefilled as expected
            Billboard and Location already exist
         """
@@ -286,14 +295,15 @@ class Test_BillboardEdit(test.TestCase):
                     self.assertEqual(getattr(location_inst, field), value)
 
 
-class Test_BillboardDelete(test.TestCase):
+class TestBillboardDelete(TestCaseCommon):
     def setUp(self):
-        """Pre conditions for all test cases :
+        """Pre-conditions for all test cases :
             * An existing user
             * A current event
             * An exiting Location instance for this user
             * An existing billboard for this location
         """
+        super().setUp()
         self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
                                              first_name='harry', last_name='test', password='blah')
         self.event = EventData(event_date=date.today() + timedelta(30),
@@ -312,14 +322,14 @@ class Test_BillboardDelete(test.TestCase):
                               'phone': '0110 111111',
                               'mobile': '0220 222222',
                               }
-        self.location = Location(user=self.user, **self.location_data)
+        self.location: Location = Location(user=self.user, **self.location_data)
         self.location.save()
 
         self.billboard = BillboardLocations(location=self.location,
                                             event=self.event)
         self.billboard.save()
 
-    def test_0280_delete_data(self):
+    def test_0250_delete_data(self):
         """Test that the form acts on delete correctly
 
             Expect that the location still exists but the BillboardLocation instance doesn't.
@@ -327,13 +337,13 @@ class Test_BillboardDelete(test.TestCase):
         c = test.Client()
         c.force_login(self.user)
         response = c.post(reverse('Billboard:apply') + '?redirect=' + reverse('getInvolved'),
-                          data = self.location_data | {'action':'Delete'}, follow=True)
+                          data=self.location_data | {'action': 'Delete'}, follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.request['PATH_INFO'], '/getInvolved')
 
         try:
-            location_inst = Location.objects.get(user=self.user)
+            location_inst: Location = Location.objects.get(user=self.user)
         except exceptions.ObjectDoesNotExist:
             self.fail("Location object has been deleted")
 
@@ -347,14 +357,15 @@ class Test_BillboardDelete(test.TestCase):
         self.assertIsNone(billboard, "Billboard object has not been deleted")
 
 
-class TestCreateAnonymous(test.TestCase):
+class TestCreateAnonymous(TestCaseCommon):
     def setUp(self):
-        """Pre conditions for all test cases :
+        """Pre-conditions for all test cases :
             * No existing user
             * A current event
             * No Location instance for this user
             * No billboard for this location
         """
+        super().setUp()
         self.event = EventData(event_date=date.today() + timedelta(30),
                                open_billboard_bookings=date.today() - timedelta(30),
                                close_billboard_bookings=date.today() - timedelta(25),
@@ -364,8 +375,8 @@ class TestCreateAnonymous(test.TestCase):
                                )
         self.event.save()
 
-    def test_0290_blank_form_served(self):
-        """Is the empty form rendered as expected"
+    def test_0260_blank_form_served(self):
+        """Is the empty form rendered as expected
             No User, No Location
         """
         c = test.Client()
@@ -374,45 +385,44 @@ class TestCreateAnonymous(test.TestCase):
 
         soup = BeautifulSoup(response.content, 'html.parser')
 
+        # Confirm that the correct fields are displayed
         expected = {'email', 'name', 'house_number', 'street_name', 'town', 'postcode', 'phone', 'mobile'}
         received = {tag['name'] for tag in soup.find_all('input') if tag['type'] in {'email', 'text'}}
-
-        self.assertEqual(expected - received, set(), )
-        self.assertEqual(received - expected, set(), )
+        self.assertEqual(expected, received )
 
         # confirm email and name are not disabled
-        should_be_enabled = {tag['name'] for tag in soup.find_all('input', attrs={'disabled':False})
-                                if tag['type'] in {'email', 'text'} and tag['name'] in {'email', 'name'} }
+        should_be_enabled = {tag['name'] for tag in soup.find_all('input', attrs={'disabled': False})
+                             if tag['type'] in {'email', 'text'} and tag['name'] in {'email', 'name'}}
         self.assertEqual({'name', 'email'}, should_be_enabled)
 
+        # Confirm that the right buttons are displayed
         expected = {('action', 'Save')}
         received = {(tag['name'], tag['value']) for tag in soup.find_all('input') if tag['type'] in {'submit'}}
 
-        self.assertEqual(expected - received, set(), )
-        self.assertEqual(received - expected, set(), )
+        self.assertEqual(expected, received)
 
-        values = {(tag['name'], tag.get('value','')) for tag in soup.find_all('input')
+        # Confirm that the email and name fields aren't filled with any data
+        values = {(tag['name'], tag.get('value', '')) for tag in soup.find_all('input')
                   if tag['type'] in {'email', 'text'} and tag.attrs['name'] in {'email', 'name'}}
         self.assertEqual({('email', ''), ('name', '')}, values)
 
         # Confirm that only the Reset and save buttons are available
         buttons = {(tag['name'], tag['value']) for tag in soup.find_all('input') if
-                     tag['type'] in {'submit','reset'} }
-        self.assertEqual( { ('action','Reset'),  ('action', 'Save')}, buttons)
+                   tag['type'] in {'submit', 'reset'}}
+        self.assertEqual({('action', 'Reset'), ('action', 'Save')}, buttons)
 
-    def test_0295_anonymous_request_saved(self):
-        _data = {'email':'harry@test.com',
-                      'name': 'harry test',
-                      'house_number': '1',
-                      'street_name': 'Acacia Avenue',
-                      'town': 'AnyTown',
-                      'postcode': 'AT1 1AA',
-                      'phone': '0110 111111',
-                      'mobile': '0220 222222',
-                      'action': 'Save'
-                      }
+    def test_0270_anonymous_request_saved(self):
+        _data = {'email': 'harry@test.com',
+                 'name': 'harry test',
+                 'house_number': '1',
+                 'street_name': 'Acacia Avenue',
+                 'town': 'AnyTown',
+                 'postcode': 'AT1 1AA',
+                 'phone': '0110 111111',
+                 'mobile': '0220 222222',
+                 'action': 'Save'
+                 }
 
-        print(reverse('Billboard:apply') + '?redirect=' + reverse('getInvolved'))
         c = test.Client()
         response = c.post(reverse('Billboard:apply') + '?redirect=' + reverse('getInvolved'), data=_data, follow=True)
         self.assertEqual(response.status_code, 200)
@@ -427,5 +437,95 @@ class TestCreateAnonymous(test.TestCase):
         self.assertEqual(user.first_name, 'harry')
         self.assertEqual(user.last_name, 'test')
         self.assertEqual(user.email, 'harry@test.com')
+        self.assertFalse(user.is_active)
+
+
+class TestEditDirect(TestCaseCommon):
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
+                                             first_name='harry', last_name='test', password='blah')
+        self.event = EventData(event_date=date.today() + timedelta(30),
+                               open_billboard_bookings=date.today() - timedelta(30),
+                               close_billboard_bookings=date.today() - timedelta(25),
+                               open_sales_bookings=date.today() - timedelta(30),
+                               close_sales_bookings=date.today() - timedelta(25),
+                               use_from=date.today() - timedelta(90),
+                               )
+        self.event.save()
+
+        self.location_data = {'house_number': '1',
+                              'street_name': 'Acacia Avenue',
+                              'town': 'AnyTown',
+                              'postcode': 'AT1 1AA',
+                              'phone': '0110 111111',
+                              'mobile': '0220 222222',
+                              }
+        self.location: Location = Location(user=self.user, **self.location_data)
+        self.location.save()
+
+        self.billboard = BillboardLocations(location=self.location,
+                                                            event=self.event)
+        self.billboard.save()
+
+    def test_0280_test_direct_edit_registered(self):
+        """Test the direct edit of an application where the user is
+           logged in
+        """
+        try:
+            billboard = BillboardLocations.objects.get(location=self.location, event=self.event)
+        except BillboardLocations.DoesNotExist:
+            raise ValueError("No Billboard Location data exists for this test")
+
+        application_id = self.billboard.id
+        action = reverse("Billboard:apply", args=[application_id]) + "?redirect=/getInvolved"
+
+        c = test.Client()
+        c.force_login(self.user)
+        response = c.get(action)
+
+        self.assertEqual(response.status_code, 200)
 
         soup = BeautifulSoup(response.content, 'html.parser')
+        # Find all the editable fields (ie not name or email
+        values = {(tag['name'], tag['value']) for tag in soup.find_all('input')
+                  if tag['type'] == 'text' and tag['name'] not in {'name', 'email'}}
+        expected = {(field, value) for field, value in self.location_data.items()}
+
+        self.assertEqual(values, expected)
+
+        # Check email and name are prefilled
+
+        prefilled = {(tag['name'], tag['value']) for tag in soup.find_all('input') if
+                     tag['type'] in {'text', 'email'} and 'disabled' in tag.attrs and tag['name'] in {'name', 'email'}}
+        self.assertEqual({('name', 'harry test'),
+                          ('email', 'harry@test.com')},
+                         prefilled)
+        # We know that save and Delete work in these cases from other tests
+
+    def test_0290_test_direct_edit_unregistered(self):
+        """Test the direct edit of an application where the user is
+           logged in
+        """
+        application_id = self.billboard.id
+        action = reverse("Billboard:apply", args=[application_id]) + "?redirect=/getInvolved"
+
+        c = test.Client()
+        response = c.get(action)
+
+        self.assertEqual(response.status_code, 200)
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        # Find all the editable fields (ie not name or email
+        values = {(tag['name'], tag['value']) for tag in soup.find_all('input')
+                  if tag['type'] == 'text' and tag['name'] not in {'name', 'email'}}
+        expected = {(field, value) for field, value in self.location_data.items()}
+        self.assertEqual(values, expected)
+
+        # Check email and name are prefilled but not disabled
+        prefilled = {(tag['name'], tag['value']) for tag in soup.find_all('input') if
+                     tag['type'] in {'text', 'email'} and 'disabled' in tag.attrs and tag['name'] in {'name', 'email'}}
+        self.assertEqual({('name', 'harry test'),
+                          ('email', 'harry@test.com')},
+                         prefilled)
+        # We know that save and Delete work in these cases from other tests

@@ -63,9 +63,12 @@ div#ToolBar div.menubar.browser {
 }
 
 div#ToolBar div.menubar.browser div.wrapper {
-    margin:auto;
-    width : 70%;
+	margin: auto;
+	width: 90%;
+	margin-left: 100px;
+	margin-right: 0px;
 }
+
 div#ToolBar div.menubar.browser ul{
     margin: auto;
     padding: 0px;
@@ -74,12 +77,13 @@ div#ToolBar div.menubar.browser ul{
     justify-content: space-between;
 }
 
-div#ToolBar div.menubar.browser ul li{
-    display: inline;
-    color : white;
-    font-weight: bold;
-    margin-right : 10px;
-    padding-right : 0px;
+div#ToolBar div.menubar.browser ul li {
+	display: inline;
+	color: white;
+	font-weight: bold;
+	margin-right: 10px;
+	padding-right: 1em;
+	font-size: 20px;
 }
 
 div.Topline {

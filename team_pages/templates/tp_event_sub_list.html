@@ -1,0 +1,13 @@
+{% extends "team_page.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block sublist %}
+    {% for item in sub_list_data %}
+        {{ item.headline }}
+    {% endfor %}
+{% endblock %}
+
+{% block detail %}
+{% endblock %}

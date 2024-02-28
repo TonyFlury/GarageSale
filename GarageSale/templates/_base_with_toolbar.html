@@ -45,6 +45,9 @@ Brantham Garage Sale - Home Page
                 <li><a href="/sponsors">Our Sponsors</a></li>
                 <li><a href="{% url 'AboutUs' %}">About Us</a></li>
                 <li><a href="{% url 'ContactUs' %}">Contact Us</a></li>
+                {% if perms.GarageSale.is_administrator %}
+                    <li><a href="{% url 'TeamPagesRoot' %}">Team</a></li>
+                {% endif %}
             </ul>
         </span>
     </span>
@@ -59,6 +62,9 @@ Brantham Garage Sale - Home Page
             <li><a href="/sponsors">Our Sponsors</a></li>
             <li><a href="{% url 'AboutUs' %}">About Us</a></li>
             <li><a href="{% url 'ContactUs' %}">Contact Us</a></li>
+            {% if perms.GarageSale.is_administrator %}
+                <li><a href="{% url 'TeamPagesRoot' %}">Team</a></li>
+            {% endif %}
         </ul>
     </div>
 </div>

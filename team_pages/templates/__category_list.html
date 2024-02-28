@@ -1,0 +1,11 @@
+<span class="category-list">
+    <ul>
+    {% for category in category_list %}
+        {% if category.tag %}
+            <li><a href="{%url category.tag  event_id=event_id %}">{{category.friendly}}</a></li>
+        {% else %}
+            <li>{{category.friendly}}</li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+</span>

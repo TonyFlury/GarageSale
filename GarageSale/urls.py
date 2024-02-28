@@ -18,7 +18,6 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-
 from . import views
 
 from django.views.generic import TemplateView
@@ -29,6 +28,10 @@ urlpatterns = [
     path("getInvolved", TemplateView.as_view(template_name="getInvolved.html"), name="getInvolved"),
     path('about_us', TemplateView.as_view(template_name='aboutUs.html'), name='AboutUs'),
     path('contact', TemplateView.as_view(template_name='contact.html'), name='ContactUs'),
+    path('privacy', TemplateView.as_view(template_name='privacy_policy.html'), name='Privacy'),
+
+    path('team_page/', include('team_pages.urls')),
+
     path("__debug__/", include("debug_toolbar.urls")),
     path('news/', include('News.urls')),
     path('user/', include('user_management.urls')),

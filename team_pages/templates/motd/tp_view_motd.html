@@ -1,0 +1,24 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block content %}
+    <div class="form">
+        <h2>Editing Message of the Day : {{form.instance.synopsis }}</h2>
+        <script>
+            function edit_event() { document.location.replace( "{% url 'TeamPagesMotdEdit' motd_id %}");}
+        </script>
+        <div>
+            <div class="motd_content">
+                {{form.instance.content.html | safe }}
+            </div>
+            <div class="use_from_date">
+               Used from {{form.instance.use_from|date:"D, jS M Y" }}
+            </div>
+        </div>
+        <span class="buttons">
+            <input type="button" id="id_MotdEdit" onclick="edit_event()" value="Edit">
+        </span>
+    </div>
+{% endblock %}

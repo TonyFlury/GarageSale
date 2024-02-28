@@ -9,6 +9,23 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponseServerError, HttpRequest
 
 
+def publish_news(request, news_id):
+    """Change the published status of the given article
+       There are no safeguards on the view - they are done via the GUI
+       Essentially :
+            An article can be published if can_be_published is True
+            An article can only be unpublished if it is already published
+    """
+    try:
+        article = NewsModel.objects.get( id = news_id)
+    except NewsModel.DoesNotExist:
+        return HttpResponseServerError(f'News item does not exist {news_id}')
+
+    article.published = not article.published
+    article.save()
+    return
+
+
 def news_page(request):
     qs = NewsModel.news_page_order.all()
     return render(request, template_name='news_page.html', context={'articles': qs})

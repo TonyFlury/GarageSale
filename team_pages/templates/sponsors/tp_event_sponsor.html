@@ -1,0 +1,74 @@
+{% extends "event/tp_use_event.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block additionalScripts%}
+<script type="text/javascript" src="{% static 'team_pages/js/news_page.js' %}"></script>
+{% endblock %}
+
+{% block additionalStyles%}
+{{block.super}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}
+
+{% block sublist %}
+<script>
+    const patterns = new Map([
+    {% for path in patterns %}
+        {% if forloop.last %}
+           ['{{path.action}}', '{{path.regex | safe}}'] ]
+        {% else %}
+           ['{{path.action}}', '{{path.regex | safe }}'],
+        {% endif %}
+    {% endfor %}
+    );
+</script>
+<input type="hidden" value="{{event_id}}" id="tp_event_id">
+<div id="id_article_list" class="sublist bordered">
+    <div id="id_al_toolbar" class="actions">
+        <ul>
+            {% if perms.Sponsors.can_create_sponsor %}
+        <li><span id="tp-create" action="create">&#127381;</span></li>  <!-- New Icon -->
+            {% endif %}
+        </ul>
+    </div>
+    <table class="data_list" id="id_entry_list">
+        <tr class="heading">
+            <th class="heading name">
+                Company Name
+            </th>
+            <th class="heading confirmed">
+                Confirmed?
+            </th>
+            <th class="heading action"> </th>
+        </tr>
+        <tbody id="tp_tbody_item_list">
+        {% for item in sub_list_data %}
+            <tr class="data-row {% cycle 'odd' 'even' %}">
+                <td class="name">
+                    {{ item.company_name }}
+                </td>
+                <td>
+                        {% if item.confirmed %} &#x2705;{%else%}&#x274E{% endif %}
+                </td>
+                <td class="icons">
+                    <span tp_row_id="{{item.id}}" tp_action="view">&#x1F50D;</span>
+                    {% if perms.Sponsors.can_edit_sponsor %}
+                        <span tp_row_id="{{item.id}}" tp_action="edit">&#x270E;</span>
+                    {% endif %}
+                    {% if perms.Sponsors.can_confirm_sponsor and not item.confirmed %}
+                        <span tp_row_id="{{item.id}}" tp_action="confirm">&#128077;</span>
+                    {% endif %}
+                    {% if perms.Sponsors.can_delete_sponsor and not item.confirmed %}
+                        <span tp_row_id="{{item.id}}" tp_action="delete">&#128465;</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+{% block detail %}
+{% endblock %}

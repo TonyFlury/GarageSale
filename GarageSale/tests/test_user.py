@@ -8,17 +8,22 @@ Summary :
 """
 import time
 
+from .common import TestCaseCommon
+
 import bs4
 import django.core.mail
-from django.test import TestCase, Client
+from django.test import TestCase, Client, RequestFactory
 from user_management.models import UserVerification
 from django.contrib.auth.models import User
 from django.shortcuts import reverse, resolve_url
-
 from django.test.utils import override_settings
 from django.core import mail  # Test client for email
 
+from user_management.models import PasswordResetApplication
+
 from user_management.apps import appsettings, settings
+
+from user_management import views
 
 from bs4 import BeautifulSoup
 
@@ -36,34 +41,11 @@ logger.addHandler(handler)
 # TODO - test cases for missing Settings (not needed for this site)
 # TODO - will need comprehensive testing if we productize the user management app.
 
-class TestUserCreation(TestCase):
+class TestUserCreation(TestCaseCommon):
     def setUp(self):
-        def compare_sets(set1: set, set2: set, msg=None):
-            """Set comparison function so that it is clear which element is missing from what """
+        super().setUp()
+        pass
 
-            # Quick check for the same sets
-            if set1 == set2:
-                return
-
-            extra_set1 = set1.difference(set2)
-            extra_set2 = set2.difference(set1)
-
-            # Build a nice message highlight each 'missing' item on a separate line
-            if extra_set1 or extra_set2:
-                print(extra_set1, extra_set2)
-                es1 = '\n'.join(map(str, extra_set1))
-                es2 = '\n'.join(map(str, extra_set2))
-
-                msg = f'Items in first set missing from second set : {es1}' if extra_set1 else ''
-                msg += f'Items in second set missing from first set : {es2}' if extra_set2 else ''
-
-                raise self.failureException(f'{msg}') from None
-            else:
-                return
-
-        self.addTypeEqualityFunc(set, compare_sets)
-
-    @override_settings(EMAIL_BACKEND='mail_panel.backend.MailToolbarBackend')
     def test_0100_user_registration_form(self):
         """Test that the correct form is provided when navigating to the /register URL
                 Does the form prompt for email, first_name, last_name, password
@@ -226,7 +208,7 @@ class TestUserCreation(TestCase):
         self.assertEqual({"This user doesn't exist - did you mean to register instead"}, tags)
 
     def test_0130_test_user_pwd_change(self):
-        """Test that a login authenticates am in_active user and then redirects"""
+        """Test that a user can change their password"""
         self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
                                              first_name='harry', last_name='test', password='blip',
                                              is_active=True)
@@ -251,3 +233,99 @@ class TestUserCreation(TestCase):
         self.assertTrue(user.is_active)
 
 # ToDo need to test password forgotten page.
+    def test_0140_pwd_reset_application(self):
+        self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
+                                             first_name='harry', last_name='test', password='blip',
+                                             is_active=True)
+
+        c = Client()
+        response = c.get("/user/pwd_reset")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'generic_with_form.html')
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        input_tags = {tag.attrs['name'] for tag in soup.select('input[type="email"]')}
+        self.assertEqual(input_tags, {'email'})
+
+        button_tags = {tag.attrs['value'] for tag in soup.select('input[type="button"],input[type="submit"]')}
+        self.assertEqual(button_tags, {'Cancel','Request Password Reset'})
+
+    def test_0142_pwd_reset_application_complete(self):
+        self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
+                                             first_name='harry', last_name='test', password='blip',
+                                             is_active=True)
+        c = Client()
+        response = c.post("/user/pwd_reset?redirect=/getInvolved",
+                              data={'email': 'harry@test.com'} )
+
+        self.assertEqual(response.status_code, 200)
+
+        application = PasswordResetApplication.objects.get(user__email='harry@test.com')
+
+        # Check that an email has been sent
+        self.assertEqual(len(mail.outbox), 1)
+
+        site_name = appsettings().get('user_management', {}).get('SITE_NAME', '')
+        sender = appsettings().get('user_management', {}).get('EMAIL_SENDER', None)
+        sender = sender if sender else settings.EMAIL_HOST_USER
+        email = mail.outbox[0]
+
+        # Check that the email has the right subject and was sent to the right person
+        self.assertEqual(email.subject, f"{site_name}: Password reset requested")
+        self.assertEqual(email.to, ['harry@test.com'])
+
+        soup = BeautifulSoup(email.body,'html.parser')
+
+        # Make sure that the button has the right destination
+        action = soup.find('form').attrs['action']
+        secret = application.uuid
+        url = response.wsgi_request.build_absolute_uri(
+            resolve_url('user_management:reset_password', secret)) + '?redirect=/getInvolved'
+        self.assertEqual(url, action)
+
+        links = [tag['href'] for tag in soup.find_all('a')]
+        self.assertEqual(links, [response.wsgi_request.build_absolute_uri('home'), url])
+
+    def test_0145_pwd_reset(self):
+        """Test the pwd reset - does the valid url get the right form"""
+
+        self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
+                                             first_name='harry', last_name='test', password='blip',
+                                             is_active=True)
+
+        secret = uuid1()
+        application = PasswordResetApplication(user = self.user, uuid = secret)
+        application.save()
+
+        c = Client()
+        response = c.get(resolve_url('user_management:reset_password', secret))
+
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content,'html.parser')
+
+        fields = [tag['name'] for tag in soup.select('input[type="password"]')]
+        buttons = [tag['value'] for tag in soup.select('input[type="reset"],input[type="submit"]')]
+        self.assertEqual(fields, ['new_password1','new_password2'])
+        self.assertEqual(buttons, ['Reset Form', 'Password Reset'])
+
+    def test_0147_pwd_reset_complete(self):
+        self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
+                                             first_name='harry', last_name='test', password='blip',
+                                             is_active=True)
+
+        secret = uuid1()
+        application = PasswordResetApplication(user = self.user, uuid = secret)
+        application.save()
+
+        c = Client()
+        response = c.post(resolve_url('user_management:reset_password', secret),
+                          data={'new_password1':'blop',
+                                'new_password2':'blop'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'generic_response.html')
+
+        user = User.objects.get(email='harry@test.com')
+        self.assertTrue(user.check_password('blop'))
+        self.assertTrue(user.is_authenticated)
+
+        self.assertFalse(PasswordResetApplication.objects.filter(uuid=secret).exists())

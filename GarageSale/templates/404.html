@@ -1,0 +1,26 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block head-extra %}
+    {% if redirect %}
+        <meta http-equiv="refresh" content="10;url='/'" />
+    {% endif %}
+{% endblock%}
+
+{% block body %}
+    <div class="msg">
+    <h2>Page Not Found</h2>
+
+    Sorry - we have searched high and low but we just can't find that page.
+    </div>
+        <div>
+            If this form does not automatically redirect, then click the button below.
+        </div>
+        <form method="GET" action="/" >
+            <div class="buttons">
+                <input type="submit" value="Continue">
+            </div>
+        </form>
+
+{% endblock %}

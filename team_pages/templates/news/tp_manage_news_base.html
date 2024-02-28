@@ -1,0 +1,105 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{# TODO - no switches inside templates #}
+
+
+{% block additionalScripts%}
+<script type="text/javascript" src="{% static 'team_pages/js/news_page.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<script>
+    const patterns = new Map([
+    {% for path in patterns %}
+        {% if forloop.last %}
+           ['{{path.action}}', '{{path.regex | safe}}'] ]
+        {% else %}
+           ['{{path.action}}', '{{path.regex | safe }}'],
+        {% endif %}
+    {% endfor %}
+    );
+</script>
+<div class="event_sub_data">
+    {% block sublist %}
+        <div id="id_article_list" class="sublist bordered">
+            <div id="id_al_toolbar" class="actions">
+                <ul>
+                   <li><span id="tp-create" action="create" >&#127381;</span></li>  <!-- New Icon -->
+                   <li><span id ="tp-filters" >&#9881;</span></li>  <!-- Gear Icon -->
+                </ul>
+                    <span id="filter-pop-up" style="display:none;">
+                        <ul id="ListOptions">
+                            <li><input checked
+                                       tp-fragment="!Xpublished"
+                                       tp-pair="id_include_unpublished"
+                                              id="id_include_published" type="checkbox" />
+                                <label for="id_include_published">Include Published</label></li>
+                            <li><input
+                                              tp-fragment="unpublished"
+                                                tp-pair="id_include_published"
+                                              id="id_include_unpublished" type="checkbox" />
+                                <label for="id_include_unpublished" >Include Unpublished</label>
+                            <hr>
+                            <li><input checked
+                                              tp-fragment="!XFrontPage"
+                                              tp-pair="id_include_not_front_page"
+                                              id="id_include_front_page" type="checkbox" />
+                            <label for="id_include_front_page">Include Front page</label>
+                            <li><label><input checked
+                                              tp-fragment="!XNotFrontPage"
+                                              tp-pair="id_include_front_page"
+                                              id="id_include_not_front_page" type="checkbox" />Include Not Front Page</label>
+                            <hr>
+                            <li><label><input id="id_include_expired"
+                                              tp-fragment="expired"
+                                              type="checkbox" />Include Expired</label>
+                        </ul>
+                        <input type="button" id="popup-button" onclick="save_list_options()" value="Save"/>
+                    </span>
+            </div>
+            <table id="id_entry_list">
+                <tr class="heading">
+                    <th>Headline</th>
+                    <th>Publish By</th>
+                    <th>Expire By</th>
+                    <th id="id_FrontPage">Frontpage ?</th>
+                    <th id="id_Published">Published ?</th>
+                    <th></th>
+                </tr>
+                <tbody id='tp_tbody_item_list'>
+                {% for item in sub_list_data %}
+                <tr class="data-row {% cycle 'odd' 'even' %}">
+                    <td>{{ item.headline}}</td>
+                    <td>{{ item.publish_by | date:'d m Y' }}</td>
+                    <td>{{ item.expire_by | date:'d m Y' }}</td>
+                    <td>{% if item.front_page %} &#x2705;{%else%}&#x274E{% endif %}</td>
+                    <td>{% if item.published %} &#x2705;{%else%}&#x274E{% endif %}</td>
+                    <td class="icons">
+                        <span tp_row_id="{{item.id}}" tp_action="view">&#x1F50D;</span>
+                        {% if not item.is_live %}
+                            <span tp_row_id="{{item.id}}" tp_action="edit">&#x270E;</span>
+                        {% endif %}
+                        {% if perms.News.can_publish_news and item.can_be_published %}
+                            <span tp_row_id="{{item.id}}" tp_action="publish">&#128424;</span>
+                        {% endif %}
+                        {% if perms.News.can_publish_news and item.published %}
+                            <span tp_row_id="{{item.id}}" tp_action="publish">&#128721;</span>
+                        {% endif %}
+                        {% if perms.News.can_delete_news and not item.is_live %}
+                            <span tp_row_id="{{item.id}}" tp_action="delete">&#128465;</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    {% endblock %}
+    {% block details %}
+
+    {% endblock %}
+</div>
+{% endblock %}

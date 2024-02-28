@@ -36,10 +36,9 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 
 # ToDo Test against multiple users etc.
-
 # ToDo Test - direct edit using a Id on the URL
 # ToDO Test - application by Anonymous user
-
+# ToDo Test email includes Donor Reference Number and BACS details.
 
 class TestSalesLocation_Create(test.TestCase):
 
@@ -326,6 +325,7 @@ class Test_SalesLocationEdit(test.TestCase):
                           data=new_data, follow=True)
 
         self.assertEqual(response.status_code, 200)
+
         self.assertEqual(response.request['PATH_INFO'], '/getInvolved')
 
         location_inst = Location.objects.get(user=self.user)
@@ -335,6 +335,7 @@ class Test_SalesLocationEdit(test.TestCase):
                     self.assertEqual(getattr(location_inst, field), new_data[field])
                 else:
                     self.assertEqual(getattr(location_inst, field), value)
+
 
 class Test_SalesLocationDelete(test.TestCase):
     def setUp(self):

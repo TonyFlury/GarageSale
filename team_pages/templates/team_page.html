@@ -1,0 +1,16 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block content %}
+<div class="manage-news">
+    <a href="{% url 'TeamPagesNews' %}">Manage News Articles</a>
+</div>
+<div class="motd">
+    {% choose_motd %}
+</div>
+<div class="choose-event">
+    {% chooseEvent %}
+</div>
+{% endblock %}

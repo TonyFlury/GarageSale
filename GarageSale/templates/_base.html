@@ -10,9 +10,18 @@
 <link rel="icon" type="image/png" sizes="32x32" href="{%static 'GarageSale/images/icons/faveicons//favicon-32x32.png' %}">
 <link rel="icon" type="image/png" sizes="16x16" href="{%static 'GarageSale/images/icons/faveicons//favicon-16x16.png' %}">
 <link rel="manifest" href="{%static 'GarageSale/images/icons/faveicons//site.webmanifest' %}">
+
+<script type="text/javascript" src="/admin/jsi18n/"></script>
+<script type="text/javascript" src="{% static 'admin/js/core.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
 {% block additionalStyles%}
     <!--- Include any additional style sheets here -->
 {% endblock %}
+{% block additionalScripts %}
+    <!--- Include any additional scripts here -->
+{% endblock %}
+
 <html lang="en">
 
 <head>

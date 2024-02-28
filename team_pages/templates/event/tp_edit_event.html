@@ -1,0 +1,72 @@
+{% extends "team_page.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block content %}
+    <div class="form">
+        <script>
+            function cancel_event() { document.location.replace( "{% url 'TeamPagesRoot' %}" ) };
+
+            function preview_image(event) {
+                var reader = new FileReader();
+                reader.onload = function(){
+                  var output = document.getElementById('output_image');
+                  output.src = reader.result;
+                }
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        </script>
+        <h2>
+                Edit Event
+        </h2>
+        <form method="post" enctype='multipart/form-data'>
+            {%csrf_token%}
+            <table>
+                <tr>
+                    <th><label for="id_event_logo">Event logo:</label></th>
+                    <td>
+                        {% if form.instance.event_logo %}
+                      <span><label for="tp_current_logo">Current</label><img name='tp_current_logo' src="{{MEDIA_URL}}{{form.instance.event_logo}}"/></span>
+                        {% endif %}
+                        <span>Preview : <img id="output_image" height=50px width=50px\></span>
+                    <input type="checkbox" name="event_logo-clear" id="event_logo-clear_id">
+                    <label for="event_logo-clear_id">Clear</label><br>
+                    Change:
+                    <input type="file" onchange="preview_image(event)" name="event_logo" accept="image/*" id="id_event_logo">
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="id_event_date">Event date:</label></th>
+                    <td><input type="date" name="event_date" value="{{form.instance.event_date|date:'Y-m-d'}}" required="" id="id_event_date"></td>
+                </tr>
+                <tr>
+                    <th><label for="id_open_billboard_bookings">Open billboard bookings:</label></th>
+                    <td><input type="date" name="open_billboard_bookings" value="{{form.instance.open_billboard_bookings|date:'Y-m-d'}}" required="" id="id_open_billboard_bookings"></td>
+                </tr>
+                <tr>
+                    <th><label for="id_close_billboard_bookings">Close billboard bookings:</label></th>
+                    <td><input type="date" name="close_billboard_bookings" value="{{form.instance.close_billboard_bookings|date:'Y-m-d'}}" required="" id="id_close_billboard_bookings"></td>
+                </tr>
+                <tr>
+                    <th><label for="id_open_sales_bookings">Open sales bookings:</label></th>
+                    <td><input type="date" name="open_sales_bookings" value="{{form.instance.open_sales_bookings|date:'Y-m-d'}}" required="" id="id_open_sales_bookings"></td>
+                </tr>
+                <tr>
+                    <th><label for="id_close_sales_bookings">Close sales bookings:</label></th>
+                    <td><input type="date" name="close_sales_bookings" value="{{form.instance.close_sales_bookings|date:'Y-m-d'}}" required="" id="id_close_sales_bookings"></td>
+                </tr>
+                <tr>
+                    <th><label for="id_use_from">Use from:</label></th>
+                    <td><input type="date" name="use_from" value="{{form.instance.use_from|date:'Y-m-d'}}" required="" id="id_use_from"></td>
+                </tr>
+            </table>
+            <div class="buttons">
+                    <input type='button' onclick="cancel_event()"  value="Cancel Edits">
+                    <input type='reset'   value="Reset Form">
+                    <input type='submit'   value="Save Changes">
+
+            </div>
+        </form>
+    </div>
+{% endblock %}

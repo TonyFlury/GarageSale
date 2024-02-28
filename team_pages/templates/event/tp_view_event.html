@@ -1,0 +1,28 @@
+{% extends "team_page.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block content %}
+    <div class="form">
+        <h2>Event Scheduled for {{form.instance.event_date}}</h2>
+        <script>
+            function use_event() { document.location.replace( "{% url 'TeamPagesEventUse' form.instance.id %}");}
+            function edit_event() { document.location.replace( "{% url 'TeamPagesEventEdit' form.instance.id %}");}
+        </script>
+        <div>
+            <img src="{{MEDIA_URL}}{{form.instance.event_logo}}"></img>
+            <div>
+                Bookings for billboards open from {{form.instance.open_billboard_bookings}} to {{form.instance.close_billboard_bookings}}.
+                <br>
+                Sale registrations open from {{form.instance.open_sales_bookings}} to {{form.instance.close_sales_bookings}}.
+                <br>
+                This event is active on the website from {{form.instance.use_from}}.
+            </div>
+        </div>
+        <span class="buttons">
+            <input type="button" id="id_EventEdit" onclick="edit_event()" value="Edit">
+            <input type="button" id="id_EventUse" onclick="use_event()" value="Use">
+        </span>
+    </div>
+{% endblock %}

@@ -19,4 +19,6 @@ app_name = "SaleLocation"
 
 urlpatterns = [
     path('apply', SalesLocationApply.as_view(), name='apply'),
+    path('apply/<int:id>/', SalesLocationApply.as_view(), name='apply'),
+
 ]

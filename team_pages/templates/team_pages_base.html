@@ -1,0 +1,20 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block additionalStyles%}
+<link rel="stylesheet" href="{% static 'team_pages/styles/team_page.css' %}" xmlns="http://www.w3.org/1999/html">
+{% endblock %}
+
+{% block Title %}
+    Brantham Garage Sale - Team Page
+{% endblock %}
+
+{% block body %}
+<div  class="breadcrumb">
+    {% breadcrumb %}
+</div>
+    {% block content %}
+    {% endblock %}
+{% endblock %}

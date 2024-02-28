@@ -36,8 +36,6 @@ class CachedDeque(deque):
         self.timer: Timer = None
 
     def __write_out(self):
-        d = [self.model(**asdict(entry)) for entry in self]
-        #            print([i for i in d])
         self.model.objects.bulk_create(d)
         super().clear()
         self.last_save = datetime.now().timestamp()

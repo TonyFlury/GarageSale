@@ -34,12 +34,9 @@
 <body>
     <div style="padding:1em;">
         <div style="font-size:120%; font-weight:bold; width:100%; text-align:center; margin-bottom:1em">
-            Thank you for applying for hosting a advertising board for the <a href="{{base_url}}">Brantham Garage Sale</a> website.
+            Thank you for applying for hosting an advertising board for this years <a href="{{base_url}}">Brantham Garage Sale</a> event.
         </div>
     </div>
-    {% if registered %}
-        If you need to edit your application you can go to  <a href="{{base_url}}}{% url '\getInvolved' %}">Get Involved page</a>
-    {% else %}
         <div style="width:50; text-align:center;margin-bottom:1em;">
         </div>
         <div class="form" >
@@ -53,6 +50,5 @@
                     If the button doesn't work (or isn't visible) you can use <a herf="{{url}}"> this link</a> to the same effect.
                 </div>
             </div>
-    {% endif %}
 </body>
 </html>

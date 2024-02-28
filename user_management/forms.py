@@ -36,6 +36,7 @@ class RegistrationForm(forms.Form):
                     {'name': 'Login', 'type': 'button', 'redirect': login_url},
                     {'name': 'Register', 'type': 'submit'}]}
 
+
 class LoginForm(forms.Form):
     email = forms.EmailField(max_length=40, required=True, label='Email')
     password = forms.CharField(widget=forms.PasswordInput, label='Password')

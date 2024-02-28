@@ -1,0 +1,49 @@
+<div>
+  <script>
+      function motd_select() {
+          select = document.getElementById("id_MoTDData");
+          value = select.options[select.selectedIndex].value;
+
+          document.getElementById("id_MOTDDetail").disabled = (value=='')?true:false;
+          document.getElementById("id_MOTDEdit").disabled = (value=='')?true:false;
+          document.getElementById("id_MOTDDelete").disabled = (value=='')?true:false;
+      }
+      function detail_motd_select() {
+          select = document.getElementById("id_MoTDData");
+          value = select.options[select.selectedIndex].value
+          if (value != '')
+              document.location.replace( '/team_page/motd/'+value+'/view/');
+      }
+      function delete_motd_select() {
+          select = document.getElementById("id_MoTDData");
+          value = select.options[select.selectedIndex].value;
+          text = select.options[select.selectedIndex].text;
+
+          if (value != '')
+                if (window.confirm('Delete this '+text+' ?') )
+                    document.location.replace( '/team_page/motd/'+value+'/delete/');
+      }
+      function edit_motd_select() {
+          select = document.getElementById("id_MoTDData");
+          value = select.options[select.selectedIndex].value
+          if (value != '')
+              document.location.replace('/team_page/motd/'+value+'/edit/' );
+      }
+      function create_motd() {
+          document.location.replace( '/team_page/motd/create/');
+      }
+  </script>
+  <label for="id_MoTDData">Which MoTD</label>
+  <select id="id_MoTDData" onchange="motd_select()" name="MotD">
+      <option value="" >Choose an MoTD</option>
+      {% for motd in motds %}
+           <option value="{{motd.pk}}">{{motd.synopsis}} (from {{motd.use_from}}}</option>
+      {% endfor %}
+  </select>
+  <span class=buttons>
+      <input type="button" id="id_MOTDDetail" onclick="detail_motd_select()" disabled value='View'>
+      <input type="button" id="id_MOTDEdit" onclick="edit_motd_select()" disabled value='Edit'>
+      <input type="button" id="id_MOTDDelete" onclick="delete_motd_select()" disabled value="Delete this MOTD">
+      <input type="button" onclick="create_motd()" value="Create New MotD">
+  </span>
+</div>

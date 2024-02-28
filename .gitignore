@@ -1,6 +1,4 @@
 
-GarageSale/__pycache__/
-
 *.pyc
 
 .idea/
@@ -8,3 +6,4 @@ GarageSale/__pycache__/
 media/
 
 static/
+

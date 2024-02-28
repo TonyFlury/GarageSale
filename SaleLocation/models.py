@@ -26,6 +26,7 @@ class MultipleChoiceField(models.CharField):
     def get_prep_value(self, value):
         return ','.join(i for i in value)
 
+
 class SaleLocations(models.Model):
     location = models.ForeignKey( Location, related_name='Sales', on_delete=models.CASCADE, null=True)
     event = models.ForeignKey( EventData, related_name='Sales', on_delete=models.CASCADE, null=True)

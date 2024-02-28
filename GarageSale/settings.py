@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-s$t^ho7^-6ou)$fb)wilo10%l%dcmt7c+*^cq7j-eqxvdl0f4_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.1.76",'127.0.0.1']
+ALLOWED_HOSTS = ["192.168.1.76",'127.0.0.1','81.147.70.233']
 
 INTERNAL_IPS = [
     # ...
@@ -42,6 +42,7 @@ MEDIA_URL = '/media/'
 # Application definition
 
 INSTALLED_APPS = [
+    'team_pages.apps.TeamPagesConfig',
     'GarageSale.apps.GarageSaleConfig',
     'Billboard.apps.BillboardConfig',
     'SaleLocation.apps.SaleLocationConfig',
@@ -88,12 +89,12 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'libraries': {
+                'team_page_tags': "team_pages.templatetags.team_page_tags",
                 'event_data_tags': "GarageSale.templatetags.garage_sale_data",
                 'user_management_tags': "user_management.templatetags.extras",
                 'newsletter_tags': "News.templatetags.extras",
                 'billboard_tags': 'Billboard.templatetags.extras',
                 'sponsor_tags': 'Sponsors.templatetags.extras',
-
             },
             'context_processors': [
                 'django.template.context_processors.debug',
