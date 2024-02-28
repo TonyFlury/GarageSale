@@ -100,11 +100,6 @@ class NewsArticle(models.Model):
              update_fields=None,
              ):
 
-        if self.published:
-            self.published = False
-            if update_fields is not None and 'published' not in update_fields:
-                update_fields = {'published'}.union(update_fields)
-
         self.slug = slugify(self.headline)
         if update_fields is not None and ('headline' not in update_fields or 'slug' not in update_fields):
             update_fields = {'headline', 'slug'}.union(update_fields)
