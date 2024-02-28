@@ -1,0 +1,440 @@
+div.breadcrumb {
+	position: relative;
+	padding-bottom: 10px;
+	font-size: 80%;
+	margin-top: 0.5em;
+}
+
+div.breadcrumb::after {
+	content: '';
+	width: 95%;
+	border-bottom: thin dashed lightgray;
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin:auto;
+}
+
+div.breadcrumb a, a:visited {
+    color : white;
+}
+
+div.motd, div.choose-event {
+    position:relative;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+div.motd:after, div.choose-event:after, div.manage-news:after{
+	content: '';
+	width: 50%;
+	border-bottom: thin dashed lightgray;
+	position: absolute;
+	left: 0;
+	bottom:0;
+	margin:auto;
+}
+
+div.form {
+ margin-top:1em;
+}
+
+.buttons input {
+	background: var(--BackgroundColor);
+	color: white;
+	height: 125%;
+	width: auto;
+	font-size: 80%;
+	box-shadow: 2px 2px 1px black;
+	padding-left:5px;
+}
+
+input[type='button']:disabled {
+    background:lightgray;
+    color:darkgray;
+}
+
+div.form input[type='date'] {
+    font-size:80%;
+    font-weight:bold;
+    background: var(--BackgroundColor);
+    color: lightgray;
+    border: thin solid lightgray;
+    padding:5px;
+}
+
+div.form th {
+    text-align:right;
+    padding-right:20px;
+    padding-bottom:10px;
+}
+
+div.form .errorlist {
+    font-size:80%
+}
+
+div.form img {
+    max-width:200px;
+    height:auto;
+}
+
+.motd_content {
+	font-size: 90%;
+	padding-left: 2em;
+	border: thin dotted lightgray;
+	border-radius: 10px;
+	margin-bottom:1em;
+}
+
+#id_FrontPage, #id_Published {
+}
+
+.ql-toolbar  {
+    background: lightgray;
+}
+
+#id_synopsis {
+    width:40em;
+}
+
+.category_list ul {
+    list_style:None;
+}
+
+.category-list ul li {
+    display : inline-block;
+    padding-right: 5em;
+}
+
+.event_sub_data {
+	content: "";
+	display: flex;
+	clear: both;
+	height: auto;
+	margin-top: 2em;
+	overflow: auto;
+}
+
+.event_sub_data:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.sublist {
+      float: left;
+      width: 50%;
+      margin-right:10px;
+      padding-left: 5px;
+      padding-right:5px;
+      font-size: 70%
+}
+
+.sublist tr td {
+    text-align:center ;
+}
+
+.detail {
+    float: left;
+    width : 50%;
+}
+
+.bordered {
+    border : thin solid lightgray;
+    border-radius: 10px;
+}
+
+div.manage-news {
+    padding-top:10px;
+    padding-bottom:10px;
+    position:relative;
+}
+
+
+tr.heading th {
+    border-bottom: thin solid lightgray;
+}
+
+th, td {
+    padding:5px;
+    padding-bottom: 0.5em;
+}
+
+tr.heading th:not(:last-child), tr.data-row td:not(:last-child) {
+    border-right: thin dashed lightgray;
+}
+
+tr.data-row.odd {
+    background:var(--BackgroundColor);
+}
+
+tr.data-row.even {
+    background:#6666FF;
+}
+
+.actions {
+    font-size:150%;
+    background: lightgray;
+    padding-top:1px;
+    padding-bottom:1px;
+    border:1px solid black;
+    border-radius: 10px 10px 0 0;
+}
+
+.actions ul {
+    list-list_style:none;
+ 	margin-bottom: 1px;
+	margin-top: 1px;
+}
+
+.actions ul li {
+    display:inline;
+}
+
+.actions span {
+    cursor:pointer;
+    font-size:125%;
+    color: darkblue;
+    padding: 0.1em 0.25em;
+}
+
+tr.data-row td.icons span {
+    cursor:pointer;
+    font-size:140%;
+}
+
+.detail {
+    font-size: 80%;
+}
+
+.ql-container {
+  min-height: 10rem;
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ql-editor {
+  height: 100%;
+  flex: 1;
+  overflow-y: auto;
+  width: 100%;
+}
+
+#id_headline {
+    width:80%;
+}
+
+.detail .buttons {
+	margin: auto;
+	width: 60%;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	text-align: center;
+}
+
+.detail .buttons input {
+    margin-right: 10px;
+}
+
+#filter-pop-up {
+    display:none;
+    background: var(--BackGroundColor);
+    color: white;
+    position: absolute;
+    z-index: 1;
+    font-size:12pt;
+    border: thin solid white;
+    border-radius: 5px;
+    box-shadow: 3px 3px 2px black;
+    padding:10px;
+    left:80px;
+}
+
+#filter-pop-up li {
+    display: block
+}
+
+#filter-pop-up input[type='button'] {
+    background: var(--BackGroundColor);
+    color:white;
+    border:thin solid white;
+    font-size:14pt;
+    box-border: 1px 1px 0px black;
+    border-radius: 5px;
+    box-shadow: 1px 1px 9px black;
+}
+
+.warning {
+	background: blue;
+	font-weight: bold;
+	text-align: center;
+}
+
+div.table, table{
+    display:table;
+    width:100%;
+    border-collapse: separate;
+}
+div.table-row{
+    display:block;
+    margin-top:1em;
+}
+
+.label {
+    font-weight:bold;
+    vertical-align:top
+}
+
+div.table-cell, span.table-cell{
+    display:inline-block;
+    width:auto;
+}
+
+div.table-cell.w5{
+max-width:5%;
+}
+
+div.table-cell.w10{
+max-width:10%;
+}
+
+.data {
+  margin-left:0.2em;
+}
+
+.content {
+	max-width: 80%;
+	display: inline-block;
+}
+
+.content p{
+    margin-bottom:5px;
+    margin-top:5px;
+}
+
+.content p:first-child{
+    margin-top: 0px;
+}
+
+.top{
+vertical-align:top;
+}
+
+.synopsis.label{
+    margin-left:15px;
+}
+.synopsis.data {
+	display: inline-block;
+	width: 60%;
+}
+
+div.table-cell.w25{
+max-width:25%;
+}
+
+div.table-cell.w75{
+max-width:75%;
+}
+
+.data_list .table-cell {
+    border-right:thin dotted white;
+}
+
+.table-cell.name {
+    width:60%;
+}
+
+.table-cell.heading {
+    border-bottom: thin solid white;
+    padding-bottom:0.2em;
+}
+
+th.heading.confirmed {
+    width:7em;
+}
+
+th.heading.action {
+    width:5em;
+}
+
+div#tp_sponsor_core {
+	display: block;
+	height: auto;
+}
+
+div#tp_sponsor_core h3 {
+    text-align:center;
+}
+
+div.contact {
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+	display: block;
+}
+div.inner .image{
+    margin:auto;
+    max-width:200px;
+    height:auto;
+}
+
+div.inner .image.edit{
+    margin:0.5em;
+    max-width:200px;
+    height:auto;
+    font-weight: bold;
+}
+
+div.inner div.image img{
+    width:200px;
+    height:auto;
+}
+
+div.inner div.description {
+	margin-left: 1em;
+	margin-right: 1em;
+	font-size:110%;
+	line-height:150%;
+	text-justify: inter-word;
+	margin-bottom: 0.5em;
+}
+
+div.contact{
+    margin-left: 1em;
+}
+div.icons {
+    margin-left: 1em;
+    margin-bottom: 1em;
+}
+
+div.icons div.social, div.icons span.social {
+	display: inline-block;
+	height: 1.25em;
+	padding-right: 0.75em;
+	width: 1.25em;
+}
+
+div.icons #id_social_label {
+	width: 5em;
+	text-align: right;
+}
+
+div.icons #id_social_icon {
+	width: 1.25em;
+	max-height: 1.25em;
+	max-width: 1.25em;
+	vertical-align: middle;
+}
+
+.icons .social_entry {
+    height: 1.5em;
+    margin-top:0.75em;
+    margin-bottom:0.75em;
+}
+
+div#tp_sponsor_core div.inner div.description textarea#id_description {
+    width:32em;
+    margin:auto;
+}

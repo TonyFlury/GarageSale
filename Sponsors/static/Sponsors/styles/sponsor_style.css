@@ -1,0 +1,201 @@
+div.introduction {
+font-size: 100%;
+  width: 64%;
+  margin: auto;
+  padding-left: 1em;
+  padding-right: 1em;
+  padding-bottom: 0em;
+}
+
+div.introduction h1 {
+    width:64%;
+    margin:auto;
+    text-align:center;
+    padding-bottom: 0.5em;
+}
+
+@media only screen and (max-width: 1200px){
+
+    .body {
+        margin-left:5px;
+        margin-right:5px;
+    }
+
+    div.introduction{
+        width:95%;
+        font-size:110%;
+        padding-left:0.25em;
+        padding-right:0.25em;
+    }
+
+    div.introduction h2{
+        width: 80%;
+        font-size: 140%;
+    }
+
+}
+
+div.bar {
+  content: '';
+  display: block;
+  width: 80%;
+  margin: auto;
+    margin-top: auto;
+  border-bottom: thin dashed lightblue;
+  padding-bottom: 1em;
+  margin-top: 0em;
+  padding-top: 0em;
+}
+
+div.outer {
+	width: 80%;
+	margin: auto;
+	font-size: 110%;
+	padding-top: 2em;
+}
+
+@media only screen and (max-width: 1200px){
+
+    div.outer{
+    width:100%;
+    padding-top:0.5em;
+    margin-left:0px;
+    margin-right:0px;
+    padding-left:0px;
+    padding-right:0px;
+    }
+}
+
+
+div.row {
+  width:80%;
+  margin:auto;
+  border: thin lightgrey solid;
+  border-radius:25px;
+    padding-left:1em;
+    padding-right:1em;
+}
+
+@media only screen and (max-width: 1200px){
+    div.row {
+        width:95%;
+        padding-left:0.1em;
+        padding-right:0.1em;
+    }
+}
+
+div.name {
+    width:60%;
+    margin:auto;
+    text-align:center;
+    font-size: 200%;
+    padding-top:0.5em;
+    padding-bottom:0.5em;
+}
+
+@media only screen and (max-width: 1200px){
+    div.name {
+        font-size: 125%;
+        width:75%;
+    }
+}
+
+div.row div.inner {
+  display: flex;
+  padding: 0 1.5em;
+}
+@media only screen and (max-width: 1200px){
+    div.row div.inner {
+        display:table;
+        padding: 0 0.25em;
+    }
+}
+
+@media only screen and (min-width: 1200px){
+    div.row div.inner:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+}
+
+div.row div.image, div.description{
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+div.description {
+	float: left;
+	font-size: 100%;
+	display: flex;
+	align-items: center;
+}
+
+div.image {
+    float:left;
+}
+
+@media only screen and (max-width: 1200px){
+    div.row div.image, div.description{
+        padding-left: 0.1em;
+        padding-right: 0.11em;
+    }
+    div.image {
+        clear:both;
+    }
+    div.image img{
+        max-width:calc(screen-width*0.8);
+    }
+    div.description {
+        clear:both;
+        font-size:100%;
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+}
+
+
+div.contact{
+    padding-top:0.5em;
+    padding-bottom:0.5em;
+    display:inline-block;
+}
+
+@media only screen and (max-width: 1200px){
+    div.contact {
+        padding-left: 10px;
+        font-size:80%
+    }
+}
+
+div.phone, div.email {
+    font-size:100%;
+    color : white
+}
+
+div.email a {
+    color : white;
+    text-decoration: None;
+}
+
+div.email a:hover, a:visited {
+    color : white;
+    text-decoration: None;
+}
+
+
+div.icons {
+    margin:auto;
+    width:50%;
+    padding-top:0.5em;
+    padding-bottom:0.5em;
+    padding-left: 10%;
+}
+
+div.icons div.social {
+	display: inline-block;
+    height:1.5em;
+    width:1.5em;
+	padding-right:1em;
+}
+
