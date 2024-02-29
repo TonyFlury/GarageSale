@@ -4,6 +4,7 @@
 {% load team_page_tags %}
 
 {% block content %}
+    {{form.media}}
     <div class="form">
         <script>
             function cancel_motd() { document.location.replace( "{% url 'TeamPagesRoot' %}" ) };

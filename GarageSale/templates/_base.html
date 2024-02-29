@@ -7,9 +7,9 @@
 <link rel="stylesheet" media="screen and (max-width:1600px)" href="{% static 'GarageSale/styles/smallscreen.css' %}">
 
 <link rel="apple-touch-icon" sizes="180x180" href="{%static 'GarageSale/images/icons/faveicons/apple-touch-icon.png' %}">
-<link rel="icon" type="image/png" sizes="32x32" href="{%static 'GarageSale/images/icons/faveicons//favicon-32x32.png' %}">
-<link rel="icon" type="image/png" sizes="16x16" href="{%static 'GarageSale/images/icons/faveicons//favicon-16x16.png' %}">
-<link rel="manifest" href="{%static 'GarageSale/images/icons/faveicons//site.webmanifest' %}">
+<link rel="icon" type="image/png" sizes="32x32" href="{%static 'GarageSale/images/icons/faveicons/favicon-32x32.png' %}">
+<link rel="icon" type="image/png" sizes="16x16" href="{%static 'GarageSale/images/icons/faveicons/favicon-16x16.png' %}">
+<link rel="manifest" href="{%static 'GarageSale/images/icons/faveicons/site.webmanifest' %}">
 
 <script type="text/javascript" src="/admin/jsi18n/"></script>
 <script type="text/javascript" src="{% static 'admin/js/core.js' %}"></script>
@@ -26,7 +26,9 @@
 
 <head>
     <meta charset="UTF-8">
-    {% include 'django_quill/media.html' %}
+    {% comment %}
+   {% include 'django_quill/media.html' %}
+    {% endcomment %}
     <title>{% block Title %}Basic Title{% endblock %}</title>
     {% block head-extra %}{% endblock%}
 </head>

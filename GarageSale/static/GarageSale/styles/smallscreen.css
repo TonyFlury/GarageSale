@@ -131,12 +131,11 @@ div.front-page-news {
     padding: 0.5em;
 }
 
-div.front-page-news span.footnote
-{
-	bottom: 15px;
+div.front-page-news span.footnote {
+	bottom: -8px;
 	font-size: 75%;
 	background: var(--PaperColor);
-	right: -25px;
+	right: -8px;
 	opacity: 1;
 }
 
@@ -152,4 +151,20 @@ div.front-page-news a.headline {
 .synopsis {
     height:auto;
     overflow:scroll;
+}
+
+h1.about-us {
+    font-size:1.5rem;
+}
+
+h2.about-us {
+    font-size:1.25rem;
+}
+
+div#about-us {
+    font-size:14pt;
+}
+
+a {
+    border-bottom: thin dotted white;
 }

@@ -95,7 +95,7 @@ div.form img {
 }
 
 #id_synopsis {
-    width:40em;
+/*   width:40rem; */
 }
 
 .category_list ul {
@@ -205,7 +205,7 @@ tr.data-row td.icons span {
 }
 
 .detail {
-    font-size: 80%;
+ /*  font-size: inherit; */
 }
 
 .ql-container {

@@ -21,10 +21,15 @@ from Sponsors.views import social_media_items
 from abc import abstractmethod
 
 
+#ToDo - debug MOTD failure on create ! (no HttpResponse returned)
+#ToDo - diagnose failure on News create (errors missing on template maybe) ?
+
+
 def PublishNews(request, news_id):
     publish_news(request, news_id)
     fragments = [key for key, item in request.GET.items() if item == '']
-    return redirect(reverse('TeamPagesNews') + ('?' + '&'.join(fragments)) if fragments else '')
+    print(reverse('TeamPagesNews'))
+    return redirect(reverse('TeamPagesNews') + (('?' + '&'.join(fragments)) if fragments else ''))
 
 
 def custom_news_query_set(param_dict):
@@ -216,9 +221,10 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
         # Redirect to the correct success url
         if hasattr(self, 'get_success_url'):
             url = self.get_success_url(request, context, **kwargs)
-            if not url == NotImplemented:
+            if url is not NotImplemented:
                 return redirect(url)
-        elif hasattr(self, 'success_url') and self.success_url:
+
+        if hasattr(self, 'success_url') and self.success_url:
             return redirect(self.success_url)
         else:
             return HttpResponseServerError('No defined success_url for this request !')

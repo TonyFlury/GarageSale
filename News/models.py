@@ -80,7 +80,7 @@ class NewsArticle(models.Model):
     headline = models.CharField(max_length=256)
     front_page = models.BooleanField(default=False, db_index=True)
     content = QuillField(default='')
-    synopsis = models.CharField(max_length=256, null=True)
+    synopsis = models.CharField(max_length=256, null=True, blank=True)
     published = models.BooleanField(default=False)
 
     class Meta:

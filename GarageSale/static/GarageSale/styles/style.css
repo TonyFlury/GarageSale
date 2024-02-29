@@ -7,7 +7,7 @@
 
 body { background : var(--BackGroundColor) ;
     color : var(--fontColor);
-    font-size:16pt;
+    font-size:14pt;
 }
 
 
@@ -145,17 +145,17 @@ label{
 font-weight:bold;
 }
 
-input[type="text"], input[type="password"], input[type="email"], input[type="url"], textarea, select
+input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="date"], textarea, select
 {
     color : var(--fontColor);
     background: var(--BackGroundColor);
-    font-size: 20px;
     border-radius: 10px;
     padding-left: 5px;
     padding-top: 5px;
     padding-bottom: 5px;
     margin:5px;
     box-shadow: 2px 2px 2px rgba(1,1,1,1) inset;
+    font-size:inherit;
 }
 input[type="url"] {
     width:25em;
@@ -227,7 +227,7 @@ div.post-form {
 }
 
 a {
-    color : var(--fontColor);
+    color : inherit;
     font-weight: bold;
     text-decoration: none;
 }
@@ -236,6 +236,7 @@ a:hover {
     font-style : italic;
     text-decoration : none;
     font-weight: bold;
+    border-bottom: thin dashed black;
 }
 
 div.TopBar {
@@ -373,4 +374,31 @@ a.footnote:hover {
 
 a.footnote:visited {
     color: black;
+}
+
+div.about-us {
+	margin-left: 5%;
+	margin-right: 5%;
+}
+div.about-us:nth-child(6){
+	margin-left: 5%;
+	margin-right: 5%;
+	margin-bottom: 0.5rem;
+}
+
+div.about-us.footnote::before {
+	content: '';
+	width: 50%;
+	display: block;
+	border-top: dashed thin white;
+	margin: auto;
+	left: 0;
+	right: 0;
+	position: relative;
+	top: -1rem;
+}
+
+div.about-us.footnote {
+	margin-top: 2rem;
+	position: absolute;
 }

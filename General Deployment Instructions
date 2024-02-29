@@ -1,0 +1,22 @@
+1) Make sure all changed files are committed and pushed.
+    Ensure this includes :
+        Migration files
+        js and css
+        static images
+        python files
+
+
+2) Open a bash console on Pythonanywhere
+
+        cd BranthamGarageSale
+        git pull origin master
+
+        if js, css or static images have been changed :
+            python manage.py collectstatic
+
+        If changes involed models field
+            python manage.py migrate
+
+3) On python anywhere Dashboard
+        If changes involed models fields or any python file (including settings)
+        Restart Server.
