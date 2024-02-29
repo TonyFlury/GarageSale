@@ -50,8 +50,7 @@
                     <span class="label"><label for="id_front_page">Front Page ?</label></span>
 
                     <span class="top" id="id_front_page">
-
-                        {% if form.front_page %} &#x2705;{%else%}&#x274E{% endif %}
+                        {{ form.front_page }}
                     </span>
                     <span class="label synopsis"><label for="id_synopsis">Synopsis</label></span>
                     <span class="data synopsis">
