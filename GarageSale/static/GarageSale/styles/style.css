@@ -401,4 +401,5 @@ div.about-us.footnote::before {
 div.about-us.footnote {
 	margin-top: 2rem;
 	position: absolute;
+	padding-bottom:2rem;
 }
