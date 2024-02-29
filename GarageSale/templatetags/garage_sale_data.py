@@ -102,17 +102,17 @@ def get_motd():
 
 @register.inclusion_tag('__application_widget.html', name="ApplicationWidget", takes_context=True)
 def render_widget(context, feature):
-    if feature not in {'billboard', 'sale'}:
+    if feature not in {'billboard', 'sales'}:
         raise AttributeError(f'Invalid site feature : {feature}')
 
     destinations = {'billboard': 'Billboard:apply',
-                    'sale': 'SaleLocation:apply'}
+                    'sales': 'SaleLocation:apply'}
 
     name = {'billboard': 'Advertising Board',
-            'sale': 'Garage Sale'}
+            'sales': 'Garage Sale'}
 
     models = {'billboard': BillboardLocations,
-              'sale': SaleLocations}
+              'sales': SaleLocations}
 
     event_open, event_close = get_feature_date(feature, 'open'), get_feature_date(feature, 'close')
 
@@ -138,7 +138,7 @@ def render_widget(context, feature):
             f"you will help advertise the Garage Sale Event "
             f"and also be raising money for our charities as "
             f"our sponsor pays us for every board we put up.<br>",
-            'sale': f"You have added your <b>{name[feature]}</b> to our sale list "
+            'sales': f"You have added your <b>{name[feature]}</b> to our sale list "
                     f"Press the button below to edit/cancel the information"
             if signed_up else f"If you want to inform us of your <b>{name[feature]}</b> at your home "
                               f"please press the button below and fill out the form"
