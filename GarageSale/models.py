@@ -111,3 +111,5 @@ class Location(models.Model):
     phone = models.CharField(max_length=12)
     mobile = models.CharField(max_length=12)
 
+    def __str__(self):
+        return f'{self.user.first_name + " " + self.user.last_name} : {self.house_number}, {self.street_name}. {self.postcode}'

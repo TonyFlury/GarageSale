@@ -86,8 +86,8 @@ class ApplicationBase(View):
                 initial_data[field] = getattr(self.application_inst, field)
 
         self.form_inst = self.form(anonymous=self.current_user.is_anonymous,
-                                   data=initial_data,
-                                   initial=(email_and_name if not self.current_user.is_anonymous else {}))
+                                       data=initial_data if initial_data else None,
+                                       initial=(email_and_name if not self.current_user.is_anonymous else {}))
 
         return render(request, template_name=self.template,
                       context={'form': self.form_inst,
