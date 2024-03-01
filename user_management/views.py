@@ -134,12 +134,15 @@ def user_verify(request, uuid=None):
     redirect_url = request.GET.get('redirect', '/')
 
     logger.debug(f"user-verify received uuid : {uuid}")
-    verify = UserVerification.objects.get(uuid=uuid)
-
-    logger.debug(f" this record belongs too : {verify.email}")
-
+    try:
+        verify = UserVerification.objects.get(uuid=uuid)
+    except UserVerification.DoesNotExist:
+        return TemplateResponse(request, template='generic_response.html',
+                                context={'redirect': redirect_url,
+                                         'msg':"""
+                                         This verification link has already been used, and the user account is ready to be used"""})
+        
     # TODO - add timeout logic
-
     user = User.objects.get(email=verify.email)
     user.is_active = True
     user.save()
