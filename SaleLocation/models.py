@@ -32,7 +32,7 @@ class SaleLocations(models.Model):
     event = models.ForeignKey( EventData, related_name='Sales', on_delete=models.CASCADE, null=True)
     gift_aid = models.BooleanField('Sign up for GiftAid ?', default=False)
     minimum_paid = models.BooleanField(default=False)
-    category = MultipleChoiceField(max_length=20, default=['Other'], null=True)
+    category = MultipleChoiceField(max_length=500, default=['Other'], null=True)
 
     def get_bacs_reference(self):
         return f'{self.event.event_date.year}-{self.location.postcode}-{self.location.house_number}'.replace(' ','')[0:15]
