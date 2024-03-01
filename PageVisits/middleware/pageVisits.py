@@ -16,6 +16,7 @@ from django.db.models import Model
 from django.http import HttpResponse, HttpRequest
 from django.conf import settings
 from ..models import PageVisit
+from django.db.utils import DataError
 
 from threading import Timer
 import threading
@@ -65,13 +66,13 @@ class PageVisitRecorder:
 
         response: HttpResponse = self.get_response(request)
 
-        inst = PageVisit(path=request.path,
+        inst = PageVisit(path=request.path[:500],
                          timestamp=datetime.now(timezone.utc),
                          sourceIP=request.META['REMOTE_ADDR'],
                          method=request.method,
                          username=request.user.username,
-                         user_agent=request.headers.get("User-Agent", ''),
-                         referer=request.META.get('HTTP_REFERER', ''),
+                         user_agent=request.headers.get("User-Agent", '')[:500],
+                         referer=request.META.get('HTTP_REFERER', '')[:200],
                          response_code=response.status_code)
         inst.save()
 
