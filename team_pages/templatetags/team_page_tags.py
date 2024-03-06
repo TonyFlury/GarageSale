@@ -1,7 +1,7 @@
 from django import template
 from django.template.loader import render_to_string
 from django.utils.html import format_html_join, format_html
-from django.urls import reverse
+from django.shortcuts import reverse
 from django.core.exceptions import ObjectDoesNotExist, BadRequest
 from GarageSale.models import EventData, MOTD
 from News.models import NewsArticle
