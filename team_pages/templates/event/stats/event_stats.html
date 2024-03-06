@@ -1,0 +1,26 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block content %}
+    <div class="choose-event">
+        {% chooseEvent %}
+    </div>
+        <div>
+            {% categoryList %}
+        </div>
+    <div class="bordered" style="padding-left:1rem;padding-right:1rem;padding-bottom:1rem;">
+        <h2>Basic event statistics</h2>
+
+        <div>
+            {% for entry in stats %}
+                <h3>{{entry.name}}</h3>
+                <div>
+                    Total Applications {{entry.total}} ({{entry.increment}} since Yesterday)
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+{% endblock %}

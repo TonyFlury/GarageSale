@@ -21,10 +21,6 @@ from Sponsors.views import social_media_items
 from abc import abstractmethod
 
 
-#ToDo - debug MOTD failure on create ! (no HttpResponse returned)
-#ToDo - diagnose failure on News create (errors missing on template maybe) ?
-
-
 def PublishNews(request, news_id):
     publish_news(request, news_id)
     fragments = [key for key, item in request.GET.items() if item == '']

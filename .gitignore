@@ -8,3 +8,7 @@ media/
 
 
 static/
+
+debug.log
+
+*.log
