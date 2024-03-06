@@ -1,11 +1,12 @@
 from django.urls import path
 
 from . import views
-
+from . import stats_view
 
 urlpatterns = [
     path('', views.TeamPage.as_view(), name='TeamPagesRoot'),
     path('<int:event_id>/', views.TeamPage.as_view(), name='TeamPagesRoot'),
+    path('<int:event_id>/stats/', stats_view.event_stats, name='TeamPageEventStats'),
 
     # TODO Rework without Generic Views = more trouble than they are worth
     path('motd/create/', views.MotDCreate.as_view(), {'action': '_create'}, name='TeamPagesMotdCreate', ),
