@@ -19,6 +19,7 @@ urlpatterns = [
     path('news/<int:news_id>/edit/', views.NewsEdit.as_view(), name='TeamPagesEditNews'),
     path('news/<int:news_id>/view/', views.NewsView.as_view(), name='TeamPagesViewNews'),
     path('news/<int:news_id>/publish/', views.PublishNews, name='TeamPagesPublishNews'),
+    path('news/<int:news_id>/delete/', views.NewsDelete.as_view(), name='TeamPagesPublishNews'),
 
     path('event/', views.TeamPage.as_view(), name='TeamPagesEvent'),
     path('event/<int:event_id>/', views.TeamPage.as_view(), name='TeamPagesEvent'),

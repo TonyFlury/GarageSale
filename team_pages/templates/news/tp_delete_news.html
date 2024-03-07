@@ -1,0 +1,19 @@
+{% extends "news/tp_manage_news.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+{% load sponsor_tags %}
+
+{% block details %}
+<div class="detail bordered">
+
+    <h3>Deleting news article '{{headline}}'</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="buttons">
+            <input id='tp_cancel_form' item_id="{{form.instance.news_id}}" type="button" value="Cancel">
+            <input id="tp_save_form"  type="submit" value="Confirm Deletion of this NewsArticle">
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -112,7 +112,10 @@ def news_bread_crumb_segments(news_id, action):
             return [{'Team Page': reverse('TeamPagesRoot')},
                     {'Manage News': reverse('TeamPagesNews')},
                     {f'Edit : {news.headline}': ''}]
-
+        case (_, 'delete'):
+            return [{'Team Page': reverse('TeamPagesRoot')},
+                    {'Manage News': reverse('TeamPagesNews')},
+                    {f'Deleting : {news.headline}': ''}]
 
 def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
 
