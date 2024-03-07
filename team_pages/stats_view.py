@@ -15,7 +15,8 @@ from collections import namedtuple
 
 def event_stats(request, event_id=None):
     """"Provide stats for this given event - so far it is counts of Billboard and sales locations """
-    def nice( inc):
+
+    def nice(inc):
         return ('+' if inc >= 0 else '') + str(inc)
 
     Stats_entry = namedtuple('Stats_entry', "name, total, increment")
@@ -24,11 +25,16 @@ def event_stats(request, event_id=None):
     stats_category = {'Advertising Billboards': BillboardLocations,
                       'Sales Locations': SaleLocations}
 
-    stats = [ Stats_entry(name=item,
-                          total=model.objects.filter(event=the_event).count(),
-                          increment=nice(model.objects.filter(event_id=the_event, creation_date__lt=date.today()).count()),
-                          ) for item, model in stats_category.items() ]
+    stats = []
+    for item, model in stats_category.items():
+        total = model.objects.filter(event=the_event).count()
+        yesterday = model.objects.filter(event_id=the_event, creation_date__lt=date.today()).count()
+
+        entry = Stats_entry(name=item,
+                            total=total,
+                            increment=nice(total - yesterday))
+        stats.append(entry)
 
     return TemplateResponse(request, "event/stats/event_stats.html",
                             context={'event_id': the_event.id,
-                                    'stats': stats})
+                                     'stats': stats})

@@ -10,7 +10,7 @@ class BillboardLocations(models.Model):
     event = models.ForeignKey( EventData, related_name='billboards', on_delete=models.CASCADE, null=True)
     location = models.ForeignKey( Location, related_name='billboards', on_delete=models.CASCADE, null=True)
     installed = models.BooleanField(default=False)
-    creation_date = models.DateField(auto_created=True)
+    creation_date = models.DateField(auto_now_add=True)
 
     @staticmethod
     def has_applied(current_event_id, current_user):
