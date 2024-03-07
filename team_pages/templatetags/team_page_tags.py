@@ -96,6 +96,8 @@ def news_bread_crumb_segments(news_id, action):
     except NewsArticle.DoesNotExist:
         news = None
 
+    print(news_id, action)
+
     match (news_id, action):
         case (None, None):
             return [{'Team Page': reverse('TeamPagesRoot')},
@@ -112,7 +114,10 @@ def news_bread_crumb_segments(news_id, action):
             return [{'Team Page': reverse('TeamPagesRoot')},
                     {'Manage News': reverse('TeamPagesNews')},
                     {f'Edit : {news.headline}': ''}]
-
+        case (_, 'delete'):
+            return [{'Team Page': reverse('TeamPagesRoot')},
+                    {'Manage News': reverse('TeamPagesNews')},
+                    {f'Deleting : {news.headline}': ''}]
 
 def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
 

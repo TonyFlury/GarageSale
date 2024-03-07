@@ -135,9 +135,6 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
         """Must be overridden to provide the actual model instance used on this form"""
         return NotImplemented
 
-    def get_new_instance(self, request, the_form, **kwargs):
-        return self.get_object(request, **kwargs)
-
     def do_post_success(self, request, context=None, model_instance=None, form_instance=None, **kwargs):
         """Can be overridden to provide an alternative to saving an instance
            If the method returns False then the instance isn't saved.
@@ -234,7 +231,7 @@ class NewsRoot(CombinedView):
 
     def get_success_url(self, request, context=None, **kwargs):
         fragments = [key for key, item in self.request.GET.items() if item == '']
-        return reverse_lazy('TeamPagesNews') + ('?' + '&'.join(fragments)) if fragments else ''
+        return reverse('TeamPagesNews') + ('?' + '&'.join(fragments)) if fragments else ''
 
     def get_object(self, request, **kwargs):
         return None
@@ -300,6 +297,20 @@ class NewsCreate(NewsRoot):
     def get_object(self, request, **kwargs):
         return None
 
+
+class NewsDelete(NewsView):
+    template_name = 'news/tp_delete_news.html'
+    permission_required = ["News.can_delete_news"]
+    form_class = None
+
+    def get_context_data(self, request, **kwargs):
+        context = super().get_context_data(request,**kwargs)
+        obj:NewsArticle = self.get_object( request, **kwargs)
+        return context | {'action':'delete', 'headline':obj.headline}
+
+    def do_post_success(self, request, context=None, model_instance:NewsArticle=None, form_instance=None, **kwargs):
+        model_instance.delete()
+        return False
 
 class MotDBase(CombinedView):
     login_url = '/user/login'
@@ -569,8 +580,10 @@ class SponsorDelete(SponsorView):
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request,**kwargs)
         obj:Sponsor = self.get_object( request, **kwargs)
-        return context| {'action':'confirm', 'company_name':obj.company_name}
+        return context| {'action':'delete', 'company_name':obj.company_name}
 
     def do_post_success(self, request, context=None, model_instance:Sponsor=None, form_instance=None, **kwargs):
         model_instance.delete()
         return False
+
+
