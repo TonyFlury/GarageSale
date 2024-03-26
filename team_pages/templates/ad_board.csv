@@ -1,0 +1,4 @@
+"name", "Address", "PostCode","Phone","Mobile"
+{% for entry in applications %}
+ {{entry.csv}}
+{% endfor %}

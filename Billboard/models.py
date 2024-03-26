@@ -21,3 +21,15 @@ class BillboardLocations(models.Model):
         except exceptions.ObjectDoesNotExist:
             return None
 
+    def name(self):
+        return f'{self.location.user.first_name + " " + self.location.user.last_name}'
+
+    def full_address(self):
+        return f'{self.location.house_number + " " + self.location.street_name}'
+
+    def csv(self):
+        return (f'{self.location.user.first_name + " " + self.location.user.last_name},'
+                f'{self.location.house_number + " " + self.location.street_name},'
+                f'{self.location.postcode},'
+                f'{self.location.phone},'
+                f'{self.location.mobile}')
