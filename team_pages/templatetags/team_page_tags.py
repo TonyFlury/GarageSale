@@ -96,6 +96,8 @@ def news_bread_crumb_segments(news_id, action):
     except NewsArticle.DoesNotExist:
         news = None
 
+    print(news_id, action)
+
     match (news_id, action):
         case (None, None):
             return [{'Team Page': reverse('TeamPagesRoot')},
