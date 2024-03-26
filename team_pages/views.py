@@ -1,4 +1,5 @@
 import datetime
+import csv
 
 from django.forms import fields
 from django.core import exceptions
@@ -9,7 +10,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.template.response import TemplateResponse
 from django.views import View
-from django.http import HttpResponseServerError
+from django.http import HttpResponseServerError, HttpResponse
 from django.contrib.admin.widgets import AdminDateWidget
 
 from News.models import NewsArticle
@@ -19,6 +20,7 @@ from GarageSale.models import MOTD, EventData
 from .forms import NewsForm, MotdForm, EventForm, SponsorForm
 from Sponsors.views import social_media_items
 from abc import abstractmethod
+from Billboard.models import BillboardLocations
 
 
 def PublishNews(request, news_id):
@@ -587,3 +589,19 @@ class SponsorDelete(SponsorView):
         return False
 
 
+def ad_board_csv(request, event_id):
+    event = EventData.objects.get(id = event_id)
+    qs = BillboardLocations.objects.filter(event=event)
+
+    response = HttpResponse(content_type='text/csv',
+                            headers={"Content-Disposition": 'attachment; filename="advert_boards.csv"'},)
+
+    writer=csv.writer(response)
+    writer.writerow(['Name', 'Address', 'Postcode', 'Phone', 'Mobile'])
+    for entry in qs:
+        writer.writerow([f'{entry.name()}',
+                         f'{entry.full_address()}',
+                         f'{entry.location.postcode}',
+                         f'{entry.location.phone}',
+                         f'{entry.location.mobile}'])
+    return response

@@ -246,7 +246,9 @@ categoryItem = namedtuple('CategoryItem', 'friendly, tag')
 @register.simple_tag(takes_context=True)
 def categoryList(context):
     c = [categoryItem('Sponsors', 'TeamPagesSponsor'),
-         categoryItem('Statistics', 'TeamPageEventStats')]
+         categoryItem('Statistics', 'TeamPageEventStats'),
+         categoryItem('Ad-Board Applications', 'TeamPageEventAdBoard')
+         ]
     return render_to_string('__category_list.html',
                             context={'category_list': c,
                                      'event_id': context.get('event_id', None) } )

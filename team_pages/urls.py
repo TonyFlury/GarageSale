@@ -28,6 +28,7 @@ urlpatterns = [
     path('event/<int:event_id>/edit/', views.EventEdit.as_view(), name='TeamPagesEventEdit'),
     path('event/<int:event_id>/view/', views.EventView.as_view(), name='TeamPagesEventView'),
     path('event/<int:event_id>/use/', views.event_use, name='TeamPagesEventUse'),
+    path('event/<int:event_id>/ad_board/',views.ad_board_csv, name='TeamPageEventAdBoard'),
 
     path('sponsor/<int:event_id>/', views.SponsorsRoot.as_view(), name='TeamPagesSponsor'),
     path('sponsor/<int:event_id>/create/', views.SponsorCreate.as_view(), name='TeamPagesSponsorCreate'),
