@@ -35,6 +35,12 @@ span#Ticker {
 	display: none;
 }
 
+span.icon {
+    height: auto;
+    width: auto;
+    display: inline-block;
+}
+
 div.TopBar img.logo {
 float: left;
   top: 40px;
@@ -45,7 +51,7 @@ float: left;
   top: 5px;
 }
 
-span#Buttons {
+div#Buttons {
     position: absolute ;
     right: 30px;
 }
@@ -79,7 +85,10 @@ list-style-position: inside;}
 
 .dropdown-content ul li {
 padding-bottom : 2px;
-padding-left : 5px;}
+padding-left : 5px;
+margin-top:0.5rem;
+margin-bottom:0.5rem;
+}
 
 .dropdown-content ul li:last-child {
 padding-bottom : 0px; }
@@ -96,7 +105,12 @@ padding-bottom : 0px; }
 .dropdown-content a:hover {font-style:italic; text-decoration: underline;}
 
 /* Show the dropdown menu on hover */
-.dropdown:hover .dropdown-content {display: block;}
+.dropdown:hover .dropdown-content {
+	display: block;
+	/* width: auto; */
+	/* margin: 1rem; */
+	/* padding: 0.5rem; */
+}
 
 /* Change the background color of the dropdown button when the dropdown content is shown */
 /* .dropdown:hover .dropbtn {background-color: #3e8e41;} */
@@ -111,7 +125,7 @@ padding-bottom : 0px; }
 	padding-top: 0.5em;
 }
 
-@media only screen and (max-width: 1200px){
+@media only screen and (max-width: 11400px){
     .body {
         margin:0.1em;
     }
@@ -123,7 +137,7 @@ div.form {
     color:white;
  /*   margin:auto; */
 }
-@media only screen and (min-width: 1200px){
+@media only screen and (min-width: 11400px){
     .form{
         padding:20px;
         border-radius:30px;
@@ -132,7 +146,7 @@ div.form {
 }
 
 
-@media only screen and (max-width: 1200px){
+@media only screen and (max-width: 11400px){
     .form {
       width:95%;
       padding:5px;
@@ -245,18 +259,17 @@ div.TopBar {
     background: rgba(68, 68, 255, 1.0);
     opacity:1;
     z-index:1;
-    height : 200px;
 }
 
-div.TopBar:after {
-  content: "";
-  width: 85%;
-  left: 0;
-  right: 0;
-  margin: auto;
-  border-bottom: dotted thin lightgrey;
-  position: absolute;
-  bottom: 10px;
+div.TopBar::after {
+	content: "";
+	width: 85%;
+	left: 0;
+	right: 0;
+	margin: auto;
+	border-bottom: dotted thin lightgrey;
+	position: absolute;
+	bottom: 1rem;
 }
 
 
