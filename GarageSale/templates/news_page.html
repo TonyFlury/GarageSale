@@ -24,10 +24,10 @@
                     <h2 class="headline">{{article.headline}}</h2>
                     <div class="content">
                         {{article.content.html|safe}}
-                    </di>
+                    </div>
                 </div>
 
-            {% if row_display == 'row' %}
+            {% if row_display != 'row' %}
             </div>
             {% endif %}
 
