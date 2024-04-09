@@ -15,11 +15,7 @@ div.introduction h1 {
 }
 
 @media only screen and (min-width: 1200px){
-<<<<<<< HEAD
     div.row div.image img.logo {
-=======
-    div.row div.logo img {
->>>>>>> e2be5083308eeaebe36d75be4e879cd1ac8ad50a
     max-width: 350px;
     max-height: auto;
     }
@@ -43,12 +39,7 @@ div.introduction h1 {
         width: 80%;
         font-size: 140%;
     }
-
-<<<<<<< HEAD
     div.row div.image img.logo {
-=======
-    div.row div.logo img {
->>>>>>> e2be5083308eeaebe36d75be4e879cd1ac8ad50a
       max-width: 200px;
       max-height: auto;
     }
