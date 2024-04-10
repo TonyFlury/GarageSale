@@ -13,21 +13,21 @@
     margin:auto;
 }
 
-@media only screen and (max-width: 11400px){
+@media only screen and (max-width: 1140px){
     .outer {
         width:100%;
         margin:0px;
     }
 }
 
-@media only screen and (min-width: 11400px){
+@media only screen and (mn-width: 1141px){
     .row {
       display: flex;
       width:100%;
     }
 }
 
-@media only screen and (max-width: 11400px){
+@media only screen and (max-width: 1140px){
     .row{
         display:block;
         width:100%
@@ -56,7 +56,7 @@
   font-size:100%
 }
 
-@media only screen and (max-width: 11400px){
+@media only screen and (max-width: 1140px){
     .widget{
         width:90%;
         border-radius:10px;

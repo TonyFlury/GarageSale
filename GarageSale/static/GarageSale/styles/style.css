@@ -125,7 +125,7 @@ padding-bottom : 0px; }
 	padding-top: 0.5em;
 }
 
-@media only screen and (max-width: 11400px){
+@media only screen and (max-width: 1140px){
     .body {
         margin:0.1em;
     }
@@ -137,7 +137,7 @@ div.form {
     color:white;
  /*   margin:auto; */
 }
-@media only screen and (min-width: 11400px){
+@media only screen and (mn-width: 1141px){
     .form{
         padding:20px;
         border-radius:30px;
@@ -146,7 +146,7 @@ div.form {
 }
 
 
-@media only screen and (max-width: 11400px){
+@media only screen and (max-width: 1140px){
     .form {
       width:95%;
       padding:5px;
