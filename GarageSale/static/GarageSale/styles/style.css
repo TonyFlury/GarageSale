@@ -279,6 +279,8 @@ div.MOTD {
     margin-top:0em;
     margin-bottom: 2em;
     width: 80%;
+    overflow-x:auto;
+    overflow-y:auto;
 }
 
 div.MOTD:after {
