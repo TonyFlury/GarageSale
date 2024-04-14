@@ -23,22 +23,24 @@ div#clock {
 }
 
 
-span#Buttons .mobile {
+div#Buttons .mobile {
     display : none ; }
 
-span#Buttons {
-    position: absolute ;
-    right: 30px;
+div#Buttons {
+	position: absolute;
+	right: 30px;
+	display: inline-block;
+	bottom: 20px;
 }
 
-span#Buttons img.Button {
+div#Buttons img.Button {
     height:32px;
     width:32px;
     padding: 4px;
     border: none;
 }
 
-span#Buttons img.Button.Animate:hover {
+div#Buttons img.Button.Animate:hover {
   /* Start the shake animation and make the animation last for 0.5 seconds */
   animation: shake 0.5s;
 
@@ -54,31 +56,31 @@ span#Buttons img.Button.Animate:hover {
   80% { transform: rotate(0deg); }
  }
 
-div#ToolBar div.menubar.browser {
-  display: block;
-  padding-top: 10px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 75%;
+div#ToolBar div.menubar {
+	display: block;
+	padding-top: 0.5rem;
+	/* margin-left: auto; */
+	margin-right: auto;
+/*	width: 75%; */
 }
 
-div#ToolBar div.menubar.browser div.wrapper {
-	margin: auto;
-	width: 90%;
-	margin-left: 100px;
-	margin-right: 0px;
+div#ToolBar div.menubar div.wrapper.browser {
+	/* margin: auto; */
+	/* width: 90%; */
+	/* margin-left: 100px; */
+	/* margin-right: 0px; */
+	display: inline-block;
+	margin-bottom: 0px;
 }
 
-div#ToolBar div.menubar.browser ul{
-    margin: auto;
-    padding: 0px;
-    width: 90%;
-    display: flex;
-    justify-content: space-between;
+div#ToolBar div.menubar div.wrapper.browser ul {
+	/* margin: auto; */
+	padding: 0px;
+	/* width: 90%; */
 }
 
-div#ToolBar div.menubar.browser ul li {
-	display: inline;
+div#ToolBar div.menubar div.wrapper.browser ul li {
+	display: inline-block;
 	color: white;
 	font-weight: bold;
 	margin-right: 10px;

@@ -23,7 +23,23 @@ Brantham Garage Sale - Home Page
     </script>
     <span id="Ticker"> New Charity formed to manage the Garage Sale ......... Date for 2024 Garage Sale Announced .......... Claim your advertising billboard now .... </span>
 
-<span id="Buttons">
+
+</div>
+<div class="menubar">
+    <div class="wrapper browser">
+        <ul>
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'News:NewsPage' %}">News</a></li>
+            <li><a href="/getInvolved">Get Involved</a></li>
+            <li><a href="/sponsors">Our Sponsors</a></li>
+            <li><a href="{% url 'AboutUs' %}">About Us</a></li>
+            <li><a href="{% url 'ContactUs' %}">Contact Us</a></li>
+            {% if perms.GarageSale.is_administrator %}
+                <li><a href="{% url 'TeamPagesRoot' %}">Team</a></li>
+            {% endif %}
+        </ul>
+    </div>
+    <div id="Buttons">
     <a href="mailto:branthamGarageSale@gmail.com"><img id=Email class="Button Animate browser" src="{% static 'GarageSale/images/icons/icons8-email-48.png' %}" ></a>
     <a href="https://www.facebook.com/BranthamGarageSale"><img id=Facebook class="Button Animate browser" src="{% static 'GarageSale/images/icons/Facebook_Logo_Secondary.png' %}"></a>
     <span id=user_management class="Button browser dropdown">
@@ -51,21 +67,6 @@ Brantham Garage Sale - Home Page
             </ul>
         </span>
     </span>
-</span>
-</div>
-<div class="menubar browser">
-    <div class="wrapper">
-        <ul>
-            <li><a href="{% url 'home' %}">Home</a></li>
-            <li><a href="{% url 'News:NewsPage' %}">News</a></li>
-            <li><a href="/getInvolved">Get Involved</a></li>
-            <li><a href="/sponsors">Our Sponsors</a></li>
-            <li><a href="{% url 'AboutUs' %}">About Us</a></li>
-            <li><a href="{% url 'ContactUs' %}">Contact Us</a></li>
-            {% if perms.GarageSale.is_administrator %}
-                <li><a href="{% url 'TeamPagesRoot' %}">Team</a></li>
-            {% endif %}
-        </ul>
     </div>
 </div>
 {% endblock %}
