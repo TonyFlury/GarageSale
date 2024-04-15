@@ -122,7 +122,7 @@ div.row div.inner {
     }
 }
 
-@media only screen and (mn-width: 1141px){
+@media only screen and (min-width: 1141px){
     div.row div.inner:after {
       content: "";
       display: table;

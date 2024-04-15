@@ -20,7 +20,7 @@
     }
 }
 
-@media only screen and (mn-width: 1141px){
+@media only screen and (min-width: 1141px){
     .row {
       display: flex;
       width:100%;

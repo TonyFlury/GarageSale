@@ -137,7 +137,7 @@ div.form {
     color:white;
  /*   margin:auto; */
 }
-@media only screen and (mn-width: 1141px){
+@media only screen and (min-width: 1141px){
     .form{
         padding:20px;
         border-radius:30px;

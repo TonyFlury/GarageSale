@@ -6,7 +6,7 @@
   position:relative;
 }
 
-@media only screen and (mn-width: 1141px)
+@media only screen and (min-width: 1141px)
 .masthead {
     padding-top:2em;
 }
@@ -25,7 +25,7 @@ div.paper div.masthead div.title {
      text-align:center;
 }
 
-@media only screen and (mn-width: 1141px) {
+@media only screen and (min-width: 1141px) {
 div.paper div.masthead div.title {
 	font-size: 250%;
 	width: 80%;
@@ -49,7 +49,7 @@ div.paper div.masthead div.date {
     width: 15%;
 }
 
-@media only screen and (mn-width: 1141px){
+@media only screen and (min-width: 1141px){
 div.paper div.masthead div.date {
 	font-size: 115%;
 	margin-right: 2em;
@@ -76,7 +76,7 @@ div.paper div.masthead div.date {
 }
 }
 
-@media only screen and (mn-width: 1141px){
+@media only screen and (min-width: 1141px){
 div.paper div.masthead:before {
   content: "";
   width: 85%;
@@ -100,7 +100,7 @@ h2.headline {
 	font-size: 150%;
 }
 
-@media only screen and (mn-width: 1141px)
+@media only screen and (min-width: 1141px)
 .article.column .headline {
 	font-size: 200%;
 }
@@ -110,7 +110,7 @@ h2.headline {
     font-size:120%
 }
 
-@media only screen and (mn-width: 1141px){
+@media only screen and (min-width: 1141px){
     .row {
     content: "";
     display: flex;
@@ -174,14 +174,14 @@ div.content {
     }
 }
 
-@media only screen and (mn-width: 1141px){
+@media only screen and (min-width: 1141px){
     .article.column {
       float: left;
       width: 50%;
     }
 }
 
-@media only screen and (mn-width: 1141px){
+@media only screen and (min-width: 1141px){
     .article.column .headline {
         font-size: 250%;
     }
@@ -220,7 +220,7 @@ div.paper .headline {
     }
 }
 
-@media only screen and (mn-width: 1141px){
+@media only screen and (min-width: 1141px){
     div.paper .headline:after{
       border-bottom: 1px solid black;
     }
