@@ -118,7 +118,7 @@ def render_widget(context, feature):
 
     allowed = (event_open <= date.today() <= event_close)
 
-    closed = {date.today() > event_close}
+    closed = (date.today() > event_close)
 
     signed_up = False
     if not context.request.user.is_anonymous:
