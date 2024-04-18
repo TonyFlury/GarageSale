@@ -118,8 +118,6 @@ def render_widget(context, feature):
 
     allowed = (event_open <= date.today() <= event_close)
 
-    closed = {date.today() > event_close}
-
     signed_up = False
     if not context.request.user.is_anonymous:
         user = User.objects.get(username=context.request.user.username)
@@ -134,22 +132,17 @@ def render_widget(context, feature):
     else:
         signed_up = False
 
-    if not closed :
-        text = {'billboard': f"You have already applied to have a <b>{name[feature]}</b> "
-                             f"at your home. Press the button below to edit/cancel that application"
-                if signed_up else f"By hosting an <b>{name[feature]}</b>, "
-                f"you will help advertise the Garage Sale Event "
-                f"and also be raising money for our charities as "
-                f"our sponsor pays us for every board we put up.<br>",
-                'sales': f"You have added your <b>{name[feature]}</b> to our sale list "
-                        f"Press the button below to edit/cancel the information"
-                if signed_up else f"If you want to inform us of your <b>{name[feature]}</b> at your home "
-                                  f"please press the button below and fill out the form"
-                }
-    else:
-        text = {'billboard': 'Applications for a billboard for this years event are now closed.',
-                'sales': 'Registration of your sales location to be included on the map are now closed.' }
-
+    text = {'billboard': f"You have already applied to have a <b>{name[feature]}</b> "
+                         f"at your home. Press the button below to edit/cancel that application"
+            if signed_up else f"By hosting an <b>{name[feature]}</b>, "
+            f"you will help advertise the Garage Sale Event "
+            f"and also be raising money for our charities as "
+            f"our sponsor pays us for every board we put up.<br>",
+            'sales': f"You have added your <b>{name[feature]}</b> to our sale list "
+                    f"Press the button below to edit/cancel the information"
+            if signed_up else f"If you want to inform us of your <b>{name[feature]}</b> at your home "
+                              f"please press the button below and fill out the form"
+            }
     return {
         'request': context.request,
         'feature': feature,
@@ -158,8 +151,7 @@ def render_widget(context, feature):
         'allowed': allowed,
         'open_date': event_open,
         'close_date': event_close,
-        'closed' : closed,
-        'button': '' if closed else ('Apply' if not signed_up else 'View/Edit'),
+        'button': 'Apply' if not signed_up else 'View/Edit',
         'destination': destinations[feature],
         'text': text[feature],
     }
