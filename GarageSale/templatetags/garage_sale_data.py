@@ -147,6 +147,7 @@ def render_widget(context, feature):
                                   f"please press the button below and fill out the form"
                 }
     else:
+
         text = {'billboard': 'Applications for a billboard for this years event are now closed.',
                 'sales': 'Registration of your sales location to be included on the map are now closed.' }
 
@@ -156,6 +157,7 @@ def render_widget(context, feature):
         'name': name[feature],
         'title': name[feature],
         'allowed': allowed,
+        'closed' : closed,
         'open_date': event_open,
         'close_date': event_close,
         'closed' : closed,
