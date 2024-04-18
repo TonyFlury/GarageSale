@@ -1,7 +1,11 @@
 {% load user_management_tags %}
 {% load event_data_tags %}
 <h3>{{title}}</h3>
-        {% if allowed %}
+        {% if closed %}
+            <div style="padding-top:0.5em;">
+                {{ text | safe }}
+            </div>
+        {% elif allowed %}
             <b>{{name}}</b> bookings are now open until <b>{{close_date | date}}</b>
             <div style="padding-top:0.5em;">
                 {{ text | safe }}
@@ -18,5 +22,5 @@
                     </div>
             </div>
         {% else %}
-            <b>{{name}}</b> bookings are open from {{ open_date | date }}
+            <b>{{name}}</b> bookings will be open from {{ open_date | date }}
         {% endif %}
