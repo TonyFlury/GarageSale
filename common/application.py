@@ -113,7 +113,7 @@ class ApplicationBase(View):
         # Does this user have a stored location
         if self.current_user and not self.current_user.is_anonymous:
             try:
-                self.location_inst = Location.objects.prefetch_related().get(user=self.current_user)
+                self.location_inst = Location.objects.prefetch_related().filter(user=self.current_user).order_by('id').last()
             except exceptions.ObjectDoesNotExist:
                 self.location_inst = None
         else:

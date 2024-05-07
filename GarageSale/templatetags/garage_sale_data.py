@@ -124,7 +124,7 @@ def render_widget(context, feature):
     if not context.request.user.is_anonymous:
         user = User.objects.get(username=context.request.user.username)
         try:
-            location = Location.objects.get(user=user)
+            location = Location.objects.filter(user=user).order_by('id').last()
         except Location.DoesNotExist:
             location = None
 
