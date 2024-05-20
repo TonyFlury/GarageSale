@@ -1,0 +1,34 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block head-extra %}
+    {% if redirect %}
+        <meta http-equiv="refresh" content="15;url='/'" />
+    {% endif %}
+{% endblock%}
+
+{% block body %}
+    <div class="msg">
+    <h2>Internal Error</h2>
+
+    Sorry - but despite our best efforts, something has gone wrong and we weren't able to fix it.
+        <br>
+    Our team knows that this error occurred and we will look into this - in the mean time it can help us if you :
+        <ul>
+           <li>email to <a href="mailto:BranthamGarageSale@gmail.com">BranthamGarageSale@gmail.com</a> and tell us as much
+               as you can about what you were trying to do.</li>
+            <li>Don't try to repeat what you did when the failure happens - the chances are that the same failure will
+                happen again, and we will have two sets of bad data, not one.</li>
+        </ul>
+    </div>
+        <div>
+            If this form does not automatically redirect, then click the button below.
+        </div>
+        <form method="GET" action="/" >
+            <div class="buttons">
+                <input type="submit" value="Continue">
+            </div>
+        </form>
+
+{% endblock %}
