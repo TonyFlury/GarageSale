@@ -1,0 +1,144 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load event_data_tags %}
+
+{% block Title %}
+Charity Auction - David Lloyd Ipswich Trial memberships
+{% endblock %}
+
+{# TODO - Add links on email and facebook icons - why didn't i do this before! #}
+
+
+{% block PageHeading %}Charity Auction - David Lloyd Ipswich Trial memberships{% endblock %}
+
+{% block body %}
+<style xmlns="http://www.w3.org/1999/html">
+    div.paragraph {
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+        font-size: 110%;
+    }
+    div.paragraph ol {
+        margin-top: 1.0rem;
+        margin-bottom: 1.0rem;
+    }
+    div.paragraph ul {
+        margin-top: 1.0rem;
+        margin-bottom: 1.0rem;
+        list-style-type: square;
+    }
+
+
+    div.paragraph ul > li {
+        margin-bottom: 0.5rem; }
+
+    div.paragraph  ul > li:last-child {
+        margin-bottom: 0.0rem; }
+
+    div.paragraph > ol > li {
+        margin-bottom: 0.75rem; }
+
+    div.paragraph ol > li::marker {
+        font-weight:bold }
+
+    div.paragraph ul li::marker {
+        font-weight:bold;
+    }
+
+    div.form {
+        margin-top: 2rem;
+        width: 35%;
+        margin-left:auto;
+        margin-right:auto;    }
+
+    div.form .buttons input[type=submit] {
+       padding:1rem;
+       font-size:120%;
+       }
+
+    /* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+</style>
+<h1>Charity Auction - David Lloyd Ipswich Trial memberships</H1>
+
+<div class="paragraph">
+Following a very generous sponsorship package from <a href="https://www.davidlloyd.co.uk/clubs/ipswich/">David Lloyd Club in Ipswich</a>
+    we are able to offer the following trial memberships for Auction:
+<ul>
+    <li>One Individual 14 day trial pass at the Ipswich Club - <i>retail value approximately £50</i></li>
+    <li>Two family (2 adult & 2 children) 14 day trial passes packs for the Ipswich Club - each pack includes 4 50% food vouchers - <i>retail value approximately £150 per pack of passes and vouchers</i>.</li>
+</ul>
+</div>
+<div class="paragraph">
+We are going to auction these prizes off in a Blind Auction that opens on <b>1st June</b> and closes at midnight on <b>23rd June</b>, the day of the Garage Sale.
+<p>
+<i>Please note that the vouchers are marked by David Lloyd as valid until the <b>31st July 2024 only</b>. The Garage Sale Foundation have no ability to change these conditions.</i>.
+
+</div>
+<div class="paragraph">
+If you want to get your hands on one of these 3 prizes simply email <a href="mailto:Auction.BranthamGarageSale@gmail.com">Auction.BranthamGarageSale@gmail.com</a> with your monetary bid amount
+and the words either "<a href="mailto:Auction.BranthamGarageSale@gmail.com?subject=Individual">Individual</a>" or "<a href="mailto:Auction.BranthamGarageSale@gmail.com?subject=Family">Family</a>"
+    in the Email subject
+</div>
+
+<div class="paragraph">
+On the <b>24th June</b> we will check the emails and the highest bid for the Individual pack and the two highest bids for the family packs will win the appropriate items.
+<p>
+The successful bidders will be notified by Email on the <b>24th June</b> and will have until <b>28th June</b> to submit their payment. If payment is not made by this deadline the prize will go to the next highest bidder.
+<p>
+Full rules and conditions are listed below.
+</p>
+
+
+</div>
+
+
+<hr>
+<h2>Rules and Conditions</h2>
+<div class="paragraph">
+<ol>
+    <li>Only emails sent to Auction.BranthamGarageSale@gmail.com will be counted.</li>
+    <li>Emails will be discarded if they are incorrect, this includes :
+        <ul>
+            <li>Emails received before 1st June 2024, or after June 23rd 2024
+            <li>Emails that do not include either the text 'Individual' or 'Family'
+            <li>Emails that do not include a bid amount.
+        </ul>
+    </li>
+    <li>If Multiple bids from the same email address are received, then the more recent received bid is accepted.</li>
+
+    <li>The bids will be examined on June 24th and the winners selected as follows :
+        <ul>
+            <li>The highest bid for the Individual voucher will win the item
+            <li>The two highest bids for the family voucher packs will win one pack per bid.
+        </ul>
+     In the case of a tie between bids, the earliest bid will be considered the winner.
+    </li>
+
+    <li>The Winning bidders will be notified by 24th June 2024, and bids must be paid by BACS transfer by 28th  June 2024.
+
+    <li>If the winning bidder does not submit payment by the deadline, the next highest bid for the items will be notified.
+
+    <li>Vouchers can be collected once Payment is received from 19, Merriam Close, Brantham - please bring some form of ID.
+
+    <li>Winning bids are Charity donations, and we regret that they cannot be refunded once paid.</li>
+
+    <li>David lLoyd may apply their own terms and conditions which are outside the control of the Charity.</l>
+
+    <li>The vouchers are only valid for the Ipswich Club</li>
+</ol>
+</div>
+{% endblock %}
