@@ -7,7 +7,12 @@
             </div>
 
         {% elif allowed %}
-            <b>{{name}}</b> bookings are now open until <b>{{close_date | date}}</b>
+            {% if feature == 'blind_auction' %}
+                <br>Bidding is open until <b>{{close_date | date}}</b>
+            {% else %}
+                <b>{{name}}</b> bookings are now open until <b>{{close_date | date}}</b>
+            {% endif %}
+
             <div style="padding-top:0.5em;">
                 {{ text | safe }}
             </div>

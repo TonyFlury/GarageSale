@@ -102,54 +102,64 @@ def get_motd():
 
 @register.inclusion_tag('__application_widget.html', name="ApplicationWidget", takes_context=True)
 def render_widget(context, feature):
-    if feature not in {'billboard', 'sales'}:
+    if feature not in {'billboard', 'sales', 'blind_auction'}:
         raise AttributeError(f'Invalid site feature : {feature}')
 
     destinations = {'billboard': 'Billboard:apply',
-                    'sales': 'SaleLocation:apply'}
+                    'sales': 'SaleLocation:apply',
+                    'blind_auction': 'BlindAuction'}
 
     name = {'billboard': 'Advertising Board',
-            'sales': 'Garage Sale'}
+            'sales': 'Garage Sale',
+            'blind_auction': 'David Lloyd trial memberships : Blind Auction'}
 
     models = {'billboard': BillboardLocations,
-              'sales': SaleLocations}
+              'sales': SaleLocations,
+              'blind_auction': None}
 
-    event_open, event_close = get_feature_date(feature, 'open'), get_feature_date(feature, 'close')
+    if feature == 'blind_auction':
+        event_open = datetime.date(2024, 6, 1)
+        event_close = datetime.date(2024, 6, 23)
+    else:
+        event_open, event_close = get_feature_date(feature, 'open'), get_feature_date(feature, 'close')
 
     allowed = (event_open <= date.today() <= event_close)
 
     closed = (date.today() > event_close)
 
     signed_up = False
-    if not context.request.user.is_anonymous:
-        user = User.objects.get(username=context.request.user.username)
-        try:
-            location = Location.objects.filter(user=user).order_by('id').last()
-        except Location.DoesNotExist:
-            location = None
 
-        if location:
-            signed_up = models[feature].objects.filter(event__id=context.request.current_event.id,
-                                                       location=location).exists()
-    else:
-        signed_up = False
+    if feature != 'blind_auction':
+        if not context.request.user.is_anonymous:
+            user = User.objects.get(username=context.request.user.username)
+            try:
+                location = Location.objects.filter(user=user).order_by('id').last()
+            except Location.DoesNotExist:
+                location = None
 
-    if not closed :
+            if location:
+                signed_up = models[feature].objects.filter(event__id=context.request.current_event.id,
+                                                           location=location).exists()
+
+    if not closed:
         text = {'billboard': f"You have already applied to have a <b>{name[feature]}</b> "
                              f"at your home. Press the button below to edit/cancel that application"
-                if signed_up else f"By hosting an <b>{name[feature]}</b>, "
-                f"you will help advertise the Garage Sale Event "
-                f"and also be raising money for our charities as "
-                f"our sponsor pays us for every board we put up.<br>",
+        if signed_up else f"By hosting an <b>{name[feature]}</b>, "
+                          f"you will help advertise the Garage Sale Event "
+                          f"and also be raising money for our charities as "
+                          f"our sponsor pays us for every board we put up.<br>",
                 'sales': f"You have added your <b>{name[feature]}</b> to our sale list "
-                        f"Press the button below to edit/cancel the information"
+                         f"Press the button below to edit/cancel the information"
                 if signed_up else f"If you want to inform us of your <b>{name[feature]}</b> at your home "
-                                  f"please press the button below and fill out the form"
+                                  f"please press the button below and fill out the form",
+                'blind_auction': 'An exciting opportunity for you to get your hands on some trial memberships'
+                                 'for David Lloyd Clubs in Ipswich.<br>'
+                                 'Enter your bid in the blind Auction'
                 }
     else:
-
         text = {'billboard': 'Applications for a billboard for this years event are now closed.',
-                'sales': 'Registration of your sales location to be included on the map are now closed.' }
+                'sales': 'Registration of your sales location to be included on the map are now closed.',
+                'blind_auction': 'The blind auction is now closed - sorry'}
 
     return {
         'request': context.request,
@@ -157,10 +167,11 @@ def render_widget(context, feature):
         'name': name[feature],
         'title': name[feature],
         'allowed': allowed,
-        'closed' : closed,
+        'closed': closed,
         'open_date': event_open,
         'close_date': event_close,
-        'button': 'Apply' if not signed_up else 'View/Edit',
+        'button': (
+            'Apply' if not signed_up else 'View/Edit') if feature != 'blind_auction' else 'View Instructions & T&Cs',
         'destination': destinations[feature],
         'text': text[feature],
     }
