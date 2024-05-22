@@ -1,0 +1,5 @@
+0) open a bash console
+1) Pull the github repository into a new folder
+2) in the new folder create a new virtual env using the deployment list.
+3) confirm the contents of the virtual env
+4)
