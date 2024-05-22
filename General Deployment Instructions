@@ -17,6 +17,19 @@
         If changes involed models field
             python manage.py migrate
 
-3) On python anywhere Dashboard
+4) Confirm settings.py has the DEBUG=FALSE. Double check settings.py has nothing commented out that is critical :
+    Email, Database, key middleware
+    If changes are needed reflect those changes into the development branch in a easier to configure way.
+    #TODO - work out how to do this without changing settings.py
+
+5) On python anywhere Dashboard
         If changes involed models fields or any python file (including settings)
         Restart Server.
+
+6) in a Separate Browser open the admin screen and confirm that the database is up and correct.
+
+# TODO - find a way to have a upgrade type switch -so the website will show a simple page until ready.
+
+
+
+https://help.pythonanywhere.com/pages/Virtualenvs
