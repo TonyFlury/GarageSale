@@ -25,14 +25,15 @@ SECRET_KEY = 'django-insecure-s$t^ho7^-6ou)$fb)wilo10%l%dcmt7c+*^cq7j-eqxvdl0f4_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.1.76",'127.0.0.1','81.147.70.233']
+if DEBUG:
+    ALLOWED_HOSTS = ["192.168.1.76",'127.0.0.1','81.147.70.233']
+    INTERNAL_IPS = [
+       "192.168.1.76"
+    ]
+else:
+    ALLOWED_HOSTS = ['www.BranthamGarageSale.org.uk']
+    INTERNAL_IPS = []
 
-INTERNAL_IPS = [
-    # ...
- #   "127.0.0.1",
-    "192.168.1.76"
-    # ...
-]
 
 STATIC_URL = 'static/'
 STATIC_ROOT = 'static'
@@ -127,15 +128,19 @@ DEBUG_TOOLBAR_PANELS = [
 
 WSGI_APPLICATION = 'GarageSale.wsgi.application'
 
-# Email Ssttings - change on deployment - DO NOT USE for the email FROM setting
-EMAIL_HOST = "mail.btinternet.com"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = "tony.flury@btinternet.com"
-EMAIL_HOST_PASSWORD = "Wh1teFriarsCl0ck2608#1"
+EMAIL_USE_TLS = False
+EMAIL_HOST_USER = "BranthamGarageSale@gmail.com"
+EMAIL_HOST_PASSWORD = "glpf hekx pais jcjt"
 
-if DEBUG:
-    EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
+
+#if DEBUG:
+#    EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
+#else:
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
