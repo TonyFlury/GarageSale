@@ -35,6 +35,9 @@ class SaleLocations(models.Model):
     category = MultipleChoiceField(max_length=500, default=['Other'], null=True)
     creation_date = models.DateField(auto_now_add=True)
 
+    def __str__(self):
+        return str(self.location)
+
     def get_bacs_reference(self):
         return f'{self.event.event_date.year}-{self.location.postcode}-{self.location.house_number}'.replace(' ','')[0:15]
 
