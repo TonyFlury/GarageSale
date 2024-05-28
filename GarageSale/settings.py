@@ -135,7 +135,6 @@ EMAIL_USE_TLS = False
 EMAIL_HOST_USER = "BranthamGarageSale@gmail.com"
 EMAIL_HOST_PASSWORD = "glpf hekx pais jcjt"
 
-
 if DEBUG:
     EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
 else:

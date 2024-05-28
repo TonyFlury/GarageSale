@@ -63,3 +63,7 @@ register_user_form invoked waitingregister-waiting, email_template:email/verify_
 register_user_form invoked waitingregister-waiting, email_template:email/verify_email.html, redirect:/
 register_user_form invoked waitingregister-waiting, email_template:email/verify_email.html, redirect:/
 register_user_form invoked waitingregister-waiting, email_template:email/verify_email.html, redirect:/
+user registration received
+user registration received for foo@bar.com
+http://testserver/user/verify/9e0e3330-0c7f-11ef-8383-bbd9db7771a9?redirect=/
+user-verify received uuid : 9e0e3331-0c7f-11ef-8383-bbd9db7771a9

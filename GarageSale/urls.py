@@ -29,10 +29,9 @@ urlpatterns = [
     path('about_us', TemplateView.as_view(template_name='aboutUs.html'), name='AboutUs'),
     path('contact', TemplateView.as_view(template_name='contact.html'), name='ContactUs'),
     path('privacy', TemplateView.as_view(template_name='privacy_policy.html'), name='Privacy'),
+    path('blind_auction', TemplateView.as_view(template_name='blind_auction.html'), name='BlindAuction'),
 
     path('team_page/', include('team_pages.urls')),
-
-    path("__debug__/", include("debug_toolbar.urls")),
     path('news/', include('News.urls')),
     path('user/', include('user_management.urls')),
     path('billboard/', include('Billboard.urls')),
@@ -42,4 +41,5 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
+    urlpatterns += path("__debug__/", include("debug_toolbar.urls")),
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
