@@ -249,7 +249,8 @@ categoryItem = namedtuple('CategoryItem', 'friendly, tag')
 def categoryList(context):
     c = [categoryItem('Sponsors', 'TeamPagesSponsor'),
          categoryItem('Statistics', 'TeamPageEventStats'),
-         categoryItem('Ad-Board Applications', 'TeamPageEventAdBoard')
+         categoryItem('Ad-Board Applications', 'TeamPageEventAdBoard'),
+         categoryItem('Sales Locations', 'TeamPageEventSaleLocation'),
          ]
     return render_to_string('__category_list.html',
                             context={'category_list': c,

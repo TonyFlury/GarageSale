@@ -135,12 +135,10 @@ EMAIL_USE_TLS = False
 EMAIL_HOST_USER = "BranthamGarageSale@gmail.com"
 EMAIL_HOST_PASSWORD = "glpf hekx pais jcjt"
 
-
-#if DEBUG:
-#    EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
-#else:
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+if DEBUG:
+    EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -152,16 +150,18 @@ DATABASES = {
         'NAME': 'garagesale',
         'USER': 'garagesaleweb',
         'PASSWORD': '7RWrbJ18tZ',
-        #        'HOST': 'BranthamGarageSale-235.postgres.eu.pythonanywhere-services.com',
-        #        'PORT': '10235',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'HOST': 'BranthamGarageSale-235.postgres.eu.pythonanywhere-services.com',
+        'PORT': '10235',
 
         'TEST': {
             'NAME': 'test_garagesale'
         }
     },
 }
+
+if DEBUG:
+    DATABASES['default']['HOST'] = 'localhost'
+    DATABASES['default']['PORT'] = '5432'
 
 SESSION_COOKIE_AGE = 365 * 24 * 60 * 60  # 365 days between log ins.
 
