@@ -21,6 +21,7 @@ from .forms import NewsForm, MotdForm, EventForm, SponsorForm
 from Sponsors.views import social_media_items
 from abc import abstractmethod
 from Billboard.models import BillboardLocations
+from SaleLocation.models import SaleLocations
 
 
 def PublishNews(request, news_id):
@@ -587,6 +588,26 @@ class SponsorDelete(SponsorView):
     def do_post_success(self, request, context=None, model_instance:Sponsor=None, form_instance=None, **kwargs):
         model_instance.delete()
         return False
+
+
+def sales_locations_csv(request, event_id):
+    event = EventData.objects.get(id = event_id)
+    qs = SaleLocations.objects.filter(event=event)
+
+    date_str = datetime.datetime.now().isoformat(timespec="seconds")
+    response = HttpResponse(content_type='text/csv',
+                            headers={"Content-Disposition": f'attachment; '
+                                        f'filename="sale_locations{date_str}.csv"'},)
+
+    writer=csv.writer(response)
+    writer.writerow(['Name', 'Address', 'Postcode', 'Category', 'Gift_aid'])
+    for entry in qs:
+        writer.writerow([f'{entry.name()}',
+                         f'{entry.full_address()}',
+                         f'{entry.location.postcode}',
+                         f'{entry.category}',
+                         f'{entry.gift_aid}'])
+    return response
 
 
 def ad_board_csv(request, event_id):

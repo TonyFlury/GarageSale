@@ -37,3 +37,9 @@ class SaleLocations(models.Model):
 
     def get_bacs_reference(self):
         return f'{self.event.event_date.year}-{self.location.postcode}-{self.location.house_number}'.replace(' ','')[0:15]
+
+    def name(self):
+        return f'{self.location.user.first_name + " " + self.location.user.last_name}'
+
+    def full_address(self):
+        return f'{self.location.house_number + " " + self.location.street_name}'
