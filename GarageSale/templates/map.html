@@ -1,0 +1,67 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block additionalStyles%}
+
+<style>
+
+
+</style>
+
+{% endblock %}
+
+{% block body %}
+<h1 style="text-align:center;margin-top:0.1rem;margin-bottom:0.5rem;">The 2024 Sellers Map</h1>
+
+<div style="margin-top:0.1rem;">
+<div style="float:left;width:48%">
+<h2 style="text-align:center;">Overview Map</h2>
+<span style="display:block;width:100%;text-align:center;font-style:italic">Click to download</span>
+<div style="text-align:center">
+<a href="https://www.google.com/maps/d/embed?mid=1gatFMR8bec9CgAYjjHYZIg-bRpfwe4U&ehbc=2E312F">
+    <img src="{% static 'GarageSale/images/resources/2204-map.png' %}" style="max-width:80%;height:auto;max-height:700px;"
+         alt="Overview map of sales and Amenities locations for the 2024 Garage Sale. Click to download the map"
+         title="Overview map of sales and Amenities locations for the 2024 Garage Sale. Click to download the map"/></a>
+</div>
+</div>
+
+<div style="float:left;width:48%;border-left:1px solid;padding-left:2%;">
+
+    <h2>Using the map on your Phone</h2>
+If you have the Google Map on your phone, you can download the map to your phone, and your phone will automatically show
+your location on the map, allowing you to find nearby sellers and amenities with ease.
+
+<h2> Amenities and Events</h2>
+
+<H3> Special Events</H3>
+<div style="margin-left:50px;margin-bottom:1rem;">
+<h4 style="margin-bottom:0.5rem;">Prize Tombola</h4>
+    The Prize Tombola is being hosted at Chloe's. Prizes include vouchers from the Brantham Bull and The Pink Shed
+        Beauty center, a gift box from David LLoyd, and others. Chloe's is also open for refreshments.
+<h4>Craft Market</h4>
+The craft market will be set up outside the Co-op super market in Brantham (Acacia Avenue) we have 6 sellers
+confirmed with items ranging from Jewelry to wooden toys.
+</div>
+
+<h3 style="margin-bottom:0.5rem;">Parking</h3>
+<div style="margin-left:50px;margin-bottom:1rem;">
+<ul>
+    <li>The Crown Pub at Cattawade
+    <li>Brooklands Primary School, Brooklands Rise.</li>
+</ul>
+</div>
+<h3 style="margin-bottom:0.5rem;">Refreshments and Toilets</h3>
+<div style="margin-left:50px;margin-bottom:1rem;">
+<ul>
+    <li>Brantham Leisure Center, New Village
+    <li>The Village Hall, New Village
+    <li>Chloe's Cafe, New Village
+</ul>
+</div>
+
+Also a number of sellers are also providing refreshments for sale for charity.
+</div>
+
+</div>
+{% endblock %}

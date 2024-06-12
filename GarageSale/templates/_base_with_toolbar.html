@@ -31,9 +31,10 @@ Brantham Garage Sale - Home Page
             <li><a href="{% url 'home' %}">Home</a></li>
             <li><a href="{% url 'News:NewsPage' %}">News</a></li>
             <li><a href="/getInvolved">Get Involved</a></li>
+            <li><a href="/blind_auction">Blind Auction</a></li>
+            <li><a href="/map">The Map</a></li>
             <li><a href="/sponsors">Our Sponsors</a></li>
             <li><a href="{% url 'AboutUs' %}">About Us</a></li>
-            <li><a href="{% url 'ContactUs' %}">Contact Us</a></li>
             {% if perms.GarageSale.is_administrator %}
                 <li><a href="{% url 'TeamPagesRoot' %}">Team</a></li>
             {% endif %}
@@ -58,9 +59,10 @@ Brantham Garage Sale - Home Page
                 {% User_menu  register="/register" login="/login" logoff="/logoff" getinvolved="/getinvolved"%}
                 <li><a href="/news">News</a></li>
                 <li><a href="/getInvolved">Get Involved</a></li>
+                <li><a href="/blind_auction">Blind Auction</a></li>
+                <li><a href="/map">The Map</a></li>
                 <li><a href="/sponsors">Our Sponsors</a></li>
                 <li><a href="{% url 'AboutUs' %}">About Us</a></li>
-                <li><a href="{% url 'ContactUs' %}">Contact Us</a></li>
                 {% if perms.GarageSale.is_administrator %}
                     <li><a href="{% url 'TeamPagesRoot' %}">Team</a></li>
                 {% endif %}

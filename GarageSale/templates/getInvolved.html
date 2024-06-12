@@ -26,30 +26,11 @@
         <div class="row">
         <div class="widget" >
             <div class="widget-content">
-                {% ApplicationWidget 'billboard' %}
-            </div>
-        </div>
-        <div class="widget" >
-            <div class="widget-content">
-                {% ApplicationWidget 'sales' %}
+                {% ApplicationWidget 'blind_auction' %}
             </div>
         </div>
     </div>
     <div class="row">
-        <div class="widget" >
-            <div class="widget-content">
-                <h3>News letter</h3>
-                    {% if request.user.is_authenticated %}
-                            {% newsletter_enrol %}
-                    {% else %}
-                        To receive our regular newsletter keeping you up-to-date with all things to do
-                        with the Garage Sale - make sure you <a href="{% url 'user_management:register' %}?redirect={{request.path}}">Register</a> for an account.
-                        Once Registered all of your involvement in the Sale can be managed in one-place.
-                        <br>
-                        If you have already registered, make sure you {% login_form_link request.path %}
-                    {% endif %}
-            </div>
-        </div>
         <div class="widget" >
             <div class="widget-content">
             <h3>Donate</h3>
