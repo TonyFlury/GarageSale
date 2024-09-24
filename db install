@@ -1,4 +1,4 @@
-sudo apt-get install postgresql postgesql-contrib
+sudo apt-get install postgresql postesql-contrib
 sudo -u postgres createdb garagesale
 sudo -u postgres psql garagesale
 
@@ -25,5 +25,5 @@ $ sudo systemctl status postgresql
 
 # Test DB connection
 
-$ psql geragesale -U garagesaleWeb
+$ psql geragesale -U garagesaleweb
 Password for user garagesaleweb:

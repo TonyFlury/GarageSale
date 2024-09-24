@@ -20,3 +20,11 @@
 3) On python anywhere Dashboard
         If changes involed models fields or any python file (including settings)
         Restart Server.
+
+
+4) Database setup :
+
+```
+    pqsl -U admin
+
+
