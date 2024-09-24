@@ -12,8 +12,3 @@ static/
 debug.log
 
 *.log
-/build/
-/credentials_unit_test/db_credentials.py
-/credentials_production/db_credentials.py
-/credentials_live_test/db_credentials.py
-/email_credentials.py
