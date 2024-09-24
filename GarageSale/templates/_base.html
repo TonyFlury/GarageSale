@@ -43,5 +43,11 @@
 <div class="body">
 {% block body %}Body Content{% endblock%}
 </div>
+{% if TEST_SERVER %}
+<div class="test_warning">
+    <p>This is a test server - all features are experimental and may not work - contact Tony Flury if any bugs or strange behaviour is found.</p>
+    <p>Do not use private personal data on this server.</p>
+</div>
+{% endif %}
 </body>
 </html>
