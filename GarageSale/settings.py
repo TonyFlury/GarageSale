@@ -9,8 +9,25 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-
 from pathlib import Path
+
+# Site specific credentials
+from credentials import db_credentials as db_credentials
+from credentials import django_secret_key
+from credentials import email_credentials
+from credentials import hosts
+
+try :
+    from credentials import test_server
+except ImportError:
+    test_server = None
+
+TEST_SERVER = test_server.TEST_SERVER if test_server else False
+
+try:
+    from credentials import debug
+except ImportError:
+    debug = None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,19 +37,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-s$t^ho7^-6ou)$fb)wilo10%l%dcmt7c+*^cq7j-eqxvdl0f4_'
+SECRET_KEY = django_secret_key.SECRET_KEY
+DEBUG = debug.DEBUG if debug else False
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+ALLOWED_HOSTS = hosts.ALLOWED_HOSTS
+INTERNAL_IPS = hosts.INTERNAL_IPS
 
-if DEBUG:
-    ALLOWED_HOSTS = ["192.168.1.76",'127.0.0.1','81.147.70.233']
-    INTERNAL_IPS = [
-       "192.168.1.76"
-    ]
-else:
-    ALLOWED_HOSTS = ['www.BranthamGarageSale.org.uk']
-    INTERNAL_IPS = []
 
 
 STATIC_URL = 'static/'
@@ -50,7 +60,6 @@ INSTALLED_APPS = [
     'Sponsors.apps.SponsorsConfig',
     'user_management.apps.user_managementConfig',
     'News.apps.NewsConfig',
-    'PageVisits.apps.PageVisitsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -75,7 +84,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'GarageSale.middleware.event.CurrentEvent',
-    'PageVisits.middleware.pageVisits.PageVisitRecorder',
 ]
 
 if DEBUG:
@@ -103,6 +111,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
+                'GarageSale.middleware.context_processors.test_server'
             ],
         },
     },
@@ -128,12 +137,8 @@ DEBUG_TOOLBAR_PANELS = [
 
 WSGI_APPLICATION = 'GarageSale.wsgi.application'
 
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True
-EMAIL_USE_TLS = False
-EMAIL_HOST_USER = "BranthamGarageSale@gmail.com"
-EMAIL_HOST_PASSWORD = "glpf hekx pais jcjt"
+
+ADMINS = [('Tony Flury', 'anthony.flury@btinternet.com')]
 
 
 #if DEBUG:
@@ -141,112 +146,12 @@ EMAIL_HOST_PASSWORD = "glpf hekx pais jcjt"
 #else:
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_DEFAULT = 'BranthemGarageSale@gmail.com'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'garagesale',
-        'USER': 'garagesaleweb',
-        'PASSWORD': '7RWrbJ18tZ',
-        #        'HOST': 'BranthamGarageSale-235.postgres.eu.pythonanywhere-services.com',
-        #        'PORT': '10235',
-        'HOST': 'localhost',
-        'PORT': '5432',
-
-        'TEST': {
-            'NAME': 'test_garagesale'
-        }
-    },
-}
+DATABASES = db_credentials.db_credentials(BASE_DIR)
 
 SESSION_COOKIE_AGE = 365 * 24 * 60 * 60  # 365 days between log ins.
-
-# Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
-
-# Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
-
-LANGUAGE_CODE = 'en-uk'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-
-QUILL_CONFIGS = {
-    'default':{
-        'theme': 'snow',
-        'modules': {
-            'syntax': True,
-            'toolbar': [
-                [
-                    {'font': []},
-                    {'header': []},
-                    {'align': []},
-                    {'list': 'ordered'}, {'list': 'bullet'},
-                    'bold', 'italic', 'underline', 'strike', 'blockquote',
-                    {'indent':'-1'}, {'indent':'+1'},
-                    {'color': []},
-                    {'background': []},
-                ],
-                ['code-block', 'link'],
-                ['clean'],
-            ]
-        }
-    }
-}
-
-STATICFILES_DIRS = [
-]
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-if DEBUG:
-    patterns = [
-        "/user_management/_user_menu",
-    ]
-    DEBUG_TOOLBAR_CONFIG = {
-        'SHOW_TOOLBAR_CALLBACK': lambda request: not any(p in request.path for p in patterns),
-    }
-
-
-APPS_SETTINGS= {
-    'user_management': {
-        'SITE_NAME': 'Brantham Garage Sale',
-        'EMAIL_SENDER': 'BranthamGarageSale@gmail.com'
-    }
-}
-
-SITE_NAME = 'Brantham Garage Sale'
-EMAIL_SENDER = 'BranthamGarageSale@gmail.com'
