@@ -422,13 +422,13 @@ div.about-us.footnote {
 
 div.test_warning {
     position: absolute;
-    bottom: -10px;
-    width : 100%;
+    bottom: 5px;
+    width : 85%;
     background-color: brown;
     padding-left: 1rem;
     padding-right: 1rem;
-    margin-left : 1rem;
-    margin-right : 1rem;
+    left:5%;
+    right:5%;
     border: thick yellow solid;
     font-weight: bold;
     text-align: center;
