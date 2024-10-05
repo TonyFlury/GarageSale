@@ -33,6 +33,7 @@ from django.core import mail  # Mail client for testing
 from django.conf import settings
 from Billboard.views import BillBoardApply
 
+
 # Printing errors
 # print([(error.next_sibling, error) for error in BeautifulSoup(response.content, 'html.parser').select('.errorlist')])
 
@@ -74,30 +75,37 @@ class TestBillboardCreate(TestCaseCommon):
         response = c.get(reverse('Billboard:apply') + '?redirect=' + reverse('getInvolved'))
         self.assertEqual(response.status_code, 200)
 
-        soup = BeautifulSoup(response.content, 'html.parser')
+        # Check that all the expected fields exist
+        self.assertHTMLMustContainNamed(html=response.content,
+                                        selector='input[type="email"]',
+                                        _names={'email'}
+                                        )
+        self.assertHTMLMustContainNamed(html=response.content,
+                                        selector='input[type="text"]',
+                                        _names={'name', 'house_number', 'street_name',
+                                                   'town', 'postcode', 'phone', 'mobile'}
+                                        )
 
-        expected = {'email', 'name', 'house_number', 'street_name', 'town', 'postcode', 'phone', 'mobile'}
-        received = {tag['name'] for tag in soup.find_all('input') if tag['type'] in {'email', 'text'}}
+        # Test for submit and Reset buttons
+        self.assertHTMLMustContainNamed(html=response.content,
+                                        selector='input[type="submit"][value="Save"]',
+                                        _names={'action'},
+                                        )
 
-        self.assertEqual(expected - received, set(), )
-        self.assertEqual(received - expected, set(), )
+        self.assertHTMLMustContainNamed(html=response.content,
+                                        selector='input[type="reset"][value="Reset"]',
+                                        _names={'action'},
+                                        )
 
-        expected = {('action', 'Save')}
-        received = {(tag['name'], tag['value']) for tag in soup.find_all('input') if tag['type'] in {'submit'}}
-
-        self.assertEqual(expected - received, set(), )
-        self.assertEqual(received - expected, set(), )
-
-        values = {(tag['name'], tag['value']) for tag in soup.find_all('input')
-                  if tag['type'] in {'email', 'text'} and tag['name'] in {'email', 'name'}}
-        self.assertEqual({('email', self.user.email),
-                          ('name', f'{self.user.first_name} {self.user.last_name}')},
-                         values)
-
-        # Confirm that only the Reset and save buttons are available
-        buttons = {(tag['name'], tag['value']) for tag in soup.find_all('input') if
-                   tag['type'] in {'submit', 'reset'}}
-        self.assertEqual({('action', 'Reset'), ('action', 'Save')}, buttons)
+        self.assertHTMLElementEquals(html=response.content,
+                                     selector='input[type="text"][name="name"]',
+                                     content=f'{self.user.first_name} {self.user.last_name}',
+                                     msg='Name field does not contain expected users name',
+                                     )
+        self.assertHTMLElementEquals(html=response.content,
+                                     selector='input[type="email"][name="email"]',
+                                     content=self.user.email,
+                                     )
 
     # ToDo - Popups on Delete and Save are not tested.
     def test_0210_save_form(self):
@@ -388,7 +396,7 @@ class TestCreateAnonymous(TestCaseCommon):
         # Confirm that the correct fields are displayed
         expected = {'email', 'name', 'house_number', 'street_name', 'town', 'postcode', 'phone', 'mobile'}
         received = {tag['name'] for tag in soup.find_all('input') if tag['type'] in {'email', 'text'}}
-        self.assertEqual(expected, received )
+        self.assertEqual(expected, received)
 
         # confirm email and name are not disabled
         should_be_enabled = {tag['name'] for tag in soup.find_all('input', attrs={'disabled': False})
@@ -465,7 +473,7 @@ class TestEditDirect(TestCaseCommon):
         self.location.save()
 
         self.billboard = BillboardLocations(location=self.location,
-                                                            event=self.event)
+                                            event=self.event)
         self.billboard.save()
 
     def test_0280_test_direct_edit_registered(self):
