@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+
+<!-- Template for email to be sent to end user_management -->
+
+<html>
+
+{% load static %}
+<link rel="stylesheet" href="{{ base_url }}{% static 'GarageSale/styles/style.css' %}">
+
+
+<body>
+
+    <div style="padding:1em;">
+        <div style="font-size:120%; font-weight:bold; width:100%; text-align:center; margin-bottom:1em">
+            Thank you for requesting a guest for the <a href="{{base_url}}">Brantham Garage Sale</a> website.
+        </div>
+    </div>
+    <div style="width:75%; text-align:center;margin-bottom:1em;">
+            <span id="short-code">
+            The short-code for your guest account is : <strong>{{code}}</strong>
+            </span>
+        <br/>
+        <span id="lifetime">
+        This code will only last for {{lifetime}} minutes.
+        </span>
+    </div>
+    <div class="center-text" style="font-style:italic;margin:1em;">
+        If you did not attempt to register with the website, you can ignore this message.
+    </div>
+</body>
+
+
+</html>

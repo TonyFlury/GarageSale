@@ -1,0 +1,41 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block additionalScripts%}
+<script type="text/javascript" src="{% static 'Location/js/tooltip.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+<h2>Your current Locations</h2>
+    {% for location in object_list %}
+        <div style="float:left; padding:0.5em; margin:1em; border:thin lightgrey solid; border-radius:0.5rem;">
+            <div style="margin-bottom:1rem;">
+                <div>
+                {{location.location_type | safe}}
+                </div>
+                <div>
+                {{location.house_number}} {{location.street_name}}<br/>
+                {{location.post_code}}
+                </div>
+            </div>
+            <div>
+                <input type="button" value="Edit">
+                <input type="button" value="Delete">
+            </div>
+        </div>
+    {% empty %}
+        <h3>You have no locations currently recorded</h3>
+    {% endfor %}
+    <div style="clear:both"></div>
+    <div>
+        <script>
+            function create_clicked(button) {
+                document.location.replace('{% url "Location:create" %}' )
+            }
+        </script>
+        <div style="float:left">
+        <input type="button" onclick="create_clicked()" value="Add new Location">
+        </div>
+    </div>
+{% endblock %}

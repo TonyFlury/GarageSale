@@ -1,0 +1,31 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block additionalScripts%}
+<script type="text/javascript" src="{% static 'Location/js/tooltip.js' %}"></script>
+{% endblock %}
+
+{% block Title %}
+Brantham Garage Sale - Identifying user
+{% endblock %}
+
+{% block body %}
+    <script type="text/javascript">
+    function login() { window.location.replace( "/user/login?next={{next|safe}}" ); }
+    function guest() { window.location.replace( "/user/guest?next={{next|safe}}" ); }
+</script>
+
+<div class="form" style="width:50%;margin:auto;text-align:center;padding:5px;">
+    <H1 style="margin-top:10px">Identifying you</H1>
+    In order to manage your locations we need to know who you are.
+    <form method="POST">
+    <input type="hidden" name="next">
+    <div class="buttons">
+    <input type="button" value="Login" onclick="login()">
+    <input type="button" value="Continue as a Guest" onclick="guest()">
+    </div>
+</form>
+
+</div>
+{% endblock %}

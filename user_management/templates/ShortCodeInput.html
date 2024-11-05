@@ -1,0 +1,89 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+ {% block additionalStyles%}
+ <style>
+input[type='text']:where([autocomplete=one-time-code]) {
+  --otp-digits: 7;
+  --otp-ls: 2ch;
+  --otp-gap: 1.25;
+  --otp-bg: lightblue;
+
+  /* private consts */
+  --_otp-bgsz: calc(var(--otp-ls) + 1ch);
+  --_otp-digit: 0;
+
+  all: unset;
+  background:
+  linear-gradient(90deg,
+    var(--otp-bg, #BBB) calc(var(--otp-gap) * var(--otp-ls)),
+    transparent 0),
+    linear-gradient(90deg,
+    var(--otp-bg, #555) calc(var(--otp-gap) * var(--otp-ls)),
+    transparent 0
+  );
+  background-position: calc(var(--_otp-digit) * var(--_otp-bgsz)) 0, 0 0;
+  background-repeat: no-repeat, repeat-x;
+  background-size: var(--_otp-bgsz) 100%;
+  caret-color: var(--otp-cc, #222);
+  caret-shape: block;
+  color:black;
+  clip-path: inset(0% calc(var(--otp-ls) / 2) 0% 0%);
+  font-family: ui-monospace, monospace;
+  font-size: var(--otp-fz, 1rem);
+  inline-size: calc(var(--otp-digits) * var(--_otp-bgsz));
+  letter-spacing: var(--otp-ls);
+  padding-block: var(--otp-pb, 1ch);
+  padding-inline-start: calc(((var(--otp-ls) - 1ch) / 2) * var(--otp-gap));
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+        <h2>Enter the short code sent to {{obfuscated_email}}</h2>
+    <div class="form">
+        <form method="POST" action="{{action}}">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                {{retry_count}} {{max_retry}}
+                <div id="InvalidAttempt">
+                    {% for err in form.non_field_errors %}
+                        {% if retry_count < max_retry %}
+                        {{err}} : {{retry_count}} Attempts remaining
+                        {% else %}
+                            {{err}}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {{ form.email }}
+            <strong>{{form.short_code.label}}</strong> {{ form.short_code }}
+
+            <div class="buttons">
+                <span style="float:left">
+                    <script>
+                            function resend_short_code()
+                            {
+                                window.location.replace( {{ resend_url }} );
+                            }
+                    </script>
+                    <input type="button" id='id_Resend' onclick="resend_short_code()" value="Send a new Code">
+                </span>
+                <span style="float:right">
+                    <input type="submit" id='id_Continue' value="Continue">
+                </span>
+            </div>
+            <script>
+                const input = document.querySelector('[autocomplete=one-time-code');
+input.addEventListener('input', () => input.style.setProperty('--_otp-digit', input.selectionStart));
+            </script>
+        </form>
+    {% if post_form %}
+        <div class="post-form">
+            {{post_form | safe}}
+        </div>
+    {% endif %}
+    </div>
+{% endblock %}

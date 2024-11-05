@@ -1,11 +1,12 @@
 :root {
   --ToolbarHeight: 40px;
-  --BackGroundColor: #4444FF;
+  --BackGroundColor: #1e90ff;
   --fontColor : lightgrey;
   --PaperColor : #CCCB9D;
 }
 
-body { background : var(--BackGroundColor) ;
+body {
+    background: var(--BackGroundColor);
     color : var(--fontColor);
     font-size:14pt;
 }
@@ -137,11 +138,15 @@ div.form {
     color:white;
  /*   margin:auto; */
 }
+
+table, td, th {
+    /* border: thin solid white; */
+}
 @media only screen and (min-width: 1141px){
     .form{
         padding:20px;
         border-radius:30px;
-            width : 80%;
+            width : 100%;
     }
 }
 
@@ -163,12 +168,12 @@ input[type="text"], input[type="password"], input[type="email"], input[type="url
 {
     color : var(--fontColor);
     background: var(--BackGroundColor);
-    border-radius: 10px;
-    padding-left: 5px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    margin:5px;
-    box-shadow: 2px 2px 2px rgba(1,1,1,1) inset;
+    border-radius: 0.5rem;
+    padding-left: 0.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    /* margin:5px; */
+    box-shadow: 1px 1px rgba(1,1,1,1) inset;
     font-size:inherit;
 }
 input[type="url"] {
@@ -193,7 +198,7 @@ div.form .buttons input{
     margin : 15px;
 }
 
-div.form input[type='checkbox']
+/*div.form input[type='checkbox']
 {
     height:2.5em;
     outline: 1px solid var(--BackGroundColor);
@@ -204,7 +209,7 @@ div.form input[type='checkbox']
     border-radius: 5px;
     box-shadow: 2px 2px 5px 1px black ;
     padding:2px;
-}
+} */
 
 div.form input[type='checkbox']:checked
 {
@@ -222,14 +227,25 @@ div.form input[type='text']:disabled, input[type='email']:disabled
     font-weight:bold;
 }
 
-div.form .errorlist {
-    font-size : 125%;
-    color: orange;
+div.form ul.errorlist {
+    font-size: 75%;
+    color: black;
     font-weight: bold;
+    background-color: lightgrey;
+    /* border: thin black solid; */
+    padding: 0.75rem;
+    /* padding-left: 0px; */
+    border-radius: 1rem;
+    width: fit-content;
+}
+
+td.errorlist {
+    /* width: 80%; */
 }
 
 div.form .errorlist li{
     list-style-type: none;
+    width: fit-content;
 }
 div.notes{
 
@@ -256,9 +272,9 @@ a:hover {
 div.TopBar {
     position:sticky;
     top:0;
-    background: rgba(68, 68, 255, 1.0);
     opacity:1;
     z-index:1;
+    background: rgba(30,144,255,1.0);
 }
 
 div.TopBar::after {
@@ -372,10 +388,23 @@ div.form th:has(label[for='id_gift_aid']){
 div.form label[for='id_gift_aid']{
     margin-top:10px;
 }
-div.form .helptext {
-    font-size : 120%;
-    margin-top : 0.5em;
-    display:block;
+
+div.form th:has(label) +td .helptext {
+    font-size : 80%;
+    padding: 5px;
+    display:None;
+    background : #f0f0f0;
+    border: thin black solid;
+    color : black;
+    position : absolute;
+    box-shadow:2px 2px 5px #0f0f0f;
+    border-radius:15px;
+    z-index: 1000;
+}
+
+div.form th:has(label:hover) +td .helptext
+{
+display: block;
 }
 
 a.footnote {
@@ -420,8 +449,61 @@ div.about-us.footnote {
 }
 
 
-div.test_warning {
+input[type="checkbox"] {
+    position: relative;
+/*    left: 1rem;  *//* TODO - 1rem doesn't work on small screen style */
+    margin: 8px 0 0 16px;
+    z-index:-1;
+    display:none;
+}
+th:has(+td input[type="checkbox"])  label{
+    position: relative;
+    padding: 5px 0 0 50px;
+    line-height: 2.0em;
+}
+th:has(+td input[type="checkbox"]) label:after {
+    content: "";
     position: absolute;
+    display: block;
+/*    left: +10rem; */
+    top: 0px;
+    width: 24px; /* x*3 */
+    height: 24px; /* x*3 */
+    border-radius: 16px; /* x*2 */
+    background: #b0b0b0;
+    border: 1px solid #d9d9d9;
+    -webkit-transition: all 0.3s;
+    transition: all 0.3s;
+}
+
+th:has(+td input[type="checkbox"]) label:before {
+    content: "";
+    position: absolute;
+    display: block;
+/*    left: +10rem; */
+    top: 0;
+    width: 40px; /* x*5 */
+    height: 24px; /* x*3 */
+    border-radius: 16px; /* x*2 */
+    background: #e4e4e4;
+    border: 1px solid #d9d9d9;
+    -webkit-transition: all 0.3s;
+    transition: all 0.3s;
+}
+
+th:has(+td input[type="checkbox"]) label:hover:after {
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+th:has(+td input[type="checkbox"]:checked) label:after {
+    margin-left: 16px;
+    background: #3333DD;
+}
+th:has(+td input[type="checkbox"]:checked) label:before {
+    background: #55D069;
+}
+
+div.test_warning {
+    position: fixed;
     bottom: 5px;
     width : 85%;
     background-color: brown;

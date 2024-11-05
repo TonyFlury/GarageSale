@@ -20,8 +20,6 @@ from GarageSale.models import MOTD, EventData
 from .forms import NewsForm, MotdForm, EventForm, SponsorForm
 from Sponsors.views import social_media_items
 from abc import abstractmethod
-from Billboard.models import BillboardLocations
-
 
 def PublishNews(request, news_id):
     publish_news(request, news_id)

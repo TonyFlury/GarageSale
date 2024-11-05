@@ -19,9 +19,11 @@ from django.contrib.auth.models import AnonymousUser
 from django import template
 from django.core import exceptions
 from django.contrib.auth.models import User
-from ..models import EventData, MOTD, Location  # should be able to get this from the request context
-from Billboard.models import BillboardLocations
-from SaleLocation.models import SaleLocations
+from Location.models import Location  # should be able to get this from the request context
+from GarageSale.models import MOTD
+
+#from Billboard.models import BillboardLocations
+#from SaleLocation.models import SaleLocations
 
 from django.utils.dateformat import DateFormat
 

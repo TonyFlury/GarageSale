@@ -7,8 +7,6 @@
 from django.template.response import TemplateResponse
 
 from GarageSale.models import EventData
-from Billboard.models import BillboardLocations
-from SaleLocation.models import SaleLocations
 from datetime import date
 from collections import namedtuple
 

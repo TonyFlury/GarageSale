@@ -25,11 +25,11 @@
             </table>
             <div class="buttons">
                 {% for button in buttons %}
-                    {% if button.redirect %}
+                    {% if button.next %}
                         <script>
                             function {{button.name|lower|cut:' '}}_redirect()
                             {
-                                window.location.replace( '{{button.redirect}}' );
+                                window.location.replace( '{{button.next}}' );
                             }
                         </script>
                         <input type="{{button.type}}" onclick="{{button.name|lower|cut:' '}}_redirect()"  value="{{button.name}}">

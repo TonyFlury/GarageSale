@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+
 from pathlib import Path
 
 # Site specific credentials
@@ -43,8 +44,6 @@ DEBUG = debug.DEBUG if debug else False
 ALLOWED_HOSTS = hosts.ALLOWED_HOSTS
 INTERNAL_IPS = hosts.INTERNAL_IPS
 
-
-
 STATIC_URL = 'static/'
 STATIC_ROOT = 'static'
 MEDIA_ROOT = 'media'
@@ -55,11 +54,13 @@ MEDIA_URL = '/media/'
 INSTALLED_APPS = [
     'team_pages.apps.TeamPagesConfig',
     'GarageSale.apps.GarageSaleConfig',
-    'Billboard.apps.BillboardConfig',
-    'SaleLocation.apps.SaleLocationConfig',
+    'Location.apps.LocationConfig',
+#    'Billboard.apps.BillboardConfig',
+#    'SaleLocation.apps.SaleLocationConfig',
     'Sponsors.apps.SponsorsConfig',
     'user_management.apps.user_managementConfig',
     'News.apps.NewsConfig',
+    'django.forms',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -68,6 +69,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_quill',
 ]
+
+AUTH_USER_MODEL = "user_management.UserExtended"
 
 if DEBUG:
     INSTALLED_APPS.extend(
@@ -100,10 +103,9 @@ TEMPLATES = [
             'libraries': {
                 'team_page_tags': "team_pages.templatetags.team_page_tags",
                 'event_data_tags': "GarageSale.templatetags.garage_sale_data",
-                'user_management_tags': "user_management.templatetags.extras",
-                'newsletter_tags': "News.templatetags.extras",
-                'billboard_tags': 'Billboard.templatetags.extras',
-                'sponsor_tags': 'Sponsors.templatetags.extras',
+                'user_management_tags': "user_management.templatetags.user_extras",
+                'newsletter_tags': "News.templatetags.enrol",
+                'sponsor_tags': 'Sponsors.templatetags.social_media',
             },
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -141,17 +143,23 @@ WSGI_APPLICATION = 'GarageSale.wsgi.application'
 ADMINS = [('Tony Flury', 'anthony.flury@btinternet.com')]
 
 
-#if DEBUG:
-#    EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
-#else:
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_DEFAULT = 'BranthemGarageSale@gmail.com'
+if DEBUG:
+    EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
+else:
+    EMAIL_BACKEND = 'GarageSale.middleware.email.EmailExtended'
+    EMAIL_DEFAULT = 'BranthemGarageSale@gmail.com'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+TIME_ZONE = 'UTC'
 
 DATABASES = db_credentials.db_credentials(BASE_DIR)
 
-SESSION_COOKIE_AGE = 365 * 24 * 60 * 60  # 365 days between log ins.
+SESSION_COOKIE_AGE = 365 * 24 * 60 * 60  # Allow upto 365 days between log ins.
+
+APPS_SETTINGS = {
+    'user_management':{'EMAIL_SENDER':'BranthamGarageSale@gmail.com',
+                   'SITE_NAME':'Brantham Garage Sale v2',
+                   }
+}

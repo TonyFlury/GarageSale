@@ -1,0 +1,59 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block additionalScripts%}
+<script type="text/javascript" src="{% static 'Location/js/tooltip.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+
+<h2>
+    Garage Sale Location
+</h2>
+<div class="form">
+    <form method=POST action='{{action}}' id="EditSalesLocation">
+        <table>
+            {% csrf_token %}
+            {{ form }}
+        </table>
+        <div class="buttons">
+            <input type="button" name='action' onclick="cancel_SalesLocation()" value="Cancel" id="CancelButton">
+            <input type="reset" name='action' value="Reset" id="ResetButton">
+            {% if delete %}
+                <input type="submit" name='action' value="Delete" id="DeleteButton">
+            {% endif %}
+            <input type="submit" name='action' value="Save" id="SaveButton">
+        </div>
+    </form>
+    <script type="text/javascript">
+        /* Javascript for pre-save and pre-delete confirmation popups */
+        var saveButton = document.getElementById("SaveButton");
+        saveButton.addEventListener("click", function() {
+            if (confirm('Do you want to Save this Application?')) {
+                document.getElementById("EditSalesLocation").submit()
+            } else {
+                event.preventDefault();
+            }
+        });
+
+        var deleteButton = document.getElementById("DeleteButton");
+        if (deleteButton != null) {
+            deleteButton.addEventListener("click", function() {
+                if (confirm('Do you want to Delete this application?')) {
+                    document.getElementById("EditSalesLocation").submit()
+                } else {
+                    event.preventDefault();
+                }
+            });
+        }
+
+        /* Implement cancel button as a simple return to the GetInvolved page */
+        function cancel_SalesLocation()
+        {
+            window.location.replace( '{% url "Location_create" %}' );
+         }
+    </script>
+
+</div>
+{% endblock %}

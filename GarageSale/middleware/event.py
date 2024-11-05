@@ -8,6 +8,7 @@ from ..models import EventData
 from django.core import exceptions
 
 
+
 class CurrentEvent:
     def __init__(self, get_response):
         self.get_response = get_response

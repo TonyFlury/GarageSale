@@ -15,30 +15,32 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, reverse_lazy
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
 
 from django.views.generic import TemplateView
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", views.home, name="home"),
-    path("getInvolved", TemplateView.as_view(template_name="getInvolved.html"), name="getInvolved"),
+    path("getInvolved", RedirectView.as_view(url=reverse_lazy('Location:view'))),
+#    path("getInvolved", include('Location.urls'), name="getInvolved"),
     path('about_us', TemplateView.as_view(template_name='aboutUs.html'), name='AboutUs'),
     path('contact', TemplateView.as_view(template_name='contact.html'), name='ContactUs'),
     path('privacy', TemplateView.as_view(template_name='privacy_policy.html'), name='Privacy'),
     path('blind_auction', TemplateView.as_view(template_name='blind_auction.html'), name='BlindAuction'),
     path('donate', TemplateView.as_view(template_name='donate.html'), name='Donate'),
 
+    path('location/', include('Location.urls')),
     path('team_page/', include('team_pages.urls')),
     path('news/', include('News.urls')),
     path('user/', include('user_management.urls')),
-    path('billboard/', include('Billboard.urls')),
-    path('sale_location/', include('SaleLocation.urls')),
+#    path('billboard/', include('Billboard.urls')),
+#    path('sale_location/', include('SaleLocation.urls')),
     path('sponsors/', include('Sponsors.urls')),
-
 ]
 
 if settings.DEBUG:

@@ -3,3 +3,11 @@
 2) in the new folder create a new virtual env using the deployment list.
 3) confirm the contents of the virtual env
 4)
+
+Branches to merge :
+
+security
+2.0-donate - done
+remove-pagevisits - done
+test-improvments (ongoing)
+single-location-form

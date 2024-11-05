@@ -6,42 +6,60 @@
 Summary :
     Test the User Management functionality
 """
-import time
+import pathlib
 
-from .common import TestCaseCommon
+from datetime import datetime
+from uuid import uuid1
+
+from .common import SmartHTMLTestMixins, TestUserAccessMixin
 
 import bs4
-import django.core.mail
-from django.test import TestCase, Client, RequestFactory
+from django.test import TestCase, Client
 from user_management.models import UserVerification
+
 from django.contrib.auth.models import User
 from django.shortcuts import reverse, resolve_url
-from django.test.utils import override_settings
-from django.core import mail  # Test client for email
 
 from user_management.models import PasswordResetApplication
 
 from user_management.apps import appsettings, settings
 
-from user_management import views
-
 from bs4 import BeautifulSoup
 
-from datetime import datetime
-from uuid import uuid1
+from django.core import mail
 
-import logging
-
-logger = logging.Logger("user-testing", level=logging.DEBUG)
-handler = logging.FileHandler('./debug.log', )
-handler.setLevel(logging.DEBUG)
-logger.addHandler(handler)
+import selenium.webdriver
 
 
-# TODO - test cases for missing Settings (not needed for this site)
-# TODO - will need comprehensive testing if we productize the user management app.
+class TestLocationCreateAccess(TestUserAccessMixin):
+    """Test that the User Access Mixin correctly protects access to the location_create page"""
+    screen_shot_sub_directory = 'location_create'
 
-class TestUserCreation(TestCaseCommon):
+    @classmethod
+    def get_driver(cls):
+        return selenium.webdriver.Firefox()
+
+    def get_test_url(self):
+        return f"{self.live_server_url}/location/create"
+
+
+class TestLocationViewAccess(TestUserAccessMixin):
+    """Test that the User Access Mixin correctly protects access to the location_view page"""
+    screen_shot_sub_directory = 'location_view'
+
+    @classmethod
+    def get_driver(cls):
+        return selenium.webdriver.Firefox()
+
+    def get_test_url(self):
+        return f"{self.live_server_url}/location/view"
+
+
+# ToDo - test creation/listing and modification of locations
+# TODO - Convert registration, login and password resets to use Selenium testing
+
+
+class TestUserCreation(SmartHTMLTestMixins, TestCase):
     def setUp(self):
         super().setUp()
         pass
@@ -125,7 +143,6 @@ class TestUserCreation(TestCaseCommon):
                                                            kwargs={"uuid": verify[0].uuid})) +
                f'?redirect={reverse("home")}')
 
-        logger.debug(url)
         # Confirm that the form will invoke the URL and that the form has a submit button
         self.assertEqual(form.attrs['action'], url)
 
@@ -199,7 +216,7 @@ class TestUserCreation(TestCaseCommon):
 
         # registration form should redirect to the login page.
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.request['PATH_INFO'],'/user/login' )
+        self.assertEqual(response.request['PATH_INFO'], '/user/login')
 
         soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -213,7 +230,7 @@ class TestUserCreation(TestCaseCommon):
                                              first_name='harry', last_name='test', password='blip',
                                              is_active=True)
         c = Client()
-        c.login(username='harry@test.com',password='blip')
+        c.login(username='harry@test.com', password='blip')
         response = c.post('/user/pwd_change?redirect=/',
                           data={'old_password': 'blip',
                                 'new_password1': 'blah',
@@ -232,7 +249,7 @@ class TestUserCreation(TestCaseCommon):
         self.assertTrue(user.is_authenticated)
         self.assertTrue(user.is_active)
 
-# ToDo need to test password forgotten page.
+    # ToDo need to test password forgotten page.
     def test_0140_pwd_reset_application(self):
         self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
                                              first_name='harry', last_name='test', password='blip',
@@ -248,7 +265,7 @@ class TestUserCreation(TestCaseCommon):
         self.assertEqual(input_tags, {'email'})
 
         button_tags = {tag.attrs['value'] for tag in soup.select('input[type="button"],input[type="submit"]')}
-        self.assertEqual(button_tags, {'Cancel','Request Password Reset'})
+        self.assertEqual(button_tags, {'Cancel', 'Request Password Reset'})
 
     def test_0142_pwd_reset_application_complete(self):
         self.user = User.objects.create_user(username='harry@test.com', email='harry@test.com',
@@ -256,7 +273,7 @@ class TestUserCreation(TestCaseCommon):
                                              is_active=True)
         c = Client()
         response = c.post("/user/pwd_reset?redirect=/getInvolved",
-                              data={'email': 'harry@test.com'} )
+                          data={'email': 'harry@test.com'})
 
         self.assertEqual(response.status_code, 200)
 
@@ -274,7 +291,7 @@ class TestUserCreation(TestCaseCommon):
         self.assertEqual(email.subject, f"{site_name}: Password reset requested")
         self.assertEqual(email.to, ['harry@test.com'])
 
-        soup = BeautifulSoup(email.body,'html.parser')
+        soup = BeautifulSoup(email.body, 'html.parser')
 
         # Make sure that the button has the right destination
         action = soup.find('form').attrs['action']
@@ -294,18 +311,18 @@ class TestUserCreation(TestCaseCommon):
                                              is_active=True)
 
         secret = uuid1()
-        application = PasswordResetApplication(user = self.user, uuid = secret)
+        application = PasswordResetApplication(user=self.user, uuid=secret)
         application.save()
 
         c = Client()
         response = c.get(resolve_url('user_management:reset_password', secret))
 
         self.assertEqual(response.status_code, 200)
-        soup = BeautifulSoup(response.content,'html.parser')
+        soup = BeautifulSoup(response.content, 'html.parser')
 
         fields = [tag['name'] for tag in soup.select('input[type="password"]')]
         buttons = [tag['value'] for tag in soup.select('input[type="reset"],input[type="submit"]')]
-        self.assertEqual(fields, ['new_password1','new_password2'])
+        self.assertEqual(fields, ['new_password1', 'new_password2'])
         self.assertEqual(buttons, ['Reset Form', 'Password Reset'])
 
     def test_0147_pwd_reset_complete(self):
@@ -314,13 +331,13 @@ class TestUserCreation(TestCaseCommon):
                                              is_active=True)
 
         secret = uuid1()
-        application = PasswordResetApplication(user = self.user, uuid = secret)
+        application = PasswordResetApplication(user=self.user, uuid=secret)
         application.save()
 
         c = Client()
         response = c.post(resolve_url('user_management:reset_password', secret),
-                          data={'new_password1':'blop',
-                                'new_password2':'blop'})
+                          data={'new_password1': 'blop',
+                                'new_password2': 'blop'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates[0].name, 'generic_response.html')
 
