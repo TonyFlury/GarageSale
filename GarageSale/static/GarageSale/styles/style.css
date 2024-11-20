@@ -139,6 +139,12 @@ div.form {
  /*   margin:auto; */
 }
 
+div.form.NoBorder {
+    border:None;
+    color:white;
+ /*   margin:auto; */
+}
+
 table, td, th {
     /* border: thin solid white; */
 }
@@ -189,13 +195,23 @@ div.form select[multiple] {
 
 div.form .buttons input{
     background : var(--BackGroundColor);
-    font-size: 20px;
     padding : 5px ;
+    font-size: 1rem;
     color : white ;
-    border : 3px solid white;
-    border-radius : 5px ;
-    box-shadow: 5px 5px 2px 2px rgba(1,1,1,1);
+    border : thin solid white;
+    border-radius : 0.5rem; ;
+    box-shadow: 2px 2px 1px 1px rgba(1,1,1,1);
     margin : 15px;
+}
+
+div.duplicate {
+    font-size: 80%;
+    background-color: red;
+    border: thin white solid;
+    color: white;
+    margin: 0.5rem;
+    margin-top:1rem;
+    padding: 0.25rem;
 }
 
 /*div.form input[type='checkbox']
@@ -503,9 +519,11 @@ th:has(+td input[type="checkbox"]:checked) label:before {
 }
 
 div.test_warning {
-    position: fixed;
+    clear:both;
+    position: absolute;
     bottom: 5px;
     width : 85%;
+    min-height: auto;
     background-color: brown;
     padding-left: 1rem;
     padding-right: 1rem;
@@ -513,5 +531,17 @@ div.test_warning {
     right:5%;
     border: thick yellow solid;
     font-weight: bold;
+    font-size:75%;
     text-align: center;
+}
+
+span.location_type {
+    margin-right: 2rem;
+}
+
+div.location_type {
+    margin-bottom: 1rem;
+}
+div.address {
+    margin-left: 1rem;
 }

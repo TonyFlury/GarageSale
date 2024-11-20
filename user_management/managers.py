@@ -19,6 +19,7 @@ class ExtendUserManager(BaseUserManager):
         extra_fields.setdefault('is_guest', True)
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
+        extra_fields.setdefault('is_verified', False)
 
         email = self.normalize_email(email)
         if not extra_fields.get("is_guest"):
@@ -32,11 +33,12 @@ class ExtendUserManager(BaseUserManager):
         user.save()
         return user
 
-    def create_user(self, email, password, **extra_fields):
+    def create_user(self, email, password=None, **extra_fields):
         """
         Create and save a user with the given email and password.
         """
         extra_fields.setdefault('is_guest', False)
+        extra_fields.setdefault('is_verified', False)
 
         if not email:
             raise ValueError(_("The Email must be set"))

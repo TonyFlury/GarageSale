@@ -3,23 +3,24 @@ import datetime
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
-from django.conf import settings
 from .managers import ExtendUserManager
 from django.utils.crypto import get_random_string
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
-from django.db.models import Q
+from django.db import transaction
 from uuid import uuid1
-
+from django.shortcuts import reverse
+from django.utils.html import escape
 
 class UserExtended(AbstractUser):
     username = None
     email = models.EmailField(_("email address"), unique=True)
 
     phone = models.CharField(max_length=12)
-    mobile = models.CharField(max_length=12)
 
     is_guest = models.BooleanField(default=False)
+
+    is_verified = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -58,6 +59,8 @@ class UserVerification(models.Model):
 
 
 class RegistrationVerifier(UserVerification):
+    registration_lifetime = 24 * 60
+
     class Meta:
         indexes = [
             models.Index(name='byUUid', fields=['uuid'])
@@ -65,26 +68,67 @@ class RegistrationVerifier(UserVerification):
 
     uuid = models.UUIDField(null=True, blank=True, default=None)
 
+    def link_url(self, request, next_url, site_base=None):
+        if request:
+            return (request.build_absolute_uri(
+                location=reverse("user_management:verify", kwargs={"uuid": self.uuid})) +
+                   "?" + escape(f'next={next_url}'))
+        elif not request and site_base:
+            relative_url = reverse("user_management:verify", kwargs={"uuid":self.uuid})
+            return f'{site_base}{relative_url}?next={next_url}'
+        else:
+            raise NotImplementedError('Need either a request or a site base')
+
     def save(self, *args, **kwargs):
         self.uuid = uuid1()
         super().save(*args, **kwargs)
+        return self
 
     @classmethod
     def confirm_registration_verification(cls, uuid):
         """Return the email address for this registration attempt or Raise ObjectNotFound"""
         try:
-            inst: UserVerification = cls.objects.filter(type="uuid")
+            inst: UserVerification = cls.objects.filter(uuid=uuid)
             return inst.email
         except cls.DoesNotExist:
             raise
 
     @classmethod
     def add_registration_verifier(cls, user, *args, **kwargs):
-        """ Registrations have a 24 hour timeout"""
-        inst = cls(user=user,
-                   expiry_timestamp=timezone.now() + datetime.timedelta(hours=24))
-        inst.save(*args, **kwargs)
+        """ Registrations have a 24-hour timeout"""
+
+        is_guest = user.is_guest
+
+        password = kwargs.pop('password', None)
+        first_name = kwargs.pop('first_name', None)
+        last_name = kwargs.pop('last_name', None)
+        phone = kwargs.pop('phone', None)
+        expiry_timestamp = kwargs.pop('expiry_timestamp', timezone.now() + datetime.timedelta(minutes=cls.registration_lifetime))
+
+        with transaction.atomic():
+            user.is_verified = False
+            user.save()
+
+            inst = cls(email=user.email,
+                       expiry_timestamp=expiry_timestamp)
+            inst.save(*args, **kwargs)
+
+            # Todo - should we defer setting data in all cases ???
+
+            # For guest users we defer setting passwords, name and phone until the registration completes
+            if is_guest:
+                additional = AdditionalData(verifier=inst, password=password, first_name=first_name, last_name=last_name,
+                                            phone=phone)
+                additional.save(*args, **kwargs)
+
         return inst
+
+class AdditionalData(models.Model):
+    verifier = models.OneToOneField(RegistrationVerifier, on_delete=models.CASCADE, related_name='AdditionalData')
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
+    phone = models.CharField(max_length=13)
+    password = models.CharField(max_length=128)
 
 
 class GuestVerifier(UserVerification):
@@ -123,17 +167,40 @@ class GuestVerifier(UserVerification):
     @classmethod
     def add_guest_verifier(cls, email, *args, **kwargs):
         """Guest verification - short code lasts one hour"""
-        kwargs.setdefault('expiry', timezone.now() + datetime.timedelta(minutes=cls.short_code_lifetime))
-        kwargs.setdefault('retry_count', cls.max_retry)
+
+        expiry = kwargs.pop('expiry', timezone.now() + datetime.timedelta(minutes=cls.short_code_lifetime))
+        retry_count = kwargs.pop('retry_count', cls.max_retry)
 
         inst = cls(email=email,
-                   expiry_timestamp=kwargs['expiry'],
-                   retry_count=kwargs['retry_count'],
+                   expiry_timestamp=expiry,
+                   retry_count=retry_count,
                    reason_code=None)
-        inst.save()
+        inst.save( *args, **kwargs)
         return inst
 
 
-class PasswordResetApplication(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='password_resets', on_delete=models.CASCADE)
+class PasswordResetApplication(UserVerification):
+
+    password_reset_lifetime = 60
+
+    class Meta:
+        indexes = [
+            models.Index(name='byUUID', fields=['uuid'])
+        ]
+
     uuid = models.UUIDField(db_index=True)
+
+    @classmethod
+    def add_password_reset(cls, user, *args, **kwargs):
+        """Password_resets have a 1-hour timeout"""
+
+        with transaction.atomic():
+            user.is_verified = False
+            user.save()
+
+            inst = cls(email=user.email,
+                       expiry_timestamp=timezone.now() + datetime.timedelta(minutes=cls.password_reset_lifetime),
+                       uuid=uuid1())
+            inst.save(*args, **kwargs)
+
+        return inst

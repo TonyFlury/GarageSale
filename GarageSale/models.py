@@ -70,12 +70,12 @@ class EventData(models.Model):
     """
     objects = models.Manager()
     CurrentFuture = CurrentFuture()
-    event_logo = models.ImageField(blank=True, upload_to=save_event_logo_to)    # The specific logo for this years event
+    event_logo = models.ImageField(null=True, upload_to=save_event_logo_to)    # The specific logo for this years event
     event_date = models.DateField()                                             # The date of the actual sale event
-    open_billboard_bookings = models.DateField()                                # When Billboard bookings open
-    close_billboard_bookings = models.DateField()                               # When Billboard bookings close
-    open_sales_bookings = models.DateField()                                    # When Sales bookings open
-    close_sales_bookings = models.DateField()                                   # When Sales bookings open
+    open_billboard_bookings = models.DateField(null=True)                                # When Billboard bookings open
+    close_billboard_bookings = models.DateField(null=True)                               # When Billboard bookings close
+    open_sales_bookings = models.DateField(null=True)                                    # When Sales bookings open
+    close_sales_bookings = models.DateField(null=True)                                   # When Sales bookings open
     use_from = models.DateField()
 
     def __str__(self):

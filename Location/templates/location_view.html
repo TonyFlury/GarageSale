@@ -1,41 +1,55 @@
 {% extends "_base_with_toolbar.html" %}
 {% load static %}
 {% load user_management_tags %}
-
+{% load location_tags %}
 {% block additionalScripts%}
 <script type="text/javascript" src="{% static 'Location/js/tooltip.js' %}"></script>
 {% endblock %}
 
 {% block body %}
+<script>
+function click_redirect( target ) {
+    let url = target.getAttribute('dest_url')
+    document.location.replace(url);
+}
+</script>
 <h2>Your current Locations</h2>
     {% for location in object_list %}
-        <div style="float:left; padding:0.5em; margin:1em; border:thin lightgrey solid; border-radius:0.5rem;">
+        <div class='form' location_id="{{ location.ext_id }}" style="float:left; width:auto; padding:0.5em; margin:1em; border:thin lightgrey solid; border-radius:0.5rem;">
             <div style="margin-bottom:1rem;">
-                <div>
-                {{location.location_type | safe}}
+                <div class="location_type">
+                <span class="location_type_sale">Sale : {% location_type_icon location 'sale_event' %}</span>
+                <span class="location_type_ad_board">Ad Board : {% location_type_icon location 'ad_board' %}</span>
                 </div>
-                <div>
-                {{location.house_number}} {{location.street_name}}<br/>
-                {{location.post_code}}
+                <div class="address">
+                    {{location.house_number}}, {{location.street_name}}<br/>
+                    {{location.town}}<br/>
+                    {{location.postcode}}
                 </div>
+                {% if location.possible_duplicate %}
+                    <div class="duplicate">This location is possibly duplicated</div>
+                {% endif %}
             </div>
-            <div>
-                <input type="button" value="Edit">
-                <input type="button" value="Delete">
+
+            <div class="buttons">
+                <input type="button" onclick="click_redirect(this)" dest_url={% url "Location:update" location.ext_id %} value="Edit">
+                <input type="button" onclick="click_redirect(this)" dest_url={% url "Location:delete" location.ext_id %} value="Delete">
             </div>
         </div>
     {% empty %}
         <h3>You have no locations currently recorded</h3>
     {% endfor %}
     <div style="clear:both"></div>
-    <div>
-        <script>
-            function create_clicked(button) {
-                document.location.replace('{% url "Location:create" %}' )
-            }
-        </script>
-        <div style="float:left">
-        <input type="button" onclick="create_clicked()" value="Add new Location">
+    <div class="form NoBorder">
+        <div class="buttons">
+            <script>
+                function create_clicked() {
+                    document.location.replace('{% url "Location:create" %}' )
+                }
+            </script>
+            <div style="float:left">
+                <input type="button" onclick="create_clicked()" value="Add new Location">
+            </div>
         </div>
     </div>
 {% endblock %}

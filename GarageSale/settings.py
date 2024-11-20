@@ -18,7 +18,7 @@ from credentials import django_secret_key
 from credentials import email_credentials
 from credentials import hosts
 
-try :
+try:
     from credentials import test_server
 except ImportError:
     test_server = None
@@ -33,7 +33,6 @@ except ImportError:
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -47,7 +46,7 @@ INTERNAL_IPS = hosts.INTERNAL_IPS
 STATIC_URL = 'static/'
 STATIC_ROOT = 'static'
 MEDIA_ROOT = 'media'
-MEDIA_URL = '/media/'
+MEDIA_URL = 'media/'
 
 # Application definition
 
@@ -55,8 +54,8 @@ INSTALLED_APPS = [
     'team_pages.apps.TeamPagesConfig',
     'GarageSale.apps.GarageSaleConfig',
     'Location.apps.LocationConfig',
-#    'Billboard.apps.BillboardConfig',
-#    'SaleLocation.apps.SaleLocationConfig',
+    #    'Billboard.apps.BillboardConfig',
+    #    'SaleLocation.apps.SaleLocationConfig',
     'Sponsors.apps.SponsorsConfig',
     'user_management.apps.user_managementConfig',
     'News.apps.NewsConfig',
@@ -75,7 +74,7 @@ AUTH_USER_MODEL = "user_management.UserExtended"
 if DEBUG:
     INSTALLED_APPS.extend(
         ['debug_toolbar',
-         'mail_panel',]
+         'mail_panel', ]
     )
 
 MIDDLEWARE = [
@@ -90,7 +89,7 @@ MIDDLEWARE = [
 ]
 
 if DEBUG:
-    MIDDLEWARE.insert(0,'debug_toolbar.middleware.DebugToolbarMiddleware' )
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'GarageSale.urls'
 
@@ -101,6 +100,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'libraries': {
+                'location_tags' : "Location.templatetags.location_data_tags",
                 'team_page_tags': "team_pages.templatetags.team_page_tags",
                 'event_data_tags': "GarageSale.templatetags.garage_sale_data",
                 'user_management_tags': "user_management.templatetags.user_extras",
@@ -134,14 +134,11 @@ DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.redirects.RedirectsPanel',
     'debug_toolbar.panels.profiling.ProfilingPanel',
     'mail_panel.panels.MailToolbarPanel',
-    ]
-
+]
 
 WSGI_APPLICATION = 'GarageSale.wsgi.application'
 
-
 ADMINS = [('Tony Flury', 'anthony.flury@btinternet.com')]
-
 
 if DEBUG:
     EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
@@ -159,7 +156,7 @@ DATABASES = db_credentials.db_credentials(BASE_DIR)
 SESSION_COOKIE_AGE = 365 * 24 * 60 * 60  # Allow upto 365 days between log ins.
 
 APPS_SETTINGS = {
-    'user_management':{'EMAIL_SENDER':'BranthamGarageSale@gmail.com',
-                   'SITE_NAME':'Brantham Garage Sale v2',
-                   }
+    'user_management': {'EMAIL_SENDER': 'BranthamGarageSale@gmail.com',
+                        'SITE_NAME': 'Brantham Garage Sale v2',
+                        }
 }

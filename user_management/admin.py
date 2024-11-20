@@ -6,6 +6,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import UserVerification, UserExtended, GuestVerifier, RegistrationVerifier
 
+from user_management.models import AdditionalData
+
 
 @admin.register(GuestVerifier)
 class GuestVerifierAdmin(admin.ModelAdmin):
@@ -36,3 +38,7 @@ class UserExtendedAdmin(UserAdmin):
 
 admin.site.register(UserExtended, UserExtendedAdmin)
 
+
+@admin.register(AdditionalData)
+class AdditionalDataAdmin(admin.ModelAdmin):
+    pass

@@ -46,11 +46,33 @@ class Location(models.Model):
     creation_timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return (f'{self.user.first_name + " " + self.user.last_name}  \n'
+        return (f'{self.user.email}\n'
                 f'{self.house_number}, {self.street_name}. {self.postcode}\n'
-                f'Ad Board Here {"Yes" if "AdBoard" in self.category else "No"}\n'
-                f'Sale Here {"Yes" if "Sale" in self.category else "No"}')
+                f'Ad Board Here {"Yes" if self.ad_board else "No"}\n'
+                f'Sale Here {"Yes" if self.sale_event else "No"}')
 
     def location_type(self):
         return (f"Sale {'&#x2705;' if self.sale_event else '&#x274E;'}  "
                 f"Ad-Board {'&#x2705;' if self.ad_board else '&#x274E;'}")
+
+    def possible_duplicate(self):
+        """Is this location already entered"""
+        inst = Location.objects.filter(user=self.user, house_number=self.house_number, postcode=self.postcode).exclude(pk=self.pk)
+        if inst:
+            return True
+
+    def simple_hash(self, length=4):
+        """This is not a cryptographic hash - this function simply serves to
+        to generate an obsfucated 'value' for the row to prevent accidental access"""
+        modulo = 2**(2**length)-1
+        rawdata:bytes = (self.user.email + self.house_number + self.postcode).encode('utf-8')
+        return f'{(sum(c for c in rawdata) % modulo):04X}'
+
+    def ext_id(self):
+        """Generate the full external id for this record"""
+        return f'{self.id:04X}' + self.simple_hash()
+
+    @classmethod
+    def get_by_ext_id(cls, ext_id):
+        inst = cls.objects.get(pk=int(ext_id[:4]))
+        return inst if inst and (inst.ext_id() == ext_id) else None
