@@ -124,6 +124,7 @@ padding-bottom : 0px; }
 	/* background: lightblue; */
 	margin-top: 0em;
 	padding-top: 0.5em;
+    padding-bottom: 90px;
 }
 
 @media only screen and (max-width: 1140px){
@@ -168,6 +169,9 @@ table, td, th {
 
 label{
 font-weight:bold;
+    width: 10rem;
+    text-align: right;
+    display: inline-block;
 }
 
 input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="date"], textarea, select
@@ -214,7 +218,7 @@ div.duplicate {
     padding: 0.25rem;
 }
 
-/*div.form input[type='checkbox']
+/*div.forms input[type='checkbox']
 {
     height:2.5em;
     outline: 1px solid var(--BackGroundColor);
@@ -405,6 +409,7 @@ div.form label[for='id_gift_aid']{
     margin-top:10px;
 }
 
+/** help text for table layout **/
 div.form th:has(label) +td .helptext {
     font-size : 80%;
     padding: 5px;
@@ -421,6 +426,32 @@ div.form th:has(label) +td .helptext {
 div.form th:has(label:hover) +td .helptext
 {
 display: block;
+}
+
+/** Helptext mouseover for div layout **/
+
+div.form .field_wrapper span.helptext {
+    font-size : 80%;
+    padding: 5px;
+    display:None;
+    background : #f0f0f0;
+    border: thin black solid;
+    color : black;
+    position : absolute;
+    box-shadow:2px 2px 5px #0f0f0f;
+    border-radius:15px;
+    z-index: 1000;
+}
+
+div.form .field_wrapper:has(label:hover) span.helptext
+{
+    display: block;
+}
+
+
+div.form .field_wrapper .label {
+    width: 15rem;
+    justify-content: right;
 }
 
 a.footnote {
@@ -472,6 +503,8 @@ input[type="checkbox"] {
     z-index:-1;
     display:none;
 }
+
+/** Syling for checkbox in a table **/
 th:has(+td input[type="checkbox"])  label{
     position: relative;
     padding: 5px 0 0 50px;
@@ -518,22 +551,73 @@ th:has(+td input[type="checkbox"]:checked) label:before {
     background: #55D069;
 }
 
-div.test_warning {
-    clear:both;
+/** Styling for simple div base layout **/
+label:has(+input[type="checkbox"])  {
+    position: relative;
+    padding: 5px 0 0 50px;
+    line-height: 2.0em;
+}
+label:has(+input[type="checkbox"]):after {
+    content: "";
     position: absolute;
+    display: block;
+/*    left: +10rem; */
+    top: 0px;
+    width: 24px; /* x*3 */
+    height: 24px; /* x*3 */
+    border-radius: 16px; /* x*2 */
+    background: #b0b0b0;
+    border: 1px solid #d9d9d9;
+    -webkit-transition: all 0.3s;
+    transition: all 0.3s;
+}
+
+label:has(+input[type="checkbox"]):before {
+    content: "";
+    position: absolute;
+    display: block;
+/*    left: +10rem; */
+    top: 0;
+    width: 40px; /* x*5 */
+    height: 24px; /* x*3 */
+    border-radius: 16px; /* x*2 */
+    background: #e4e4e4;
+    border: 1px solid #d9d9d9;
+    -webkit-transition: all 0.3s;
+    transition: all 0.3s;
+}
+
+label:has(+input[type="checkbox"]):hover:after  {
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+label:has(+input[type="checkbox"]:checked):after {
+    margin-left: 16px;
+    background: #3333DD;
+}
+label:has(+input[type="checkbox"]:checked):before {
+    background: #55D069;
+}
+
+
+div.test_warning {
+     clear: both;
+    position: fixed;
     bottom: 5px;
-    width : 85%;
+    width: 85%;
     min-height: auto;
     background-color: brown;
     padding-left: 1rem;
     padding-right: 1rem;
-    left:5%;
-    right:5%;
+    left: 5%;
+    right: 5%;
     border: thick yellow solid;
     font-weight: bold;
-    font-size:75%;
+    font-size: 75%;
     text-align: center;
 }
+
+
 
 span.location_type {
     margin-right: 2rem;

@@ -21,7 +21,6 @@ class GoogleMapWidget(Widget):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        print('before', name, value, context, attrs)
         widget_attrs = context.get('widget', {}).get('attrs', {})
         widget_attrs.setdefault('MapTypeId', 'roadmap')
         widget_attrs.setdefault('MAP_ID', 'DEMO_MAP_ID')
@@ -33,5 +32,4 @@ class GoogleMapWidget(Widget):
         widget_attrs.setdefault('zoomStep', 2)
         widget_attrs.setdefault('title', 'Your Location')
 
-        print('after', context)
         return context

@@ -1,9 +1,12 @@
 from django.db import models
+
+import DjangoGoogleMap.models.fields
 from GarageSale.models import EventData
 # Create your models here.
 
 from django.conf import settings
 
+from DjangoGoogleMap import models as GoogleMapModels
 
 class MultipleChoiceField(models.CharField):
     def __init__(self,*args, **kwargs):
@@ -43,6 +46,7 @@ class Location(models.Model):
     street_name = models.CharField(max_length=200)
     postcode = models.CharField(max_length=10)
     town = models.CharField(max_length=100, default='Brantham')
+    lng_lat = DjangoGoogleMap.models.fields.GoogleLocation()
     creation_timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

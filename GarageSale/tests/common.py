@@ -158,7 +158,7 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
             f.write(source)
 
     def fill_form(self, url, **kwargs):
-        """Selenium fill in form helper method"""
+        """Selenium fill in forms helper method"""
 
         if url:
             self.selenium.get(url)
@@ -188,5 +188,3 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
                         pass
         except:
             raise
-
-

@@ -8,6 +8,8 @@ from django.core.exceptions import ValidationError
 from django.forms import fields as form_fields
 from django.forms.fields import CharField
 from django.core import exceptions
+
+from DjangoGoogleMap.forms.widgets import GoogleMapWidget
 from .models import Location
 from django.utils.translation import gettext_lazy as _
 
@@ -26,11 +28,23 @@ class LocationForm(ModelForm):
 
     class Meta:
         model = Location
-        fields = ["ad_board", "sale_event", "house_number", "street_name", "postcode", "town"]
+        fields = ["ad_board", "sale_event", "house_number", "street_name", "postcode", "town", "lng_lat"]
         postcode = CharField(validators=[validate_postcode])
-        widgets = {'house_number': TextInput(attrs={"size":40}),
-                   'street_name': TextInput(attrs={"size":80}),
+        widgets = {'house_number': TextInput(attrs={"size":30}),
+                   'street_name': TextInput(attrs={"size":40}),
                    'town_name': TextInput(attrs={"size":20}),
+                   'lng_lat': GoogleMapWidget(place='Brantham')}
+        error_messages={
+                'lng_lat': {'required':'Please identify your location on the map'} }
+        help_texts = {
+            'lng_lat' : 'Use the zoom map and zoom controls to find this address on the map.<br>'
+                          'Please note that some house numbers on the map are incorrect or simply missing.<br>'
+                        'Sadly We have no control over this'
+
+
+
+
+
         }
 
     def clean_house_number(self):

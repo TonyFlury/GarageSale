@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'Location.apps.LocationConfig',
     #    'Billboard.apps.BillboardConfig',
     #    'SaleLocation.apps.SaleLocationConfig',
+    'DjangoGoogleMap.apps.DjangoWhat3WordsConfig',
     'Sponsors.apps.SponsorsConfig',
     'user_management.apps.user_managementConfig',
     'News.apps.NewsConfig',
@@ -159,4 +160,18 @@ APPS_SETTINGS = {
     'user_management': {'EMAIL_SENDER': 'BranthamGarageSale@gmail.com',
                         'SITE_NAME': 'Brantham Garage Sale v2',
                         }
+}
+
+GOOGLE_MAP_SETTINGS = {
+    'API_KEY' : "AIzaSyADwZE0Z7KkXRcC8xcE5BPho_kYNJGyx6I",
+    'MAP_ID' :  "48c4f8f723f382a2",
+    'PLACES' :  {
+            'Brantham': {
+                'bounds' :  '{ north: 51.9755, south: 51.9554, east: 1.0798, west : 1.056}',
+                'center' : '{lat: 51.965370025651595, lng: 1.0653301728556086, }',
+                'defaultZoom': 4,
+                'autoZoomLevel': 18,
+                'zoomStep': 2,
+            }
+    }
 }

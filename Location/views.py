@@ -8,6 +8,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView
 from .models import Location as LocationModel
 from .forms import LocationForm
+from django.conf import settings
 
 class LocationCreateView(UserRecognisedMixin, CreateView):
     """Creation Form for Location"""
@@ -47,6 +48,11 @@ class LocationEditView(UserRecognisedMixin, UpdateView):
     login_url = reverse_lazy("user_management:identify")
     transaction_type = "locations"
     success_url = reverse_lazy('Location:view')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context |= {'GOOGLE_MAP_API' : settings.GOOGLE_MAP_SETTINGS.get('API_KEY')}
+        return context
 
     def get_object(self, queryset=None):
         ext_id = self.kwargs.get('ext_id')

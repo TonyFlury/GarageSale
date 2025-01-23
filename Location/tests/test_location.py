@@ -25,8 +25,8 @@ class LocationMixin(SeleniumCommonMixin):
         # Confirm that the correct Location appears on the view page :
         inst:Location
         for inst in inst_set:
-            # Check that the form exists.
-            form = self.selenium.find_element(By.XPATH, f'//div[@class="form" and @location_id="{inst.ext_id()}"]')
+            # Check that the forms exists.
+            form = self.selenium.find_element(By.XPATH, f'//div[@class="forms" and @location_id="{inst.ext_id()}"]')
             self.assertIsNotNone(form)
 
             loc_type_div = form.find_element(By.XPATH, './/div[@class="location_type"]')
@@ -100,7 +100,7 @@ class LocationCreate(LocationMixin, SeleniumCommonMixin, IdentifyMixin, StaticLi
         super().tearDown()
 
     def test_001_location_create_form_guest(self):
-        """Test that the Location creation form is correct
+        """Test that the Location creation forms is correct
             Don't need a current event for this
         """
 
@@ -122,7 +122,7 @@ class LocationCreate(LocationMixin, SeleniumCommonMixin, IdentifyMixin, StaticLi
                 self.assertIsNotNone(element, f'{button_id} button does not exist on the Location:create for inst {self.selenium.current_url}')
 
     def test_010_location_create_form_guest_save(self):
-        """Test that the Location form is correctly saved for this guest"""
+        """Test that the Location forms is correctly saved for this guest"""
 
         with self.identify_as_guest(guest_user="test_user@test.com"):
 
@@ -184,7 +184,7 @@ class LocationCreate(LocationMixin, SeleniumCommonMixin, IdentifyMixin, StaticLi
             self._check_location_view(inst_set=locations)
 
     def test_100_location_create_form_login(self):
-        """Test that the Location creation form is correct
+        """Test that the Location creation forms is correct
             Don't need a current event for this
         """
         email, password = 'test_user@test.com', 'okoboje'
@@ -209,7 +209,7 @@ class LocationCreate(LocationMixin, SeleniumCommonMixin, IdentifyMixin, StaticLi
 
 
     def test_110_location_create_form_login_save(self):
-        """Test that the Location creation form is correct"""
+        """Test that the Location creation forms is correct"""
 
         email, password = 'test_user@test.com', 'okoboje'
         get_user_model().objects.create_user(email=email, password=password)

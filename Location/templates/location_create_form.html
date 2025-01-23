@@ -8,15 +8,72 @@
 
 {% block body %}
 
+{% block additionalSty%}
+    <style>
+    .columns .address, .columns .map {
+                float:left;
+                width:45%;
+            }
+    .buttons {
+        clear:both;
+    }
+    #id_lng_lat_map{
+        width:400px;
+        height:400px;
+        margin:10px;
+    }
+    </style>
+{% endblock %}
+
 <h2>
     Garage Sale Location
 </h2>
 <div class="form">
     <form method=POST action='{{action}}' id="CreateLocation">
-        <table>
             {% csrf_token %}
-            {{ form }}
-        </table>
+            <div class="columns">
+                {%  if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                    <div class="error">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                <div class="address">
+                    <div>
+                        <div class="field_wrapper"><label for='{{ form.ad_board.id_for_label }}' >{{ form.ad_board.label }}</label>{{ form.ad_board }}<span class="helptext">{{ form.ad_board.help_text }}</span></div>
+                        <div class="field_wrapper"><label for='{{ form.sale_event.id_for_label }}' >{{ form.sale_event.label }}</label>{{ form.sale_event }}<span class="helptext">{{ form.sale_event.help_text }}</span></div>
+                    </div>
+                    <div>
+                        <div class="field_wrapper">
+                            {{ form.house_number.errors }}
+                            <span class="label"><label for='{{ form.house_number.id_for_label }}' >{{ form.house_number.label }}</label></span>
+                            {{ form.house_number }}{% if form.house_number.help_text %}<span class="helptext">{{ form.house_number.help_text }}</span>{%  endif %}</div>
+                        <div class="field_wrapper">
+                                                    {{ form.street_name.errors }}
+
+                            <span class="label"><label for='{{ form.street_name.id_for_label }}' >{{ form.street_name.label }}</label></span>
+                            {{ form.street_name }}{% if form.street_name.help_text %}<span class="helptext">{{ form.street_name.help_text }}</span>{%  endif %}</div>
+
+                        <div class="field_wrapper">
+                            {{ form.postcode.errors }}
+                            <span class="label"><label for='{{ form.postcode.id_for_label }}' >{{ form.postcode.label }}</label></span>
+                            {{ form.postcode }}{% if form.postcode.help_text %}<span class="helptext">{{ form.postcode.help_text }}{% endif %}</span></div>
+
+                        <div class="field_wrapper">
+                            {{ form.town.errors }}
+                            <span class="label"><label for='{{ form.town.id_for_label }}' >{{ form.town.label }}</label></span>
+                            {{ form.town }}{% if form.town.help_text %}<span class="helptext">{{ form.town.help_text }}{%  endif %}</span></div>
+                    </div>
+                </div>
+                <div class="map">
+                    {{ form.lng_lat.errors }}
+                    <div class="field_wrapper">
+                        <div style="font-size: 80%;">Please be aware that not all buildings appear on the roadmap version of the map, and that some
+                        house numbers are incorrect - we have no control over that aspect of the map.
+                        Please use the satellite view to identify your location if at all possible.
+                        </div>
+                        <label for='{{ form.lng_lat.id_for_label }}' >{{ form.lng_lat.label }}</label>{{ form.lng_lat }}{% if form.lng_lat.help_text %}<span class="helptext">{{ form.lng_lat.help_text | safe}}{%  endif %}</div>
+                </div>
+            </div>
         <div class="buttons">
             <input type="button" name='action' onclick="cancel_LocationSave()" value="Cancel" id="id_CancelButton">
             <input type="reset" name='action' value="Reset" id="id_ResetButton">
@@ -24,20 +81,10 @@
         </div>
     </form>
     <script type="text/javascript">
-        /* Javascript for pre-save and pre-delete confirmation popups */
-        var saveButton = document.getElementById("SaveButton");
-        saveButton.addEventListener("click", function() {
-            if (confirm('Do you want to Save this new Location information?')) {
-                document.getElementById("CreateLocation").submit()
-            } else {
-                event.preventDefault();
-            }
-        });
-
         /* Implement cancel button as a simple return to the GetInvolved page */
         function cancel_LocationSave()
         {
-            window.location.replace( '{% url "Location:create" %}' );
+            window.location.replace( '{% url "Location:view" %}' );
          }
     </script>
 
