@@ -44,7 +44,7 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
 
     def test_100_test_user_registration(self):
         """ Full happy path of user registration process - no guest account
-            1) User fills in User registration form
+            1) User fills in User registration forms
             2) Unverified User account is created & RegistrationVerifier record is created
             3) User is sent email with link
             4) User follows link
@@ -105,7 +105,7 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
 
                 case [content, 'text/html']:
                     soup = BeautifulSoup(content, 'html.parser')
-                    url_form = soup.select_one('div.form > form')
+                    url_form = soup.select_one('div.forms > forms')
                     if not url_form:
                         self.fail('Cannot find expected structure in text/html')
 
@@ -197,7 +197,7 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
 
     def test_150_test_registration_of_guest(self):
         """ Full happy path of user registration process - no guest account
-            1) User fills in User registration form
+            1) User fills in User registration forms
             2) Unverified User account is created & RegistrationVerifier record is created
             2a) name and phone_number is stored in an AdditionalData record.
             3) User is sent email with link
@@ -214,7 +214,7 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
         model:Type[UserExtended|AbstractBaseUser] = get_user_model()
         user = model.objects.create_guest_user(email, is_verified=True)
 
-        # Fetch and complete registration form
+        # Fetch and complete registration forms
         self.fill_form(f'{self.live_server_url}{reverse("user_management:register")}?next={next_url}',
                        id_email = email,
                        id_password = password,
@@ -273,7 +273,7 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
 
                 case [content, 'text/html']:
                     soup = BeautifulSoup(content, 'html.parser')
-                    url_form = soup.select_one('div.form > form')
+                    url_form = soup.select_one('div.forms > forms')
                     if not url_form:
                         self.fail('Cannot find expected structure in text/html')
 
@@ -504,7 +504,7 @@ class TestPasswordResetRequest(SeleniumCommonMixin, StaticLiveServerTestCase):
 
             #Test Reset process by going via the login page
             self.selenium.get(self.live_server_url+reverse('user_management:login')+f'?next={next_url}')
-            post_form = self.selenium.find_element(By.XPATH, '//div[@class="post-form"]')
+            post_form = self.selenium.find_element(By.XPATH, '//div[@class="post-forms"]')
             link = post_form.find_element(By.TAG_NAME,'a')
             self.assertIsNotNone(link)
             link.click()
@@ -544,7 +544,7 @@ class TestPasswordResetRequest(SeleniumCommonMixin, StaticLiveServerTestCase):
 
                     case [content, 'text/html']:
                         soup = BeautifulSoup(content, 'html.parser')
-                        url_form = soup.select_one('div.form > form')
+                        url_form = soup.select_one('div.forms > forms')
                         if not url_form:
                             self.fail('Cannot find expected structure in text/html')
 
@@ -554,7 +554,7 @@ class TestPasswordResetRequest(SeleniumCommonMixin, StaticLiveServerTestCase):
                             self.fail(f'{method}\n{expected_url!r}\n{action!r}\n not as expected text/html')
 
 
-            # Go to the reset form and enter the new password
+            # Go to the reset forms and enter the new password
             new_password = 'wibble'
             self.fill_form(url=expected_url,
                            id_new_password1=new_password,

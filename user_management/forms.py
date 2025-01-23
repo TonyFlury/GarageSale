@@ -16,7 +16,7 @@ phone_regex = re.compile(r'^('
 
 
 def validate_phone_number(value):
-    """Raise an exception if the phone number isn't valid in some form"""
+    """Raise an exception if the phone number isn't valid in some forms"""
     if not phone_regex.match(value):
         raise exceptions.ValidationError(f'{value} is not a valid phone number')
 
@@ -41,7 +41,7 @@ class RegistrationForm(forms.Form):
     phone = forms.CharField(max_length=13, validators=[validate_phone_number], initial='', label='Phone or Mobile Contact')
 
     def form_context(self, action_path='', login_path='', next_url=''):
-        """Return the context needed for this form in the generic template"""
+        """Return the context needed for this forms in the generic template"""
         action_url = resolve_url(action_path) if action_path \
             else resolve_url('user_management:register')
         next_url = escape(next_url) if next_url else resolve_url('home')
@@ -51,7 +51,7 @@ class RegistrationForm(forms.Form):
                 'action': action_url + f'?next={next_url}',
                 'method': 'POST',
                 'form': self,
-                'post-form': 'By registering with us you will be able to manage all of your involvement with the'
+                'post-forms': 'By registering with us you will be able to manage all of your involvement with the'
                              'Garage Sale in one place, requesting'
                              'an advertising board or having your sale included on our map.<br/>'
                              'All of your data is managed in accordance with our privacy policy.',
@@ -67,7 +67,7 @@ class LoginForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput, label='Password')
 
     def form_context(self, action_path='', register_path='', reset_path='', next=''):
-        """Return the context needed for this form in the generic template"""
+        """Return the context needed for this forms in the generic template"""
         action_url = resolve_url(action_path) if action_path else resolve_url('user_management:login')
         reset_url = resolve_url(reset_path) if reset_path else resolve_url('user_management:reset_password_application')
         register_url = resolve_url(register_path) if register_path \
@@ -83,7 +83,7 @@ class LoginForm(forms.Form):
                 'buttons': [
                     {'name': 'Cancel', 'type': 'button', 'redirect': next},
                     {'name': 'Login', 'type': 'submit'},
-                    {'name': 'Register User', 'type': 'button', 'next': register_url + f'?redirect={next}'}]}
+                    {'name': 'Register User', 'type': 'button', 'redirect': register_url + f'?redirect={next}'}]}
 
 
 class PasswordChangeForm(forms.Form):
@@ -92,7 +92,7 @@ class PasswordChangeForm(forms.Form):
     new_password2 = forms.CharField(widget=forms.PasswordInput, label='New Password (repeat)')
 
     def form_context(self, action_path='', reset_password_path='', next=''):
-        """Return the context needed for this form in the generic template"""
+        """Return the context needed for this forms in the generic template"""
         action_url = resolve_url(action_path) if action_path \
             else resolve_url('user_management:change_password')
         reset_password_url = resolve_url(reset_password_path) if reset_password_path \
@@ -114,7 +114,7 @@ class ResetPasswordApplyForm(forms.Form):
     email = forms.EmailField()
 
     def form_context(self, action_path='', reset_password_path='', next=''):
-        """Return the context needed for this form in the generic template"""
+        """Return the context needed for this forms in the generic template"""
         action_url = resolve_url(action_path) if action_path \
             else resolve_url('user_management:reset_password_application')
         next = escape(next) if next else resolve_url('home')
@@ -134,7 +134,7 @@ class PasswordResetForm(forms.Form):
     new_password2 = forms.CharField(widget=forms.PasswordInput, label='New password (repeat)')
 
     def form_context(self, uuid, action_path='', next=''):
-        """Return the context needed for this form in the generic template"""
+        """Return the context needed for this forms in the generic template"""
         action_url = resolve_url(action_path, uuid) if action_path \
             else resolve_url('user_management:password_reset_prompt_new', uuid)
         next = escape(next) if next else resolve_url('home')

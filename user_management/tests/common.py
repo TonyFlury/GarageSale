@@ -124,7 +124,7 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
         self.assertIsNotNone(guest_button)
 
     def test_005_identify_to_login(self):
-        """Test that clicking the login button on the identify page invokes the login form"""
+        """Test that clicking the login button on the identify page invokes the login forms"""
         test_url = self.get_test_url()
         self.selenium.get(test_url)
         webpage_timeout = 2
@@ -199,7 +199,7 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
         self.assertEqual(reverse('user_management:input_short_code',
                                  kwargs={'short_code_entry': user_v.pk}), path)
         self.assertEqual(args['next'], [urlparse(self.get_test_url()).path])
-        # Verify that the email on the form is the same as the email on the GuestVerifier record
+        # Verify that the email on the forms is the same as the email on the GuestVerifier record
         form_email = self.selenium.find_element(By.NAME, 'email').get_attribute('value')
         self.assertEqual(form_email, user_v.email)
 
@@ -340,7 +340,7 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
         path = urlparse(self.selenium.current_url).path
         self.assertEqual(reverse('user_management:guest_error',
                                  kwargs={'short_code_entry': user_v.pk}), path)
-        error_div = self.selenium.find_element(By.CLASS_NAME, "pre-form")
+        error_div = self.selenium.find_element(By.CLASS_NAME, "pre-forms")
         self.assertIsNotNone(error_div)
 
         self.assertEqual(error_div.text.strip(),
@@ -382,13 +382,13 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
             WebDriverWait(self.selenium,
                           webpage_timeout).until(lambda driver: driver.find_element(By.TAG_NAME, "body"))
 
-            error_div = self.selenium.find_element(By.CLASS_NAME, "pre-form")
+            error_div = self.selenium.find_element(By.CLASS_NAME, "pre-forms")
             self.assertIsNotNone(error_div)
 
             self.assertEqual(error_div.text, 'Your existing short code expired')
 
     def test_100_login_form(self):
-        """Test that the login form works as expected"""
+        """Test that the login forms works as expected"""
 
         email, password = 'test_user@test.com', 'okoboje'
 
@@ -412,13 +412,13 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
             fp.write(self.selenium.page_source)
 
         email_element = self.selenium.find_element(By.ID, 'id_email')
-        self.assertIsNotNone(email_element, 'Cannot find email input on the form')
+        self.assertIsNotNone(email_element, 'Cannot find email input on the forms')
 
         password_element = self.selenium.find_element(By.ID, 'id_password')
-        self.assertIsNotNone(password_element, 'Cannot find password input on the form')
+        self.assertIsNotNone(password_element, 'Cannot find password input on the forms')
 
         login_button = self.selenium.find_element(By.XPATH, '//input[@type="submit" and @value="Login"]')
-        self.assertIsNotNone(login_button, 'Cannot find Login button on form')
+        self.assertIsNotNone(login_button, 'Cannot find Login button on forms')
 
         email_element.send_keys(email)
         password_element.send_keys(password)

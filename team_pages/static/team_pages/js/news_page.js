@@ -164,7 +164,7 @@ function __document_loaded(){
             filter_button.addEventListener('click', function() {popup('filter-pop-up',''); } );
     }
 
-    /* set the form buttons if any */
+    /* set the forms buttons if any */
     const cancel_button = document.getElementById('tp_cancel_form');
     if (cancel_button)
     {

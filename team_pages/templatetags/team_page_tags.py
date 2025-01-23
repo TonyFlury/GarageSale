@@ -225,7 +225,7 @@ def breadcrumb(context):
 
 @register.simple_tag(takes_context=True)
 def chooseEvent(context):
-    """Generate the Event selection Mini-form"""
+    """Generate the Event selection Mini-forms"""
     context['event_id'] = context.get('event_id',None)
     content = render_to_string('__select_event.html',
                                context=context.flatten() | {'events': EventData.CurrentFuture.all()})
@@ -234,7 +234,7 @@ def chooseEvent(context):
 
 @register.simple_tag(takes_context=True)
 def choose_motd(context):
-    """Generate the motd Selection mini-form"""
+    """Generate the motd Selection mini-forms"""
     c = {'motds': MOTD.objects.all()}
     content = render_to_string('__select_motd.html', context=c)
     return content

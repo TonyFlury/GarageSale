@@ -20,6 +20,11 @@
         {% endif %}
         <form method="{{method}}" action="{{action}}">
             {% csrf_token %}
+        <ul>
+            {% for field in form %}
+                <li>   {{ field.name }} </li>
+            {% endfor %}
+        </ul>
             <table>
                 {{form}}
             </table>

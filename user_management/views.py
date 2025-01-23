@@ -255,7 +255,7 @@ class InputShortCode(View):
         if form.cleaned_data['email'] != code_inst.email:
             raise ValidationError(f'email address for guest request don\'t match')
 
-        # The data matched - ie the form is valid - check for expiry
+        # The data matched - ie the forms is valid - check for expiry
         if code_inst.is_time_expired():
             code_inst.reason_code = 'expired'
             code_inst.save()
@@ -265,9 +265,9 @@ class InputShortCode(View):
             code_inst.retry_count -= 1
             code_inst.save()
 
-            # Only re-show the form if the retry count hasn't hit zero
+            # Only re-show the forms if the retry count hasn't hit zero
             if code_inst.retry_count > 0:
-                # Build a blank form
+                # Build a blank forms
 
                 form = forms.InputShortCodeForm(data={'email': code_inst.email})
                 form.add_error(None, 'Short code Incorrect - please try again')
@@ -351,7 +351,7 @@ class UserRegistration(View):
 
         next_url = incoming_request.GET.get('next', '/')
 
-        # Build a form instance for validation purposes.
+        # Build a forms instance for validation purposes.
         form = forms.RegistrationForm(incoming_request.POST)
 
         if not form.is_valid():
@@ -450,7 +450,7 @@ def user_verify(request, uuid=None):
 class Login(View):
     @staticmethod
     def get(request):
-        """Render a new blank form"""
+        """Render a new blank forms"""
 
         next = request.GET.get('next', '/')
         form = forms.LoginForm()
@@ -463,7 +463,7 @@ class Login(View):
 
     @staticmethod
     def post(request):
-        """deal with the submitted form"""
+        """deal with the submitted forms"""
         next_url = request.GET.get('next', '/')
         form_inst = forms.LoginForm(request.POST)
         if not form_inst.is_valid():
