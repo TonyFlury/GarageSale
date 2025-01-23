@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Identification</title>
+    <style>
+        #map {
+            height: 400px;  /* Set the height of the map */
+            width: 100%;    /* Full width */
+        }
+    </style>
+</head>
+<body>
+    <input type="text" name="location" id="id_location" {%  if widget == 'set' %}value='{"lat" :51.961053274564065, "lng" : 1.0698445125573741}'{% endif %}/>
+    <h1>Locate Your Home</h1>
+    <div id="map"></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyADwZE0Z7KkXRcC8xcE5BPho_kYNJGyx6I&callback=initMap&libraries=marker" async defer></script>
+    <script>
+        let map;
+        let marker;
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 51.961053274564065, lng : 1.0698445125573741, }, // Default center point
+                mapTypeId: "terrain",
+                zoom: 13,
+                mapId: "DEMO_MAP_ID"
+            });
+
+            const bounds = {
+                north: 52,   // replace with your bounding box coordinates
+                south: 51.9,
+                east: 1.08,
+                west : 1.045
+            };
+
+            map.setOptions({
+                restriction: {
+                    latLngBounds: bounds,
+                    strictBounds: false  // Set to true to restrict all bounds
+                }
+            });
+
+            if  (document.getElementById('id_location').value.toString() !== '')
+            {
+                console.log(document.getElementById('id_location').value);
+                map.setZoom(19);
+                addMarker(JSON.parse(document.getElementById('id_location').value));
+            }
+
+            // Add a click listener to the map
+            map.addListener('click', (event) => {
+                addMarker(event.latLng);
+            });
+        }
+
+        function addMarker(location) {
+            if (map.zoom < 18) {
+                map.panTo(location);
+                map.setZoom(Math.min(map.zoom+2,19));
+                return;
+            }
+            if (marker) {
+                marker.setMap(null); // Remove the previous marker
+            }
+            marker = new google.maps.marker.AdvancedMarkerElement({
+                map: map,
+                position: location,
+                title: "Your Location"
+            });
+            console.log(JSON.stringify(location), 'Marked');
+            document.getElementById('id_location').value=JSON.stringify(location);
+        }
+    </script>
+</body>
+</html>

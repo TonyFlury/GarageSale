@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title></title>
+    <meta charset="UTF-8">
+      <style>
+        .what3words-map-wrapper {
+        }
+        </style>
+</head>
+<body>
+            <div>
+<script type="module" defer src="https://cdn.what3words.com/javascript-components@4.8.0/dist/what3words/what3words.esm.js"></script>
+<script nomodule defer src="https://cdn.what3words.com/javascript-components@4.8.0/dist/what3words/what3words.js"></script>             </div>
+
+             <input type=text name="{{ widget }}_words_inframe" id="id_{{ widget }}_words_inframe" hidden="True"/>
+             <input type=text name="{{ widget }}_coords_inframe" id="id_{{ widget }}_coords_inframe" hidden="True"/>
+    <div class="what3words-map-wrapper">
+
+          <what3words-map
+    id="w3w-map"
+    api_key="PCGWD5EG"
+    map_api_key="AIzaSyADwZE0Z7KkXRcC8xcE5BPho_kYNJGyx6I"
+    disable_default_ui
+    fullscreen_control
+    map_type_control
+    zoom_control
+    current_location_control_position="9"
+    fullscreen_control_position="3"
+    search_control_position="2"
+    words="voices.smirking.blank"
+  >
+    <div slot="map" id="map-container"></div>
+  </what3words-map>
+
+            <script>
+              const w3wMap = document.getElementById("{{ widget }}-map");
+              w3wMap.addEventListener(
+                "selected_square",
+                w3wSelected
+              );
+              function w3wSelected(object)
+              {
+                  console.log(object.detail.words, "Selected what3words square");
+                  const words_Input = document.getElementById("id_{{ widget }}_words_inframe");
+                  const coord_Input = document.getElementById("id_{{ widget }}_coords_inframe")
+                  words_Input.value = object.detail.words
+                  coord_Input.value = object.details.long,toString() + "," + object.details.lat.toString()
+              }
+            </script>
+        </div>
+    </body>
+</html>
