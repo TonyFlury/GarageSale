@@ -4,6 +4,8 @@
 
 {% block additionalScripts%}
 <script type="text/javascript" src="{% static 'Location/js/tooltip.js' %}"></script>
+<!--<script  async type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{GOOGLE_MAP_API}}&loading=async&libraries=places&callback=initPlaces"></script> -->
+
 {% endblock %}
 
 {% block body %}
@@ -56,8 +58,9 @@
                         <div class="field_wrapper">
                             {{ form.postcode.errors }}
                             <span class="label"><label for='{{ form.postcode.id_for_label }}' >{{ form.postcode.label }}</label></span>
-                            {{ form.postcode }}{% if form.postcode.help_text %}<span class="helptext">{{ form.postcode.help_text }}{% endif %}</span></div>
-
+                            {{ form.postcode }}{% if form.postcode.help_text %}<span class="helptext">{{ form.postcode.help_text }}{% endif %}</span>
+                            <span class="buttons"><input type="button" id="id_FindButton" value="Find on map."></span>
+                            </div>
                         <div class="field_wrapper">
                             {{ form.town.errors }}
                             <span class="label"><label for='{{ form.town.id_for_label }}' >{{ form.town.label }}</label></span>
@@ -86,6 +89,26 @@
         {
             window.location.replace( '{% url "Location:view" %}' );
          }
+
+
+        var findPostcode = document.getElementById("id_FindButton");
+        findPostcode.addEventListener("click", FindButtonClicked );
+
+        function FindButtonClicked()
+        {
+                    var postcodeEntry = document.getElementById("id_postcode");
+
+            console.log("Finding location of postcode : " + postcodeEntry.value) ;
+              let service = new google.maps.places.PlacesService(mapInst);
+              service.findPlaceFromQuery({query: postcodeEntry.value,
+                                          fields: ["name", "geometry"]}, LocationFound );
+        }
+
+        function LocationFound(results, status) {
+                       console.log("Found" + status + " "+  JSON.stringify(results[0].geometry.location));
+                recenterTo(results[0].geometry.location);
+        }
+
     </script>
 
 </div>

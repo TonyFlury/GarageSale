@@ -3,9 +3,11 @@
     <input type="text" name="{{ widget.name }}" id="id_{{ widget.name }}"
            {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %} hidden/>
     <div id="id_{{ widget.name }}_map_wrapper" style="width: 100%; height:100%;"></div>
-        <script async src="https://maps.googleapis.com/maps/api/js?key={{ widget.attrs.API_KEY }}&callback=initMap&libraries=marker" defer></script>
-        <script>
-        let map;
+
+    <script type="text/javascript" async src="https://maps.googleapis.com/maps/api/js?key={{ widget.attrs.API_KEY }}&libraries=marker,places&callback=initMap"></script>
+
+        <script type="text/javascript">
+        let mapInst;
         let marker;
 
         function initMap() {
@@ -16,7 +18,7 @@
                 return ;
             }
 
-            map = new google.maps.Map(document.getElementById('id_{{ widget.name }}_map_wrapper'), {
+            mapInst = new google.maps.Map(document.getElementById('id_{{ widget.name }}_map_wrapper'), {
                 center: {{ widget.attrs.center | safe }}, // Default center point
                 zoom: {{ widget.attrs.defaultZoom }},
                 mapId: '{{ widget.attrs.MAP_ID }}',
@@ -37,7 +39,7 @@
             });
 
             {% if  'bounds' in widget.attrs %}
-                map.setOptions({
+                mapInst.setOptions({
                     restriction: {
                             latLngBounds: {{ widget.attrs.bounds | safe }},
                             strictBounds : {% if 'strictBounds' in widget.attrs %}true{% else %}false{% endif %}
@@ -47,29 +49,43 @@
             if  (field.value != null && field.value !== '')
             {
                 console.log(field.value);
-                map.setZoom( {{ widget.attrs.autoZoomLevel}} );
-                map.panTo(JSON.parse(field.value))
+                mapInst.setZoom( {{ widget.attrs.autoZoomLevel}} );
+                mapInst.panTo(JSON.parse(field.value))
                 addMarker(JSON.parse(field.value));
             }
 
             // Add a click listener to the map
-            map.addListener('click', (event) => {
+            mapInst.addListener('click', (event) => {
                 addMarker(event.latLng);
             });
         }
 
-        function addMarker(location) {
-            map.panTo(location);
+        /** Attempt to build generic find API to solve what appaers to be a coupling problem **/
+        function findOnMap( data, callback ){
+              var service = new google.maps.places.PlacesService(mapInst);
+              service.findPlaceFromQuery({query: data,
+                                          fields: ["name", "geometry"]}, callback);
+        }
 
-            if (map.zoom < {{ widget.attrs.autoZoomLevel }}) {
-                map.setZoom(Math.min(map.zoom+{{ widget.attrs.zoomStep }}, {{ widget.attrs.autoZoomLevel }} ));
+        function recenterTo(location) {
+            mapInst.panTo(location);
+            if (mapInst.zoom < {{ widget.attrs.autoZoomLevel }}) {
+                mapInst.setZoom({{ widget.attrs.autoZoomLevel }});
+            }
+        }
+
+        function addMarker(location) {
+            mapInst.panTo(location);
+
+            if (mapInst.zoom < {{ widget.attrs.autoZoomLevel }}) {
+                mapInst.setZoom(Math.min(map.zoom+{{ widget.attrs.zoomStep }}, {{ widget.attrs.autoZoomLevel }} ));
                 return;
             }
             if (marker) {
                 marker.setMap(null); // Remove the previous marker
             }
             marker = new google.maps.marker.AdvancedMarkerElement({
-                map: map,
+                map: mapInst,
                 position: location,
                 title: "{{widget.attrs.title}}"
             });
