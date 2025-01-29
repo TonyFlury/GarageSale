@@ -1,0 +1,37 @@
+{% extends "_snap_slider_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load event_data_tags %}
+
+{% block Title %}
+Brantham Garage Sale - Home Page
+{% endblock %}
+
+{% block SnappableSections %}
+  <div class="card">
+    <h1>Welcome</h1>
+      <div class="MOTD">
+        {% MOTD %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h1>Are you on the Map?</h1>
+    To be involved in the Garage sale, you need to get yourself on the map, either to host an advertisement board,
+    or as the host of a sale or both.
+  </div>
+
+  <div class="card">
+    <h1>Donating to the Charity</h1>
+
+  </div>
+
+  <div class="card">
+    <h1>About Us</h1>
+  </div>
+
+  <div class="card">
+    <h1>Contact Us</h1>
+  </div>
+
+{% endblock %}

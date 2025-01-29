@@ -19,6 +19,11 @@ class LocationCreateView(UserRecognisedMixin, CreateView):
     transaction_type = "locations"
     success_url = reverse_lazy('Location:view')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context |= {'GOOGLE_MAP_API' : settings.GOOGLE_MAP_SETTINGS.get('API_KEY')}
+        return context
+
     def form_valid(self, form):
         """Add user and event details to the location"""
         inst: LocationModel = form.save(commit=False)
