@@ -3,58 +3,19 @@
 {% load user_management_tags %}
 {% load event_data_tags %}
 
+{% block additionalScripts%}
+<script type="text/javascript" src="{% static 'GarageSale/js/tooltip.js' %}"></script>
+<script type="text/javascript" src="{% static 'GarageSale/js/scrollablePanel.js' %}"></script>
+
+{% endblock %}
 
 {% block Title %}
 Brantham Garage Sale - Home Page
 {% endblock %}
 
 {% block additionalStyles %}
-<style>
-    body {
-        background-image: {% static "GarageSale/images/resources/map.png" %};
-        background-size: auto;
-        background-repeat: no-repeat;
-        opacity: 50%;
-    }
+<link rel="stylesheet" href="{% static 'GarageSale/styles/scrollablePanel.css' %}">
 
-    .body { height: auto; overflow: hidden}
-    div#Content {
-        float:left;
-        width:80%;
-        display:flex;
-    }
-
-    div#Container {
-    }
-
-    div.mandatory-scroll-snapping {
-        display: flex;
-        margin: 1em auto;
-        outline: 1px dashed lightgray;
-        flex: none;
-        overflow: auto;
-        flex-flow: column wrap;
-    }
-
-    div.y {
-        width:100%;
-        flex-flow: column nowrap;
-        overflow-x: hidden;
-        height:600px;
-    }
-
-    div.y.mandatory-scroll-snapping {
-      scroll-snap-type: y mandatory;
-    }
-
-    div.mandatory-scroll-snapping > div.card {
-      text-align: center;
-      scroll-snap-align: center;
-      background:rgba(0.5,0.5,0,0.3);
-        height:100%;
-        flex:none;
-    }
-</style>
 
 {% endblock %}
 
@@ -62,42 +23,7 @@ Brantham Garage Sale - Home Page
 
 
 {%block body-extra %}
-    <script>
-        let timeout = false; // holder for timeout id
-        let delay = 250; // delay after event is "complete" to run callback
-        let calls = 0;
 
-        function resizeCards(){
-
-/*            let content = document.getElementById('Content');
-            let container = document.getElementById('Container');
-            let children = document.querySelectorAll('div#Container>div.card');
-            let bodyDiv = document.getElementsByClassName('body')
-            let warning = document.getElementsByClassName('test_warning')
-            if (warning.length != 0)
-                bodyDiv[0].style.height = (document.body.clientHeight-warning[0].clientHeight).toString() + "px"
-
-            console.log(content.clientHeight);
-            container.style.height = content.clientHeight.toString()+"px"; */
-
-          /*  for(let i=0; i< children.length; i++)
-            {
-                children[i].style.height=container.style.height;
-            } */
-        }
-
-        addEventListener("resize", function ()  {
-            // clear the timeout
-            clearTimeout(timeout);
-            // start timing for event "completion"
-            timeout = setTimeout(resizeCards, delay);
-        });
-
-        addEventListener("DOMContentLoaded", function () {
-            resizeCards();
-        })
-
-    </script>
 
     {% CountdownClock 'clock'  %}
 {% endblock %}
@@ -142,29 +68,30 @@ Brantham Garage Sale - Home Page
     </span>
     </div>
 </div>
+    {% if request.current_event.supporting_organisations.all %}
+    <div class="supporting">Supporting
+    {%  for organisation in request.current_event.supporting_organisations.all %}
+        <span class="supporting.organisation"><a href="{{ organisation.website }}">
+        <img class="supporting_logo" src="{{ MEDIA_URL }}{{ organisation.logo }}" alt="{{organisation.name}}"></a></span>
+        {%  if not forloop.last %}
+            <span>&</span>
+        {% endif %}
+    {%  endfor %}
+    </div>
+    {% endif %}
 {% endblock %}
 {% block body %}
-<div class="sidebar" style="float:left;height:100%;width:20%">
+    <div id="Container">
+<div id="SidebarContainer" class="sidebar container" >
         <div>
-        <ul>
         {% block sidebar %}
-            <li><a href="{% url 'home' %}">Home</a></li>
-            <li><a href="{% url 'News:NewsPage' %}">News</a></li>
-            <li><a href="/getInvolved">Get Involved</a></li>
-            <li><a href="/donate">How to Donate</a></li>
-            <li><a href="/sponsors">Our Sponsors</a></li>
-            <li><a href="{% url 'AboutUs' %}">About Us</a></li>
-            <li><a href="{% url 'ContactUs' %}">Contact Us</a></li>
-            {% if perms.GarageSale.is_administrator %}
-                <li><a href="{% url 'TeamPagesRoot' %}">Team</a></li>
-            {% endif %}
+            <div class="sidebar entry"> Insert Side bar here</div>
         {% endblock %}
-        </ul>
     </div>
 
 </div>
 <div id="Content">
-  <div id="Container" class="y mandatory-scroll-snapping" dir="ltr">
+  <div id="CardContainer" class="y mandatory-scroll-snapping" dir="ltr">
       {% block SnappableSections %}
     <div class="card">Y Mand. RTL</div>
     <div class="card">2</div>
@@ -174,5 +101,5 @@ Brantham Garage Sale - Home Page
       {% endblock %}
   </div>
 </div>
-
+</div>
 {% endblock %}

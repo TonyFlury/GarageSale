@@ -7,30 +7,93 @@
 Brantham Garage Sale - Home Page
 {% endblock %}
 
+{% block sidebar %}
+
+    <!-- Do we need a cms ??? -->
+    <div class="sidebar entry" item="home" id='home' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Back Home" id='id_home_icon' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %}/>
+        <label for="id_home_icon">Back Home</label>
+        <span class="helptext">Go Back Home</span>
+    </div>
+
+    <div class="sidebar entry" item="involved" id='map' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Are you on the map" id='id_get_on_map_icon' src={% static "GarageSale/images/icons/menu/gps-location-map-marker-navigation-svgrepo-com.svg" %}/>
+        <label for="id_get_on_map_icon">Are you on the Map</label>
+        <span class="helptext">Are you on the Map</span>
+    </div>
+
+    <div class="sidebar entry" item="donate" id='donate' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="How to Donate" id='id_donate' src={% static "GarageSale/images/icons/menu/pounds-coins-stack-svgrepo-com.svg" %}/>
+        <label for="id_donate">How to Donate</label>
+        <span class="helptext">How to Donate</span>
+    </div>
+
+    <div class="sidebar entry" item="news" id='news' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="News" id='id_news' src={% static "GarageSale/images/icons/menu/news-svgrepo-com.svg" %}/>
+        <label for="id_news">Garage Sale News</label>
+        <span class="helptext">Garage Sale News</span>
+    </div>
+
+      <div class="sidebar entry" item="sponsors" id='sponsors' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Our Sponsors" id='id_sponsors' src={% static "GarageSale/images/icons/menu/money-bag-pound-svgrepo-com.svg" %}/>
+        <label for="id_sponsors">Our Sponsors</label>
+        <span class="helptext">Our Sponsors</span>
+    </div>
+
+    <div class="sidebar entry" item="AboutUs" id="AboutUs'" xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="About Us" id='id_AboutUs' src={% static "GarageSale/images/icons/menu/about-svgrepo-com.svg" %}/>
+        <label for="id_AboutUs">About Us</label>
+        <span class="helptext">About Us</span>
+    </div>
+
+    <div class="sidebar entry" item="contact" id='Contact Us' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Contact Us" id='id_contact' src={% static "GarageSale/images/icons/menu/contact-us-svgrepo-com.svg" %}/>
+        <label for="id_contact">Contact Us</label>
+        <span class="helptext">Contact Us</span>
+    </div>
+
+
+        {% if perms.GarageSale.is_administrator %}
+            <div class="sidebar entry direct" item="team" xmlns="http://www.w3.org/1999/html">
+            <a href="{% url 'TeamPagesRoot' %}">
+                <img class="sidebar icon" alt="About Us" id='id_team' src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %}/>
+                <label for="id_team">Team Access</label>
+                <span class="helptext">Team Access</span></a>
+            </div>
+        {% endif %}
+{% endblock %}
+
 {% block SnappableSections %}
-  <div class="card">
+  <div class="card" card_name="home">
     <h1>Welcome</h1>
       <div class="MOTD">
         {% MOTD %}
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" card_name="involved">
     <h1>Are you on the Map?</h1>
     To be involved in the Garage sale, you need to get yourself on the map, either to host an advertisement board,
     or as the host of a sale or both.
   </div>
 
-  <div class="card">
+  <div class="card" card_name="donate">
     <h1>Donating to the Charity</h1>
-
   </div>
 
-  <div class="card">
-    <h1>About Us</h1>
+    <div class="card" card_name="news">
+    <h1>All of the latest News for the Garage Sale</h1>
+    </div>
+
+    <div class="card" card_name="sponsors">
+    <h1>Our Generous Sponsors</h1>
+    </div>
+
+  <div class="card" card_name="AboutUs">
+    <h1>About the Garage Sale and the Foundation</h1>
   </div>
 
-  <div class="card">
+  <div class="card" card_name="contact">
     <h1>Contact Us</h1>
   </div>
 

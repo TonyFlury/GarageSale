@@ -1,14 +1,15 @@
 :root {
   --ToolbarHeight: 40px;
-  --BackGroundColor: #1e90ff;
-  --fontColor : lightgrey;
+  --BackGroundColor: rgba(255, 255, 255, 75%);
+  --fontColor : black;
   --PaperColor : #CCCB9D;
 }
 
 body {
-    background: var(--BackGroundColor);
+ /*   background: var(--BackGroundColor); */
     color : var(--fontColor);
     font-size:14pt;
+    font-family: sans-serif;
 }
 
 
@@ -23,8 +24,8 @@ span#Ticker {
 	margin: auto;
 	padding-left: 1em;
 	padding-right: 1em;
-	color: white;
-	border: solid thin white;
+	color: var(--fontColor);
+	border: solid thin darkgray;
 	border-radius: 2em;
 	line-height: var(--ToolbarHeight);
 	max-height: var(--ToolbarHeight);
@@ -44,7 +45,6 @@ span.icon {
 
 div.TopBar img.logo {
 float: left;
-  top: 40px;
   position: absolute;
   display: inline;
   left: 0;
@@ -136,7 +136,7 @@ padding-bottom : 0px; }
 
 div.form {
     border:thin white solid;
-    color:white;
+    color:var(--fontColor);
  /*   margin:auto; */
 }
 
@@ -294,7 +294,7 @@ div.TopBar {
     top:0;
     opacity:1;
     z-index:1;
-    background: rgba(30,144,255,1.0);
+    background: var(--BackGroundColor);
 }
 
 div.TopBar::after {
@@ -303,7 +303,7 @@ div.TopBar::after {
 	left: 0;
 	right: 0;
 	margin: auto;
-	border-bottom: dotted thin lightgrey;
+	border-bottom: dotted thin black;
 	position: absolute;
 	bottom: 1rem;
 }
@@ -448,6 +448,9 @@ div.form .field_wrapper:has(label:hover) span.helptext
     display: block;
 }
 
+div.sidebar.entry img.sidebar.icon:hover ~ span.helptext{
+    display: block ;
+}
 
 div.form .field_wrapper .label {
     width: 15rem;
@@ -510,6 +513,7 @@ th:has(+td input[type="checkbox"])  label{
     padding: 5px 0 0 50px;
     line-height: 2.0em;
 }
+
 th:has(+td input[type="checkbox"]) label:after {
     content: "";
     position: absolute;

@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
             name='EventData',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('event_logo', models.ImageField(blank=True, upload_to=GarageSale.models.save_event_logo_to)),
+                ('event_logo', models.ImageField(blank=True, upload_to=GarageSale.models.models.save_event_logo_to)),
                 ('event_date', models.DateField()),
                 ('open_billboard_bookings', models.DateField()),
                 ('close_billboard_bookings', models.DateField()),

@@ -1,7 +1,7 @@
 
 div#ToolBar h1 {
 	text-align: center;
-	color: white;
+	color: var(--fontColor);
 	padding-top: 10px;
 	margin-top: 0;
 	margin-bottom: 5px;
@@ -9,7 +9,7 @@ div#ToolBar h1 {
 
 div#clock {
 	padding-bottom: 0.5em;
-	color: white;
+	color: var(--fontColor);
 	font-size: 120%;
 	line-height: var(--ToolbarHeight);
 	max-height: var(--ToolbarHeight);
@@ -81,7 +81,7 @@ div#ToolBar div.menubar div.wrapper.browser ul {
 
 div#ToolBar div.menubar div.wrapper.browser ul li {
 	display: inline-block;
-	color: white;
+	color: var(--fontColor);
 	font-weight: bold;
 	margin-right: 10px;
 	padding-right: 1em;
