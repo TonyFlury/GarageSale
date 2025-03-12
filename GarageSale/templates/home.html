@@ -1,4 +1,4 @@
-{% extends "_base_with_toolbar.html" %}
+{% extends "_snap_slider_base.html" %}
 {% load static %}
 {% load user_management_tags %}
 {% load event_data_tags %}
@@ -7,25 +7,185 @@
 Brantham Garage Sale - Home Page
 {% endblock %}
 
-{# TODO - Add links on email and facebook icons - why didn't i do this before! #}
+{% block sidebar %}
+
+    <!-- Do we need a cms ??? -->
+    <div class="sidebar entry" item="home" id='home' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Back Home" id='id_home_icon' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %}/>
+        <label for="id_home_icon">Back Home</label>
+        <span class="helptext">Go Back Home</span>
+    </div>
+
+    <div class="sidebar entry" item="involved" id='map' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Are you on the map" id='id_get_on_map_icon' src={% static "GarageSale/images/icons/menu/gps-location-map-marker-navigation-svgrepo-com.svg" %}/>
+        <label for="id_get_on_map_icon">Are you on the Map</label>
+        <span class="helptext">Are you on the Map</span>
+    </div>
+
+    <div class="sidebar entry" item="donate" id='donate' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="How to Donate" id='id_donate' src={% static "GarageSale/images/icons/menu/pounds-coins-stack-svgrepo-com.svg" %}/>
+        <label for="id_donate">How to Donate</label>
+        <span class="helptext">How to Donate</span>
+    </div>
+
+    <!--
+    <div class="sidebar entry" item="news" id='news' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="News" id='id_news' src={% static "GarageSale/images/icons/menu/news-svgrepo-com.svg" %}/>
+        <label for="id_news">Garage Sale News</label>
+        <span class="helptext">Garage Sale News</span>
+    </div>
+    -->
+
+      <div class="sidebar entry" item="sponsors" id='sponsors' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Our Sponsors" id='id_sponsors' src={% static "GarageSale/images/icons/menu/money-bag-pound-svgrepo-com.svg" %}/>
+        <label for="id_sponsors">Our Sponsors</label>
+        <span class="helptext">Our Sponsors</span>
+    </div>
+
+    <div class="sidebar entry" item="AboutUs" id="AboutUs'" xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="About Us" id='id_AboutUs' src={% static "GarageSale/images/icons/menu/about-svgrepo-com.svg" %}/>
+        <label for="id_AboutUs">About Us</label>
+        <span class="helptext">About Us</span>
+    </div>
+
+    <div class="sidebar entry" item="contact" id='Contact Us' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Contact Us" id='id_contact' src={% static "GarageSale/images/icons/menu/contact-us-svgrepo-com.svg" %}/>
+        <label for="id_contact">Contact Us</label>
+        <span class="helptext">Contact Us</span>
+    </div>
 
 
-{% block PageHeading %}Brantham Garage Sale{% endblock %}
+        {% if perms.GarageSale.is_administrator %}
+            <div class="sidebar entry direct" item="team" xmlns="http://www.w3.org/1999/html">
+            <a href="{% url 'TeamPagesRoot' %}">
+                <img class="sidebar icon" alt="About Us" id='id_team' src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %}/>
+                <label for="id_team">Team Access</label>
+                <span class="helptext">Team Access</span></a>
+            </div>
+        {% endif %}
+{% endblock %}
 
-{% block body %}
-    <div class="MOTD">
+{% block SnappableSections %}
+  <div class="card" card_name="home">
+    <h1>Welcome</h1>
+      <div class="MOTD">
         {% MOTD %}
     </div>
-    <div id="Font-page-news">
-    <h2 id="Front-page-headline">Headlines</h2>
-    {% for item in articles %}
-    <div class="front-page-news">
-        <div class="synopsis">
-            <a class="headline" href="{% url 'News:article' item.slug %}">{{item.headline}}</a>
-            {{item.synopsis }}
+  </div>
+
+  <div class="card" id="OnTheMap" card_name="involved">
+    <h1>Are you on the Map?</h1>
+      <p style="font-size:125%;width:75%;margin:auto">
+    To be involved in the Garage sale, you need to get yourself on the map, either to host an advertisement board,
+    or as the host of a sale or both.<br>
+    So - what are you waiting for -<br>
+    <button name="Are you on the Map" alt="Are you on the Map"
+            onclick="document.location.replace('{% url "Location:view" %}')">Are you on the map?</button>
+      </p>
+  </div>
+
+  <div class="card donate" card_name="donate">
+    <h1>Donating to the Charity</h1>
+        <div class="panel">
+            <div id="bacs">
+                You can donate to the charity using BACS
+                <ul style="list-style-type:none;font-size:85%;margin:1rem;">
+                    <li><b>Account Type </b>: Business
+                    <li><b>Name </b>: Brantham Garage Sale Foundation
+                    <li><b>Acc # </b>: 26992063
+                    <li><b>Sort Code </b>: 30 99 50
+                </ul>
+            </div>
+            <div id="cash-fees">
+                If you want to pay your £8.00 pitch fee in cash, please place it in a sealed
+                envelope with your name, and address on it and deliver it to :
+                <ul>
+                    <li>19, Merriam Close</li>
+                    <li>Brantham</li>
+                    <li>CO11 1RY</li>
+                </ul>
+            </div>
+            <div id="cash-donations">
+                There is also a cash collection tin at Chloes Cafe if you have
+                spare change and you are feeling generous.
+                <br>
+                Please do not use this cash collection tin to pay your £8.00 pitch fee as we can't track
+                who has paid and who hasn't.
+            </div>
         </div>
-        <span class="footnote"><a class="footnote" href="{% url 'News:article' item.slug %}">Read More</a></span>
+  </div>
+
+  <!--
+    <div class="card" card_name="news">
+    <h1>All of the latest News for the Garage Sale</h1>
+        {%  for item in  articles %}
+            <span class="synopsis">{{ items.headline }}</span>
+        {%  endfor %}
     </div>
-    {% endfor %}
+    -->
+
+    <div class="card" card_name="sponsors">
+    <h1>Our Generous Sponsors</h1>
+    A number of very generous local companies have sponsored the Garage Sale this year, either with a cash donation or
+    with donations of vouchers or prizes to our prize Tombola. Not only do these sponsors allow us to cover the costs of
+    advertising the event and much else besides, they allow us to ensure that every single penny raised by the Sales
+    events can be donated to the Hospice and local good causes.<br>
+
+
+<script type="text/javascript" src='https://unpkg.com/blaze-slider@latest/dist/blaze-slider.min.js'></script>
+
+<div class="blaze-slider">
+  <div class="blaze-container">
+    <div class="blaze-track-container">
+      <div class="blaze-track">
+        {% for sponsor in request.current_event.sponsors.all %}
+            <div>
+                <img class="sponsor-logo" alt="{{ sponsor.company_name }}" src="{{ MEDIA_URL }}{{ sponsor.logo }}">
+            </div>
+        {% endfor %}
+      </div>
     </div>
+  </div>
+    <button name="Full Sponsors List" alt="View full list of sponsors"
+            onclick="document.location.replace({% url 'sponsors:sponsor_list' %})">Full Sponsor List</button>
+</div>
+     <script type="text/javascript">
+
+             const el = document.querySelector('.blaze-slider');
+             new BlazeSlider(el, {
+                     all: {
+                         enableAutoplay: true,
+                         autoplayInterval: 2500,
+                         transitionDuration: 250,
+                         slidesToShow: 6,
+                         width: '128px',
+                     },
+                 }
+             );
+  </script>
+    </div>
+
+
+  <div class="card" card_name="AboutUs" style="text-align: left; padding-left: 2rem; padding-right: 2rem;">
+    <h1>About the Garage Sale and the Foundation</h1>
+      The Garage Sale has been running in Brantham since 2003 - initially to raise money for
+      St Elizabeth's Hospice in Ipswich, specifically for the "Carla Dawson Memorial fund".
+      In the following years the Garage Sale became a feature of village life, raising money for both the hospice
+      and local good causes.
+      In 2023 the organiser wanted to step aside, and it was clear that the work to organise the Sale event was beyond the
+      scope of one person.
+      <p>
+      The foundation itself was created in October 2023, in order to ensure that the Garage Sale Event continued and
+      that the fund-raising potential increased.
+      <p>
+      For the 2024 Sale the trustees added a very popular Craft Market, and prize Tombola to the event, and we have
+      plans to expand the 2025 sale even more.
+  </div>
+
+  <div class="card" card_name="contact">
+    <h1>Contact Us</h1>
+
+      To Contact the Trustess please email <span><a href="mailto:BranthamGarageSale@gmail.com"><img width="32px" height="32px" src="{%  static 'GarageSale/images/icons/email-open-svgrepo-com.svg' %}"/>BranthamGarageSale@gmail.com</a></span>
+  </div>
+
 {% endblock %}

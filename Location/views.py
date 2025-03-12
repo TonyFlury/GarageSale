@@ -30,6 +30,8 @@ class LocationCreateView(UserRecognisedMixin, CreateView):
         inst.user = self.request.user
         inst.event = self.request.current_event
         inst.save()
+
+        #To DO - send confirmation email.
         return redirect(self.success_url)
 
 
@@ -53,6 +55,8 @@ class LocationEditView(UserRecognisedMixin, UpdateView):
     login_url = reverse_lazy("user_management:identify")
     transaction_type = "locations"
     success_url = reverse_lazy('Location:view')
+
+#To Do - send email if the data has changed !
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -83,3 +87,5 @@ class LocationDelete(UserRecognisedMixin, DeleteView):
         if not inst:
             raise Http404(f"No location found matching {ext_id}")
         return inst
+
+# ToDo - send confirmation of deletion ????

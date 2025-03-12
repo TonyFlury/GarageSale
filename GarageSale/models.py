@@ -21,16 +21,18 @@ from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 
+from GarageSale.svgaimagefield import SVGAndImageFormField
 
-class General(models.Model):
-    class Meta:
-        managed = False
-        default_permissions = ()
-        permissions = [
-            ("is_trustee", "Is a member of the Charity Trustee Team"),
-            ("is_administrator", 'Is a administrator for the website'),
-            ("is_manager", 'Is a manager of the website'),
-        ]
+
+#class General(models.Model):
+#    class Meta:
+#        managed = False
+#        default_permissions = ()
+#        permissions = [
+#            ("is_trustee", "Is a member of the Charity Trustee Team"),
+#            ("is_administrator", 'Is a administrator for the website'),
+#            ("is_manager", 'Is a manager of the website'),
+#        ]
 
 class MOTD(models.Model):
     """"Holder for Message of the Day"""
@@ -54,6 +56,23 @@ class MOTD(models.Model):
             ("can_delete_motd", "Can delete an existing MotD"),
         ]
 
+def save_supported_logo_to(instance, filename):
+    return f'supported_logo_{instance.name}/{filename}'
+
+class byIndex(models.Manager):
+    def get_queryset(self):
+        return super(byIndex, self).get_queryset().order_by('index')
+
+class Supporting(models.Model):
+    objects = byIndex()
+    name = models.CharField(max_length = 100)
+    logo = models.FileField(upload_to=save_supported_logo_to, null=True, blank=True)
+    website = models.URLField()
+    index = models.IntegerField()
+    def __str__(self):
+        return self.name
+
+
 
 class CurrentFuture(models.Manager):
     def get_queryset(self):
@@ -70,13 +89,14 @@ class EventData(models.Model):
     """
     objects = models.Manager()
     CurrentFuture = CurrentFuture()
-    event_logo = models.ImageField(null=True, upload_to=save_event_logo_to)    # The specific logo for this years event
+    event_logo = models.FileField(null=True, upload_to=save_event_logo_to)    # The specific logo for this years event
     event_date = models.DateField()                                             # The date of the actual sale event
     open_billboard_bookings = models.DateField(null=True)                                # When Billboard bookings open
     close_billboard_bookings = models.DateField(null=True)                               # When Billboard bookings close
     open_sales_bookings = models.DateField(null=True)                                    # When Sales bookings open
     close_sales_bookings = models.DateField(null=True)                                   # When Sales bookings open
     use_from = models.DateField()
+    supporting_organisations = models.ManyToManyField(Supporting, related_name='by_event')
 
     def __str__(self):
         return f'{self.event_date}'

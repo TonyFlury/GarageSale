@@ -1,0 +1,173 @@
+body {
+        background-image: url( "/static/GarageSale/images/resources/MAP-Greyscale-01.png");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        margin: 0;
+}
+
+ div.body {
+    container: body / size;
+    margin: 0;
+    padding: 0;
+    height: 600px;
+}
+
+    div#Container
+    {
+        height: auto;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+        background: var(--BackGroundColor);
+        flood-opacity: 0.9;
+        display: flex;
+    }
+
+    div#Content {
+        float:left;
+        width:80%;
+        display:flex;
+        flex-grow: 1;
+    }
+
+    div.mandatory-scroll-snapping {
+        display: flex;
+        margin: 1em auto;
+      /*  outline: 1px dashed darkgrey; */
+        flex: none;
+        overflow: auto;
+        flex-flow: column wrap;
+    }
+
+    div.y {
+        width:100%;
+        flex-flow: column nowrap;
+        overflow-x: hidden;
+        height:600px;
+    }
+
+    div.y.mandatory-scroll-snapping {
+      scroll-snap-type: y mandatory;
+    }
+
+    div.mandatory-scroll-snapping > div.card {
+      text-align: center;
+      scroll-snap-align: center;
+        height:100%;
+        flex:none;
+    }
+
+div.sidebar.container {
+    float: left;
+    height: 100%;
+    max-width: 20%;
+    margin-right: 1rem;
+    margin-left: 1rem;
+}
+
+    div.sidebar.entry:not(.bullet) {
+        padding: 0.25rem 0.25rem 0.25rem 1rem;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        border: thin grey solid;
+        border-radius: 25px;
+        box-shadow: grey 1px 1px 2px;
+        background-color: inherit;
+    }
+
+    div.sidebar.entry.bullet {
+            text-align: center;
+    }
+
+    @container body (max-width: 1250px) {
+
+        div.sidebar.entry.bullet {
+            text-align: right;
+        }
+    }
+
+    div.sidebar.entry label {
+            display:inline-block;
+        }
+
+    @container body (max-width: 1250px){
+        div.sidebar.entry label {
+            display:none
+        }
+        div.sidebar.entry {
+            width : 40px;
+        }
+        div.sidebar.container {
+            width : 80px;
+        }
+    }
+
+    @container body (min-width: 12500px){
+
+        div.sidebar.entry label {
+            display:inline-block;
+        }
+        div.sidebar.entry {
+            width : 270px;
+        }
+        div.sidebar.container {
+            width : 270px;
+        }
+    }
+
+    div.sidebar.entry.selected:not(.bullet)
+    {
+        border: thin black solid;
+        box-shadow: black -3px -3px 2px;
+        background-color: yellow;
+    }
+
+    div.selected.entry.bullet {
+        height : 1.3rem;
+    }
+
+div.sidebar.entry.bullet.selected {
+    visibility: hidden;
+}
+
+    div.sidebar.entry.selected.bullet:after
+    {
+        content: '\25CF';
+        visibility: visible;
+        display: block;
+        position: relative;
+        top: -1.3rem;
+        padding: 0;
+        margin: 0;
+    }
+
+
+    div.sidebar.entry label {
+        text-align: left;
+        margin: 0 0.5rem 0 0 ;
+        width : auto;
+    }
+
+    div.sidebar.entry img.icon {
+        width:32px;
+        height:auto;
+        vertical-align: middle;
+    }
+    div.sidebar.entry span.helptext {
+        font-size: 80%;
+        padding: 5px;
+        display: None;
+        background: #f0f0f0;
+        border: thin black solid;
+        color: black;
+        position: absolute;
+        box-shadow: 2px 2px 5px #0f0f0f;
+        border-radius: 15px;
+        z-index: 1000;
+    }
+
+    div.sidebar.entry:has(label:hover) span.helptext
+    {
+        display: block;
+    }

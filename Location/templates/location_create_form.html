@@ -1,43 +1,51 @@
-{% extends "_base_with_toolbar.html" %}
+{% extends "_snap_slider_base.html" %}
 {% load static %}
 {% load user_management_tags %}
+{% load location_tags %}
 
-{% block additionalScripts%}
-<script type="text/javascript" src="{% static 'GarageSale/js/tooltip.js' %}"></script>
+{% block head-extra %}
+    <script src="{% static 'DjangoGoogleMap/api/display_location.js' %}"></script>
+    <script type="text/javascript" src="{% static 'GarageSale/js/tooltip.js' %}"></script>
 {% endblock %}
 
-{% block body %}
 
-{% block additionalSty%}
-    <style>
-    .columns .address, .columns .map {
-                float:left;
-                width:45%;
-            }
-    .buttons {
-        clear:both;
-    }
-    #id_lng_lat_map{
-        width:400px;
-        height:400px;
-        margin:10px;
-    }
-    </style>
+{% block PageStyles %}
+    <link rel="stylesheet" href="{% static 'Location/styles/locations.css' %}">
 {% endblock %}
 
-<h2>
-    Garage Sale Location
-</h2>
-<div class="form">
+{% block sidebar %}
+        <div class="sidebar entry direct tooltip" item="Homepage" xmlns="http://www.w3.org/1999/html">
+            <a href="{% url 'home' %}">
+                <img class="sidebar icon" alt="Home Page" id='id_home_page' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %}/>
+                <label for="id_team">Home Page</label></a>
+                <span class="tooltiptext right arrow">Return to Home Page</span>
+        </div>
+           <div class="sidebar entry direct tooltip" item="Back" xmlns="http://www.w3.org/1999/html">
+            <a href="{% url 'Location:view' %}">
+                <img class="sidebar icon" alt="Return to Previous Page" id='id_back' src={% static "GarageSale/images/icons/menu/back-svgrepo-com.svg" %}/>
+                <label for="id_team">Back to Previous Page</label></a>
+                <span class="tooltiptext right arrow">Return to Previous Page</span>
+        </div>
+{%  endblock %}
+
+{%  block SnappableSections %}
+
+<div class="card location">
+    <h3>
+        Garage Sale Location
+    </h3>
+    <div class="form">
     <form method=POST action='{{action}}' id="CreateLocation">
             {% csrf_token %}
-            <div class="columns">
+            <div class="address-and-map">
                 {%  if form.non_field_errors %}
                     {% for error in form.non_field_errors %}
                     <div class="error">{{ error }}</div>
                     {% endfor %}
                 {% endif %}
                 <div class="address">
+                    {{ form.ad_board.errors }}
+                    {{ form.sale_event.errors }}
                     <div>
                         <div class="field_wrapper"><label for='{{ form.ad_board.id_for_label }}' >{{ form.ad_board.label }}</label>{{ form.ad_board }}<span class="helptext">{{ form.ad_board.help_text }}</span></div>
                         <div class="field_wrapper"><label for='{{ form.sale_event.id_for_label }}' >{{ form.sale_event.label }}</label>{{ form.sale_event }}<span class="helptext">{{ form.sale_event.help_text }}</span></div>
@@ -64,7 +72,8 @@
                             {{ form.town }}{% if form.town.help_text %}<span class="helptext">{{ form.town.help_text }}{%  endif %}</span></div>
                     </div>
                 </div>
-                <div class="map">
+               <div class="premarked-map">
+                <div class="map-details">
                     {{ form.lng_lat.errors }}
                     <div class="field_wrapper">
                         <div style="font-size: 80%;">Please be aware that not all buildings appear on the roadmap version of the map, and that some
@@ -73,6 +82,7 @@
                         </div>
                         <label for='{{ form.lng_lat.id_for_label }}' >{{ form.lng_lat.label }}</label>{{ form.lng_lat }}{% if form.lng_lat.help_text %}<span class="helptext">{{ form.lng_lat.help_text | safe}}{%  endif %}</div>
                 </div>
+               </div>
             </div>
         <div class="buttons">
             <input type="button" name='action' onclick="cancel_LocationSave()" value="Cancel" id="id_CancelButton">
@@ -87,6 +97,6 @@
             window.location.replace( '{% url "Location:view" %}' );
          }
     </script>
-
+</div>
 </div>
 {% endblock %}

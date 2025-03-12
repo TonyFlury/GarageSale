@@ -6,7 +6,6 @@
 {% block additionalScripts%}
 <script type="text/javascript" src="{% static 'GarageSale/js/tooltip.js' %}"></script>
 <script type="text/javascript" src="{% static 'GarageSale/js/scrollablePanel.js' %}"></script>
-
 {% endblock %}
 
 {% block Title %}
@@ -15,9 +14,12 @@ Brantham Garage Sale - Home Page
 
 {% block additionalStyles %}
 <link rel="stylesheet" href="{% static 'GarageSale/styles/scrollablePanel.css' %}">
-
-
+<link rel="stylesheet" href="https://unpkg.com/blaze-slider@latest/dist/blaze.css">
+    {% block PageStyles %}
+    {% endblock %}
 {% endblock %}
+
+
 
 {% block PageHeading %}Brantham Garage Sale{% endblock %}
 
@@ -38,10 +40,10 @@ Brantham Garage Sale - Home Page
 </div>
 <div class="menubar">
     <div id="Buttons">
-    <a href="mailto:branthamGarageSale@gmail.com"><img id=Email class="Button Animate browser" src="{% static 'GarageSale/images/icons/icons8-email-48.png' %}" ></a>
-    <a href="https://www.facebook.com/BranthamGarageSale"><img id=Facebook class="Button Animate browser" src="{% static 'GarageSale/images/icons/Facebook_Logo_Secondary.png' %}"></a>
+    <a href="mailto:branthamGarageSale@gmail.com"><img id=Email class="Button Animate browser" src="{% static 'GarageSale/images/icons/email-open-svgrepo-com.svg' %}" ></a>
+    <a href="https://www.facebook.com/BranthamGarageSale"><img id=Facebook class="Button Animate browser" src="{% static 'GarageSale/images/icons/facebook-color-svgrepo-com.svg' %}"></a>
     <span id=user_management class="Button browser dropdown">
-            <img id=Account class="Button Animate dropbtn" src="{% static 'user_management/images/icons/icons8-person-64.png' %}" >
+            <img id=Account class="Button Animate dropbtn" src="{% static 'user_management/images/icons/user-svgrepo-com.svg' %}" >
                 <span class="dropdown-content">
                   <ul>
                       {% User_menu  register="/register" login="/login" logoff="/logoff" profile="/getInvolved"%}
@@ -49,17 +51,11 @@ Brantham Garage Sale - Home Page
                 </span>
     </span>
     <span class="mobile BurgerDropDown">
-        <img id=Burger class="Button Animate" src="{% static 'GarageSale/images/icons/burger.png' %}" >
+        <img id=Burger style="width:64px;height:auto;" class="Button Animate" src="{% static 'GarageSale/images/icons/menu-burger-horizontal-svgrepo-com.svg' %}" >
         <span class="BurgerDropdown-content">
             <ul>
                 <li><a href="/">Home</a></li>
                 {% User_menu  register="/register" login="/login" logoff="/logoff" getinvolved="/getinvolved"%}
-                <li><a href="/news">News</a></li>
-                <li><a href="/getInvolved">Get Involved</a></li>
-                <li><a href="/donate">How to Donate</a></li>
-                <li><a href="/sponsors">Our Sponsors</a></li>
-                <li><a href="{% url 'AboutUs' %}">About Us</a></li>
-                <li><a href="{% url 'ContactUs' %}">Contact Us</a></li>
                 {% if perms.GarageSale.is_administrator %}
                     <li><a href="{% url 'TeamPagesRoot' %}">Team</a></li>
                 {% endif %}
@@ -81,25 +77,26 @@ Brantham Garage Sale - Home Page
     {% endif %}
 {% endblock %}
 {% block body %}
+    {% block header %}
+    {% endblock %}
     <div id="Container">
-<div id="SidebarContainer" class="sidebar container" >
-        <div>
-        {% block sidebar %}
-            <div class="sidebar entry"> Insert Side bar here</div>
-        {% endblock %}
+        <div id="SidebarContainer" class="sidebar container" >
+            <div>
+            {% block sidebar %}
+                <div class="sidebar entry"> Insert Side bar here</div>
+            {% endblock %}
+            </div>
+        </div>
+        <div id="Content">
+            <div id="CardContainer" class="y mandatory-scroll-snapping" dir="ltr">
+                {% block SnappableSections %}
+                    <div class="card">Y Mand. RTL</div>
+                    <div class="card">2</div>
+                    <div class="card">3</div>
+                    <div class="card">4</div>
+                    <div class="card">5</div>
+                {% endblock %}
+            </div>
+        </div>
     </div>
-
-</div>
-<div id="Content">
-  <div id="CardContainer" class="y mandatory-scroll-snapping" dir="ltr">
-      {% block SnappableSections %}
-    <div class="card">Y Mand. RTL</div>
-    <div class="card">2</div>
-    <div class="card">3</div>
-    <div class="card">4</div>
-    <div class="card">5</div>
-      {% endblock %}
-  </div>
-</div>
-</div>
 {% endblock %}

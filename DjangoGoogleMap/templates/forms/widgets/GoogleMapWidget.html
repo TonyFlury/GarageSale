@@ -1,5 +1,5 @@
 
-<div id="id_{{ widget.name }}_map">
+<div class="map" id="id_{{ widget.name }}_map">
     <input type="text" name="{{ widget.name }}" id="id_{{ widget.name }}"
            {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %} hidden/>
     <div id="id_{{ widget.name }}_map_wrapper" style="width: 100%; height:100%;"></div>

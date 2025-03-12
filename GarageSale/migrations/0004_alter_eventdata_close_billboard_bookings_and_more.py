@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='eventdata',
             name='event_logo',
-            field=models.ImageField(null=True, upload_to=GarageSale.models.models.save_event_logo_to),
+            field=models.ImageField(null=True, upload_to=GarageSale.models.save_event_logo_to),
         ),
         migrations.AlterField(
             model_name='eventdata',

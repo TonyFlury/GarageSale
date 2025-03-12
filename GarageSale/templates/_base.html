@@ -33,21 +33,21 @@
     {% block head-extra %}{% endblock%}
 </head>
 <body>
-{% block body-extra %}{% endblock %}
-<div class="TopBar">
-    <div class="ToolBar" id="ToolBar">
-            <H1>{% block PageHeading %}Page Title{% endblock %}</h1>
-    {% block ToolBar %}Tool Bar goes here{% endblock %}
-</div>
-</div>
-<div class="body">
-{% block body %}Body Content{% endblock%}
-</div>
-{% if TEST_SERVER %}
-<div class="test_warning">
-    <p>This is a test server - all features are experimental and may not work - contact Tony Flury if any bugs or strange behaviour is found.</p>
-    <p>Do not use private personal data on this server.</p>
-</div>
-{% endif %}
+    {% block body-extra %}{% endblock %}
+        <div class="TopBar">
+            <div class="ToolBar" id="ToolBar">
+                    <H1>{% block PageHeading %}Page Title{% endblock %}</h1>
+            {% block ToolBar %}Tool Bar goes here{% endblock %}
+            </div>
+        </div>
+    <div class="body">
+        {% block body %}Body Content{% endblock%}
+    </div>
+    {% if TEST_SERVER %}
+        <div class="test_warning">
+            <p>This is a test server - all features are experimental and may not work - contact Tony Flury if any bugs or strange behaviour is found.</p>
+            <p>Do not use private personal data on this server.</p>
+        </div>
+    {% endif %}
 </body>
 </html>

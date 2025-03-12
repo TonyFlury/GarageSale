@@ -8,7 +8,20 @@ from django.core.validators import (
     get_available_image_extensions,
 )
 from django.forms import ImageField as DjangoImageField
+from django.forms.widgets import FileInput
 from PIL import Image
+from django.utils.safestring import mark_safe
+
+class ImagePreviewWidget(FileInput):
+    def render(self, name, value, attrs=None, **kwargs):
+         input_html = super().render(name, value, attrs=None, **kwargs)
+         return input_html
+#        print(input_html)
+#        if value.url :
+#            img_html = mark_safe(f'<br><br><img style="width:64px;height=auto;" src="{value.url}"/>')
+#        else:
+#            img_html = ''
+#        return f'{input_html}{img_html}'
 
 
 def validate_image_and_svg_file_extension(value):

@@ -14,7 +14,7 @@ Testable Statements :
 """
 import datetime
 
-from django.contrib.auth.models import AnonymousUser
+from django.conf import settings
 
 from django import template
 from django.core import exceptions
@@ -22,14 +22,23 @@ from django.contrib.auth.models import User
 from Location.models import Location  # should be able to get this from the request context
 from GarageSale.models import MOTD
 
-#from Billboard.models import BillboardLocations
-#from SaleLocation.models import SaleLocations
-
 from django.utils.dateformat import DateFormat
 
 from datetime import date
 
 register = template.Library()
+
+# settings value
+@register.simple_tag
+def settings_value(name):
+    keys = name.split('.')
+    obj = settings.__dict__
+    for key in keys :
+        try:
+            obj = obj.get(key,'')
+        except IndexError:
+            return ''
+    return obj
 
 
 def get_feature_date(feature, state):

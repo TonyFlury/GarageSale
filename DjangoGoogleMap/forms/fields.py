@@ -34,5 +34,4 @@ class GoogleMap(forms.Field):
             place_fields = ['bounds', 'center', 'defaultZoom', 'autoZoomLevel', 'zoomStep', 'title']
             attrs |= {key: value for key, value in place_data.items() if key in place_fields}
 
-        print('widget attrs', self._place, attrs)
         return attrs

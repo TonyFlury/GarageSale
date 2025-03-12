@@ -78,5 +78,5 @@ class Location(models.Model):
 
     @classmethod
     def get_by_ext_id(cls, ext_id):
-        inst = cls.objects.get(pk=int(ext_id[:4]))
+        inst = cls.objects.get(pk=int(ext_id[:4],base=16))
         return inst if inst and (inst.ext_id() == ext_id) else None

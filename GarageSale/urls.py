@@ -26,6 +26,7 @@ from django.views.generic.base import RedirectView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", views.home, name="home"),
+    path("newhome", TemplateView.as_view(template_name='home.html'), name="NewHome"),
     path("getInvolved", RedirectView.as_view(url=reverse_lazy('Location:view'))),
 #    path("getInvolved", include('Location.urls'), name="getInvolved"),
     path('about_us', TemplateView.as_view(template_name='aboutUs.html'), name='AboutUs'),
@@ -33,14 +34,16 @@ urlpatterns = [
     path('privacy', TemplateView.as_view(template_name='privacy_policy.html'), name='Privacy'),
     path('blind_auction', TemplateView.as_view(template_name='blind_auction.html'), name='BlindAuction'),
     path('donate', TemplateView.as_view(template_name='donate.html'), name='Donate'),
-
     path('location/', include('Location.urls')),
     path('team_page/', include('team_pages.urls')),
     path('news/', include('News.urls')),
     path('user/', include('user_management.urls')),
 #    path('billboard/', include('Billboard.urls')),
 #    path('sale_location/', include('SaleLocation.urls')),
+
+    # path('test/<int:case>/', views.testing, name='test'),
     path('sponsors/', include('Sponsors.urls')),
+    path('mapping/', include('DjangoGoogleMap.urls')),
 ]
 
 if settings.DEBUG:

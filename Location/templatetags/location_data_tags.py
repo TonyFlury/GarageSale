@@ -9,7 +9,7 @@ register = template.Library()
 @register.simple_tag( takes_context=True)
 def location_type_icon(context, location, field):
     def location_status_html():
-        return '&#x2705;' if getattr(location, field) else '&#x274E;'
+        return '&#x2705;' if getattr(location, field) else '&#x274C;'
 
     return mark_safe(location_status_html())
 
