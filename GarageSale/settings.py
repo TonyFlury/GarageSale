@@ -163,8 +163,8 @@ APPS_SETTINGS = {
 }
 
 GOOGLE_MAP_SETTINGS = {
-    'API_KEY' : "AIzaSyADwZE0Z7KkXRcC8xcE5BPho_kYNJGyx6I",
-    'MAP_ID' :  "48c4f8f723f382a2",
+    'API_KEY' : "######################################################",
+    'MAP_ID' :  "###########################",
     'PLACES' :  {
             'Brantham': {
                 'bounds' :  '{ north: 51.9755, south: 51.9554, east: 1.0798, west : 1.056}',
