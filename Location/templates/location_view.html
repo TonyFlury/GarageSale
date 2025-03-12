@@ -18,14 +18,14 @@
 {% block sidebar %}
         <div class="sidebar entry direct tooltip" item="Homepage" xmlns="http://www.w3.org/1999/html">
             <a href="{% url 'home' %}">
-                <img class="sidebar icon" alt="Home Page" id='id_home_page' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %}/>
+                <img class="sidebar icon" alt="Home Page" id='id_home_page' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %}>
                 <label for="id_team">Home Page</label></a>
                 <span class="tooltiptext right arrow">Return to Home Page</span>
         </div>
         <div class="sidebar entry direct tooltip">
             <a href="{% url 'Location:create' %}">
                 <img class="sidebar icon" alt="Home Page" id='id_AddLocation'
-                     src={% static "GarageSale/images/icons/menu/add-location-svgrepo-com.svg" %}/>
+                     src={% static "GarageSale/images/icons/menu/add-location-svgrepo-com.svg" %}>
                     <label for="id_AddLocation">New Location</label></a>
             <span class="tooltiptext right arrow">Add a new Location</span>
         </div>
@@ -34,7 +34,7 @@
             {% for location in object_list %}
                 <div class="sidebar entry tooltip" item="location_{{location.id}}" xmlns="http://www.w3.org/1999/html">
                 <img class="sidebar icon" alt="Home Page" id='id_location_{{location.id}}'
-                     src={% static "GarageSale/images/icons/menu/map-marker-area-line-svgrepo-com.svg" %}/>
+                     src={% static "GarageSale/images/icons/menu/map-marker-area-line-svgrepo-com.svg" %}>
                     <label for="id_location_{{location.id}}">{{ location.house_number }}, {{ location.street_name }}</label>
                     <span class="tooltiptext right arrow">{{ location.house_number }}, {{ location.street_name }}</span>
                 </div>

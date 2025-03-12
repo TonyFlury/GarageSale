@@ -16,13 +16,13 @@
 {% block sidebar %}
         <div class="sidebar entry direct tooltip" item="Homepage" xmlns="http://www.w3.org/1999/html">
             <a href="{% url 'home' %}">
-                <img class="sidebar icon" alt="Home Page" id='id_home_page' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %}/>
+                <img class="sidebar icon" alt="Home Page" id='id_home_page' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %} >
                 <label for="id_team">Home Page</label></a>
                 <span class="tooltiptext right arrow">Return to Home Page</span>
         </div>
            <div class="sidebar entry direct tooltip" item="Back" xmlns="http://www.w3.org/1999/html">
             <a href="{% url 'Location:view' %}">
-                <img class="sidebar icon" alt="Return to Previous Page" id='id_back' src={% static "GarageSale/images/icons/menu/back-svgrepo-com.svg" %}/>
+                <img class="sidebar icon" alt="Return to Previous Page" id='id_back' src={% static "GarageSale/images/icons/menu/back-svgrepo-com.svg" %} location_view.html >
                 <label for="id_team">Back to Previous Page</label></a>
                 <span class="tooltiptext right arrow">Return to Previous Page</span>
         </div>
