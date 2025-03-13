@@ -141,6 +141,7 @@ DEBUG_TOOLBAR_PANELS = [
 WSGI_APPLICATION = 'GarageSale.wsgi.application'
 
 EMAIL_CREDENTIALS = email_credentials.EMAIL_CREDENTIALS
+SERVER_EMAIL = email_credentials.SERVER_EMAIL
 
 ADMINS = [('Tony Flury', 'anthony.flury@btinternet.com')]
 
