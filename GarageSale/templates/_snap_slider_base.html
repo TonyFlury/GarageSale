@@ -14,7 +14,6 @@ Brantham Garage Sale - Home Page
 
 {% block additionalStyles %}
 <link rel="stylesheet" href="{% static 'GarageSale/styles/scrollablePanel.css' %}">
-<link rel="stylesheet" href="https://unpkg.com/blaze-slider@latest/dist/blaze.css">
     {% block PageStyles %}
     {% endblock %}
 {% endblock %}
@@ -51,7 +50,7 @@ Brantham Garage Sale - Home Page
                 </span>
     </span>
     <span class="mobile BurgerDropDown">
-        <img id=Burger style="width:64px;height:auto;" class="Button Animate" src="{% static 'GarageSale/images/icons/menu-burger-horizontal-svgrepo-com.svg' %}" >
+        <img id=Burger  class="Button Animate" src="{% static 'GarageSale/images/icons/menu-burger-horizontal-svgrepo-com.svg' %}" >
         <span class="BurgerDropdown-content">
             <ul>
                 <li><a href="/">Home</a></li>
@@ -80,7 +79,7 @@ Brantham Garage Sale - Home Page
     {% block header %}
     {% endblock %}
     <div id="Container">
-        <div id="SidebarContainer" class="sidebar container" >
+        <div id="SidebarContainer" class="sidebar container"  style="display: flex; flex-direction: column;">
             <div>
             {% block sidebar %}
                 <div class="sidebar entry"> Insert Side bar here</div>

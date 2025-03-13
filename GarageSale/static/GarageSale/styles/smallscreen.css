@@ -3,21 +3,18 @@
     display : none ; }
 
 body {
-font-size:14pt;
+font-size:85%;
 }
 
 .body {
     padding: 0em;
 }
 #clock {
-	width: 80%;
-	font-size: 90%;
-	margin-left: 0;
-	text-align: left;
-	margin-right: 0;
-	font-size: 100%;
-	margin-top: 14px;
-	display: inline-block;
+    width: 60%;
+    text-align: left;
+    margin-left: 100px;
+    font-size: 100%;
+    display: inline-block;
 }
 
 span#Buttons {
@@ -30,7 +27,7 @@ span#Ticker {
  }
 
 div.TopBar h1 {
-    font-size:120%;
+    font-size:12px;
     padding-left: 80px;
     padding-top : 0px;
     text-align: left;
@@ -58,9 +55,7 @@ div#Buttons {
 }
 
 div.MOTD {
-    font-size: 100%;
     width:100%;
-    height:10em;
     overflow:auto;
 }
 div.MOTD:after {
@@ -178,4 +173,23 @@ div#about-us {
 
 a {
     border-bottom: thin dotted white;
+}
+
+img#Burger{
+    width:32px;
+    height:32px;
+}
+
+@media only screen and (max-width: 470px) {
+    div#Content {
+        max-width: 340px;
+    }
+    h1 {
+        font-size:120%;
+    }
+    #ToolBar h1 {
+        font-size: 130%;
+        width:fit-content;
+        margin:auto;
+    }
 }

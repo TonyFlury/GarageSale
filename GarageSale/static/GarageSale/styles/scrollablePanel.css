@@ -29,6 +29,8 @@ body {
         width:80%;
         display:flex;
         flex-grow: 1;
+margin-left:1rem;
+        margin-right:1rem;
     }
 
     div.mandatory-scroll-snapping {
@@ -61,9 +63,11 @@ body {
 div.sidebar.container {
     float: left;
     height: 100%;
-    max-width: 20%;
     margin-right: 1rem;
     margin-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    max-width: 300px;
 }
 
     div.sidebar.entry:not(.bullet) {

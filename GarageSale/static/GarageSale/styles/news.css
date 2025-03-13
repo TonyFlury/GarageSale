@@ -6,14 +6,15 @@
   position:relative;
 }
 
-@media only screen and (min-width: 1141px)
-.masthead {
-    padding-top:2em;
+@media only screen and (min-width: 1141px) {
+    .masthead {
+        padding-top: 2em;
+    }
 }
-
-@media only screen and (mam-width: 1140px)
-.masthead {
-    padding-top:0.25em;
+@media only screen and (max-width: 1140px) {
+    .masthead {
+        padding-top: 0.25em;
+    }
 }
 
 

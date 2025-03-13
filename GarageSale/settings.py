@@ -17,6 +17,7 @@ from credentials import db_credentials as db_credentials
 from credentials import django_secret_key
 from credentials import email_credentials
 from credentials import hosts
+from credentials import GoogleMap_credentials
 
 try:
     from credentials import test_server
@@ -162,16 +163,4 @@ APPS_SETTINGS = {
                         }
 }
 
-GOOGLE_MAP_SETTINGS = {
-    'API_KEY' : "AIzaSyADwZE0Z7KkXRcC8xcE5BPho_kYNJGyx6I",
-    'MAP_ID' :  "48c4f8f723f382a2",
-    'PLACES' :  {
-            'Brantham': {
-                'bounds' :  '{ north: 51.9755, south: 51.9554, east: 1.0798, west : 1.056}',
-                'center' : '{lat: 51.965370025651595, lng: 1.0653301728556086, }',
-                'defaultZoom': 4,
-                'autoZoomLevel': 18,
-                'zoomStep': 2,
-            }
-    }
-}
+GOOGLE_MAP_SETTINGS = GoogleMap_credentials.GOOGLE_MAP_SETTINGS

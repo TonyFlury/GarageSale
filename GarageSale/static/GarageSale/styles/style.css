@@ -69,7 +69,7 @@ div#Buttons {
   position: absolute;
   right : -10px;
   background-color: var(--BackGroundColor);
-  color : white ;
+  color : var(--fontColor) ;
   min-width: auto;
   box-shadow: 0px 8px 16px 0px rgba(1,1,1,1);
   z-index: 1;
@@ -94,7 +94,6 @@ margin-bottom:0.5rem;
 padding-bottom : 0px; }
 
 .dropdown-content a {
-  color: white;
   font-weight: bold;
   padding: 0.25em 16px;
   text-decoration: None;
@@ -648,16 +647,11 @@ img.sponsor-logo {
     max-width: 100%;
     height: auto;
     width: auto;
-    /* border: 1px dashed darkgrey; */
     margin: auto;
     position: absolute;
     top: 0;
     bottom: 0;
 }
-
-    .blaze-slider {
-        --slides-to-show: 5;
-    }
 
 #OnTheMap button,
 div.blaze-slider button {
@@ -748,26 +742,33 @@ div.blaze-slider button {
 
 
 .donate .panel  {
-    display: inline-flex;
+    display: flex;
     margin-left: 0rem;
     margin-right: 1rem;
     text-align: left;
+    flex-wrap: wrap;
 
+
+    @media screen and (min-width: 1000px) {
+        #bacs,
+        #cash-fees,
+        #cash-donations{
+            width:28%;
+        }
+
+    }
     #bacs{
         float: left;
-        width: 40%;
         padding: 1rem;
         margin: 0;
     }
     #cash-fees {
         float: left;
-        width: 40%;
         padding: 1rem;
         border-left: dotted thin;
     }
     #cash-donations {
         float: left;
-        width: 20%;
         padding: 1rem;
         border-left: dotted thin;
     }
@@ -777,3 +778,5 @@ div.blaze-slider button {
         margin: 1rem;
     }
 }
+
+div#Content a > img {vertical-align: middle;}

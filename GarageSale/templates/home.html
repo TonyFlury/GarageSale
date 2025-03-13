@@ -10,22 +10,22 @@ Brantham Garage Sale - Home Page
 {% block sidebar %}
 
     <!-- Do we need a cms ??? -->
-    <div class="sidebar entry" item="home" id='home' xmlns="http://www.w3.org/1999/html">
+    <div class="sidebar entry tooltip" item="home" id='home' xmlns="http://www.w3.org/1999/html">
         <img class="sidebar icon" alt="Back Home" id='id_home_icon' src={% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}>
         <label for="id_home_icon">Back Home</label>
-        <span class="helptext">Go Back Home</span>
+        <span class="tooltiptext arrow right">Go Back Home</span>
     </div>
 
-    <div class="sidebar entry" item="involved" id='map' xmlns="http://www.w3.org/1999/html">
+    <div class="sidebar entry tooltip" item="involved" id='map' xmlns="http://www.w3.org/1999/html">
         <img class="sidebar icon" alt="Are you on the map" id='id_get_on_map_icon' src={% static "GarageSale/images/icons/menu/gps-location-map-marker-navigation-svgrepo-com.svg" %}>
         <label for="id_get_on_map_icon">Are you on the Map</label>
-        <span class="helptext">Are you on the Map</span>
+        <span class="tooltiptext arrow right">Are you on the Map</span>
     </div>
 
-    <div class="sidebar entry" item="donate" id='donate' xmlns="http://www.w3.org/1999/html">
+    <div class="sidebar entry tooltip" item="donate" id='donate' xmlns="http://www.w3.org/1999/html">
         <img class="sidebar icon" alt="How to Donate" id='id_donate' src={% static "GarageSale/images/icons/menu/pounds-coins-stack-svgrepo-com.svg" %}>
         <label for="id_donate">How to Donate</label>
-        <span class="helptext">How to Donate</span>
+        <span class="tooltiptext arrow right">How to Donate</span>
     </div>
 
     <!--
@@ -36,31 +36,31 @@ Brantham Garage Sale - Home Page
     </div>
     -->
 
-      <div class="sidebar entry" item="sponsors" id='sponsors' xmlns="http://www.w3.org/1999/html">
+      <div class="sidebar entry tooltip" item="sponsors" id='sponsors' xmlns="http://www.w3.org/1999/html">
         <img class="sidebar icon" alt="Our Sponsors" id='id_sponsors' src={% static "GarageSale/images/icons/menu/money-bag-pound-svgrepo-com.svg" %}>
         <label for="id_sponsors">Our Sponsors</label>
-        <span class="helptext">Our Sponsors</span>
+        <span class="tooltiptext arrow right">Our Sponsors</span>
     </div>
 
-    <div class="sidebar entry" item="AboutUs" id="AboutUs'" xmlns="http://www.w3.org/1999/html">
+    <div class="sidebar entry tooltip" item="AboutUs" id="AboutUs'" xmlns="http://www.w3.org/1999/html">
         <img class="sidebar icon" alt="About Us" id='id_AboutUs' src={% static "GarageSale/images/icons/menu/about-svgrepo-com.svg" %}>
         <label for="id_AboutUs">About Us</label>
-        <span class="helptext">About Us</span>
+        <span class="tooltiptext arrow right">About Us</span>
     </div>
 
-    <div class="sidebar entry" item="contact" id='Contact Us' xmlns="http://www.w3.org/1999/html">
+    <div class="sidebar entry tooltip" item="contact" id='Contact Us' xmlns="http://www.w3.org/1999/html">
         <img class="sidebar icon" alt="Contact Us" id='id_contact' src={% static "GarageSale/images/icons/menu/contact-us-svgrepo-com.svg" %}>
         <label for="id_contact">Contact Us</label>
-        <span class="helptext">Contact Us</span>
+        <span class="tooltiptext arrow right">Contact Us</span>
     </div>
 
 
         {% if perms.GarageSale.is_administrator %}
-            <div class="sidebar entry direct" item="team" xmlns="http://www.w3.org/1999/html">
+            <div class="sidebar entry direct tooltip" item="team" xmlns="http://www.w3.org/1999/html">
             <a href="{% url 'TeamPagesRoot' %}">
                 <img class="sidebar icon" alt="About Us" id='id_team' src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %}>
                 <label for="id_team">Team Access</label>
-                <span class="helptext">Team Access</span></a>
+                <span class="tooltiptext arrow right">Team Access</span></a>
             </div>
         {% endif %}
 {% endblock %}
@@ -75,7 +75,7 @@ Brantham Garage Sale - Home Page
 
   <div class="card" id="OnTheMap" card_name="involved">
     <h1>Are you on the Map?</h1>
-      <p style="font-size:125%;width:75%;margin:auto">
+      <p>
     To be involved in the Garage sale, you need to get yourself on the map, either to host an advertisement board,
     or as the host of a sale or both.<br>
     So - what are you waiting for -<br>
@@ -130,9 +130,7 @@ Brantham Garage Sale - Home Page
     with donations of vouchers or prizes to our prize Tombola. Not only do these sponsors allow us to cover the costs of
     advertising the event and much else besides, they allow us to ensure that every single penny raised by the Sales
     events can be donated to the Hospice and local good causes.<br>
-
-
-<script type="text/javascript" src='https://unpkg.com/blaze-slider@latest/dist/blaze-slider.min.js'></script>
+    <script type="text/javascript" src='https://unpkg.com/blaze-slider@latest/dist/blaze-slider.min.js'></script>
 
 <div class="blaze-slider">
   <div class="blaze-container">
@@ -157,16 +155,24 @@ Brantham Garage Sale - Home Page
                          enableAutoplay: true,
                          autoplayInterval: 2500,
                          transitionDuration: 250,
-                         slidesToShow: 6,
                          width: '128px',
+                         slidesToShow: 5,
                      },
+                    '(max-width: 900px)': {
+                         width:'64px;',
+                         slidesToShow: 3,
+                    },
+                    '(max-width: 400px)': {
+                        slidesToShow: 2,
+                    }
+
                  }
              );
   </script>
     </div>
 
 
-  <div class="card" card_name="AboutUs" style="text-align: left; padding-left: 2rem; padding-right: 2rem;">
+  <div class="card" card_name="AboutUs" >
     <h1>About the Garage Sale and the Foundation</h1>
       The Garage Sale has been running in Brantham since 2003 - initially to raise money for
       St Elizabeth's Hospice in Ipswich, specifically for the "Carla Dawson Memorial fund".
@@ -185,7 +191,7 @@ Brantham Garage Sale - Home Page
   <div class="card" card_name="contact">
     <h1>Contact Us</h1>
 
-      To Contact the Trustess please email <span><a href="mailto:BranthamGarageSale@gmail.com"><img width="32px" height="32px" src="{%  static 'GarageSale/images/icons/email-open-svgrepo-com.svg' %}"/>BranthamGarageSale@gmail.com</a></span>
+      To Contact the Trustess please email <div><a href="mailto:BranthamGarageSale@gmail.com"><img width="32px" height="32px" src="{%  static 'GarageSale/images/icons/email-open-svgrepo-com.svg' %}"/>BranthamGarageSale@gmail.com</a></div>
   </div>
 
 {% endblock %}
