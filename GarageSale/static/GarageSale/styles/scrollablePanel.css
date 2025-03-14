@@ -11,6 +11,7 @@ body {
     margin: 0;
     padding: 0;
     height: 600px;
+    background-color: var(--BackGroundColor);
 }
 
     div#Container
@@ -20,7 +21,6 @@ body {
         margin: 0;
         padding: 0;
         background: var(--BackGroundColor);
-        flood-opacity: 0.9;
         display: flex;
     }
 

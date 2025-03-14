@@ -40,11 +40,6 @@ class LocationForm(ModelForm):
             'lng_lat' : 'Use the zoom map and zoom controls to find this address on the map.<br>'
                           'Please note that some house numbers on the map are incorrect or simply missing.<br>'
                         'Sadly We have no control over this'
-
-
-
-
-
         }
 
     def clean_house_number(self):

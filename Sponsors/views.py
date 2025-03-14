@@ -7,7 +7,7 @@ from .models import Sponsor
 
 
 def social_media_items():
-    return ['website','facebook','twitter','instagram']
+    return ['website','facebook','instagram']
 
 
 def sponsor_list(request):

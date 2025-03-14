@@ -618,11 +618,17 @@ class ResetPasswordApply(View):
         sender = appsettings().get('user_management', {}).get('EMAIL_SENDER', None)
         sender = sender if sender else settings.EMAIL_HOST_USER
 
-        send_mail(subject=f'{site_name}: Password reset requested',
-                  message=html_content,
-                  from_email=f'{sender}',
-                  recipient_list=[form.cleaned_data["email"]],
-                  html_message=html_content)
+        msg = EmailMultiAlternatives(subject=f'{site_name}: Password reset requested',
+                                     from_email=f'{sender}',
+                                     to=[user.email])
+
+        msg.attach_alternative(
+            f'A password reset for the user using your email address was requested for {site_name}.\n'
+                    f'Copy this link : {{url}} into your browser to complete the password reset.\n\n'
+                    f"If you didn't request a reset you can ignore this email.\n",
+                               'text/plain')
+        msg.attach_alternative(html_content, 'text/html')
+        msg.send()
 
         return TemplateResponse(request, 'generic_response.html',
                                 context={'msg': 'A Password reset email has been sent to you. '

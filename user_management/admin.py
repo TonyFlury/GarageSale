@@ -21,6 +21,7 @@ class UserExtendedAdmin(UserAdmin):
     list_filter = ("email", "is_guest", "is_staff", "is_active",)
     fieldsets = (
         (None, {"fields": ("email", "password")}),
+        ('Details', {'fields' : ('first_name', 'last_name')}),
         ("Permissions", {"fields": ("is_guest", "is_staff", "is_active", "groups", "user_permissions")}),
     )
     add_fieldsets = (

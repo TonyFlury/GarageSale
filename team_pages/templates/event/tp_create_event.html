@@ -1,18 +1,18 @@
 
-{% extends "team_page.html" %}
+{% extends "team_pages_base.html" %}
 {% load static %}
 {% load user_management_tags %}
 {% load team_page_tags %}
 
-{% block content %}
+{% block SnappableSections %}
     <div class="form" >
         <script>
-            function cancel_event() { document.location.replace( "{% url 'TeamPagesRoot' %}" ) };
+            function cancel_event() { document.location.replace( "{% url 'TeamPagesRoot' %}" ) }
         </script>
         <h2>
-            {% if action == '_edit' %}
+            {% if action == 'edit' %}
                 Edit Event
-            {% elif action == '_create' %}
+            {% elif action == 'create' %}
                 Create Event
             {% endif %}
         </h2>
@@ -22,11 +22,11 @@
                 {{form}}
             </table>
             <div class="buttons">
-                {% if action == '_edit' %}
+                {% if action == 'edit' %}
                     <input type='button' onclick="cancel_event()"  value="Cancel Edits">
                     <input type='reset'   value="Reset Form">
                     <input type='submit'   value="Save Changes">
-                {% elif action == '_create'%}
+                {% elif action == 'create' %}
                     <input type='button' onclick="cancel_event()"  value="Cancel New Event">
                     <input type='reset'   value="Reset Form">
                     <input type='submit'   value="Save New Event">

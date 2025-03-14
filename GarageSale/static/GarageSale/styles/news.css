@@ -101,16 +101,16 @@ h2.headline {
 	font-size: 150%;
 }
 
-@media only screen and (min-width: 1141px)
-.article.column .headline {
-	font-size: 200%;
+@media only screen and (min-width: 1141px) {
+    .article.column .headline {
+        font-size: 200%;
+    }
 }
-
-@media only screen and (max-width: 1140px)
-h2.headline {
-    font-size:120%
+@media only screen and (max-width: 1140px) {
+    h2.headline {
+        font-size: 120%
+    }
 }
-
 @media only screen and (min-width: 1141px){
     .row {
     content: "";

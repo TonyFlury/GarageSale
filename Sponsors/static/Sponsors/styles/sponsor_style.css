@@ -3,6 +3,7 @@ div.introduction {
     width: 80%;
     padding-bottom: 1rem;
     margin: auto;
+    background: var(--BackGroundColor);
 }
 
 div.introduction h1 {
@@ -15,7 +16,7 @@ div.introduction h1 {
 @media only screen and (min-width: 1141px){
     div.row div.image img.logo {
     max-width: 300px;
-    max-height: auto;
+    max-height: 200px;
     }
 }
 
@@ -39,7 +40,7 @@ div.introduction h1 {
     }
     div.row div.image img.logo {
       max-width: 200px;
-      max-height: auto;
+      max-height: 150px;
     }
 
 }
@@ -114,6 +115,8 @@ div.inner {
   padding: 0 1.5em;
 }
 
+form div.inner { display: block}
+
 div.inner:after {
     clear:both;
 }
@@ -148,12 +151,21 @@ div.image {
     float: left;
 }
 
+form div.image { float: none; }
+
+
 div.image img {
     max-height:250px;
     width:auto;
     max-width:375px;
 }
 
+form div.image img {
+                    max-height:200px;
+                    width:auto;
+                    max-width: 200px;}
+
+.lead_provider { height: 1.5rem; margin-top: 0.5em; margin-bottom: 0.5em; font-size: 100%}
 
 @media only screen and (max-width: 1140px){
     div.row div.image, div.description{
@@ -164,7 +176,7 @@ div.image img {
         clear:both;
     }
     div.image img{
-        max-width:calc(screen-width*0.8);
+        max-width: 200px;
     }
     div.description {
         clear:both;
@@ -196,6 +208,8 @@ div.contact img {
 div.phone, div.email {
     font-size:100%;
 }
+
+form div.phone div.email { float:left;}
 
 div.email a {
     text-decoration: None;
@@ -231,6 +245,24 @@ div.icons div.social {
     width:1.5em;
 	padding-right:1em;
 }
+
+form div.contact {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    display: flex;
+    flex-flow: column;
+}
+form div.icons {
+    float: left;
+    margin-left: 0;
+}
+
+form div.icons div.social {
+    display: block;
+    height: auto;
+    width : auto ;
+}
+
 
 div.card.sponsor {
 

@@ -17,6 +17,9 @@ class SponsorForm(forms.ModelForm):
     class Meta:
         model = Sponsor
         exclude =['event']
+        widgets = {'gift': forms.Textarea(attrs={'cols':50,'rows':2}),
+                   'description': forms.Textarea(attrs={'cols':50,'rows':4}),
+                }
 
 
 class MotdForm(forms.ModelForm):

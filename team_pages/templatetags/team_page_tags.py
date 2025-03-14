@@ -9,6 +9,8 @@ from Sponsors.models import Sponsor
 
 from collections import namedtuple
 
+from pprint import pprint
+
 register = template.Library()
 
 
@@ -142,6 +144,7 @@ def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
         event = sponsor.event
         event_id = sponsor.event.id
 
+
     match (action, sponsor_id, event_id):
         case (None, None, _):
             return [{'Team Page': reverse('TeamPagesRoot')},
@@ -153,6 +156,13 @@ def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
                 {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},
                 {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id':event_id}) },
                 {f'Viewing {sponsor.company_name}': ''}
+            ]
+        case ('create', _, _):
+            return [
+                {'Team Page': reverse('TeamPagesRoot')},
+                {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},
+                {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id':event_id}) },
+                {f'Creating new sponsorship lead': ''}
             ]
         case ('edit', _, _):
             return [
@@ -175,7 +185,7 @@ def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
                 {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id': event_id})},
                 {f'Confirming {sponsor.company_name}': ''}
             ]
-        case(_,_):
+        case(_,_,_,_):
             return [
                 {'Team Page': reverse('TeamPagesRoot')},
                 {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},]
@@ -215,6 +225,7 @@ def breadcrumb(context):
             event_id = context.get('event_id', None)
             sponsor_id = context.get('sponsor_id', None)
             action = context.get('action',None)
+            print(event_id, sponsor_id, event_id)
             return format_html_join(' / ',
                                     '<a href="{}">{}</a>',
                                     ((v, k) for d in sponsor_breadcrumb_segments(event_id, sponsor_id, action) for

@@ -6,6 +6,8 @@
 {% block additionalScripts%}
 <script type="text/javascript" src="{% static 'GarageSale/js/tooltip.js' %}"></script>
 <script type="text/javascript" src="{% static 'GarageSale/js/scrollablePanel.js' %}"></script>
+    {% block PageScripts %}
+        {%  endblock %}
 {% endblock %}
 
 {% block Title %}

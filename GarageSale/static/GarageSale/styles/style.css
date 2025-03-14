@@ -164,7 +164,6 @@ table, td, th {
 
 label{
 font-weight:bold;
-    width: 10rem;
     text-align: right;
     display: inline-block;
 }
@@ -175,8 +174,8 @@ input[type="text"], input[type="password"], input[type="email"], input[type="url
     background: var(--BackGroundColor);
     border-radius: 0.5rem;
     padding-left: 0.5rem;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
     /* margin:5px; */
     box-shadow: 1px 1px rgba(1,1,1,1) inset;
     font-size:inherit;
@@ -206,7 +205,7 @@ div.form .buttons input{
 div.duplicate {
     font-size: 80%;
     background-color: red;
-    border: thin white solid;
+    border: thin grey solid;
     color: white;
     margin: 0.5rem;
     margin-top:1rem;
@@ -494,109 +493,7 @@ div.about-us.footnote {
 }
 
 
-input[type="checkbox"] {
-    position: relative;
-/*    left: 1rem;  *//* TODO - 1rem doesn't work on small screen style */
-    margin: 8px 0 0 16px;
-    z-index:-1;
-    display:none;
-}
 
-/** Syling for checkbox in a table **/
-th:has(+td input[type="checkbox"])  label{
-    position: relative;
-    padding: 5px 0 0 50px;
-    line-height: 2.0em;
-}
-
-th:has(+td input[type="checkbox"]) label:after {
-    content: "";
-    position: absolute;
-    display: block;
-/*    left: +10rem; */
-    top: 0px;
-    width: 24px; /* x*3 */
-    height: 24px; /* x*3 */
-    border-radius: 16px; /* x*2 */
-    background: #b0b0b0;
-    border: 1px solid #d9d9d9;
-    -webkit-transition: all 0.3s;
-    transition: all 0.3s;
-}
-
-th:has(+td input[type="checkbox"]) label:before {
-    content: "";
-    position: absolute;
-    display: block;
-/*    left: +10rem; */
-    top: 0;
-    width: 40px; /* x*5 */
-    height: 24px; /* x*3 */
-    border-radius: 16px; /* x*2 */
-    background: #e4e4e4;
-    border: 1px solid #d9d9d9;
-    -webkit-transition: all 0.3s;
-    transition: all 0.3s;
-}
-
-th:has(+td input[type="checkbox"]) label:hover:after {
-    box-shadow: 0 0 5px rgba(0,0,0,0.3);
-}
-th:has(+td input[type="checkbox"]:checked) label:after {
-    margin-left: 16px;
-    background: #3333DD;
-}
-th:has(+td input[type="checkbox"]:checked) label:before {
-    background: #55D069;
-}
-
-/** Styling for simple div base layout **/
-label:has(+input[type="checkbox"])  {
-    position: relative;
-    padding: 5px 0 0 50px;
-    line-height: 2.0em;
-}
-label:has(+input[type="checkbox"]):after {
-    content: "";
-    position: absolute;
-    display: block;
-/*    left: +10rem; */
-    top: 0px;
-    width: 24px; /* x*3 */
-    height: 24px; /* x*3 */
-    border-radius: 16px; /* x*2 */
-    background: #b0b0b0;
-    border: 1px solid #d9d9d9;
-    -webkit-transition: all 0.3s;
-    transition: all 0.3s;
-}
-
-label:has(+input[type="checkbox"]):before {
-    content: "";
-    position: absolute;
-    display: block;
-/*    left: +10rem; */
-    top: 0;
-    width: 40px; /* x*5 */
-    height: 24px; /* x*3 */
-    border-radius: 16px; /* x*2 */
-    background: #e4e4e4;
-    border: 1px solid #d9d9d9;
-    -webkit-transition: all 0.3s;
-    transition: all 0.3s;
-}
-
-label:has(+input[type="checkbox"]):hover:after  {
-    box-shadow: 0 0 5px rgba(0,0,0,0.3);
-}
-
-label:has(+input[type="checkbox"]:checked):after {
-    margin-left: 16px;
-    background: #3333DD;
-}
-label:has(+input[type="checkbox"]:checked):before {
-    background: #55D069;
-}
 
 
 div.test_warning {

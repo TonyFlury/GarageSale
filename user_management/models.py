@@ -30,6 +30,9 @@ class UserExtended(AbstractUser):
     def __str__(self):
         return self.email
 
+    def full_name(self):
+        return self.first_name + " " + self.last_name
+
 
 class UserVerification(models.Model):
     """Base model for all verification purposes"""

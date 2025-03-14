@@ -448,7 +448,7 @@ class EventCreate(EventBase):
 
 def event_use(request, event_id):
     """Simple invocation of a template - option to add more complexity if needed"""
-    return TemplateResponse(request, 'event/tp_use_event.html', context={'event_id': event_id, 'data_type': 'sponsor'})
+    return TemplateResponse(request, 'event/tp_use_event.html', context={'action':'use', 'event_id': event_id, 'data_type': 'event'})
 
 
 class TeamPage(LoginRequiredMixin, View):
@@ -510,7 +510,7 @@ class SponsorCreate(SponsorsRoot):
     permission_required = ["Sponsors.can_create_sponsor"]
 
     def get_context_data(self, request, **kwargs):
-        return super().get_context_data(request, **kwargs) | {'create':'action'}
+        return super().get_context_data(request, **kwargs) | {'action':'create'}
 
     def get_object(self, request, **kwargs):
         return None
@@ -521,9 +521,8 @@ class SponsorCreate(SponsorsRoot):
         except EventData.DoesNotExist:
             raise BadRequest(f'Cannot create a sponsorship record without a valid event {kwargs.get("event_id")}')
 
-        inst = self.model_class(event=event, **form.cleaned_data)
+        inst = self.model_class(event=event, lead_provider = request.user(), **form.cleaned_data,)
         return inst
-
 
 class SponsorView(SponsorsRoot):
     template_name = 'sponsors/tp_view_sponsor.html'
