@@ -43,9 +43,9 @@
             <div class="lead_provider">
                 <b>{{ form.lead_provider.label }}</b>
                     {%  if action == "create" %}
-                            {{ request.user.get_full_name }}
+                            {{ request.user.full_name }}
                     {% elif form.lead_provider %}
-                            {{  form.lead_provider.value.get_full_name }}
+                            {{  form.instance.lead_provider.full_name }}
                     {%  else %}
                             Unknown User
                     {% endif %}

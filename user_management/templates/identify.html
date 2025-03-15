@@ -1,16 +1,22 @@
-{% extends "_base_with_toolbar.html" %}
+{% extends "_snap_slider_base.html" %}
 {% load static %}
 {% load user_management_tags %}
-
-{% block additionalScripts%}
-<script type="text/javascript" src="{% static 'Location/js/tooltip.js' %}"></script>
-{% endblock %}
 
 {% block Title %}
 Brantham Garage Sale - Identifying user
 {% endblock %}
 
-{% block body %}
+{% block sidebar %}
+
+    <!-- Do we need a cms ??? -->
+    <div class="sidebar entry tooltip" item="home" id='home' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Back Home" id='id_home_icon' src={% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}>
+        <label for="id_home_icon">Back Home</label>
+        <span class="tooltiptext arrow right">Go Back Home</span>
+    </div>
+{%  endblock %}
+
+{% block SnappableSections %}
     <script type="text/javascript">
     function login() { window.location.replace( "/user/login?next={{next|safe}}" ); }
     function guest() { window.location.replace( "/user/guest?next={{next|safe}}" ); }

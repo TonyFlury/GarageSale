@@ -9,8 +9,6 @@ from Sponsors.models import Sponsor
 
 from collections import namedtuple
 
-from pprint import pprint
-
 register = template.Library()
 
 
@@ -124,7 +122,7 @@ def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
     if sponsor_id:
         sponsor = None
         try:
-            sponsor = Sponsor.objects.get(id=event_id)
+            sponsor = Sponsor.objects.get(id=sponsor_id)
         except Sponsor.DoesNotExist:
             raise BadRequest(f'Invalid sponsor_id value {sponsor_id}')
     else:
@@ -143,7 +141,6 @@ def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
     else:
         event = sponsor.event
         event_id = sponsor.event.id
-
 
     match (action, sponsor_id, event_id):
         case (None, None, _):
@@ -225,7 +222,6 @@ def breadcrumb(context):
             event_id = context.get('event_id', None)
             sponsor_id = context.get('sponsor_id', None)
             action = context.get('action',None)
-            print(event_id, sponsor_id, event_id)
             return format_html_join(' / ',
                                     '<a href="{}">{}</a>',
                                     ((v, k) for d in sponsor_breadcrumb_segments(event_id, sponsor_id, action) for

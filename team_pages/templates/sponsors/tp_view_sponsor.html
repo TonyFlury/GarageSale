@@ -16,6 +16,13 @@
             Not Confirmed
         </div>
         {% endif %}
+        <div id="tp_lead_provider">
+            <div id="tp_lead_name">
+            {% if form.lead_provider %}
+                <label>Lead Provided by</label>: {{ form.instance.lead_provider.full_name }}
+            {% endif %}
+            </div>
+        </div>
         <div id="tp_sponsor_core">
             <div class="name">
                 <h3>{{form.instance.company_name}}</h3>

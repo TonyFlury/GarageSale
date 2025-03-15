@@ -40,9 +40,9 @@ div.form {
 }
 
 .buttons input {
-	background: var(--BackgroundColor);
-	box-shadow: 2px 2px 1px black;
-	padding-left:5px;
+    box-shadow: 2px 2px 1px black;
+    padding-left: 5px;
+    background: white;
 }
 
 form label

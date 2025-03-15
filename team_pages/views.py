@@ -521,7 +521,7 @@ class SponsorCreate(SponsorsRoot):
         except EventData.DoesNotExist:
             raise BadRequest(f'Cannot create a sponsorship record without a valid event {kwargs.get("event_id")}')
 
-        inst = self.model_class(event=event, lead_provider = request.user(), **form.cleaned_data,)
+        inst = self.model_class(event=event, **(form.cleaned_data | {'lead_provider':request.user}))
         return inst
 
 class SponsorView(SponsorsRoot):
