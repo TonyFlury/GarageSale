@@ -59,6 +59,7 @@ class MOTD(models.Model):
 def save_supported_logo_to(instance, filename):
     return f'supported_logo_{instance.name}/{filename}'
 
+
 class byIndex(models.Manager):
     def get_queryset(self):
         return super(byIndex, self).get_queryset().order_by('index')

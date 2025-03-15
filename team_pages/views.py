@@ -112,6 +112,9 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
     model_class = None
     success_url = ''
 
+    def post_save(self, request, instance, form, **kwargs):
+        return None
+
     def get_form(self, form_instance=None):
         return form_instance
 
@@ -208,6 +211,7 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
             if instance:
                 instance.save()
+                self.post_save(request, instance, the_form, **kwargs)
 
         # Redirect to the correct success url
         if hasattr(self, 'get_success_url'):
@@ -436,6 +440,7 @@ class EventCreate(EventBase):
     permission_required = ["GarageSale.can_create_event"]
     template_name = 'event/tp_create_event.html'
     success_url = reverse_lazy( 'TeamPagesEvent')
+    _supporting = None
 
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request, **kwargs)
@@ -445,6 +450,18 @@ class EventCreate(EventBase):
     def get_object(self, request, **kwargs):
         return None
 
+    def get_new_instance(self, request, form, **kwargs):
+        print([i for i in form.cleaned_data])
+        supporting = form.cleaned_data['supporting_organisations']
+        self._supporting = form.cleaned_data.pop('supporting_organisations')
+        inst = self.model(**form.cleaned_data)
+        return inst
+
+    def post_save(self, request, instance, form, **kwargs):
+        for item in self._supporting:
+            instance.supporting_organisations.add( item.id )
+        self._supporting = None
+        return instance
 
 def event_use(request, event_id):
     """Simple invocation of a template - option to add more complexity if needed"""
