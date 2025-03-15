@@ -24,15 +24,15 @@ from django.conf import settings
 from GarageSale.svgaimagefield import SVGAndImageFormField
 
 
-#class General(models.Model):
-#    class Meta:
-#        managed = False
-#        default_permissions = ()
-#        permissions = [
-#            ("is_trustee", "Is a member of the Charity Trustee Team"),
-#            ("is_administrator", 'Is a administrator for the website'),
-#            ("is_manager", 'Is a manager of the website'),
-#        ]
+class General(models.Model):
+    class Meta:
+        managed = False
+        default_permissions = ()
+        permissions = [
+            ("is_trustee", "Is a member of the Charity Trustee Team"),
+           ("is_administrator", 'Is a administrator for the website'),
+            ("is_manager", 'Is a manager of the website'),
+        ]
 
 class MOTD(models.Model):
     """"Holder for Message of the Day"""
