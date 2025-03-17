@@ -38,20 +38,13 @@
         </div>
     </div>
     <div style="width:50; text-align:center;margin-bottom:1em;">
-        You are nearly there - you just need to click the button below to verify your email and start getting the
-        benefits of being a registered user.
-    </div>
-    <div class="form" >
-        <form method="GET" action="{{ url }}">
-            {% csrf_token %}
-            <div class="buttons" >
-                <input type="submit" value="Verify my email" >
-            </div>
-        </form>
-            <div class="center-text">
-                If the button doesn't work (or isn't visible) you can use <a href="{{url}}" alt="{{ url }}"> this link</a> to the same effect.
-            </div>
-        </div>
+        You are nearly there:
+
+        <ul>
+            <li>If you are reading your email inside your browser, you can click to <a href="{{ url }}">verify your email</a></li>
+            <li>If you aren't in a browser, then you can also copy and paste this URL {{ url }} into your browser to verify your email.</li>
+        </ul>
+
     <div class="center-text" style="font-style:italic;margin:1em;">
         If you did not attempt to register with the website, you can ignore this message.
     </div>
