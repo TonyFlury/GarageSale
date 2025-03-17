@@ -105,13 +105,20 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
 
                 case [content, 'text/html']:
                     soup = BeautifulSoup(content, 'html.parser')
-                    url_form = soup.select_one('div.forms > forms')
-                    if not url_form:
+
+                    first_entry = soup.select_one("div ul li:nth-of-type(1)")
+                    if not first_entry:
                         self.fail('Cannot find expected structure in text/html')
 
-                    method, action = url_form.get('method'), url_form.get('action')
-                    if not (method == 'GET') or not (action == verify_url):
-                        self.fail(f'\n{verify_url}\n not in text/html : {url_form}')
+                    if not (first_entry.select_one('a').get('href') == verify_url):
+                        self.fail(f'\n{verify_url}\n not in text/html : {content}')
+
+                    copy_paste = soup.select_one("div ul li:nth-of-type(2)")
+                    if not copy_paste:
+                        self.fail('Cannot find the 2nd bullet list entry text/html')
+                    if not ('copy and paste' in copy_paste.text and verify_url in copy_paste.text):
+                        self.fail(f'\n{verify_url}\n not available for copy and paste : {copy_paste.text}')
+
 
         # simulate user clicking or copy/pasting link from email
         self.selenium.get(verify_url)
