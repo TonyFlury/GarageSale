@@ -73,6 +73,9 @@ input[type='text']:where([autocomplete=one-time-code]) {
 
             <div class="buttons">
                 <span style="float:left">
+                    <input type="submit" id='id_Continue' value="Continue">
+                </span>
+                <span style="float:left; margin-left:20rem;">
                     <script>
                             function resend_short_code()
                             {
@@ -80,9 +83,6 @@ input[type='text']:where([autocomplete=one-time-code]) {
                             }
                     </script>
                     <input type="button" id='id_Resend' onclick="resend_short_code()" value="Send a new Code">
-                </span>
-                <span style="float:right">
-                    <input type="submit" id='id_Continue' value="Continue">
                 </span>
             </div>
             <script>
