@@ -624,7 +624,7 @@ class ResetPasswordApply(View):
 
         msg.attach_alternative(
             f'A password reset for the user using your email address was requested for {site_name}.\n'
-                    f'Copy this link : {{url}} into your browser to complete the password reset.\n\n'
+                    f'Copy this link : {url} into your browser to complete the password reset.\n\n'
                     f"If you didn't request a reset you can ignore this email.\n",
                                'text/plain')
         msg.attach_alternative(html_content, 'text/html')

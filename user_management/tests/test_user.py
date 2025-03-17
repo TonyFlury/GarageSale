@@ -511,7 +511,16 @@ class TestPasswordResetRequest(SeleniumCommonMixin, StaticLiveServerTestCase):
 
             #Test Reset process by going via the login page
             self.selenium.get(self.live_server_url+reverse('user_management:login')+f'?next={next_url}')
-            post_form = self.selenium.find_element(By.XPATH, '//div[@class="post-forms"]')
+            try:
+                post_form = self.selenium.find_element(By.XPATH, '//div[@class="post-form"]')
+            except NoSuchElementException:
+                post_form = None
+
+            if not post_form:
+                self.screenshot()
+                self._dump_page_source()
+                self.fail("Unexpected Login form structure")
+
             link = post_form.find_element(By.TAG_NAME,'a')
             self.assertIsNotNone(link)
             link.click()
@@ -525,6 +534,7 @@ class TestPasswordResetRequest(SeleniumCommonMixin, StaticLiveServerTestCase):
             self.selenium.find_element(By.XPATH, '//input[@type="submit" and @value="Request Password Reset"]').click()
 
             WebDriverWait(self.selenium, 10).until(lambda driver: driver.find_element(By.TAG_NAME, 'body'))
+            self.screenshot('reset password apply')
 
             #Check that a Reset object exists for this user now.
             try:
@@ -547,19 +557,26 @@ class TestPasswordResetRequest(SeleniumCommonMixin, StaticLiveServerTestCase):
                     case [content, 'text/plain']:
                         element = content
                         if expected_url not in element:
-                            self.fail('Unable to find URL in text/plain')
+                            self.fail(f'Unable to find URL {expected_url} in text/plain')
 
                     case [content, 'text/html']:
                         soup = BeautifulSoup(content, 'html.parser')
-                        url_form = soup.select_one('div.forms > forms')
-                        if not url_form:
-                            self.fail('Cannot find expected structure in text/html')
 
-                        method, action = url_form.get('method'), url_form.get('action')
-                        self.assertEqual(action, expected_url)
-                        if not (method == 'GET') or not (action == expected_url):
-                            self.fail(f'{method}\n{expected_url!r}\n{action!r}\n not as expected text/html')
+                        parent = soup.select_one("div ul")
 
+                        first_entry = parent.select_one(":nth-child(1)")
+                        if not first_entry:
+                            self.fail('Cannot find bullet list first l1 in text/html')
+
+                        if not (first_entry.select_one('a').get('href') == expected_url):
+                            self.fail(f'\n{expected_url}\n not in text/html : {content}')
+
+                        copy_paste = parent.select_one(":nth-child(2)")
+                        if not copy_paste:
+                            print(content)
+                            self.fail('Cannot find the 2nd bullet list entry text/html')
+                        if not ('copy and paste' in copy_paste.text and expected_url in copy_paste.text):
+                            self.fail(f'\n{expected_url}\n not available for copy and paste : {copy_paste.text}')
 
             # Go to the reset forms and enter the new password
             new_password = 'wibble'

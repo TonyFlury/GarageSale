@@ -196,7 +196,7 @@ div.form .buttons input{
     padding : 5px ;
     font-size: 1rem;
     color : var(--fontColor) ;
-    border : thin solid white;
+    border : thin solid darkgray;
     border-radius : 0.5rem; ;
     box-shadow: 1px 1px 1px 1px rgba(1,1,1,1);
     margin : 15px;

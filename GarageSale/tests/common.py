@@ -109,7 +109,7 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
     def get_test_url(self):
         pass
 
-    def screenshot(self, name):
+    def screenshot(self, name=None):
         if self.screen_shot_path:
             test_name = self.id().split('.')[-1]
             self.selenium.save_screenshot(self.screen_shot_path / f'{test_name}_{name if name else ""}.png')
