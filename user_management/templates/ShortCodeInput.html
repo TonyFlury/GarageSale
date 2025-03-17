@@ -1,8 +1,9 @@
-{% extends "_base_with_toolbar.html" %}
+{% extends "_snap_slider_base.html" %}
 {% load static %}
 {% load user_management_tags %}
 
  {% block additionalStyles%}
+     {{ block.super }}
  <style>
 input[type='text']:where([autocomplete=one-time-code]) {
   --otp-digits: 7;
@@ -41,7 +42,16 @@ input[type='text']:where([autocomplete=one-time-code]) {
 </style>
 {% endblock %}
 
-{% block body %}
+{% block sidebar %}
+        <div class="sidebar entry direct tooltip" item="Homepage" xmlns="http://www.w3.org/1999/html">
+            <a href="{% url 'home' %}">
+                <img class="sidebar icon" alt="Home Page" id='id_home_page' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %} >
+                <label for="id_team">Home Page</label></a>
+                <span class="tooltiptext right arrow">Return to Home Page</span>
+        </div>
+{%  endblock %}
+
+{% block SnappableSections %}
         <h2>Enter the short code sent to {{obfuscated_email}}</h2>
     <div class="form">
         <form method="POST" action="{{action}}">

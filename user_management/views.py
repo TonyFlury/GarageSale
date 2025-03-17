@@ -299,11 +299,17 @@ class InputShortCode(View):
             user_inst.is_verified=True
             user_inst.save()
             login(request=incoming_request, user=user_inst)
-            incoming_request.session.set_expiry(timezone.now() + datetime.timedelta(hours=2))
+            try:
+                incoming_request.session.set_expiry(timezone.now() + datetime.timedelta(hours=2))
+            except AttributeError:
+                raise AttributeError('failed to set session expiry')
         else:
             user = user_model.objects.create_guest_user(email=code_inst.email, is_verified=True)
             login(request=incoming_request, user=user)
-            incoming_request.session.set_expiry(timezone.now() + datetime.timedelta(hours=2))
+            try:
+                incoming_request.session.set_expiry(timezone.now() + datetime.timedelta(hours=2))
+            except AttributeError:
+                raise AttributeError('failed to set session expiry')
 
         return redirect(next)
 
