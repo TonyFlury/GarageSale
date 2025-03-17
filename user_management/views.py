@@ -297,7 +297,11 @@ class InputShortCode(View):
         # Create a guest user account if necessary - allow a two hour time out on guest users
         if user_inst:
             user_inst.is_verified=True
-            user_inst.save()
+            try:
+                user_inst.save()
+            except Exception as e:
+                raise e from None
+
             login(request=incoming_request, user=user_inst)
             try:
                 incoming_request.session.set_expiry(timezone.now() + datetime.timedelta(hours=2))
