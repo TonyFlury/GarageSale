@@ -57,7 +57,7 @@ th:has(+td input[type="checkbox"]:checked) label:before {
 /** Styling for simple div base layout **/
 label:has(+input[type="checkbox"])  {
     position: relative;
-    padding: 5px 0 0 50px;
+    padding: 25px 0 0 50px;
     line-height: 2.0em;
 }
 label:has(+input[type="checkbox"]):after {
