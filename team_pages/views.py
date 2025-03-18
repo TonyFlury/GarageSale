@@ -605,16 +605,16 @@ class SponsorDelete(SponsorView):
 def ad_board_csv(request, event_id):
     event = EventData.objects.get(id = event_id)
     qs = Location.objects.filter(event=event).filter(ad_board=True)
+    ts = datetime.datetime.now().isoformat()
 
     response = HttpResponse(content_type='text/csv',
-                            headers={"Content-Disposition": 'attachment; filename="advert_boards.csv"'},)
+                            headers={"Content-Disposition": f'attachment; filename="advert_boards_{ts}.csv"'},)
 
     writer=csv.writer(response)
-    writer.writerow(['Name', 'Address', 'Postcode', 'Phone', 'Mobile'])
+    writer.writerow(['Name', 'Address', 'Postcode', 'Phone'])
     for entry in qs:
-        writer.writerow([f'{entry.name()}',
+        writer.writerow([f'{entry.user.full_name()}',
                          f'{entry.full_address()}',
-                         f'{entry.location.postcode}',
-                         f'{entry.location.phone}',
-                         f'{entry.location.mobile}'])
+                         f'{entry.postcode}',
+                         f'{entry.user.phone}'])
     return response

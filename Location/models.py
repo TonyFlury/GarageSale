@@ -49,6 +49,9 @@ class Location(models.Model):
     lng_lat = DjangoGoogleMap.models.fields.GoogleLocation()
     creation_timestamp = models.DateTimeField(auto_now_add=True)
 
+    def full_address(self):
+        return f'{self.house_number}, {self.street_name}, {self.town}.'
+
     def __str__(self):
         return (f'{self.user.email}\n'
                 f'{self.house_number}, {self.street_name}. {self.postcode}\n'
