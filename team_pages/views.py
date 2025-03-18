@@ -20,6 +20,7 @@ from GarageSale.models import MOTD, EventData
 from .forms import NewsForm, MotdForm, EventForm, SponsorForm
 from Sponsors.views import social_media_items
 from abc import abstractmethod
+from Location.models import Location
 
 def PublishNews(request, news_id):
     publish_news(request, news_id)
@@ -603,7 +604,7 @@ class SponsorDelete(SponsorView):
 
 def ad_board_csv(request, event_id):
     event = EventData.objects.get(id = event_id)
-    qs = BillboardLocations.objects.filter(event=event)
+    qs = Location.objects.filter(event=event).filter(ad_board=True)
 
     response = HttpResponse(content_type='text/csv',
                             headers={"Content-Disposition": 'attachment; filename="advert_boards.csv"'},)
