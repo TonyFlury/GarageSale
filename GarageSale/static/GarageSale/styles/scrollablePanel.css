@@ -69,15 +69,16 @@ div.sidebar.container {
     max-width: 300px;
 }
 
-    div.sidebar.entry:not(.bullet) {
-        padding: 0.25rem 0.25rem 0.25rem 1rem;
-        margin-top: 1rem;
-        margin-bottom: 0.5rem;
-        border: thin grey solid;
-        border-radius: 25px;
-        box-shadow: grey 1px 1px 2px;
-        background-color: inherit;
-    }
+div.sidebar.entry:not(.bullet),
+span.sidebar.entry:not(.bullet) {
+    padding: 0.5rem 0.25rem 0.5rem 1rem;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    border: thin grey solid;
+    border-radius: 25px;
+    box-shadow: grey 1px 1px 2px;
+    background-color: inherit;
+}
 
     div.sidebar.entry.bullet {
             text-align: center;
@@ -146,17 +147,20 @@ div.sidebar.entry.bullet.selected {
     }
 
 
-    div.sidebar.entry label {
+    div.sidebar.entry label,
+    span.sidebar.entry label {
         text-align: left;
         margin: 0 0.5rem 0 0 ;
         width : auto;
     }
 
-    div.sidebar.entry img.icon {
+    div.sidebar.entry img.icon,
+    span.sidebar.entry img.icon {
         width:32px;
         height:auto;
         vertical-align: middle;
     }
+
     div.sidebar.entry span.helptext {
         font-size: 80%;
         padding: 5px;

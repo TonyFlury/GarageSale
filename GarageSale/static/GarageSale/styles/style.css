@@ -145,10 +145,10 @@ table, td, th {
     /* border: thin solid white; */
 }
 @media only screen and (min-width: 1141px){
-    .form{
-        padding:20px;
-        border-radius:30px;
-            width : 100%;
+    .form {
+    padding: 20px;
+    border-radius: 30px;
+    width: 80%;
     }
 }
 
