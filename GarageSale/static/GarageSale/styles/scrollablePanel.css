@@ -74,6 +74,7 @@ span.sidebar.entry:not(.bullet) {
     padding: 0.5rem 0.25rem 0.5rem 1rem;
     margin-top: 1rem;
     margin-bottom: 0.5rem;
+    margin-right: 0.5rem;
     border: thin grey solid;
     border-radius: 25px;
     box-shadow: grey 1px 1px 2px;
@@ -97,7 +98,7 @@ span.sidebar.entry:not(.bullet) {
 
     @container body (max-width: 1250px){
         div.sidebar.entry label,
-        span.sidebar.entry {
+        span.sidebar.entry label{
             display:none
         }
         div.sidebar.entry,
