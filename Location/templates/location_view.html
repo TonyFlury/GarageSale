@@ -74,6 +74,16 @@
                 <input type="button" onclick="document.location.replace('{% url "Location:delete" location.ext_id %}')" value="Delete">
             </div>
         </div>
+        {% empty %}
+            <div class='card location'>
+                <h2>No Locations have been recorded - yet</h2>
+                You have not created any locations as yet - but it is very easy to get on the Map.
+                <p>
+                Just click the <span class="sidebar entry"><img class="icon" alt="Home Page" id='id_AddLocation'
+                                          src={% static "GarageSale/images/icons/menu/add-location-svgrepo-com.svg" %} />
+                                            <label>New Location</label></span> button on the left to get started.
+                </p>
+            </div>
         {% endfor %}
         <script type="text/javascript">
             function initMaps() {
