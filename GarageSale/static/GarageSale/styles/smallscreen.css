@@ -1,10 +1,20 @@
+:root {
+    --fontSize:12pt;
+}
+
+@media only screen and (max-width: 800px)
+{
+    :root {
+        --fontSize: 10pt;
+    }
+}
+
 
 .browser {
     display : none ; }
 
 body {
-font-size:85%;
-}
+font-size}
 
 .body {
     padding: 0em;
@@ -13,7 +23,6 @@ font-size:85%;
     width: 60%;
     text-align: left;
     margin-left: 100px;
-    font-size: 100%;
     display: inline-block;
 }
 
@@ -27,7 +36,7 @@ span#Ticker {
  }
 
 div.TopBar h1 {
-    font-size:12px;
+    font-size:120%;
     padding-left: 80px;
     padding-top : 0px;
     text-align: left;
@@ -149,7 +158,6 @@ div.front-page-news a.headline {
 	margin-left: 0.5em;
 	margin-right: 0.5em;
 	font-weight: bold;
-	font-size:100%;
 	color: black;
 	text-decoration: none;
 }
@@ -160,15 +168,14 @@ div.front-page-news a.headline {
 }
 
 h1.about-us {
-    font-size:1.5rem;
+    font-size:125%;
 }
 
 h2.about-us {
-    font-size:1.25rem;
+    font-size:110%;
 }
 
 div#about-us {
-    font-size:14pt;
 }
 
 a {

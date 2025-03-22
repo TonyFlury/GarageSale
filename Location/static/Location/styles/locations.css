@@ -123,6 +123,14 @@ div.card.location  {
                 height: 300px;
                 width: 350px;
                 }
+
+            @container body (max-width: 800px) {
+                div.map {
+                    max-height: 150px;
+                    height: 150px;
+                    width: 150px;
+                }
+            }
         }
     }
 }

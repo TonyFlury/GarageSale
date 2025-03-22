@@ -3,11 +3,12 @@
   --BackGroundColor: rgba(255, 255, 255, 90%);
   --fontColor : black;
   --PaperColor : #CCCB9D;
+  --fontSize: 14pt;
 }
 
 body {
     color : var(--fontColor);
-    font-size:14pt;
+    font-size: var(--fontSize);
     font-family: sans-serif;
 }
 
