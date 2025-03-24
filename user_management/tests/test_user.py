@@ -593,6 +593,125 @@ class TestPasswordResetRequest(SeleniumCommonMixin, StaticLiveServerTestCase):
             self.assertTrue(user.check_password(new_password))
             self.assertTrue(user.is_verified)
 
+        def test_260_password_reset_invalid_user(self):
+            email = 'test_user@test.com'
+            name = 'Test', 'User'
+            phone = '01111 111111'
+            password = 'okoboje'
+            next_url = reverse('Location:view')
+
+            invalid_user = 'frooble@frooble.com'
+
+
+            model: Type[UserExtended | AbstractBaseUser] = get_user_model()
+            user:UserExtended = model.objects.create_user(email=email,password=password,
+                                                               is_verified=True,
+                                                               first_name=name[0], last_name=name[1], phone=phone)
+
+            self.selenium.get(self.live_server_url+reverse('user_management:reset_password_application')+f'?next={next_url}')
+
+            try:
+                post_form = self.selenium.find_element(By.XPATH, '//div[@class="post-form"]')
+            except NoSuchElementException:
+                post_form = None
+
+            self.selenium.find_element(By.XPATH, '//input[@name="email"]').send_keys(invalid_user)
+            self.selenium.find_element(By.XPATH, '//input[@type="submit" and @value="Request Password Reset"]').click()
+
+            WebDriverWait(self.selenium, 10).until(lambda driver: driver.find_element(By.TAG_NAME, 'body'))
+            self.screenshot('reset password apply - invalid email')
+
+            # We should have been pushed back to the reset_password url
+            self.assertEqual(self.selenium.current_url, self.live_server_url+reverse('user_management:reset_password_application')+f'?next={next_url}')
+
+            error = self.selenium.find_element(By.CSS_SELECTOR, 'ul.errorlist li:nth-child(1)')
+            self.assertEqual(error.text, 'This user does not exist')
+
+            #Check that a Reset object exists for this user now.
+            inst = PasswordResetApplication.objects.filter(email=email)
+            self.assertTrue(len(inst)==0,"Password reset has been created")
+
+        def test_270_password_reset_guest(self):
+            email = 'test_user@test.com'
+            name = 'Test', 'User'
+            phone = '01111 111111'
+            password = 'okoboje'
+            next_url = reverse('Location:view')
+
+            invalid_user = 'frooble@frooble.com'
+
+            model: Type[UserExtended | AbstractBaseUser] = get_user_model()
+            user: UserExtended = model.objects.create_guest_user(email=email,
+                                                           is_verified=True,
+                                                           first_name=name[0], last_name=name[1], phone=phone)
+
+            self.selenium.get(
+                self.live_server_url + reverse('user_management:reset_password_application') + f'?next={next_url}')
+
+            try:
+                post_form = self.selenium.find_element(By.XPATH, '//div[@class="post-form"]')
+            except NoSuchElementException:
+                post_form = None
+
+            self.selenium.find_element(By.XPATH, '//input[@name="email"]').send_keys(email)
+            self.selenium.find_element(By.XPATH,
+                                       '//input[@type="submit" and @value="Request Password Reset"]').click()
+
+            WebDriverWait(self.selenium, 10).until(lambda driver: driver.find_element(By.TAG_NAME, 'body'))
+            self.screenshot('reset password apply - invalid email')
+
+            # We should have been pushed back to the reset_password url
+            self.assertEqual(self.selenium.current_url, self.live_server_url + reverse(
+                'user_management:reset_password_application') + f'?next={next_url}')
+
+            error = self.selenium.find_element(By.CSS_SELECTOR, 'ul.errorlist li:nth-child(1)')
+            self.assertEqual(error.text, 'This user is a guest which does not have a password that can be reset')
+
+            # Check that a Reset object exists for this user now.
+            inst = PasswordResetApplication.objects.filter(email=email)
+            self.assertTrue(len(inst) == 0, "Password reset has been created")
+
+        def test_280_password_reset_unverified(self):
+            email = 'test_user@test.com'
+            name = 'Test', 'User'
+            phone = '01111 111111'
+            password = 'okoboje'
+            next_url = reverse('Location:view')
+
+            invalid_user = 'frooble@frooble.com'
+
+            model: Type[UserExtended | AbstractBaseUser] = get_user_model()
+            user: UserExtended = model.objects.create_user(email=email,
+                                                           is_verified=False,
+                                                           first_name=name[0], last_name=name[1], phone=phone)
+
+            self.selenium.get(
+                self.live_server_url + reverse('user_management:reset_password_application') + f'?next={next_url}')
+
+            try:
+                post_form = self.selenium.find_element(By.XPATH, '//div[@class="post-form"]')
+            except NoSuchElementException:
+                post_form = None
+
+            self.selenium.find_element(By.XPATH, '//input[@name="email"]').send_keys(email)
+            self.selenium.find_element(By.XPATH,
+                                       '//input[@type="submit" and @value="Request Password Reset"]').click()
+
+            WebDriverWait(self.selenium, 10).until(lambda driver: driver.find_element(By.TAG_NAME, 'body'))
+            self.screenshot('reset password apply - invalid email')
+
+            # We should have been pushed back to the reset_password url
+            self.assertEqual(self.selenium.current_url, self.live_server_url + reverse(
+                'user_management:reset_password_application') + f'?next={next_url}')
+
+            error = self.selenium.find_element(By.CSS_SELECTOR, 'ul.errorlist li:nth-child(1)')
+            self.assertEqual(error.text, 'This user has not completed verification so cannot be reset')
+
+            # Check that a Reset object exists for this user now.
+            inst = PasswordResetApplication.objects.filter(email=email)
+            self.assertTrue(len(inst) == 0, "Password reset has been created")
+
+
 class TestChangePassword(IdentifyMixin,SeleniumCommonMixin, StaticLiveServerTestCase):
     screenshot_sub_directory = 'TestChangePassword'
 

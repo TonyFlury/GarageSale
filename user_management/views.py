@@ -597,17 +597,20 @@ class ResetPasswordApply(View):
                                     'generic_with_form.html',
                                     context=form.form_context(next=next_url))
 
+        model: Type[UserExtended | AbstractBaseUser] = get_user_model()
+
         try:
-            model: Type[UserExtended | AbstractBaseUser] = get_user_model()
             user = model.objects.get(email=form.cleaned_data['email'])
-        except User.DoesNotExist:
-            form.add_error('email', 'The password for this user cannot be reset')
+        except model.DoesNotExist:
+            form.add_error('email', 'This user does not exist')
             return TemplateResponse(request,
                                     'generic_with_form.html',
                                     context=form.form_context(next=next_url))
 
         if user.is_guest or not user.is_verified:
-            form.add_error('email', 'The password for this user cannot be reset')
+            error_msg = 'This user is a guest which does not have a password that can be reset' if user.is_guest \
+                else 'This user has not completed verification so cannot be reset'
+            form.add_error('email', error_msg)
             return TemplateResponse(request,
                                     'generic_with_form.html',
                                     context=form.form_context(next=next_url))
