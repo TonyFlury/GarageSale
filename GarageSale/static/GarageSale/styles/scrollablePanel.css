@@ -1,0 +1,288 @@
+body {
+        background-image: url( "/static/GarageSale/images/resources/MAP-Greyscale-01.png");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        margin: 0;
+}
+
+ div.body {
+    container: body / size;
+    margin: 0;
+    padding: 0;
+    height: 600px;
+    background-color: var(--BackGroundColor);
+}
+
+ div.page-header {
+     margin-left : 15rem;
+ }
+
+div#Container
+{
+    height: auto;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+div#Content
+{
+    float:left;
+    width:80%;
+    display:flex;
+    flex-grow: 1;
+    margin-left:1rem;
+    margin-right:1rem;
+}
+
+div.mandatory-scroll-snapping {
+    display: flex;
+    margin: 1em auto;
+  /*  outline: 1px dashed darkgrey; */
+    flex: none;
+    overflow: auto;
+    flex-flow: column wrap;
+}
+
+div.y {
+    width:100%;
+    flex-flow: column nowrap;
+    overflow-x: hidden;
+    height:600px;
+}
+
+div.y.mandatory-scroll-snapping {
+  scroll-snap-type: y mandatory;
+}
+
+div.mandatory-scroll-snapping > div.card {
+  text-align: center;
+  scroll-snap-align: center;
+    height:100%;
+    flex:none;
+}
+
+div.sidebar.container {
+    float: left;
+    height: 100%;
+    margin-right: 1rem;
+    margin-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    max-width: 300px;
+}
+
+div.sidebar.entry:not(.bullet),
+span.sidebar.entry:not(.bullet) {
+    padding: 0.5rem 0.25rem 0.5rem 1rem;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    margin-right: 0.5rem;
+    border: thin grey solid;
+    border-radius: 25px;
+    box-shadow: grey 1px 1px 2px;
+    background-color: inherit;
+}
+
+span.sidebar.entry:not(.bullet) {
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+    vertical-align: baseline;
+    margin-right: 0.25rem;
+    padding-left: 0.5rem;
+    padding-right: 0.25rem;
+}
+
+span.sidebar.entry:not(.bullet) img.icon{
+    width: 24px;
+    height: auto;
+}
+
+div.sidebar.entry.bullet {
+        text-align: center;
+}
+
+@container body (max-width: 1250px) {
+
+    div.sidebar.entry.bullet {
+        text-align: right;
+    }
+}
+
+div.sidebar.entry label {
+        display:inline-block;
+    }
+
+@container body (max-width: 1250px){
+    div#Content {
+        margin-left: 0.25rem;
+    }
+    div#SidebarContainer {
+        margin-right: 0.25rem;
+    }
+
+    div.sidebar.entry img.icon,
+    span.sidebar.entry img.icon{
+        display:none
+    }
+    div.sidebar.entry,
+    span.sidebar.entry {
+        width : 140px;
+    }
+
+    div.sidebar.entry label,
+    span.sidebar.entry label {
+        font-size: 75%;
+
+    }
+    div#SidebarContainer {
+        margin-right: 0.25rem;
+        width : 150px;
+    }
+}
+
+@container body (max-width: 900px){
+
+    div#Content {
+        margin-left: 0.1rem;
+    }
+
+    /** beware - dependent on the internals of the google cloud **/
+    .gm-style-mtc {
+        width: 65px !important;
+
+        button {
+            font-size: 10pt !important;
+            padding: 5px 12px !important;
+        }
+
+        li {
+            font-size: 10pt !important;
+            padding: 3px !important
+        }
+    }
+
+    .gm-style {
+
+        div.gmnoprint.gm-bundled-control {
+            right: 20px !important
+        }
+
+        div.gmnoprint.gm-bundled-control div.gmnoprint > div
+        {
+            height: 40px !important;
+            width: 20px !important;
+
+        }
+        div.gmnoprint.gm-bundled-control div.gmnoprint > div > button {
+            height: 20px !important;
+            width: 20px !important;
+        }
+
+        button.gm-control-active {
+            height: 20px !important;
+            width: 20px !important;
+        }
+    }
+
+
+
+    div.sidebar.entry {
+        width: 80%;
+    }
+
+    div.sidebar.entry img.icon,
+    span.sidebar.entry img.icon{
+            display:none
+    }
+
+    div.card.location  div.map {
+        max-height: 350px;
+        height: 150px;
+        width: 150px;
+    }
+
+    div.page-header {
+         margin-left : 2rem;
+    }
+
+    div#SidebarContainer {
+        margin-right: 0.1rem;
+        width : 100px;
+    }
+
+
+}
+
+@container body (min-width: 1250px){
+    div.sidebar.entry label {
+        display:inline-block;
+    }
+    div.sidebar.entry {
+        width : 270px;
+    }
+    div.sidebar.container {
+        width : 270px;
+    }
+}
+
+    div.sidebar.entry.selected:not(.bullet)
+    {
+        border: thin black solid;
+        box-shadow: black -3px -3px 2px;
+        background-color: yellow;
+    }
+
+    div.selected.entry.bullet {
+        height : 1.3rem;
+    }
+
+div.sidebar.entry.bullet.selected {
+    visibility: hidden;
+}
+
+    div.sidebar.entry.selected.bullet:after
+    {
+        content: '\25CF';
+        visibility: visible;
+        display: block;
+        position: relative;
+        top: -1.3rem;
+        padding: 0;
+        margin: 0;
+    }
+
+
+    div.sidebar.entry label,
+    span.sidebar.entry label {
+        text-align: left;
+        margin: 0 0.5rem 0 0 ;
+        width : auto;
+    }
+
+    div.sidebar.entry img.icon,
+    span.sidebar.entry img.icon {
+        width:32px;
+        height:auto;
+        vertical-align: middle;
+    }
+
+    div.sidebar.entry span.helptext {
+        font-size: 80%;
+        padding: 5px;
+        display: None;
+        background: #f0f0f0;
+        border: thin black solid;
+        color: black;
+        position: absolute;
+        box-shadow: 2px 2px 5px #0f0f0f;
+        border-radius: 15px;
+        z-index: 1000;
+    }
+
+    div.sidebar.entry:has(label:hover) span.helptext
+    {
+        display: block;
+    }

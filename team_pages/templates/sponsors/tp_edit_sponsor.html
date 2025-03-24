@@ -4,6 +4,11 @@
 {% load team_page_tags %}
 {% load sponsor_tags %}
 
+{%  block PageStyles %}
+{{ block.super }}
+    <link rel="stylesheet" href="{% static 'Sponsors/styles/sponsor_style.css' %}">
+{% endblock %}
+
 {% block detail %}
 <div class="detail bordered">
     <script>
@@ -30,54 +35,85 @@
         </div>
         <div id="tp_sponsor_core">
             <div class="name">
+                <div class="errorlist">
+                    {{ form.company_name.errors }}
+                </div>
                 <label for="id_company_name">Company Name</label>{{form.company_name}}
             </div>
-            <div class="inner">
+            <div class="lead_provider">
+                <b>{{ form.lead_provider.label }}</b>
+                    {%  if action == "create" %}
+                            {{ request.user.full_name }}
+                    {% elif form.lead_provider %}
+                            {{  form.instance.lead_provider.full_name }}
+                    {%  else %}
+                            Unknown User
+                    {% endif %}
+            </div>
+        <hr>
                 <div class="image edit">
 
                     {% if form.instance.logo != ''%}
-                        <span><label for="tp_current_logo">Current</label><img name='tp_current_logo' src="{{MEDIA_URL}}{{form.instance.logo}}"/></span>
+                        <span><label for="tp_current_logo">Current Logo</label><img id='id_current_logo' alt="{{form.company_name.logo}}"src="{{MEDIA_URL}}{{form.instance.logo}}" /></span>
                     {% endif %}
-                    <input type="checkbox" name="logo-clear" id="logo-clear_id">
-                    <label for="logo-clear_id">Clear</label><br>
-                    Change:
-                    <input type="file" onchange="preview_image(event)" name="logo" accept="image/*" id="id_logo">
-                    <span id="id_preview" style="display:none;">Preview : <img id="output_image" height=50px width=50px\></span>
+
+                    <div class="edit-logo">
+                        <span class="clear-logo">
+                        <label for="id_logo_clear">Clear</label>
+                        <input type="checkbox" name="logo-clear" id="id_logo_clear">
+                        </span>
+                        <span class="change-logo">
+                        <label for="id_logo">Change</label>
+                        <input type="file" onchange="preview_image(event)" name="logo" accept="image/*" id="id_logo">
+                        <span id="id_preview" style="display:none;">Preview : <img id="output_image" height=50px width=50px\></span>
+                        </span>
+                    </div>
                 </div>
-                <div class="description">
-                    <label for="id_description">Description</label>
-                    {{form.description | safe}}
+        <hr>
+                <table class="inner">
+                    <tr class="description">
+                        <div class="errorlist">
+                            {{ form.description.errors }}
+                        </div>
+
+                        <th><label for="id_description">Description</label></th>
+                        <td>{{form.description | safe}}</td>
+                    </tr>
+                    <tr class="gift">
+                        <div class="errorlist">
+                            {{ form.gift.errors }}
+                        </div>
+                        <th><label for="id_gift">Gift</label></th>
+                        <td>{{form.gift | safe }}</td>
+                    </tr>
+                    </table>
+                <hr>
+            <div class="contact">
+                <div class="phone" >
+                        <img alt='Phone' src="{% static 'GarageSale/images/icons/phone-calling-svgrepo-com.svg' %}" />
+                    <b>Phone</b> : {{form.phone}}
+                </div>
+                <div class="email" >
+                        <img alt='Email' src="{% static 'GarageSale/images/icons/email-open-svgrepo-com.svg' %}" />
+                    <b>email</b> : {{form.email}}
+                </div>
+                <div class="icons">
+                    {% for social in socials %}
+                        <div class="social">
+                            <span id="id_social_label" class="social_entry"><label id="id_{{ social }}_link">{{social}}</label></span>
+                            <span id="id_social_icon" class="social_entry">{% get_social_icon social %}</span>
+                            <span id="id_social_link" class="social_entry">{% get_form_field form social %}</span>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
-        <div class="contact">
-            <div class="phone" >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-telephone-fill" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z"/>
-                </svg>
-                <b>Phone</b> : {{form.phone}}
+        <hr>
+            <div class="buttons">
+            {% block buttons %}
+                <input id='tp_cancel_form' item_id="{{form.instance.event_id}}" type="button" value="Cancel">
+                <input id="tp_save_form"  type="submit" value="Save this entry">
+            {% endblock %}
             </div>
-            <div class="email" >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-envelope" viewBox="0 0 16 16">
-                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/>
-                </svg>
-                <b>email</b> : {{form.email}}
-            </div>
-        </div>
-        <div class="icons">
-            {% for social in socials %}
-                <div class="social_entry">
-                    <span id="id_social_label" class="social"><label id="id_website">{{social}}</label></span>
-                    <span id="id_social_icon" class="social">{% get_social_icon social %}</span>
-                    <span id="id_social_link" class="social">{% get_form_field form social %}</span>
-                </div>
-            {% endfor %}
-        </div>
-        <div class="buttons">
-        {% block buttons %}
-            <input id='tp_cancel_form' item_id="{{form.instance.event_id}}" type="button" value="Cancel">
-            <input id="tp_save_form"  type="submit" value="Save this entry">
-        {% endblock %}
         </div>
     </form>
 </div>

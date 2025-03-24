@@ -20,15 +20,12 @@ from GarageSale.models import MOTD, EventData
 from .forms import NewsForm, MotdForm, EventForm, SponsorForm
 from Sponsors.views import social_media_items
 from abc import abstractmethod
-from Billboard.models import BillboardLocations
-
+from Location.models import Location
 
 def PublishNews(request, news_id):
     publish_news(request, news_id)
     fragments = [key for key, item in request.GET.items() if item == '']
-    print(reverse('TeamPagesNews'))
     return redirect(reverse('TeamPagesNews') + (('?' + '&'.join(fragments)) if fragments else ''))
-
 
 def custom_news_query_set(param_dict):
     unpublished = 'unpublished' in param_dict
@@ -68,19 +65,19 @@ def custom_news_query_set(param_dict):
 
 class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """
-    An All purpose class for displaying a list and detail/creation form in one template
+    An All purpose class for displaying a list and detail/creation forms in one template
 
     Attributes :
         login_url & redirect_field_name - required by the LoginRequiredMixin
         permission_required - as required by the PermissionRequiredMixin
-        template_name : the template to be invoked by the instance to display the data and form
-        form_class : the detail form to be used - can be none if the detail doesn't need a form (eg a confirmation button)
+        template_name : the template to be invoked by the instance to display the data and forms
+        form_class : the detail forms to be used - can be none if the detail doesn't need a forms (eg a confirmation button)
         model_class : must be a class of a model which can be instantiated
         success_url :  a static URL to be used if the POST operation succeeds
 
     Methods :
         get_form( form_instance ) -> Form :
-                Can be used to modify the form if necessary (for example change widgets)
+                Can be used to modify the forms if necessary (for example change widgets)
 
         get_success_url( request, context, **kwargs ) -> url
                If implement this defines the url to be used when the POST succeeds - used in presence to self.success_url
@@ -92,16 +89,16 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 Must be overridden - returns the context used to drive the relevant template.
 
         get_object( request, **kwargs) - Model instance
-                Must be overridden - will return the instance to be used on the form (for edit/views)
-                Can return None (ie. for create and non-form actions)
+                Must be overridden - will return the instance to be used on the forms (for edit/views)
+                Can return None (ie. for create and non-forms actions)
 
-        get_new_instance( request, form, **kwargs):
+        get_new_instance( request, forms, **kwargs):
                 Can be implemented - used when self.get_object returns None
                 Can also return None to prevent a save.
 
         self.do_post_success( self, request, context=None, model_instance=None, form_instance=None, **kwargs)
             can be implemented - can be used for any reason during the POST processing.
-            Called once the form is known to be valid.
+            Called once the forms is known to be valid.
             If it returns False then the automatic updating of the instance from the form_data
             if this method updates the instance and intends to return False it must also save the instance
             returning False does not constitute a failure.
@@ -115,6 +112,9 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
     form_class = None
     model_class = None
     success_url = ''
+
+    def post_save(self, request, instance, form, **kwargs):
+        return None
 
     def get_form(self, form_instance=None):
         return form_instance
@@ -134,7 +134,7 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     @abstractmethod
     def get_object(self, request, **kwargs):
-        """Must be overridden to provide the actual model instance used on this form"""
+        """Must be overridden to provide the actual model instance used on this forms"""
         return NotImplemented
 
     def do_post_success(self, request, context=None, model_instance=None, form_instance=None, **kwargs):
@@ -144,7 +144,7 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return True
 
     def __init__(self, *args, **kwargs):
-        """Validate that some form of success_url is provided"""
+        """Validate that some forms of success_url is provided"""
         super().__init__(*args, **kwargs)
         if not hasattr(self, 'success_url') and not hasattr(self, 'get_success_url'):
             raise exceptions.ImproperlyConfigured('Either "success_url" attribute or "get_success_url" '
@@ -176,7 +176,7 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
         else:
             the_form = None
 
-        # If there is a form instance then validate the form (and return if errors)
+        # If there is a forms instance then validate the forms (and return if errors)
         if the_form:
             if not the_form.is_valid():
                 context['form'] = the_form
@@ -190,7 +190,7 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         # A value of post_success of False suppress the automated updating the instance and saving.
 
-        # If the post success was affirmative then update the instance from the form
+        # If the post success was affirmative then update the instance from the forms
         if post_success:
             if instance and the_form:
                 for field_name in the_form.fields:
@@ -212,6 +212,7 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
             if instance:
                 instance.save()
+                self.post_save(request, instance, the_form, **kwargs)
 
         # Redirect to the correct success url
         if hasattr(self, 'get_success_url'):
@@ -440,6 +441,7 @@ class EventCreate(EventBase):
     permission_required = ["GarageSale.can_create_event"]
     template_name = 'event/tp_create_event.html'
     success_url = reverse_lazy( 'TeamPagesEvent')
+    _supporting = None
 
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request, **kwargs)
@@ -449,10 +451,22 @@ class EventCreate(EventBase):
     def get_object(self, request, **kwargs):
         return None
 
+    def get_new_instance(self, request, form, **kwargs):
+        print([i for i in form.cleaned_data])
+        supporting = form.cleaned_data['supporting_organisations']
+        self._supporting = form.cleaned_data.pop('supporting_organisations')
+        inst = self.model(**form.cleaned_data)
+        return inst
+
+    def post_save(self, request, instance, form, **kwargs):
+        for item in self._supporting:
+            instance.supporting_organisations.add( item.id )
+        self._supporting = None
+        return instance
 
 def event_use(request, event_id):
     """Simple invocation of a template - option to add more complexity if needed"""
-    return TemplateResponse(request, 'event/tp_use_event.html', context={'event_id': event_id, 'data_type': 'sponsor'})
+    return TemplateResponse(request, 'event/tp_use_event.html', context={'action':'use', 'event_id': event_id, 'data_type': 'event'})
 
 
 class TeamPage(LoginRequiredMixin, View):
@@ -514,7 +528,7 @@ class SponsorCreate(SponsorsRoot):
     permission_required = ["Sponsors.can_create_sponsor"]
 
     def get_context_data(self, request, **kwargs):
-        return super().get_context_data(request, **kwargs) | {'create':'action'}
+        return super().get_context_data(request, **kwargs) | {'action':'create'}
 
     def get_object(self, request, **kwargs):
         return None
@@ -525,9 +539,8 @@ class SponsorCreate(SponsorsRoot):
         except EventData.DoesNotExist:
             raise BadRequest(f'Cannot create a sponsorship record without a valid event {kwargs.get("event_id")}')
 
-        inst = self.model_class(event=event, **form.cleaned_data)
+        inst = self.model_class(event=event, **(form.cleaned_data | {'lead_provider':request.user}))
         return inst
-
 
 class SponsorView(SponsorsRoot):
     template_name = 'sponsors/tp_view_sponsor.html'
@@ -591,17 +604,17 @@ class SponsorDelete(SponsorView):
 
 def ad_board_csv(request, event_id):
     event = EventData.objects.get(id = event_id)
-    qs = BillboardLocations.objects.filter(event=event)
+    qs = Location.objects.filter(event=event).filter(ad_board=True)
+    ts = datetime.datetime.now().isoformat()
 
     response = HttpResponse(content_type='text/csv',
-                            headers={"Content-Disposition": 'attachment; filename="advert_boards.csv"'},)
+                            headers={"Content-Disposition": f'attachment; filename="advert_boards_{ts}.csv"'},)
 
     writer=csv.writer(response)
-    writer.writerow(['Name', 'Address', 'Postcode', 'Phone', 'Mobile'])
+    writer.writerow(['Name', 'Address', 'Postcode', 'Phone'])
     for entry in qs:
-        writer.writerow([f'{entry.name()}',
+        writer.writerow([f'{entry.user.full_name()}',
                          f'{entry.full_address()}',
-                         f'{entry.location.postcode}',
-                         f'{entry.location.phone}',
-                         f'{entry.location.mobile}'])
+                         f'{entry.postcode}',
+                         f'{entry.user.phone}'])
     return response

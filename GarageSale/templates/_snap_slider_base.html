@@ -1,0 +1,105 @@
+{% extends "_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load event_data_tags %}
+
+{% block additionalScripts%}
+<script type="text/javascript" src="{% static 'GarageSale/js/tooltip.js' %}"></script>
+<script type="text/javascript" src="{% static 'GarageSale/js/scrollablePanel.js' %}"></script>
+    {% block PageScripts %}
+        {%  endblock %}
+{% endblock %}
+
+{% block Title %}
+Brantham Garage Sale - Home Page
+{% endblock %}
+
+{% block additionalStyles %}
+<link rel="stylesheet" href="{% static 'GarageSale/styles/scrollablePanel.css' %}">
+    {% block PageStyles %}
+    {% endblock %}
+{% endblock %}
+
+
+
+{% block PageHeading %}Brantham Garage Sale{% endblock %}
+
+
+{%block body-extra %}
+
+
+    {% CountdownClock 'clock'  %}
+{% endblock %}
+
+{% block ToolBar %}
+<div>
+    <span class="icon"><img src="{{ MEDIA_URL }}{{ request.current_event.event_logo }}" class='logo' ></span>
+    <div id="clock"></div>
+    <script>
+        set_msg();
+    </script>
+</div>
+<div class="menubar">
+    <div id="Buttons">
+    <a href="mailto:branthamGarageSale@gmail.com"><img id=Email class="Button Animate browser" src="{% static 'GarageSale/images/icons/email-open-svgrepo-com.svg' %}" ></a>
+    <a href="https://www.facebook.com/BranthamGarageSale"><img id=Facebook class="Button Animate browser" src="{% static 'GarageSale/images/icons/facebook-color-svgrepo-com.svg' %}"></a>
+    <span id=user_management class="Button browser dropdown">
+            <img id=Account class="Button Animate dropbtn" src="{% static 'user_management/images/icons/user-svgrepo-com.svg' %}" >
+                <span class="dropdown-content">
+                  <ul>
+                      {% User_menu  register="/register" login="/login" logoff="/logoff" profile="/getInvolved"%}
+                  </ul>
+                </span>
+    </span>
+    <span class="mobile BurgerDropDown">
+        <img id=Burger  class="Button Animate" src="{% static 'GarageSale/images/icons/menu-burger-horizontal-svgrepo-com.svg' %}" >
+        <span class="BurgerDropdown-content">
+            <ul>
+                <li><a href="/">Home</a></li>
+                {% User_menu  register="/register" login="/login" logoff="/logoff" getinvolved="/getinvolved"%}
+                {% if perms.GarageSale.is_administrator %}
+                    <li><a href="{% url 'TeamPagesRoot' %}">Team</a></li>
+                {% endif %}
+            </ul>
+        </span>
+    </span>
+    </div>
+</div>
+    {% if request.current_event.supporting_organisations.all %}
+    <div class="supporting">Supporting
+    {%  for organisation in request.current_event.supporting_organisations.all %}
+        <span class="supporting.organisation"><a href="{{ organisation.website }}">
+        <img class="supporting_logo" src="{{ MEDIA_URL }}{{ organisation.logo }}" alt="{{organisation.name}}"></a></span>
+        {%  if not forloop.last %}
+            <span>&</span>
+        {% endif %}
+    {%  endfor %}
+    </div>
+    {% endif %}
+{% endblock %}
+{% block body %}
+    <div class="page-header">
+    {% block header %}
+    {% endblock %}
+    </div>
+    <div id="Container">
+        <div id="SidebarContainer" class="sidebar container"  style="display: flex; flex-direction: column;">
+            <div>
+            {% block sidebar %}
+                <div class="sidebar entry"> Insert Side bar here</div>
+            {% endblock %}
+            </div>
+        </div>
+        <div id="Content">
+            <div id="CardContainer" class="y mandatory-scroll-snapping" dir="ltr">
+                {% block SnappableSections %}
+                    <div class="card">Y Mand. RTL</div>
+                    <div class="card">2</div>
+                    <div class="card">3</div>
+                    <div class="card">4</div>
+                    <div class="card">5</div>
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

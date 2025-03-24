@@ -3,14 +3,11 @@
 {% load user_management_tags %}
 {% load team_page_tags %}
 
-{# TODO - no switches inside templates #}
-
-
-{% block additionalScripts%}
+{% block PageScripts%}
 <script type="text/javascript" src="{% static 'team_pages/js/news_page.js' %}"></script>
 {% endblock %}
 
-{% block content %}
+{% block SnappableSections %}
 <script>
     const patterns = new Map([
     {% for path in patterns %}

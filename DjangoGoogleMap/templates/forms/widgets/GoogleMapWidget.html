@@ -1,0 +1,80 @@
+
+<div class="map" id="id_{{ widget.name }}_map">
+    <input type="text" name="{{ widget.name }}" id="id_{{ widget.name }}"
+           {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %} hidden/>
+    <div id="id_{{ widget.name }}_map_wrapper" style="width: 100%; height:100%;"></div>
+        <script async src="https://maps.googleapis.com/maps/api/js?key={{ widget.attrs.API_KEY }}&callback=initMap&libraries=marker" defer></script>
+        <script>
+        let map;
+        let marker;
+
+        function initMap() {
+
+            const field = document.getElementById('id_{{ widget.name }}');
+            if (field == null) {
+                console.error("Missing form element 'id_{{ widget.name }}' - unable to display Google map widget.")
+                return ;
+            }
+
+            map = new google.maps.Map(document.getElementById('id_{{ widget.name }}_map_wrapper'), {
+                center: {{ widget.attrs.center | safe }}, // Default center point
+                zoom: {{ widget.attrs.defaultZoom }},
+                mapId: '{{ widget.attrs.MAP_ID }}',
+                controlSize: 20,
+                scaleControl: true,
+                fullscreenControl: false,
+                zoomControl: true,
+                zoomControlOptions: {
+                  position: google.maps.ControlPosition.BLOCK_START_INLINE_END
+                },
+                streetViewControl: false,
+                mapTypeControl: true,
+                mapTypeControlOptions: {
+                    style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+                    mapTypeIds: ["roadmap", "satellite", "hybrid"],
+                },
+
+            });
+
+            {% if  'bounds' in widget.attrs %}
+                map.setOptions({
+                    restriction: {
+                            latLngBounds: {{ widget.attrs.bounds | safe }},
+                            strictBounds : {% if 'strictBounds' in widget.attrs %}true{% else %}false{% endif %}
+                    }} );
+            {%  endif %}
+
+            if  (field.value != null && field.value !== '')
+            {
+                console.log(field.value);
+                map.setZoom( {{ widget.attrs.autoZoomLevel}} );
+                map.panTo(JSON.parse(field.value))
+                addMarker(JSON.parse(field.value));
+            }
+
+            // Add a click listener to the map
+            map.addListener('click', (event) => {
+                addMarker(event.latLng);
+            });
+        }
+
+        function addMarker(location) {
+            map.panTo(location);
+
+            if (map.zoom < {{ widget.attrs.autoZoomLevel }}) {
+                map.setZoom(Math.min(map.zoom+{{ widget.attrs.zoomStep }}, {{ widget.attrs.autoZoomLevel }} ));
+                return;
+            }
+            if (marker) {
+                marker.setMap(null); // Remove the previous marker
+            }
+            marker = new google.maps.marker.AdvancedMarkerElement({
+                map: map,
+                position: location,
+                title: "{{widget.attrs.title}}"
+            });
+            console.log(JSON.stringify(location), 'Marked');
+            document.getElementById('id_{{ widget.name }}').value=JSON.stringify(location);
+        }
+    </script>
+</div>

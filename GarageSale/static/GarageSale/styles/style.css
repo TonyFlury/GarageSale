@@ -1,13 +1,15 @@
 :root {
   --ToolbarHeight: 40px;
-  --BackGroundColor: #4444FF;
-  --fontColor : lightgrey;
+  --BackGroundColor: rgba(255, 255, 255, 90%);
+  --fontColor : black;
   --PaperColor : #CCCB9D;
+  --fontSize: 14pt;
 }
 
-body { background : var(--BackGroundColor) ;
+body {
     color : var(--fontColor);
-    font-size:14pt;
+    font-size: var(--fontSize);
+    font-family: sans-serif;
 }
 
 
@@ -22,8 +24,8 @@ span#Ticker {
 	margin: auto;
 	padding-left: 1em;
 	padding-right: 1em;
-	color: white;
-	border: solid thin white;
+	color: var(--fontColor);
+	border: solid thin darkgray;
 	border-radius: 2em;
 	line-height: var(--ToolbarHeight);
 	max-height: var(--ToolbarHeight);
@@ -43,7 +45,6 @@ span.icon {
 
 div.TopBar img.logo {
 float: left;
-  top: 40px;
   position: absolute;
   display: inline;
   left: 0;
@@ -69,7 +70,7 @@ div#Buttons {
   position: absolute;
   right : -10px;
   background-color: var(--BackGroundColor);
-  color : white ;
+  color : var(--fontColor) ;
   min-width: auto;
   box-shadow: 0px 8px 16px 0px rgba(1,1,1,1);
   z-index: 1;
@@ -94,7 +95,6 @@ margin-bottom:0.5rem;
 padding-bottom : 0px; }
 
 .dropdown-content a {
-  color: white;
   font-weight: bold;
   padding: 0.25em 16px;
   text-decoration: None;
@@ -116,13 +116,11 @@ padding-bottom : 0px; }
 /* .dropdown:hover .dropbtn {background-color: #3e8e41;} */
 
 
+
 .body {
-	padding: 1em;
-	margin: 1em;
-	display: block;
-	/* background: lightblue; */
-	margin-top: 0em;
-	padding-top: 0.5em;
+    display: block;
+    margin: 0em 1em 1em;
+    padding: 0.5em 1em 90px;
 }
 
 @media only screen and (max-width: 1140px){
@@ -134,14 +132,24 @@ padding-bottom : 0px; }
 
 div.form {
     border:thin white solid;
+    color:var(--fontColor);
+ /*   margin:auto; */
+}
+
+div.form.NoBorder {
+    border:None;
     color:white;
  /*   margin:auto; */
 }
+
+table, td, th {
+    /* border: thin solid white; */
+}
 @media only screen and (min-width: 1141px){
-    .form{
-        padding:20px;
-        border-radius:30px;
-            width : 80%;
+    .form {
+    padding: 20px;
+    border-radius: 30px;
+    width: 80%;
     }
 }
 
@@ -157,18 +165,20 @@ div.form {
 
 label{
 font-weight:bold;
+    text-align: right;
+    display: inline-block;
 }
 
 input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="date"], textarea, select
 {
     color : var(--fontColor);
     background: var(--BackGroundColor);
-    border-radius: 10px;
-    padding-left: 5px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    margin:5px;
-    box-shadow: 2px 2px 2px rgba(1,1,1,1) inset;
+    border-radius: 0.5rem;
+    padding-left: 0.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    /* margin:5px; */
+    box-shadow: 1px 1px rgba(1,1,1,1) inset;
     font-size:inherit;
 }
 input[type="url"] {
@@ -184,16 +194,26 @@ div.form select[multiple] {
 
 div.form .buttons input{
     background : var(--BackGroundColor);
-    font-size: 20px;
     padding : 5px ;
-    color : white ;
-    border : 3px solid white;
-    border-radius : 5px ;
-    box-shadow: 5px 5px 2px 2px rgba(1,1,1,1);
+    font-size: 1rem;
+    color : var(--fontColor) ;
+    border : thin solid darkgray;
+    border-radius : 0.5rem; ;
+    box-shadow: 1px 1px 1px 1px rgba(1,1,1,1);
     margin : 15px;
 }
 
-div.form input[type='checkbox']
+div.duplicate {
+    font-size: 80%;
+    background-color: red;
+    border: thin grey solid;
+    color: white;
+    margin: 0.5rem;
+    margin-top:1rem;
+    padding: 0.25rem;
+}
+
+/*div.forms input[type='checkbox']
 {
     height:2.5em;
     outline: 1px solid var(--BackGroundColor);
@@ -204,7 +224,7 @@ div.form input[type='checkbox']
     border-radius: 5px;
     box-shadow: 2px 2px 5px 1px black ;
     padding:2px;
-}
+} */
 
 div.form input[type='checkbox']:checked
 {
@@ -222,14 +242,25 @@ div.form input[type='text']:disabled, input[type='email']:disabled
     font-weight:bold;
 }
 
-div.form .errorlist {
-    font-size : 125%;
-    color: orange;
+div.form ul.errorlist {
+    font-size: 75%;
+    color: black;
     font-weight: bold;
+    background-color: lightgrey;
+    /* border: thin black solid; */
+    padding: 0.75rem;
+    /* padding-left: 0px; */
+    border-radius: 1rem;
+    width: fit-content;
+}
+
+td.errorlist {
+    /* width: 80%; */
 }
 
 div.form .errorlist li{
     list-style-type: none;
+    width: fit-content;
 }
 div.notes{
 
@@ -256,9 +287,9 @@ a:hover {
 div.TopBar {
     position:sticky;
     top:0;
-    background: rgba(68, 68, 255, 1.0);
     opacity:1;
     z-index:1;
+    background: var(--BackGroundColor);
 }
 
 div.TopBar::after {
@@ -267,7 +298,7 @@ div.TopBar::after {
 	left: 0;
 	right: 0;
 	margin: auto;
-	border-bottom: dotted thin lightgrey;
+	border-bottom: dotted thin black;
 	position: absolute;
 	bottom: 1rem;
 }
@@ -283,7 +314,7 @@ div.MOTD {
     overflow-y:auto;
 }
 
-div.MOTD:after {
+/*div.MOTD:after {
     width:50%;
     content:"";
     border-bottom: thin solid lightgrey;
@@ -291,7 +322,7 @@ div.MOTD:after {
     margin:auto;
     left:0;
     right:0;
-}
+} */
 
 div#Front-page-news {
       padding-top: 2em;
@@ -372,10 +403,53 @@ div.form th:has(label[for='id_gift_aid']){
 div.form label[for='id_gift_aid']{
     margin-top:10px;
 }
-div.form .helptext {
-    font-size : 120%;
-    margin-top : 0.5em;
-    display:block;
+
+/** help text for table layout **/
+div.form th:has(label) +td .helptext {
+    font-size : 80%;
+    padding: 5px;
+    display:None;
+    background : #f0f0f0;
+    border: thin black solid;
+    color : black;
+    position : absolute;
+    box-shadow:2px 2px 5px #0f0f0f;
+    border-radius:15px;
+    z-index: 1000;
+}
+
+div.form th:has(label:hover) +td .helptext
+{
+display: block;
+}
+
+/** Helptext mouseover for div layout **/
+
+div.form .field_wrapper span.helptext {
+    font-size : 80%;
+    padding: 5px;
+    display:None;
+    background : #f0f0f0;
+    border: thin black solid;
+    color : black;
+    position : absolute;
+    box-shadow:2px 2px 5px #0f0f0f;
+    border-radius:15px;
+    z-index: 1000;
+}
+
+div.form .field_wrapper:has(label:hover) span.helptext
+{
+    display: block;
+}
+
+div.sidebar.entry img.sidebar.icon:hover ~ span.helptext{
+    display: block ;
+}
+
+div.form .field_wrapper .label {
+    width: 15rem;
+    justify-content: right;
 }
 
 a.footnote {
@@ -418,3 +492,189 @@ div.about-us.footnote {
 	position: absolute;
 	padding-bottom:2rem;
 }
+
+
+
+
+
+div.test_warning {
+     clear: both;
+    position: fixed;
+    bottom: 5px;
+    width: 85%;
+    min-height: auto;
+    background-color: brown;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    left: 5%;
+    right: 5%;
+    border: thick yellow solid;
+    font-weight: bold;
+    font-size: 75%;
+    text-align: center;
+}
+
+
+
+span.location_type {
+    margin-right: 2rem;
+}
+
+div.location_type {
+    margin-bottom: 1rem;
+}
+div.address {
+    margin-left: 1rem;
+}
+
+div.blaze-slider {
+    margin-top:2rem;
+}
+div.blaze-track > div {
+    /* display: inline-block; */
+    /* vertical-align: middle; */
+    /* text-align: center; */
+    height: 128px;
+    /* border: 1px dotted darkgrey; */
+    border-radius: 15%;
+    position: relative;
+}
+
+img.sponsor-logo {
+    max-height: 100%;
+    max-width: 100%;
+    height: auto;
+    width: auto;
+    margin: auto;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+#OnTheMap button,
+div.blaze-slider button {
+    font-size: 125%;
+    border-radius: 15px;
+    box-shadow: 4px 4px 3px darkgray;
+    margin-top: 2rem;
+}
+
+    div.supporting:not(.organisation) {
+        width:fit-content;
+        margin:auto;
+        font-size: 150%;
+    }
+
+    img.supporting_logo {
+        width:64px;
+        vertical-align: middle;
+    }
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+
+  /* Position the tooltip text - see examples below! */
+  position: absolute;
+  z-index: 1;
+}
+
+.tooltip .tooltiptext.top {
+    width: auto;
+    bottom: 120%;
+    left: -75%;
+    margin-left: 0;
+}
+
+.tooltip .tooltiptext.right {
+    top: -5px;
+    left: 105%;
+    bottom: auto;
+    width: 120px;
+    margin-left: 0.5rem;
+}
+
+.tooltip a:hover {
+    text-decoration: none;
+    border:none;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+    text-decoration: none;
+}
+
+.tooltip .tooltiptext.right.arrow::after {
+  content: " ";
+  position: absolute;
+  top: 50%;
+  right: 100%; /* To the left of the tooltip */
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent black transparent transparent;
+}
+
+.tooltip .tooltiptext.top.arrow::after {
+  content: " ";
+  position: absolute;
+  top: 100%; /* At the bottom of the tooltip */
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: black transparent transparent transparent;
+}
+
+
+.donate .panel  {
+    display: flex;
+    margin-left: 0rem;
+    margin-right: 1rem;
+    text-align: left;
+    flex-wrap: wrap;
+
+
+    @media screen and (min-width: 1000px) {
+        #bacs,
+        #cash-fees,
+        #cash-donations{
+            width:28%;
+        }
+
+    }
+    #bacs{
+        float: left;
+        padding: 1rem;
+        margin: 0;
+    }
+    #cash-fees {
+        float: left;
+        padding: 1rem;
+        border-left: dotted thin;
+    }
+    #cash-donations {
+        float: left;
+        padding: 1rem;
+        border-left: dotted thin;
+    }
+    ul {
+        list-style-type: none;
+        font-size: 85%;
+        margin: 1rem;
+    }
+}
+
+div#Content a > img {vertical-align: middle;}

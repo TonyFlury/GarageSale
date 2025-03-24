@@ -1,23 +1,29 @@
+:root {
+    --fontSize:12pt;
+}
+
+@media only screen and (max-width: 800px)
+{
+    :root {
+        --fontSize: 10pt;
+    }
+}
+
 
 .browser {
     display : none ; }
 
 body {
-font-size:14pt;
-}
+font-size}
 
 .body {
     padding: 0em;
 }
 #clock {
-	width: 80%;
-	font-size: 90%;
-	margin-left: 0;
-	text-align: left;
-	margin-right: 0;
-	font-size: 100%;
-	margin-top: 14px;
-	display: inline-block;
+    width: 60%;
+    text-align: left;
+    margin-left: 100px;
+    display: inline-block;
 }
 
 span#Buttons {
@@ -33,8 +39,8 @@ div.TopBar h1 {
     font-size:120%;
     padding-left: 80px;
     padding-top : 0px;
-    text-align: left
-	color: white;
+    text-align: left;
+	color: var(--fontColor);
 	margin-top: 0;
 	margin-bottom: 5px;
 }
@@ -51,7 +57,6 @@ div.TopBar span.icon {
 
 div.TopBar{
     height:auto;
-    margin-bottom:0.25rem;
 }
 
 div#Buttons {
@@ -59,9 +64,7 @@ div#Buttons {
 }
 
 div.MOTD {
-    font-size: 100%;
     width:100%;
-    height:10em;
     overflow:auto;
 }
 div.MOTD:after {
@@ -105,7 +108,7 @@ div.TopBar::after {
   position: absolute;
   right: -20px;
   background-color: var(--BackGroundColor);
-  color : white ;
+	color: var(--fontColor);
   border-radius : 30px;
   box-shadow: 0px 8px 16px 0px rgba(1,1,1,1);
   z-index: 1;
@@ -129,7 +132,7 @@ padding-left : 2px;}
 padding-bottom : 0px; }
 
 .BurgerDropdown-content a {
-  color: white;
+	color: var(--fontColor);
   font-weight: bold;
   padding: 0.25em 16px;
   text-decoration: None;
@@ -155,7 +158,6 @@ div.front-page-news a.headline {
 	margin-left: 0.5em;
 	margin-right: 0.5em;
 	font-weight: bold;
-	font-size:100%;
 	color: black;
 	text-decoration: none;
 }
@@ -166,17 +168,35 @@ div.front-page-news a.headline {
 }
 
 h1.about-us {
-    font-size:1.5rem;
+    font-size:125%;
 }
 
 h2.about-us {
-    font-size:1.25rem;
+    font-size:110%;
 }
 
 div#about-us {
-    font-size:14pt;
 }
 
 a {
     border-bottom: thin dotted white;
+}
+
+img#Burger{
+    width:32px;
+    height:32px;
+}
+
+@media only screen and (max-width: 470px) {
+    div#Content {
+        max-width: 340px;
+    }
+    h1 {
+        font-size:120%;
+    }
+    #ToolBar h1 {
+        font-size: 130%;
+        width:fit-content;
+        margin:auto;
+    }
 }

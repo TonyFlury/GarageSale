@@ -1,0 +1,43 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load location_tags %}
+{% block additionalScripts%}
+<script type="text/javascript" src="{% static 'Location/js/tooltip.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+<p>You requested to delete this location from your account :</p>
+<div class="form" style="width:auto;float:left;">
+    <form method="post">{% csrf_token %}
+        <div class="location">
+             <div style="margin-bottom:1rem;">
+                    <div class="location_type">
+                        <span class="location_type">Sale : {% location_type_icon location 'sale_event' %}</span>
+                        <span class="location_type">Ad Board : {% location_type_icon location 'ad_board' %}</span>
+                    </div>
+                    <div class="address">
+                        {{location.house_number}}, {{location.street_name}}<br/>
+                        {{location.town}}<br/>
+                        {{location.postcode}}
+                    </div>
+                 <div style="margin-top:1rem;">
+                     <strong>Are you sure ?</strong>
+                     </div>
+            </div>
+        </div>
+        <script>
+            /* Implement cancel button as a simple return to the GetInvolved page */
+            function cancel_LocationDelete()
+            {
+                window.location.replace( '{% url "Location:view" %}' );
+             }
+        </script>
+        <div class="buttons">
+            {{ form }}
+            <input type="button" name='action' onclick="cancel_LocationDelete()" value="Cancel" id="CancelButton">
+            <input type="submit" value="Confirm">
+        </div>
+    </form>
+</div>
+{% endblock %}

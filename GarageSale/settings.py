@@ -12,30 +12,39 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 
+# Site specific credentials
+from credentials import db_credentials as db_credentials
+from credentials import django_secret_key
+from credentials import email_credentials
+from credentials import hosts
+from credentials import GoogleMap_credentials
+
+try:
+    from credentials import test_server
+except ImportError:
+    test_server = None
+
+TEST_SERVER = test_server.TEST_SERVER if test_server else False
+
+try:
+    from credentials import debug
+except ImportError:
+    debug = None
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-s$t^ho7^-6ou)$fb)wilo10%l%dcmt7c+*^cq7j-eqxvdl0f4_'
+SECRET_KEY = django_secret_key.SECRET_KEY
+DEBUG = debug.DEBUG if debug else False
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+ALLOWED_HOSTS = hosts.ALLOWED_HOSTS
+INTERNAL_IPS = hosts.INTERNAL_IPS
 
-if DEBUG:
-    ALLOWED_HOSTS = ["192.168.1.76",'127.0.0.1','81.147.70.233']
-    INTERNAL_IPS = [
-       "192.168.1.76"
-    ]
-else:
-    ALLOWED_HOSTS = ['www.BranthamGarageSale.org.uk']
-    INTERNAL_IPS = []
-
-
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = 'static'
 MEDIA_ROOT = 'media'
 MEDIA_URL = '/media/'
@@ -45,12 +54,14 @@ MEDIA_URL = '/media/'
 INSTALLED_APPS = [
     'team_pages.apps.TeamPagesConfig',
     'GarageSale.apps.GarageSaleConfig',
-    'Billboard.apps.BillboardConfig',
-    'SaleLocation.apps.SaleLocationConfig',
+    'Location.apps.LocationConfig',
+    #    'Billboard.apps.BillboardConfig',
+    #    'SaleLocation.apps.SaleLocationConfig',
+    'DjangoGoogleMap.apps.DjangoWhat3WordsConfig',
     'Sponsors.apps.SponsorsConfig',
     'user_management.apps.user_managementConfig',
     'News.apps.NewsConfig',
-    'PageVisits.apps.PageVisitsConfig',
+    'django.forms',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -60,10 +71,12 @@ INSTALLED_APPS = [
     'django_quill',
 ]
 
+AUTH_USER_MODEL = "user_management.UserExtended"
+
 if DEBUG:
     INSTALLED_APPS.extend(
         ['debug_toolbar',
-         'mail_panel',]
+         'mail_panel', ]
     )
 
 MIDDLEWARE = [
@@ -75,11 +88,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'GarageSale.middleware.event.CurrentEvent',
-    'PageVisits.middleware.pageVisits.PageVisitRecorder',
 ]
 
 if DEBUG:
-    MIDDLEWARE.insert(0,'debug_toolbar.middleware.DebugToolbarMiddleware' )
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'GarageSale.urls'
 
@@ -90,12 +102,12 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'libraries': {
+                'location_tags' : "Location.templatetags.location_data_tags",
                 'team_page_tags': "team_pages.templatetags.team_page_tags",
                 'event_data_tags': "GarageSale.templatetags.garage_sale_data",
-                'user_management_tags': "user_management.templatetags.extras",
-                'newsletter_tags': "News.templatetags.extras",
-                'billboard_tags': 'Billboard.templatetags.extras',
-                'sponsor_tags': 'Sponsors.templatetags.extras',
+                'user_management_tags': "user_management.templatetags.user_extras",
+                'newsletter_tags': "News.templatetags.enrol",
+                'sponsor_tags': 'Sponsors.templatetags.social_media',
             },
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -103,6 +115,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
+                'GarageSale.middleware.context_processors.test_server'
             ],
         },
     },
@@ -123,130 +136,34 @@ DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.redirects.RedirectsPanel',
     'debug_toolbar.panels.profiling.ProfilingPanel',
     'mail_panel.panels.MailToolbarPanel',
-    ]
-
+]
 
 WSGI_APPLICATION = 'GarageSale.wsgi.application'
 
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True
-EMAIL_USE_TLS = False
-EMAIL_HOST_USER = "BranthamGarageSale@gmail.com"
-EMAIL_HOST_PASSWORD = "glpf hekx pais jcjt"
+EMAIL_CREDENTIALS = email_credentials.EMAIL_CREDENTIALS
+SERVER_EMAIL = email_credentials.SERVER_EMAIL
 
+ADMINS = [('Tony Flury', 'anthony.flury@btinternet.com')]
 
-#if DEBUG:
-#    EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
-#else:
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+if DEBUG:
+    EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
+else:
+    EMAIL_BACKEND = 'GarageSale.middleware.email.EmailExtended'
+    EMAIL_DEFAULT = 'BranthemGarageSale@gmail.com'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'garagesale',
-        'USER': 'garagesaleweb',
-        'PASSWORD': '7RWrbJ18tZ',
-        #        'HOST': 'BranthamGarageSale-235.postgres.eu.pythonanywhere-services.com',
-        #        'PORT': '10235',
-        'HOST': 'localhost',
-        'PORT': '5432',
-
-        'TEST': {
-            'NAME': 'test_garagesale'
-        }
-    },
-}
-
-SESSION_COOKIE_AGE = 365 * 24 * 60 * 60  # 365 days between log ins.
-
-# Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
-
-# Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
-
-LANGUAGE_CODE = 'en-uk'
-
 TIME_ZONE = 'UTC'
 
-USE_I18N = True
+DATABASES = db_credentials.db_credentials(BASE_DIR)
 
-USE_TZ = True
+SESSION_COOKIE_AGE = 365 * 24 * 60 * 60  # Allow upto 365 days between log ins.
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-
-QUILL_CONFIGS = {
-    'default':{
-        'theme': 'snow',
-        'modules': {
-            'syntax': True,
-            'toolbar': [
-                [
-                    {'font': []},
-                    {'header': []},
-                    {'align': []},
-                    {'list': 'ordered'}, {'list': 'bullet'},
-                    'bold', 'italic', 'underline', 'strike', 'blockquote',
-                    {'indent':'-1'}, {'indent':'+1'},
-                    {'color': []},
-                    {'background': []},
-                ],
-                ['code-block', 'link'],
-                ['clean'],
-            ]
-        }
-    }
+APPS_SETTINGS = {
+    'user_management': {'EMAIL_SENDER': 'BranthamGarageSale@gmail.com',
+                        'SITE_NAME': 'Brantham Garage Sale v2',
+                        }
 }
 
-STATICFILES_DIRS = [
-]
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-if DEBUG:
-    patterns = [
-        "/user_management/_user_menu",
-    ]
-    DEBUG_TOOLBAR_CONFIG = {
-        'SHOW_TOOLBAR_CALLBACK': lambda request: not any(p in request.path for p in patterns),
-    }
-
-
-APPS_SETTINGS= {
-    'user_management': {
-        'SITE_NAME': 'Brantham Garage Sale',
-        'EMAIL_SENDER': 'BranthamGarageSale@gmail.com'
-    }
-}
-
-SITE_NAME = 'Brantham Garage Sale'
-EMAIL_SENDER = 'BranthamGarageSale@gmail.com'
+GOOGLE_MAP_SETTINGS = GoogleMap_credentials.GOOGLE_MAP_SETTINGS

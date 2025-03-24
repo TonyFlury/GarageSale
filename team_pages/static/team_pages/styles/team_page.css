@@ -1,8 +1,11 @@
 div.breadcrumb {
-	position: relative;
-	padding-bottom: 10px;
-	font-size: 80%;
-	margin-top: 0.5em;
+    position: relative;
+    padding-bottom: 10px;
+    padding-top: 0.5rem;
+    margin-left: 5rem;
+    font-size: 80%;
+    margin-top: 0;
+    background: var(--BackGroundColor);
 }
 
 div.breadcrumb::after {
@@ -14,10 +17,6 @@ div.breadcrumb::after {
 	right: 0;
 	bottom: 0;
 	margin:auto;
-}
-
-div.breadcrumb a, a:visited {
-    color : white;
 }
 
 div.motd, div.choose-event {
@@ -41,33 +40,46 @@ div.form {
 }
 
 .buttons input {
-	background: var(--BackgroundColor);
-	color: white;
-	height: 125%;
-	width: auto;
-	font-size: 80%;
-	box-shadow: 2px 2px 1px black;
-	padding-left:5px;
+    box-shadow: 2px 2px 1px black;
+    padding-left: 5px;
+    background: white;
 }
 
-input[type='button']:disabled {
-    background:lightgray;
-    color:darkgray;
+form label
+{
+    font-weight: bold;
+    text-align: right;
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 2rem;
 }
 
 div.form input[type='date'] {
     font-size:80%;
     font-weight:bold;
-    background: var(--BackgroundColor);
-    color: lightgray;
     border: thin solid lightgray;
     padding:5px;
 }
 
+form div.edit-logo {
+    margin-bottom: 1rem;
+}
+
+form span.clear-logo,
+form span.change-logo {
+    margin-right:2rem;
+    margin-bottom:1rem;
+    label {
+        margin-right:0.5rem;
+    }
+}
 div.form th {
-    text-align:right;
-    padding-right:20px;
-    padding-bottom:10px;
+    text-align: left;
+    padding-right: 10px;
+    padding-bottom: 0;
+    padding-top: 0;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 div.form .errorlist {
@@ -108,12 +120,12 @@ div.form img {
 }
 
 .event_sub_data {
-	content: "";
-	display: flex;
-	clear: both;
-	height: auto;
-	margin-top: 2em;
-	overflow: auto;
+    content: "";
+    display: flex;
+    clear: both;
+    height: auto;
+    /* margin-top: 2em; */
+    overflow: auto;
 }
 
 .event_sub_data:after {
@@ -124,7 +136,6 @@ div.form img {
 
 .sublist {
       float: left;
-      width: 50%;
       margin-right:10px;
       padding-left: 5px;
       padding-right:5px;
@@ -137,7 +148,7 @@ div.form img {
 
 .detail {
     float: left;
-    width : 50%;
+    width: 60%;
 }
 
 .bordered {
@@ -157,8 +168,7 @@ tr.heading th {
 }
 
 th, td {
-    padding:5px;
-    padding-bottom: 0.5em;
+    padding: 0;
 }
 
 tr.heading th:not(:last-child), tr.data-row td:not(:last-child) {
@@ -205,7 +215,7 @@ tr.data-row td.icons span {
 }
 
 .detail {
- /*  font-size: inherit; */
+    font-size: 85%;
 }
 
 .ql-container {
@@ -224,7 +234,7 @@ tr.data-row td.icons span {
 }
 
 #id_headline {
-    width:80%;
+    width: 75%;
 }
 
 .detail .buttons {
@@ -242,11 +252,11 @@ tr.data-row td.icons span {
 #filter-pop-up {
     display:none;
     background: var(--BackGroundColor);
-    color: white;
+
     position: absolute;
     z-index: 1;
     font-size:12pt;
-    border: thin solid white;
+    border: thin solid grey;
     border-radius: 5px;
     box-shadow: 3px 3px 2px black;
     padding:10px;
@@ -259,10 +269,8 @@ tr.data-row td.icons span {
 
 #filter-pop-up input[type='button'] {
     background: var(--BackGroundColor);
-    color:white;
-    border:thin solid white;
+    border:thin solid grey;
     font-size:14pt;
-    box-border: 1px 1px 0px black;
     border-radius: 5px;
     box-shadow: 1px 1px 9px black;
 }
@@ -275,12 +283,11 @@ tr.data-row td.icons span {
 
 div.table, table{
     display:table;
-    width:100%;
     border-collapse: separate;
 }
 div.table-row{
     display:block;
-    margin-top:1em;
+    margin-top:0.5rem;
 }
 
 .label {
@@ -327,8 +334,7 @@ vertical-align:top;
     margin-left:15px;
 }
 .synopsis.data {
-	display: inline-block;
-	width: 60%;
+
 }
 
 div.table-cell.w25{
@@ -340,7 +346,7 @@ max-width:75%;
 }
 
 .data_list .table-cell {
-    border-right:thin dotted white;
+    border-right:thin dotted grey;
 }
 
 .table-cell.name {
@@ -392,7 +398,8 @@ div.inner div.image img{
     height:auto;
 }
 
-div.inner div.description {
+form div.inner div.description,
+form div.inner div.gift {
 	margin-left: 1em;
 	margin-right: 1em;
 	font-size:110%;

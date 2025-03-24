@@ -1,0 +1,89 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block additionalScripts%}
+<script type="text/javascript" src="{% static 'Location/js/tooltip.js' %}"></script>
+<script  async type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{GOOGLE_MAP_API}}&loading=async&libraries=places&callback=initPlaces">
+
+    {% endblock %}
+
+{% block body %}
+
+<h2>
+    Garage Sale Location
+</h2>
+<div class="form">
+    <form method=POST action='{{action}}' id="EditSalesLocation">
+            {% csrf_token %}
+            <div class="columns">
+                <div class="address">
+                    <div>
+                        {{ form.ad_board.label }}{{ form.ad_board }}<span class=".helptext">{{ form.ad_board.help_text }}</span>
+                        {{ form.sale_event }}
+                    </div>
+                    <div>
+                        {{ form.house_number }}
+                        {{ form.street_name }}
+                        <span>
+                        {{ form.postcode }}
+                        </span>
+                        <span><input type="button" id="FindButton" name="Find approximate location on map."></span>
+                        {{ form.town }}
+                    </div>
+                </div>
+                <div class="map">
+                    {{ form.lng_lat }}
+                </div>
+            </div>
+        <div class="buttons">
+            <input type="button" name='action' onclick="cancel_SalesLocation()" value="Cancel" id="CancelButton">
+            <input type="reset" name='action' value="Reset" id="ResetButton">
+            {% if delete %}
+                <input type="submit" name='action' value="Delete" id="DeleteButton">
+            {% endif %}
+            <input type="submit" name='action' value="Save" id="SaveButton">
+        </div>
+    </form>
+    <script type="text/javascript">
+        function initPlaces(){
+            alert("Places library loaded from Google")
+        }
+
+
+        var findMapButton = document.getElementById("FindButton");
+        findMapButton.addEventListener("click", function() {
+            var PostcodeEntry = document.getElementById('id_Postcode');
+            alert("Postcode : " + PostcodeEntry.value());
+        });
+
+        /* Javascript for pre-save and pre-delete confirmation popups */
+        var saveButton = document.getElementById("SaveButton");
+        saveButton.addEventListener("click", function() {
+            if (confirm('Do you want to Save this Application?')) {
+                document.getElementById("EditSalesLocation").submit()
+            } else {
+                event.preventDefault();
+            }
+        });
+
+        var deleteButton = document.getElementById("DeleteButton");
+        if (deleteButton != null) {
+            deleteButton.addEventListener("click", function() {
+                if (confirm('Do you want to Delete this application?')) {
+                    document.getElementById("EditSalesLocation").submit()
+                } else {
+                    event.preventDefault();
+                }
+            });
+        }
+
+        /* Implement cancel button as a simple return to the GetInvolved page */
+        function cancel_SalesLocation()
+        {
+            window.location.replace( '{% url "Location_create" %}' );
+         }
+    </script>
+
+</div>
+{% endblock %}

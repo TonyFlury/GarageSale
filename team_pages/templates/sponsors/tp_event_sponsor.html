@@ -1,18 +1,18 @@
-{% extends "event/tp_use_event.html" %}
+{% extends "team_pages_base.html" %}
 {% load static %}
 {% load user_management_tags %}
 {% load team_page_tags %}
+{% load sponsor_tags %}
 
-{% block additionalScripts%}
+{% block PageScripts %}
+    {{ block.super }}
 <script type="text/javascript" src="{% static 'team_pages/js/news_page.js' %}"></script>
-{% endblock %}
+    {%  endblock %}
 
-{% block additionalStyles%}
-{{block.super}}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-{% endblock %}
 
-{% block sublist %}
+
+{% block SnappableSections %}
+    <div class="snappable-section">
 <script>
     const patterns = new Map([
     {% for path in patterns %}
@@ -69,6 +69,8 @@
         </tbody>
     </table>
 </div>
+    {% block detail %}
+    {% endblock %}
+    </div>
 {% endblock %}
-{% block detail %}
-{% endblock %}
+

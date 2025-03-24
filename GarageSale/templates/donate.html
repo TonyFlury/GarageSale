@@ -1,0 +1,70 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block Title %}
+Brantham Garage Sale - How to Donate
+{% endblock %}
+
+{% block PageHeading %}Brantham Garage Sale - How to Donate{% endblock %}
+
+{% block additionalStyles%}
+<style>
+    h1 {margin-top:0.1rem;}
+    p {padding-left:2rem;}
+    ul {padding-left:4rem;list-style-type:none;}
+    ul.address-list {list-style-type:disclosure-closed;}
+</style>
+{% endblock %}
+
+{% block body %}
+<div>
+
+<h1>Donating before or after the sale</h1>
+
+    <p>
+
+We have a number of ways you can donate to us, either before or after your sale. Any donation is welcome no matter
+    how small: Every single penny will help the charities that we are supporting,
+</p>
+
+    <h2>Direct to our Bank Account via BACS</h2>
+    <p>
+    If you have access to online banking then you can make a direct donation via BACS - use the following details :
+    </p>
+
+    <p>
+    <ul>
+    <li><b>Account Type </b>: Business
+    <li><b>Name </b>: Brantham Garage Sale Foundation
+    <li><b>Acc # </b>: 26992063
+    <li><b>Sort Code </b>: 30 99 50
+</ul>
+    </p>
+
+    <h2>Paying by cash</h2>
+<p>
+    You can pay by cash in a number of places in Brantham as listed below. In all cases please ensure the cah
+    is within a sealed envelope with your name and address and postcode clearly written on the envelope.
+</p>
+<p>
+    You can drop off your cash donations at :
+    <ul class="address-list">
+        <li>Chloe's Cafe, Acacia Court - until the 29th June only</li>
+        <li>19, Merriam Close, Brantham. CO11 1RY</li>
+        <li>7, Western's Close, Brantham. CO11 1RS</li>
+        <li>33, Brooklands Road, CO11 1RP</li>
+        <li>2, Hilltop, Brantham Hill, CO11 1SR</li>
+        <li>3, Sycamore Way, CO11 1TL</li>
+    </ul>
+    <br>
+    It is entirely safe for you to post your cash donations through the letterbox in its sealed envelope.
+</p>
+
+    <h2>Donation deadline</h2>
+    <p>
+    Please ensure all donations either BACS or cash are made by <b>Sunday 7th, July</b>. This ensures that the Trustees are
+    able to announce the total in the August issue of the Brantham Bugle.
+    </p>
+</div>
+{% endblock %}

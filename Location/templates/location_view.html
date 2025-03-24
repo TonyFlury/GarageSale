@@ -1,0 +1,104 @@
+{% extends "_snap_slider_base.html" %}
+{% load static %}
+{% load event_data_tags %}
+{% load user_management_tags %}
+{% load location_tags %}
+
+{% block head-extra %}
+    <script async
+    src="https://maps.googleapis.com/maps/api/js?key={%  settings_value "GOOGLE_MAP_SETTINGS.API_KEY" %}&loading=async&libraries=places&libraries=marker&callback=initMaps">
+</script>
+    <script type="text/javascript" src="{% static 'DjangoGoogleMap/api/display_location.js' %}"></script>
+{% endblock %}
+
+    {% block PageStyles %}
+        <link rel="stylesheet" href="{% static 'Location/styles/locations.css' %}">
+    {% endblock %}
+
+    {% block header %}
+        <h2 style="text-align: center">Are you on the Map ?</h2>
+            We build a map for both ad-board and sale-locations - and you need to be on that map to be involved in the Garage Sale.
+            <p>
+            Click the <span class="sidebar entry" style="line-height: 2rem;"><img class="icon" alt="Home Page" id='id_AddLocation'
+                                  src={% static "GarageSale/images/icons/menu/add-location-svgrepo-com.svg" %} />
+                                    <label>New Location</label></span> button on the left to get started.
+            You can even add multiple locations - so now you can easily help friends and family who can't get online.
+            </p>
+    {% endblock %}
+<h2>Are you on The Map</h2>
+
+{% block sidebar %}
+        <div class="sidebar entry direct tooltip" item="Homepage" xmlns="http://www.w3.org/1999/html">
+            <a href="{% url 'home' %}">
+                <img class="sidebar icon" alt="Home Page" id='id_home_page' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %}>
+                <label for="id_team">Home Page</label></a>
+                <span class="tooltiptext right arrow">Return to Home Page</span>
+        </div>
+        <div class="sidebar entry direct tooltip">
+            <a href="{% url 'Location:create' %}">
+                <img class="sidebar icon" alt="Home Page" id='id_AddLocation'
+                     src={% static "GarageSale/images/icons/menu/add-location-svgrepo-com.svg" %}>
+                    <label for="id_AddLocation">New Location</label></a>
+            <span class="tooltiptext right arrow">Add a new Location</span>
+        </div>
+        {% if object_list.count > 0 %}
+            <hr/>
+            {% for location in object_list %}
+                <div class="sidebar entry tooltip" item="location_{{location.id}}" xmlns="http://www.w3.org/1999/html">
+                <img class="sidebar icon" alt="Home Page" id='id_location_{{location.id}}'
+                     src={% static "GarageSale/images/icons/menu/map-marker-area-line-svgrepo-com.svg" %}>
+                    <label for="id_location_{{location.id}}">{{ location.house_number }}, {{ location.street_name }}</label>
+                    <span class="tooltiptext right arrow">{{ location.house_number }}, {{ location.street_name }}</span>
+                </div>
+
+            {% endfor %}
+        {% endif %}
+{% endblock %}
+
+    {%  block SnappableSections %}
+        {% for location in object_list %}
+            <div class='card location form' card_name="location_{{location.id}}" location_id="{{ location.ext_id }}" style="float:left; width:auto; padding:0.5em; margin:1em; border:thin lightgrey solid; border-radius:0.5rem;">
+            <div class='address-and-map'>
+                <div class='address' >
+                    <div class="location_type">
+                        <div class="location_type_sale">Sale : {% location_type_icon location 'sale_event' %}</div>
+                        <div class="location_type_ad_board">Ad Board : {% location_type_icon location 'ad_board' %}</div>
+                    </div>
+                    <div class="address-details">
+                        {{location.house_number}}, {{location.street_name}}<br/>
+                        {{location.town}}<br/>
+                        {{location.postcode}}
+                    </div>
+                    {% if location.possible_duplicate %}
+                        <div class="duplicate">This location is possibly duplicated</div>
+                    {% endif %}
+                </div>
+                <div class="premarked-map">
+                    <div class="map" id="map_{{location.id}}" __lng_lat="{{ location.lng_lat }}"
+                            __address="{{ location.house_number }}, {{ location.street_name }}">
+                            <div class="map_wrapper" style="width: 100%; height:100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <input type="button" onclick="document.location.replace('{% url "Location:update" location.ext_id %}')" value="Edit">
+                <input type="button" onclick="document.location.replace('{% url "Location:delete" location.ext_id %}')" value="Delete">
+            </div>
+        </div>
+        {% empty %}
+
+        {% endfor %}
+        <script type="text/javascript">
+            function initMaps() {
+                const maps = document.getElementsByClassName('map')
+                for (let i = 0; i < maps.length; i++) {
+                    const element = maps[i];
+                        this_map = new GoogleMap(element,
+                            marker_details = {location:element.getAttribute("__lng_lat"), address:element.getAttribute("__address")},
+                            google_map_id =  '{% settings_value "GOOGLE_MAP_SETTINGS.MAP_ID" %}' );
+                        this_map.display()
+                }
+            }
+        </script>
+    {% endblock %}

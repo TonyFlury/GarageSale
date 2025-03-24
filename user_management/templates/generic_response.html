@@ -10,7 +10,7 @@
 
 {% block body %}
     <div class="msg">
-        {{msg}}
+        {{msg | safe}}
     </div>
     {% if redirect %}
         <div>

@@ -1,10 +1,9 @@
 div.introduction {
-font-size: 100%;
-  width: 64%;
-  margin: auto;
-  padding-left: 1em;
-  padding-right: 1em;
-  padding-bottom: 0em;
+    font-size: 100%;
+    width: 80%;
+    padding-bottom: 1rem;
+    margin: auto;
+    background: var(--BackGroundColor);
 }
 
 div.introduction h1 {
@@ -17,7 +16,7 @@ div.introduction h1 {
 @media only screen and (min-width: 1141px){
     div.row div.image img.logo {
     max-width: 300px;
-    max-height: auto;
+    max-height: 200px;
     }
 }
 
@@ -41,7 +40,7 @@ div.introduction h1 {
     }
     div.row div.image img.logo {
       max-width: 200px;
-      max-height: auto;
+      max-height: 150px;
     }
 
 }
@@ -111,9 +110,15 @@ div.name {
     }
 }
 
-div.row div.inner {
+div.inner {
   display: flex;
   padding: 0 1.5em;
+}
+
+form div.inner { display: block}
+
+div.inner:after {
+    clear:both;
 }
 @media only screen and (max-width: 1140px){
     div.row div.inner {
@@ -136,15 +141,31 @@ div.row div.image, div.description{
 }
 
 div.description {
-	float: left;
-	font-size: 100%;
-	display: flex;
-	align-items: center;
+    float: left;
+    font-size: 100%;
+    text-align: left;
+    margin-left: 2rem;
 }
 
 div.image {
-    float:left;
+    float: left;
 }
+
+form div.image { float: none; }
+
+
+div.image img {
+    max-height:250px;
+    width:auto;
+    max-width:375px;
+}
+
+form div.image img {
+                    max-height:200px;
+                    width:auto;
+                    max-width: 200px;}
+
+.lead_provider { height: 1.5rem; margin-top: 0.5em; margin-bottom: 0.5em; font-size: 100%}
 
 @media only screen and (max-width: 1140px){
     div.row div.image, div.description{
@@ -155,7 +176,7 @@ div.image {
         clear:both;
     }
     div.image img{
-        max-width:calc(screen-width*0.8);
+        max-width: 200px;
     }
     div.description {
         clear:both;
@@ -169,7 +190,7 @@ div.image {
 div.contact{
     padding-top:0.5em;
     padding-bottom:0.5em;
-    display:inline-block;
+    display:flex;
 }
 
 @media only screen and (max-width: 1140px){
@@ -178,29 +199,44 @@ div.contact{
         font-size:80%
     }
 }
+div.contact img {
+    width:24px;
+    height:24px;
+    vertical-align: middle;
+}
 
 div.phone, div.email {
     font-size:100%;
-    color : white
 }
 
+form div.phone div.email { float:left;}
+
 div.email a {
-    color : white;
     text-decoration: None;
 }
 
 div.email a:hover, a:visited {
-    color : white;
     text-decoration: None;
 }
 
 
 div.icons {
-    margin:auto;
-    width:50%;
-    padding-top:0.5em;
-    padding-bottom:0.5em;
-    padding-left: 10%;
+    margin-left: 5rem;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+div.icons a {
+    text-decoration: none !important;
+    border: none !important;
+    outline:none;
+
+}
+
+div.icons a img{
+    text-decoration: none !important;
+    border: none !important;
+    outline:none;
 }
 
 div.icons div.social {
@@ -210,3 +246,46 @@ div.icons div.social {
 	padding-right:1em;
 }
 
+form div.contact {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    display: flex;
+    flex-flow: column;
+}
+form div.icons {
+    float: left;
+    margin-left: 0;
+}
+
+form div.icons div.social {
+    display: block;
+    height: auto;
+    width : auto ;
+}
+
+
+div.card.sponsor {
+
+    div.name {
+        font-size: 125%;
+        font-weight: bold;
+    }
+
+    div.details {
+        display: flex;
+    }
+
+    div.details {
+        div.image {
+            float:left;
+        }
+        div.image img {
+            max-height : 256px;
+            max-width : 300px;
+        }
+        div.description {
+            float:left;
+            text-align: left;
+        }
+    }
+}

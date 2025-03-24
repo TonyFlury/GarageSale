@@ -2,6 +2,7 @@
 
 {% load static %}
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="https://unpkg.com/blaze-slider@latest/dist/blaze.css">
 <link rel="stylesheet" href="{% static 'GarageSale/styles/style.css' %}">
 <link rel="stylesheet" media="screen and (min-width:1141px)" href="{% static 'GarageSale/styles/largescreen.css' %}">
 <link rel="stylesheet" media="screen and (max-width:1140px)" href="{% static 'GarageSale/styles/smallscreen.css' %}">
@@ -33,15 +34,21 @@
     {% block head-extra %}{% endblock%}
 </head>
 <body>
-{% block body-extra %}{% endblock %}
-<div class="TopBar">
-    <div class="ToolBar" id="ToolBar">
-            <H1>{% block PageHeading %}Page Title{% endblock %}</h1>
-    {% block ToolBar %}Tool Bar goes here{% endblock %}
-</div>
-</div>
-<div class="body">
-{% block body %}Body Content{% endblock%}
-</div>
+    {% block body-extra %}{% endblock %}
+        <div class="TopBar">
+            <div class="ToolBar" id="ToolBar">
+                    <H1>{% block PageHeading %}Page Title{% endblock %}</h1>
+            {% block ToolBar %}Tool Bar goes here{% endblock %}
+            </div>
+        </div>
+    <div class="body">
+        {% block body %}Body Content{% endblock%}
+    </div>
+    {% if TEST_SERVER %}
+        <div class="test_warning">
+            <p>This is a test server - all features are experimental and may not work - contact Tony Flury if any bugs or strange behaviour is found.</p>
+            <p>Do not use private personal data on this server.</p>
+        </div>
+    {% endif %}
 </body>
 </html>

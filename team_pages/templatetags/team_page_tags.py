@@ -96,8 +96,6 @@ def news_bread_crumb_segments(news_id, action):
     except NewsArticle.DoesNotExist:
         news = None
 
-    print(news_id, action)
-
     match (news_id, action):
         case (None, None):
             return [{'Team Page': reverse('TeamPagesRoot')},
@@ -124,7 +122,7 @@ def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
     if sponsor_id:
         sponsor = None
         try:
-            sponsor = Sponsor.objects.get(id=event_id)
+            sponsor = Sponsor.objects.get(id=sponsor_id)
         except Sponsor.DoesNotExist:
             raise BadRequest(f'Invalid sponsor_id value {sponsor_id}')
     else:
@@ -156,6 +154,13 @@ def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
                 {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id':event_id}) },
                 {f'Viewing {sponsor.company_name}': ''}
             ]
+        case ('create', _, _):
+            return [
+                {'Team Page': reverse('TeamPagesRoot')},
+                {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},
+                {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id':event_id}) },
+                {f'Creating new sponsorship lead': ''}
+            ]
         case ('edit', _, _):
             return [
                 {'Team Page': reverse('TeamPagesRoot')},
@@ -177,7 +182,7 @@ def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
                 {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id': event_id})},
                 {f'Confirming {sponsor.company_name}': ''}
             ]
-        case(_,_):
+        case(_,_,_,_):
             return [
                 {'Team Page': reverse('TeamPagesRoot')},
                 {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},]
@@ -227,7 +232,7 @@ def breadcrumb(context):
 
 @register.simple_tag(takes_context=True)
 def chooseEvent(context):
-    """Generate the Event selection Mini-form"""
+    """Generate the Event selection Mini-forms"""
     context['event_id'] = context.get('event_id',None)
     content = render_to_string('__select_event.html',
                                context=context.flatten() | {'events': EventData.CurrentFuture.all()})
@@ -236,7 +241,7 @@ def chooseEvent(context):
 
 @register.simple_tag(takes_context=True)
 def choose_motd(context):
-    """Generate the motd Selection mini-form"""
+    """Generate the motd Selection mini-forms"""
     c = {'motds': MOTD.objects.all()}
     content = render_to_string('__select_motd.html', context=c)
     return content

@@ -14,14 +14,14 @@ Testable Statements :
 """
 from django.contrib import admin
 from django import forms
-from .models import MOTD, EventData, Location
+from .models import MOTD, EventData, Supporting
+from Location.models import Location
 
-from Billboard import models as billboard_models
 from Sponsors import models as sponsor_models
-from SaleLocation import models as sale_location_models
 
 from django.contrib.auth.models import Permission
 
+from .svgaimagefield import ImagePreviewWidget
 from django.contrib import admin
 
 
@@ -34,37 +34,39 @@ class MOTDAdmin(admin.ModelAdmin):
     date_hierarchy = 'use_from'
 
 
+class OrganisationsInline(admin.TabularInline):
+    model = EventData.supporting_organisations.through
+    extra = 1
+
+class SupportingAdminForm(forms.ModelForm):
+    class Meta:
+        model = Supporting
+        fields = '__all__'  # edit: django >= 1.8
+
+@admin.register(Supporting)
+class SupportingAdmin(admin.ModelAdmin):
+    form = SupportingAdminForm
+
+
 class SponsorsInline(admin.TabularInline):
     extra = 0
     model = sponsor_models.Sponsor
 
-
-class BillBoardsInline(admin.TabularInline):
+class LocationInline(admin.TabularInline):
     extra = 0
-    model = billboard_models.BillboardLocations
+    model = Location
 
-
-class SaleLocationInline(admin.TabularInline):
-    extra = 0
-    model = sale_location_models.SaleLocations
-
-
-class EventDataAdminForm( forms.ModelForm):
+class EventAdminForm(forms.ModelForm):
     class Meta:
         model = EventData
-        fields = '__all__'
+        fields = '__all__'  # edit: django >= 1.8
 
-
-@admin.register(Location)
-class LocationAdminForm( admin.ModelAdmin):
-    class Meta:
-        model = Location
-        fields = '__all__'
 
 
 @admin.register(EventData)
 class SettingsAdmin(admin.ModelAdmin):
-    form = EventDataAdminForm
+    form = EventAdminForm
     list_display = ['event_date']
     date_hierarchy = 'event_date'
-    inlines = [SponsorsInline, BillBoardsInline, SaleLocationInline]
+    inlines = [OrganisationsInline,SponsorsInline, LocationInline]
+    exclude = ['supporting_organisations']

@@ -1,0 +1,85 @@
+from django.db import models
+
+import DjangoGoogleMap.models.fields
+from GarageSale.models import EventData
+# Create your models here.
+
+from django.conf import settings
+
+from DjangoGoogleMap import models as GoogleMapModels
+
+class MultipleChoiceField(models.CharField):
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def from_db_value(self, value, expression, connection):
+        if value is None:
+            return []
+
+        return [i for i in value.split(',')]
+
+    def to_python(self, value):
+        if isinstance(value,set):
+            return value
+
+        if value is None:
+            return []
+
+        return [i for i in value.split(',') ]
+
+    def get_prep_value(self, value):
+        return ','.join(i for i in value)
+
+
+# TODO - sanitise house_number (remove trailing spaces and punctuation).
+# TODO - sanitise postcode - format to Incode/Outcode - CO[0-9]{2} [0-9][A-Z]{2}
+# ToDO - How to spot duplicates ?
+
+class Location(models.Model):
+    objects = models.Manager()
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='UserLocations', on_delete=models.CASCADE)
+    event = models.ForeignKey(EventData,related_name='EventLocations', on_delete=models.CASCADE)
+    ad_board = models.BooleanField(help_text="Do you want an advertising board at this location ?")
+    sale_event = models.BooleanField(help_text="Do you plan to have a sale or another event at this location ?")
+    house_number = models.CharField(max_length=80)
+    street_name = models.CharField(max_length=200)
+    postcode = models.CharField(max_length=10)
+    town = models.CharField(max_length=100, default='Brantham')
+    lng_lat = DjangoGoogleMap.models.fields.GoogleLocation()
+    creation_timestamp = models.DateTimeField(auto_now_add=True)
+
+    def full_address(self):
+        return f'{self.house_number}, {self.street_name}, {self.town}.'
+
+    def __str__(self):
+        return (f'{self.user.email}\n'
+                f'{self.house_number}, {self.street_name}. {self.postcode}\n'
+                f'Ad Board Here {"Yes" if self.ad_board else "No"}\n'
+                f'Sale Here {"Yes" if self.sale_event else "No"}')
+
+    def location_type(self):
+        return (f"Sale {'&#x2705;' if self.sale_event else '&#x274E;'}  "
+                f"Ad-Board {'&#x2705;' if self.ad_board else '&#x274E;'}")
+
+    def possible_duplicate(self):
+        """Is this location already entered"""
+        inst = Location.objects.filter(user=self.user, house_number=self.house_number, postcode=self.postcode).exclude(pk=self.pk)
+        if inst:
+            return True
+
+    def simple_hash(self, length=4):
+        """This is not a cryptographic hash - this function simply serves to
+        to generate an obsfucated 'value' for the row to prevent accidental access"""
+        modulo = 2**(2**length)-1
+        rawdata:bytes = (self.user.email + self.house_number + self.postcode).encode('utf-8')
+        return f'{(sum(c for c in rawdata) % modulo):04X}'
+
+    def ext_id(self):
+        """Generate the full external id for this record"""
+        return f'{self.id:04X}' + self.simple_hash()
+
+    @classmethod
+    def get_by_ext_id(cls, ext_id):
+        inst = cls.objects.get(pk=int(ext_id[:4],base=16))
+        return inst if inst and (inst.ext_id() == ext_id) else None

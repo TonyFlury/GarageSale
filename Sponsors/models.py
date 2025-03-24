@@ -1,6 +1,6 @@
 from django.db import models
 from GarageSale.models import EventData
-
+from django.conf import settings
 # Create your models here.
 
 from django.utils.text import slugify
@@ -15,6 +15,8 @@ class Sponsor(models.Model):
     company_name = models.CharField(max_length=120)
     logo = models.ImageField( upload_to=save_logo_to, blank=True)
     description = models.TextField(max_length=1000)
+    gift = models.TextField(max_length=1000, null=True, blank=True)
+    lead_provider = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     website = models.URLField(blank=True)
     facebook = models.URLField(blank=True)
     twitter = models.URLField(blank=True)
