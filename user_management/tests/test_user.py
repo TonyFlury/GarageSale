@@ -24,6 +24,7 @@ from django.urls import reverse, reverse_lazy
 from selenium.common import NoSuchElementException
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
+from django.contrib.auth import authenticate
 
 
 from GarageSale.tests.common import SeleniumCommonMixin
@@ -133,6 +134,8 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
         self.assertEqual(user.phone, phone)
         self.assertEqual(user.is_guest, False)
         self.assertEqual(user.is_verified, True)
+
+        self.assertEqual(authenticate(username=email, password=password).id, user.id, 'Authentication failed')
 
         # Prove RegistrationVerifier is deleted
         verifier_qs = RegistrationVerifier.objects.filter(email=email)

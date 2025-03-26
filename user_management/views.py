@@ -400,8 +400,8 @@ class UserRegistration(View):
                                                                 first_name=form.cleaned_data['first_name'],
                                                                 last_name=form.cleaned_data['last_name'],
                                                                 phone=form.cleaned_data['phone'],
-                                                                password=form.cleaned_data['password'],
                                                                 is_active=False)
+                new_user.set_password(form.cleaned_data['password'])
                 new_user.save()
 
             verify = RegistrationVerifier.add_registration_verifier(
@@ -450,6 +450,7 @@ def user_verify(request, uuid=None):
         user.is_guest = False
 
     user.is_verified = True
+    user.is_active = True
 
     user.save()
     verify.delete()
