@@ -28,17 +28,15 @@
 <h2>Are you on The Map</h2>
 
 {% block sidebar %}
-        <div class="sidebar entry direct tooltip" item="Homepage" xmlns="http://www.w3.org/1999/html">
-            <a href="{% url 'home' %}">
+        <div class="sidebar entry direct tooltip" item="{% url 'home' %}" xmlns="http://www.w3.org/1999/html" >
                 <img class="sidebar icon" alt="Home Page" id='id_home_page' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %}>
-                <label for="id_team">Home Page</label></a>
+                <label for="id_team">Home Page</label>
                 <span class="tooltiptext right arrow">Return to Home Page</span>
         </div>
-        <div class="sidebar entry direct tooltip">
-            <a href="{% url 'Location:create' %}">
+        <div class="sidebar entry direct tooltip" item="{% url 'Location:create' %}" >
                 <img class="sidebar icon" alt="Home Page" id='id_AddLocation'
                      src={% static "GarageSale/images/icons/menu/add-location-svgrepo-com.svg" %}>
-                    <label for="id_AddLocation">New Location</label></a>
+                    <label for="id_AddLocation">New Location</label>
             <span class="tooltiptext right arrow">Add a new Location</span>
         </div>
         {% if object_list.count > 0 %}
