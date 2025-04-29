@@ -13,7 +13,8 @@ from DjangoGoogleMap.forms.widgets import GoogleMapWidget
 from .models import Location
 from django.utils.translation import gettext_lazy as _
 
-postcode_regex = re.compile(r'(?P<incode>[A-Z]{2}[1-9][0-9]?)\s*(?P<outcode>[1-9][A-Z]{2})')
+# Fixed Web-46 bug to allow lower case letters in postcode.
+postcode_regex = re.compile(r'(?P<incode>[a-zA-Z]{1,2}[1-9][0-9]?)\s*(?P<outcode>[1-9][a-zA-Z]{2})')
 
 def validate_postcode( value):
     if not postcode_regex.match(value):
@@ -49,7 +50,8 @@ class LocationForm(ModelForm):
     def clean_postcode(self):
         data = self.cleaned_data['postcode']
         if match := postcode_regex.match(data):
-            return f'{match.group("incode")} {match.group("outcode")}'
+            # Web-46 : allow lower case letters - but normalise to upper case.
+            return f'{match.group("incode").upper()} {match.group("outcode").upper()}'
         else:
             self.add_error( 'postcode', _(f"{data} is not a valid postcode"))
 
