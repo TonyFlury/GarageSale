@@ -13,6 +13,17 @@
 
     {% block PageStyles %}
         <link rel="stylesheet" href="{% static 'Location/styles/locations.css' %}">
+
+        <style>
+            div.address {
+                float:left;
+                width:40%;
+            }
+            div.premarked-map {
+                float:left;
+                width:40%;
+            }
+        </style>
     {% endblock %}
 
     {% block header %}
@@ -56,7 +67,7 @@
     {%  block SnappableSections %}
         {% for location in object_list %}
             <div class='card location form' card_name="location_{{location.id}}" location_id="{{ location.ext_id }}" style="float:left; width:auto; padding:0.5em; margin:1em; border:thin lightgrey solid; border-radius:0.5rem;">
-            <div class='address-and-map'>
+                <div class='address-and-map'>
                 <div class='address' >
                     <div class="location_type">
                         <div class="location_type_sale">Sale : {% location_type_icon location 'sale_event' %}</div>
@@ -71,19 +82,19 @@
                         <div class="duplicate">This location is possibly duplicated</div>
                     {% endif %}
                 </div>
-                <div class="premarked-map">
-                    <div class="map" id="map_{{location.id}}" __lng_lat="{{ location.lng_lat }}"
-                            __address="{{ location.house_number }}, {{ location.street_name }}">
-                            <div class="map_wrapper" style="width: 100%; height:100%;"></div>
+                    <div class="premarked-map">
+                        <div class="map" id="map_{{location.id}}" __lng_lat="{{ location.lng_lat }}"
+                                __address="{{ location.house_number }}, {{ location.street_name }}">
+                                <div class="map_wrapper" style="width: 100%; height:100%;"></div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="buttons">
-                <input type="button" onclick="document.location.replace('{% url "Location:update" location.ext_id %}')" value="Edit">
-                <input type="button" onclick="document.location.replace('{% url "Location:delete" location.ext_id %}')" value="Delete">
+                    <div class="buttons" style="clear:both;">
+                        <input type="button" onclick="document.location.replace('{% url "Location:update" location.ext_id %}')" value="Edit">
+                        <input type="button" onclick="document.location.replace('{% url "Location:delete" location.ext_id %}')" value="Delete">
+                    </div>
             </div>
-        </div>
+            </div>
         {% empty %}
 
         {% endfor %}

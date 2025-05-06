@@ -57,8 +57,8 @@ th:has(+td input[type="checkbox"]:checked) label:before {
 /** Styling for simple div base layout **/
 label:has(+input[type="checkbox"])  {
     position: relative;
-    padding: 25px 0 0 50px;
     line-height: 2.0em;
+    text-indent: 3rem;
 }
 label:has(+input[type="checkbox"]):after {
     content: "";
@@ -106,17 +106,12 @@ div.card.location  {
 
     div.address-and-map {
     margin-bottom: 1rem;
-    display: flex;
     margin-top: 2rem;
 
         div.address {
-            float: left;
-            width: 40%;
         }
 
         div.premarked-map {
-            float: left;
-            width: 40%;
 
             div.map {
                 max-height: 350px;
