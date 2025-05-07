@@ -42,7 +42,8 @@ class LocationForm(ModelForm):
                 'postcode': {'required': _("Please enter a postcode")},
                 'lng_lat': {'required':'Please identify your location on the map'} }
         help_texts = {
-            'lng_lat' : 'Use the zoom map and zoom controls to find this address on the map.<br>'
+            'lng_lat' : 'Use the zoom map and zoom controls to find this address on the map<br>'
+                        'and then click-hold to place a marker on the map for this address'
         }
 
     def clean_house_number(self):

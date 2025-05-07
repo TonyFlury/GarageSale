@@ -46,7 +46,7 @@ class Location(models.Model):
     street_name = models.CharField(max_length=200, null=False, blank=True,)
     postcode = models.CharField(max_length=10,  null=False, blank=True,)
     town = models.CharField(max_length=100, default='Brantham', null=False, blank=True,)
-    lng_lat = DjangoGoogleMap.models.fields.GoogleLocation()
+    lng_lat = DjangoGoogleMap.models.fields.GoogleLocation(verbose_name='Sale/AdBoard location')
     creation_timestamp = models.DateTimeField(auto_now_add=True)
 
     def full_address(self):
