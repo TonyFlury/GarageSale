@@ -23,6 +23,7 @@ from django.conf import settings
 
 from GarageSale.svgaimagefield import SVGAndImageFormField
 
+from calendar import day_name, month_name
 
 class General(models.Model):
     class Meta:
@@ -100,7 +101,7 @@ class EventData(models.Model):
     supporting_organisations = models.ManyToManyField(Supporting, related_name='by_event')
 
     def __str__(self):
-        return f'{self.event_date}'
+            return f'{day_name[self.event_date.weekday()]} {self.event_date.day} {month_name[self.event_date.month]}, {self.event_date.year}'
 
     class Meta:
         default_permissions = ()
