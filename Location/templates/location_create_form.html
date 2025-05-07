@@ -15,16 +15,20 @@
     <style>
         div.form {
             margin: auto;
+            margin-top:0;
         }
+
+        div.field_outer { display: flex; flex-wrap: wrap; justify-items: flex-start; }
+        div.field_outer:after { display: block; width: 100%; }
 
         div.map-details {
             display: flex;
         }
 
         div.map-notes {
-            font-size: 95%;
+            font-size: small;
             margin-top: 1rem;
-            width: 50%;
+            width: 70%;
             margin-left: 2rem;
             text-align: left;
 
@@ -41,7 +45,7 @@
             display: block;
 
             label {
-               width: 9rem;
+                width: 9rem;
                 margin-right: 1rem;
             }
 
@@ -54,27 +58,31 @@
                 margin-top: 1rem;
             }
 
+            div.header {
+                margin-top: 0;
+            }
+
             div.footer {
                 padding: 0.5rem;
                 display: flex;
 
-                 .ToLeft {
+                .ToLeft {
                     margin-left: 1rem;
-                     margin-right: auto;
-                    display:inline-flex;
-                 }
+                    margin-right: auto;
+                    display: inline-flex;
+                }
 
 
                 .ToRight {
                     margin-left: auto;
-                    margin-right : 0;
+                    margin-right: 0;
                     display: inline-flex;
                 }
             }
+
             div.footer button,
             div.footer input[type=button],
-            div.footer input[type=submit]
-            {
+            div.footer input[type=submit] {
                 font-size: 100%;
                 background-color: gray;
                 border-radius: 10px;
@@ -87,6 +95,23 @@
                 float: none;
                 width: 100%;
                 text-align: left;
+                margin-left: 0;
+                padding-left: 0;
+
+                .field_wrapper {
+                    margin: 0 0 0.5rem;
+                }
+
+                 ul.errorlist {
+                     margin: 0 2rem 0 0.5rem;
+                     padding: 0.25rem 0 0.25rem;
+
+                    li {
+                        margin-left: 1rem;
+                        margin-right: 1rem;
+                        font-size: small;
+                    }
+                 }
             }
         }
 
@@ -114,12 +139,35 @@
 
 {%  block SnappableSections %}
 
+    <script lang="javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            let section1_fields = ["AdBoard", "HouseNumber", "StreetName", "Postocde", "Town" ];
+
+            for (var i = 0; i < section1_fields.length; i++) {
+                var section = section1_fields[i] + "Error"
+                var item = document.getElementById(section)
+                console.log(item, section)
+                if (item.innerHTML.trim() != '')
+                    return;
+            }
+
+            let error = document.getElementById('MapError').innerHTML.trim()
+            if (error == '')
+                return;
+
+            let section1 = document.getElementById("section1");
+            let section2 = document.getElementById("section2");
+            section1.style.display = "none";
+            section2.style.display = "block";
+        });
+
+    </script>
 <div class="card location">
-    <h3>
+    <h3 style="margin-bottom: 0;">
         {{ Activity }} Garage Sale Location
     </h3>
     <div class="form">
-    <form method=POST action='{{action}}' id="CreateLocation">
+    <form method=POST action='{{action}}' name='CreateLocation' id="CreateLocation">
             {% csrf_token %}
             <div class="address-and-map">
                 {%  if form.non_field_errors %}
@@ -146,33 +194,48 @@
                         }
                     </script>
                     <div class="address">
-                        {{ form.ad_board.errors }}
                         {{ form.sale_event.errors }}
-                        <div>
-                            <div class="field_wrapper"><label for='{{ form.ad_board.id_for_label }}' >{{ form.ad_board.label }}</label>{{ form.ad_board }}<span class="helptext">{{ form.ad_board.help_text }}</span></div>
-                            <div class="field_wrapper"><label for='{{ form.sale_event.id_for_label }}' >{{ form.sale_event.label }}</label>{{ form.sale_event }}<span class="helptext">{{ form.sale_event.help_text }}</span></div>
+                        <div class="field_outer">
+                            <div>
+                                <div class="field_wrapper"><label for='{{ form.ad_board.id_for_label }}' >{{ form.ad_board.label }}</label>{{ form.ad_board }}<span class="helptext">{{ form.ad_board.help_text }}</span></div>
+                                <div class="field_wrapper"><label for='{{ form.sale_event.id_for_label }}' >{{ form.sale_event.label }}</label>{{ form.sale_event }}<span class="helptext">{{ form.sale_event.help_text }}</span></div>
+                            </div>
+                                <div id='AdBoardError' class="error">{{ form.ad_board.errors }}</div>
                         </div>
-                        <div>
+                        <div class="field_outer">
                             <div class="field_wrapper">
-                                {{ form.house_number.errors }}
                                 <label for='{{ form.house_number.id_for_label }}' >{{ form.house_number.label }}</label>
                                 {{ form.house_number }}{% if form.house_number.help_text %}<span class="helptext">{{ form.house_number.help_text }}</span>{%  endif %}
                             </div>
+                            <div id="HouseNumberError" class="error">
+                                    {{ form.house_number.errors }}
+                            </div>
+                        </div>
+                        <div class="field_outer">
                             <div class="field_wrapper">
-                                                        {{ form.street_name.errors }}
-
                                 <span class="label"><label for='{{ form.street_name.id_for_label }}' >{{ form.street_name.label }}</label></span>
-                                {{ form.street_name }}{% if form.street_name.help_text %}<span class="helptext">{{ form.street_name.help_text }}</span>{%  endif %}</div>
+                                {{ form.street_name }}{% if form.street_name.help_text %}<span class="helptext">{{ form.street_name.help_text }}</span>{%  endif %}
+                            </div>
+                            <div id="StreetNameError" class="error">
+                                {{ form.street_name.errors }}
+                            </div>
+                        </div>
 
+                        <div class="field_outer">
                             <div class="field_wrapper">
-                                {{ form.postcode.errors }}
                                 <span class="label"><label for='{{ form.postcode.id_for_label }}' >{{ form.postcode.label }}</label></span>
                                 {{ form.postcode }}{% if form.postcode.help_text %}<span class="helptext">{{ form.postcode.help_text }}{% endif %}</span></div>
-
+                            <div id="PostocdeError" class="error">
+                                {{ form.postcode.errors }}
+                            </div>
+                        </div>
+                        <div class="field_outer">
                             <div class="field_wrapper">
-                                {{ form.town.errors }}
                                 <span class="label"><label for='{{ form.town.id_for_label }}' >{{ form.town.label }}</label></span>
                                 {{ form.town }}{% if form.town.help_text %}<span class="helptext">{{ form.town.help_text }}{%  endif %}</span></div>
+                            <div id="TownError" class="error">
+                                {{ form.town.errors }}
+                            </div>
                         </div>
                     </div>
                     <div style="font-size:95%;font-style: italic; width: 75%; margin:auto; margin-top:1rem;">
@@ -192,10 +255,20 @@
 
                    <div class="premarked-map">
                         <div class="map-details">
-                            {{ form.lng_lat.errors }}
-                            <div class="field_wrapper">
-                                <label for='{{ form.lng_lat.id_for_label }}' >{{ form.lng_lat.label }}</label>{{ form.lng_lat }}{% if form.lng_lat.help_text %}<span class="helptext">{{ form.lng_lat.help_text | safe}}{%  endif %}</div>
+                            <div class="field_outer" style="flex-wrap:nowrap;">
+                                <div class="field_wrapper">
+                                    <label for='{{ form.lng_lat.id_for_label }}' >{{ form.lng_lat.label }}</label>
+                                    {{ form.lng_lat }}
+                                    {% if form.lng_lat.help_text %}
+                                        <span class="helptext">{{ form.lng_lat.help_text | safe}}</span>
+                                    {%  endif %}
+                                </div>
+                            <div>
+
                                 <div class="map-notes">
+                                    <div id="MapError" class="errors">
+                                        {{ form.lng_lat.errors }}
+                                    </div>
                                     <ul>
                                     <li>Use the mouse wheel (or the +/- buttons) to zoom in and out: doing a two finger pinch
                                     works on touch screens (such as phones/tablets).<br>
@@ -206,23 +279,25 @@
                                     <li>Unfortunately We have no control over the accuracy of the map.
                                     </ul>
                                 </div>
+                            </div>
                         </div>
                    </div>
-                   <div style="font-size:95%;font-style: italic; width: 75%; margin:auto; margin-top:1rem;">
-                       Once you find your location on the map, click so that the marker appears, make
-                       sure you then click save.
-                    </div>
-                   <div class="footer">
-                       <span class="ToLeft">
-                            <button type=button onclick="PrevSectionClick()"><<< Prev section</button>
-                       </span>
-                       <span class="ToRight">
-                           <input type="button" name='action' onclick="cancel_LocationSave()" value="Cancel" id="id_CancelButton">
-                           <input type="submit" name='action' value="Save" id="id_SaveButton">
-                        </span>
-                   </div>
+               </div>
+               <div style="font-size:95%;font-style: italic; width: 75%; margin:auto; margin-top:1rem;">
+                   Once you find your location on the map, click so that the marker appears, make
+                   sure you then click save.
                 </div>
+               <div class="footer">
+                   <span class="ToLeft">
+                        <button type=button onclick="PrevSectionClick()"><<< Prev section</button>
+                   </span>
+                   <span class="ToRight">
+                       <input type="button" name='action' onclick="cancel_LocationSave()" value="Cancel" id="id_CancelButton">
+                       <input type="submit" name='action' value="Save" id="id_SaveButton">
+                    </span>
+               </div>
             </div>
+        </div>
 
     </form>
     <script type="text/javascript">
@@ -231,6 +306,8 @@
         {
             window.location.replace( '{% url "Location:view" %}' );
          }
+
+
     </script>
 </div>
 </div>

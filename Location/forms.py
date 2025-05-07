@@ -29,17 +29,20 @@ class LocationForm(ModelForm):
     class Meta:
         model = Location
         fields = ["ad_board", "sale_event", "house_number", "street_name", "postcode", "town", "lng_lat"]
+        labels = {"lng_let" : 'Sale/AdBoard location'}
         postcode = CharField(validators=[validate_postcode])
-        widgets = {'house_number': TextInput(attrs={"size":30}),
-                   'street_name': TextInput(attrs={"size":40}),
-                   'town_name': TextInput(attrs={"size":20}),
+        widgets = {'house_number': TextInput(attrs={"size":30, 'required': False}),
+                   'street_name': TextInput(attrs={"size":40, 'required': False}),
+                   'town_name': TextInput(attrs={"size":20, 'required': False}),
                    'lng_lat': GoogleMapWidget(place='Brantham')}
         error_messages={
+                'house_number': {'required': _("Please enter a house number or name.")},
+                'street_name': {'required': _("Please enter a street name.")},
+                'town_name': {'required': _("Please enter a town name - (Brantham/Cattawade.")},
+                'postcode': {'required': _("Please enter a postcode")},
                 'lng_lat': {'required':'Please identify your location on the map'} }
         help_texts = {
             'lng_lat' : 'Use the zoom map and zoom controls to find this address on the map.<br>'
-                          'Please note that some house numbers on the map are incorrect or simply missing.<br>'
-                        'Sadly We have no control over this'
         }
 
     def clean_house_number(self):
@@ -51,7 +54,10 @@ class LocationForm(ModelForm):
         if match := postcode_regex.match(data):
             return f'{match.group("incode")} {match.group("outcode")}'
         else:
-            self.add_error( 'postcode', _(f"{data} is not a valid postcode"))
+            if not data == '':
+                self.add_error(field='postcode', error=exceptions.ValidationError('Provide a postcode', code='missing'))
+            else:
+                self.add_error( 'postcode', _(f"{data} is not a valid postcode"))
 
     def clean(self):
         """"Check that one or both of the adbord or sale checkboxes are selected"""
@@ -63,3 +69,12 @@ class LocationForm(ModelForm):
                 error = exceptions.ValidationError("You need to select at least one of hosting"
                                                    " an Ad Board, or hosting a sale", code='missing'))
 
+        if not self.cleaned_data.get('house_number',False):
+            self.add_error(
+                field='house_number',error=exceptions.ValidationError("Provide a house number or house name", code='missing'))
+
+        if not self.cleaned_data.get('street_name',False):
+            self.add_error(field='street_name',error=exceptions.ValidationError("Provide a street name", code='missing'))
+
+        if not self.cleaned_data.get('town', False):
+            self.add_error(field='town', error=exceptions.ValidationError('Provide a town/village name', code='missing'))
