@@ -56,7 +56,7 @@ class LocationForm(ModelForm):
     def clean(self):
         """"Check that one or both of the adbord or sale checkboxes are selected"""
         super().clean()
-        data = self.cleaned_data.get('ad_board',False), self.cleaned_data.get('sale',False)
+        data = self.cleaned_data.get('ad_board',False), self.cleaned_data.get('sale_event',False)
         if not any(data):
             self.add_error(
                 field = 'ad_board',
