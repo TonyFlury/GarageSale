@@ -22,6 +22,7 @@ class LocationCreateView(UserRecognisedMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context |= {'GOOGLE_MAP_API' : settings.GOOGLE_MAP_SETTINGS.get('API_KEY')}
+        context |= {"Activity" : "Recording new "}
         return context
 
     def form_valid(self, form):
@@ -61,6 +62,7 @@ class LocationEditView(UserRecognisedMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context |= {'GOOGLE_MAP_API' : settings.GOOGLE_MAP_SETTINGS.get('API_KEY')}
+        context |= {"Activity" : "Editing "}
         return context
 
     def get_object(self, queryset=None):
