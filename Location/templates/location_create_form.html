@@ -201,8 +201,17 @@
                         {{ form.sale_event.errors }}
                         <div class="field_outer">
                             <div>
+                                {% if request.current_event.allow_ad_board_bookings %}
                                 <div class="field_wrapper"><label for='{{ form.ad_board.id_for_label }}' >{{ form.ad_board.label }}</label>{{ form.ad_board }}<span class="helptext">{{ form.ad_board.help_text }}</span></div>
+                                {% else %}
+                                    <div class="field_wrapper"><strong>It is not now possible to book or remove an ad-board for this event.</strong></div>
+                                {% endif %}
+                                {% if request.current_event.allow_sale_bookings %}
                                 <div class="field_wrapper"><label for='{{ form.sale_event.id_for_label }}' >{{ form.sale_event.label }}</label>{{ form.sale_event }}<span class="helptext">{{ form.sale_event.help_text }}</span></div>
+                                {% else %}
+                                    <div class="field_wrapper"><strong>It is not now possible to book a Sale Event on the map for this event
+                                        - you can still set up your sale on the day though.</strong></div>
+                                {% endif %}
                             </div>
                                 <div id='AdBoardError' class="error">{{ form.ad_board.errors }}</div>
                         </div>
