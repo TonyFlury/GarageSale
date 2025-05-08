@@ -100,6 +100,19 @@ class EventData(models.Model):
     use_from = models.DateField()
     supporting_organisations = models.ManyToManyField(Supporting, related_name='by_event')
 
+    def allow_ad_board_bookings(self):
+        """Whether to allow ad-board bookings
+           returns True/False depending on whether today is in the booking window
+        """
+        return self.open_billboard_bookings <= datetime.date.today() <= self.close_billboard_bookings
+
+    def allow_sale_bookings(self):
+        """Whether to allow ad-board bookings
+           returns True/False depending on whether today is in the booking window
+        """
+        return self.open_sales_bookings <= datetime.date.today() <= self.close_sales_bookings
+
+
     def __str__(self):
             return f'{day_name[self.event_date.weekday()]} {self.event_date.day} {month_name[self.event_date.month]}, {self.event_date.year}'
 
