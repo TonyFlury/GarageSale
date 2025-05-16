@@ -52,14 +52,25 @@ class UserVerification(models.Model):
         return self.expiry_timestamp < timezone.now()
 
     @classmethod
-    def remove_expired(cls, email=None):
-        """Remove all time expired entries - filtered by email"""
-        qs = cls.objects.filter(expiry_timestamp__gt=timezone.now())
-        if email:
-            qs = qs.filter(email=email)
-
+    def remove_expired(cls, email=None, _all=False):
+        """Remove all time expired entries - filtered by email
+           by Specifying _all=True, ignore the expiration timestamp, but must specify email.
+        """
+        qs: models.QuerySet
+        if not _all and not email:
+            qs = cls.objects.filter(expiry_timestamp__gt=timezone.now())
+        elif not _all and email:
+            qs = cls.objects.filter(expiry_timestamp__gt=timezone.now(), email=email)
+        elif _all and email:
+            qs =cls.objects.filter(email=email)
+        else:
+            raise ValueError("Cannot delete all verifier entries - must provide email or _all or both")
         qs.delete()
 
+    @classmethod
+    def remove_all(cls, email):
+        """Shortcut to remove all verifier entries for this user"""
+        return cls.remove_expired(email=email, _all=True)
 
 class RegistrationVerifier(UserVerification):
     registration_lifetime = 24 * 60

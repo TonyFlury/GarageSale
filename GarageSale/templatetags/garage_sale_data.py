@@ -13,6 +13,7 @@ Testable Statements :
     ...
 """
 import datetime
+import logging
 
 from django.conf import settings
 
@@ -28,15 +29,24 @@ from datetime import date
 
 register = template.Library()
 
+logger = logging.getLogger(__name__)
+
+logger.setLevel(level=logging.DEBUG)
+
+import pprint
+
 # settings value
 @register.simple_tag
 def settings_value(name):
     keys = name.split('.')
-    obj = settings.__dict__
+    obj = settings
     for key in keys :
         try:
-            obj = obj.get(key,'')
-        except IndexError:
+            if isinstance(obj, dict):
+                obj = obj.get(key,'')
+            else:
+                obj = getattr(obj, key, {})
+        except (IndexError, AttributeError, TypeError):
             return ''
     return obj
 
