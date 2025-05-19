@@ -21,9 +21,9 @@ urlpatterns = [
     path('reset/<uuid:uuid>/', views.PasswordResetEnterNew.as_view(),
          name='password_reset_prompt_new'),
     path('guest', views.GuestApplication.as_view(), name='guest_application'),
-    path('input_short_code/<int:short_code_entry>/',
+    path('input_short_code/<int:short_code_id>/',
          views.InputShortCode.as_view(), name='input_short_code'),
-    path('resend/<int:short_code_entry>/', views.resend_short_code, name='resend'),
-    path('error/<int:short_code_entry>/', views.guest_error, name='guest_error'),
+    path('resend/<int:short_code_id>/', views.resend_short_code, name='resend'),
+    path('error/<int:short_code_id>/', views.guest_error, name='guest_error'),
 
 ]
