@@ -117,7 +117,7 @@ div.sidebar.entry label {
 
 @container body (max-width: 1250px){
     div#Content {
-        margin-left: 0.25rem;
+        margin-left: 0.75rem;
     }
     div#SidebarContainer {
         margin-right: 0.25rem;
@@ -146,7 +146,7 @@ div.sidebar.entry label {
 @container body (max-width: 900px){
 
     div#Content {
-        margin-left: 0.1rem;
+        margin-left: 0.75rem;
     }
 
     /** beware - dependent on the internals of the google cloud **/

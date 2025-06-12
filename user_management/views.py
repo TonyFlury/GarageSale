@@ -1,6 +1,5 @@
 import datetime
 import logging
-import pprint
 from typing import Type
 from uuid import uuid1
 
@@ -29,11 +28,10 @@ from .apps import appsettings, settings
 from django.contrib.auth import get_user_model, login, logout, update_session_auth_hash
 
 from .models import RegistrationVerifier
-
-import pprint
+import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.INFO)
+logger.setLevel(logging.INFO)
 
 # ToDo - show password Help on registration, and validate password format
 # ToDo - test password Reset stuff
@@ -89,14 +87,17 @@ def send_guest_verification_email(request, email=None, short_code=None, template
     msg.send()
 
 
-def guest_error(incoming_request, short_code_entry=None):
+def guest_error(incoming_request, short_code_id=None):
     """View to display error page for guest logins"""
     next = incoming_request.GET.get('next', '/')
 
     try:
-        code_inst = GuestVerifier.objects.get(pk=short_code_entry)
+        code_inst = GuestVerifier.objects.get(pk=short_code_id)
     except GuestVerifier.DoesNotExist:
-        raise SystemError('Invalid Short Code on error page !')
+        logger.info(f'Invalid Short Code {short_code_id} sent to error page !')
+        redirect_url = incoming_request.GET.get('next', '/')
+        return redirect( reverse('user_management:guest_application') + '?next=' + redirect_url )
+
 
     match code_inst.reason_code:
         case 'expired':
@@ -111,12 +112,12 @@ def guest_error(incoming_request, short_code_entry=None):
     return TemplateResponse(incoming_request,
                             'generic_with_form.html',
                             context=form.form_context(
-                                action_path=resolve_url('user_management:resend', short_code_entry=short_code_entry),
+                                action_path=resolve_url('user_management:resend', short_code_id=short_code_id),
                                 pre_form=pre_form,
                                 next=next))
 
 
-def resend_short_code(incoming_request, short_code_entry=None):
+def resend_short_code(incoming_request, short_code_id=None):
     """"Simple view to resend a new short-code - use existing short_code
         as the original data for the next
     """
@@ -124,18 +125,23 @@ def resend_short_code(incoming_request, short_code_entry=None):
 
     next_url = incoming_request.GET.get('next', '/')
     try:
-        inst: GuestVerifier = GuestVerifier.objects.get(short_code=short_code_entry)
+        inst: GuestVerifier = GuestVerifier.objects.get(id=short_code_id)
     except GuestVerifier.DoesNotExist:
-        raise ObjectDoesNotExist('Original short_code does not exist')
+        logger.info(f'Invalid Short Code {short_code_id} sent to resend page !')
+        redirect_url = incoming_request.GET.get('next', '/')
+        return redirect( reverse('user_management:guest_application') + '?next=' + redirect_url )
 
     email = inst.email
-    GuestVerifier.remove_expired(email=email)
-    send_guest_verification_email(incoming_request, email=email, short_code=inst, template=email_template)
+    GuestVerifier.remove_expired(email=email, _any=True)
 
     new_inst = GuestVerifier.add_guest_verifier(email=email)
+    new_inst.reason_code='resend'
+    new_inst.save()
+
+    send_guest_verification_email(incoming_request, email=email, short_code=new_inst, template=email_template)
 
     return redirect(reverse('user_management:input_short_code',
-                            kwargs={'short_code_entry': new_inst.pk}) + f'?next={next_url}')
+                            kwargs={'short_code_id': new_inst.pk}) + f'?next={next_url}')
 
 
 def resend_registration_link(incoming_request, uuid):
@@ -201,17 +207,16 @@ class GuestApplication(View):
 
         email = form.cleaned_data['email']
 
-        # We know the data is a valid email - remove all verifiers for this user
-        GuestVerifier.remove_all(email=email)
+        # We know the data is a valid email - remove old entries and add a new entry
+        GuestVerifier.remove_expired(email=email)
         code = GuestVerifier.add_guest_verifier(email=email)
 
         send_guest_verification_email(incoming_request,
                                       email=form.cleaned_data['email'],
                                       short_code=code,
                                       template=self.email_template)
-        logger.info(f'Allocated short-code {code.short_code} for {email} - id : {code.pk}')
 
-        return redirect(resolve_url('user_management:input_short_code', short_code_entry=code.pk) + f'?next={next}')
+        return redirect(resolve_url('user_management:input_short_code', short_code_id=code.pk) + f'?next={next}')
 
 
 class InputShortCode(View):
@@ -223,47 +228,49 @@ class InputShortCode(View):
         name, domain = email.split('@')[0], email.split('@')[1]
         return name[0:4].rjust(len(name), '*') + '@' + domain[0:4].rjust(len(domain), '*') + '.' + tld
 
-    def get(self, incoming_request, short_code_entry):
+    def get(self, incoming_request, short_code_id):
         next = incoming_request.GET.get('next', '/')
-
         try:
-            code_inst = GuestVerifier.objects.filter(reason_code__isnull=True, pk=short_code_entry).first()
-        except UserVerification.DoesNotExist:
-            raise ObjectDoesNotExist(f'Received Invalid ShortCode pk {short_code_entry} ')
+            code_inst = GuestVerifier.objects.get(pk=short_code_id)
+        except GuestVerifier.DoesNotExist:
+            raise ObjectDoesNotExist(f'Received Invalid ShortCode pk {short_code_id} ')
+
+        if code_inst.reason_code == 'resend':
+            pre_form = 'A new code has been sent by email'
+            code_inst.reason_code = ''
+            code_inst.save()
+        else:
+            pre_form = ""
 
         form = forms.InputShortCodeForm(data={'email': code_inst.email})
 
         return TemplateResponse(request=incoming_request,
                                 template='ShortCodeInput.html',
                                 context={'form': form,
+                                         'pre_form': pre_form,
                                          'email': code_inst.email,
                                          'action': resolve_url('user_management:input_short_code',
-                                                               short_code_entry=short_code_entry) + f'?next={next}',
+                                                               short_code_id=short_code_id) + f'?next={next}',
                                          'resend_url': resolve_url('user_management:resend',
-                                                                   short_code_entry=short_code_entry) + f'?next={next}',
+                                                                   short_code_id=short_code_id) + f'?next={next}',
                                          'obfuscated_email': self._obfuscate_email(code_inst)})
 
-    def post(self, incoming_request: HttpRequest, short_code_entry):
+    def post(self, incoming_request: HttpRequest, short_code_id):
         next = incoming_request.GET.get('next', '/')
 
         try:
-            code_inst = GuestVerifier.objects.get(pk=short_code_entry)
+            code_inst = GuestVerifier.objects.get(pk=short_code_id)
         except GuestVerifier.DoesNotExist:
-            raise ObjectDoesNotExist(f'No such GuestVerifierObject : {short_code_entry}')
+            raise ObjectDoesNotExist(f'No such GuestVerifierObject : {short_code_id}')
 
         form = forms.InputShortCodeForm(data=incoming_request.POST)
         if not form.is_valid():
             return TemplateResponse(request=incoming_request,
                                     template='ShortCodeInput.html',
                                     context={'form': form,
-                                             'email': code_inst.email,
                                              'action': resolve_url('user_management:input_short_code',
-                                                                   short_code_entry=short_code_entry) + f'?next={next}',
-                                             'resend_url': resolve_url('user_management:resend',
-                                                                       short_code_entry=short_code_entry) + f'?next={next}',
+                                                                   short_code_id=short_code_id) + f'?next={next}',
                                              'obfuscated_email': self._obfuscate_email(code_inst)})
-
-        logger.info(f"Received short-code {form.cleaned_data['short_code']} for {form.cleaned_data['email']} - id : {code_inst.pk}")
 
         if form.cleaned_data['email'] != code_inst.email:
             raise ValidationError(f'email address for guest request don\'t match')
@@ -272,18 +279,15 @@ class InputShortCode(View):
         if code_inst.is_time_expired():
             code_inst.reason_code = 'expired'
             code_inst.save()
-            return redirect(resolve_url('user_management:guest_error', short_code_entry=code_inst.pk) + f'?next={next}')
+            return redirect(resolve_url('user_management:guest_error', short_code_id=code_inst.pk) + f'?next={next}')
 
         if form.cleaned_data['short_code'] != code_inst.short_code:
-            logger.info(
-                f"Received short-code {form.cleaned_data['short_code']} doesn\'t match expected {code_inst.short_code} for {form.cleaned_data['email']} - id : {code_inst.pk} - retry: {code_inst.retry_count}")
-
             code_inst.retry_count -= 1
             code_inst.save()
 
             # Only re-show the forms if the retry count hasn't hit zero
             if code_inst.retry_count > 0:
-                # Build a blank form
+                # Build a blank forms
 
                 form = forms.InputShortCodeForm(data={'email': code_inst.email})
                 form.add_error(None, 'Short code Incorrect - please try again')
@@ -291,21 +295,15 @@ class InputShortCode(View):
                 return TemplateResponse(request=incoming_request,
                                         template='ShortCodeInput.html',
                                         context={'form': form,
-                                                 'email': code_inst.email,
                                                  'action': resolve_url('user_management:input_short_code',
-                                                                       short_code_entry=short_code_entry) + f'?next={next}',
+                                                                       short_code_id=short_code_id) + f'?next={next}',
                                                  'obfuscated_email': self._obfuscate_email(code_inst),
-                                                 'resend_url': resolve_url('user_management:resend',
-                                                                           short_code_entry=short_code_entry) + f'?next={next}',
                                                  'retry_count': code_inst.retry_count,
                                                  'max_retry': code_inst.max_retry}, )
             else:
                 code_inst.reason_code = 'entry_error'
                 code_inst.save()
-                logger.info(
-                    f"Failed to receive short-code  {code_inst.short_code} for {form.cleaned_data['email']} - id : {code_inst.pk} - retry: {code_inst.retry_count}")
-
-                return redirect(resolve_url('user_management:guest_error', short_code_entry=code_inst.pk)
+                return redirect(resolve_url('user_management:guest_error', short_code_id=code_inst.pk)
                                 + f'?next={next}')
 
         user_model:Type[UserExtended|AbstractBaseUser] = get_user_model()

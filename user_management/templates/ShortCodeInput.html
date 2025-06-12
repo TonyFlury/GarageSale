@@ -52,12 +52,19 @@ input[type='text']:where([autocomplete=one-time-code]) {
 {%  endblock %}
 
 {% block SnappableSections %}
-        <h2>Enter the short code sent to {{obfuscated_email}}</h2>
+        {% if pre_form %}
+            <div id="_preform">
+                {{ pre_form }}
+            </div>
+        {% endif %}
+    <h2>Enter the short code sent to {{obfuscated_email}}</h2>
     <div class="form">
+        <div style="font-size:90%;margin:1rem 0;">
+            If you can't find the email please check your junk or spam folders for an email from BranthamGarageSale@gmail.com.
+        </div>
         <form method="POST" action="{{action}}">
             {% csrf_token %}
             {% if form.non_field_errors %}
-                {{retry_count}} {{max_retry}}
                 <div id="InvalidAttempt">
                     {% for err in form.non_field_errors %}
                         {% if retry_count < max_retry %}
@@ -75,14 +82,15 @@ input[type='text']:where([autocomplete=one-time-code]) {
                 <span style="float:left">
                     <input type="submit" id='id_Continue' value="Continue">
                 </span>
+
                 <span style="float:left; margin-left:20rem;">
-                    <script>
+                    <input type="button" id='id_Resend' onclick="resend_short_code()" value="Send a new Code">
+                    <script lang="javascript" type="text/javascript">
                             function resend_short_code()
                             {
-                                window.location.replace( {{ resend_url }} );
+                                window.location.replace( "{{ resend_url }}" );
                             }
                     </script>
-                    <input type="button" id='id_Resend' onclick="resend_short_code()" value="Send a new Code">
                 </span>
             </div>
             <script>
