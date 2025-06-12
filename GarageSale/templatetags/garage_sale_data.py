@@ -23,6 +23,8 @@ from django.contrib.auth.models import User
 from Location.models import Location  # should be able to get this from the request context
 from GarageSale.models import MOTD
 
+from django.utils.safestring import mark_safe
+
 from django.utils.dateformat import DateFormat
 
 from datetime import date

@@ -9,5 +9,5 @@ urlpatterns = [
     path('view', views.LocationView.as_view(), name='view'),
     path( 'update/<str:ext_id>/', views.LocationEditView.as_view(), name='update'),
     path('delete/<str:ext_id>/', views.LocationDelete.as_view(), name='delete'),
-
+    path( 'event_map', views.view_event_map, name='event_map'),
 ]

@@ -1,5 +1,6 @@
 from django.http import Http404
 from django.shortcuts import redirect
+from django.template.response import TemplateResponse
 
 from user_management.decorators.guest import UserRecognisedMixin
 from django.urls import reverse_lazy
@@ -9,6 +10,13 @@ from django.views.generic import ListView
 from .models import Location as LocationModel
 from .forms import LocationForm
 from django.conf import settings
+
+def view_event_map(request):
+    locations = LocationModel.objects.all()
+    context = {'GOOGLE_MAP_API': settings.GOOGLE_MAP_SETTINGS.get('API_KEY'),
+               'locations' :  LocationModel.objects.filter(event=request.current_event,
+                                                        sale_event=True).order_by('creation_timestamp')}
+    return TemplateResponse(request, "map_view.html", context  )
 
 class LocationCreateView(UserRecognisedMixin, CreateView):
     """Creation Form for Location"""

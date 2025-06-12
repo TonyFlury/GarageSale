@@ -1,0 +1,78 @@
+{% extends "_snap_slider_base.html" %}
+{% load static %}
+{% load event_data_tags %}
+{% load user_management_tags %}
+{% load location_tags %}
+
+{% block head-extra %}
+    <script async
+    src="https://maps.googleapis.com/maps/api/js?key={%  settings_value "GOOGLE_MAP_SETTINGS.API_KEY" %}&loading=async&libraries=places&libraries=marker&callback=initMaps">
+</script>
+    <script type="text/javascript" src="{% static 'DjangoGoogleMap/api/display_location.js' %}"></script>
+{% endblock %}
+
+
+{% block PageStyles %}
+    <link rel="stylesheet" href="{% static 'Location/styles/locations.css' %}">
+
+    <style>
+        div#CardContainer {
+            margin-left: 1rem;
+        }
+
+        H1 {
+            text-align: center;
+        }
+
+        div#map {
+            width:600px;
+            height:600px;
+            margin:auto;
+        }
+    </style>
+{% endblock %}
+
+{% block sidebar %}
+
+            <div class="sidebar entry direct tooltip" item="{% url 'home' %}" xmlns="http://www.w3.org/1999/html" >
+                <img class="sidebar icon" alt="Home Page" id='id_home_page' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %}>
+                <label for="id_team">Home Page</label>
+                <span class="tooltiptext right arrow">Return to Home Page</span>
+        </div>
+{% endblock %}
+
+{%  block SnappableSections %}
+
+    <h1>The Sales locations for this event</h1>
+
+    <div class="premarked-map">
+        <div id="map" class="map">
+                <div class="map_wrapper" style="width: 100%; height:100%;"></div>
+        </div>
+    </div>
+
+            <script type="text/javascript">
+
+            function initMaps() {
+
+                const map_element= document.getElementsByClassName('map');
+
+
+                let this_map = new GoogleMap( element = map_element[0],
+                    markers = [],
+                    read_only = true,
+                    google_map_id = '{% settings_value "GOOGLE_MAP_SETTINGS.MAP_ID" %}');
+
+                options = this_map.defaultOptions;
+                options.center = {% settings_value "GOOGLE_MAP_SETTINGS.PLACES.Brantham.center" %};
+                this_map.Options = options;
+
+                this_map.display( bounds = {% settings_value "GOOGLE_MAP_SETTINGS.PLACES.Brantham.bounds" %});
+
+                {% for location in locations %}
+                    this_map.addMarker( {{ location.lng_lat | safe }}, "{{ location.house_number}}, {{location.street_name}}");
+                {% endfor %}
+
+            }
+        </script>
+{%  endblock %}
