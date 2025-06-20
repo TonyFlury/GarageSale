@@ -74,6 +74,8 @@ Brantham Garage Sale - Home Page
   </div>
 
   <div class="card" id="OnTheMap" card_name="involved">
+  <a id="TheMap"></a>
+
     <h1>Are you on the Map?</h1>
       <p>
     To be involved in the Garage sale, you need to get yourself on the map, Whether you want to have an
@@ -85,6 +87,15 @@ Brantham Garage Sale - Home Page
 
     <button name="Are you on the Map" alt="Get yourself on the Map"
             onclick="document.location.replace('{% url "Location:view" %}')">Are you on the map ?</button>
+
+          {% if request.current_event.myGoogleMapURL %}
+            <div >
+                <h2>Downloads :</h2>
+      The <a href="{{ request.current_event.myGoogleMapURL }}" >Map is now available to download</a> - if you have the Google Map app on your device, this will add
+                the map directly as a layer to the app, so that you can use the app to track where you are and where
+                the nearest Sales are.
+            </div>
+      {% endif %}
       </p>
   </div>
 

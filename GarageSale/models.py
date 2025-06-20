@@ -98,7 +98,8 @@ class EventData(models.Model):
     open_sales_bookings = models.DateField(null=True)                                    # When Sales bookings open
     close_sales_bookings = models.DateField(null=True)                                   # When Sales bookings open
     use_from = models.DateField()
-    supporting_organisations = models.ManyToManyField(Supporting, related_name='by_event')
+    supporting_organisations = models.ManyToManyField(Supporting, related_name='by_event', blank=True)
+    myGoogleMapURL = models.URLField(null=True, blank=True)
 
     def allow_ad_board_bookings(self):
         """Whether to allow ad-board bookings
