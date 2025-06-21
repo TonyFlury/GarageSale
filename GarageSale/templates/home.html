@@ -89,11 +89,16 @@ Brantham Garage Sale - Home Page
             onclick="document.location.replace('{% url "Location:view" %}')">Are you on the map ?</button>
 
           {% if request.current_event.myGoogleMapURL %}
-            <div >
+            <div style="text-align: left;">
                 <h2>Downloads :</h2>
-      The <a href="{{ request.current_event.myGoogleMapURL }}" >Map is now available to download</a> - if you have the Google Map app on your device, this will add
-                the map directly as a layer to the app, so that you can use the app to track where you are and where
-                the nearest Sales are.
+                <ul>
+                    <li><a href="{{ request.current_event.myGoogleMapURL }}" >The Map</a> is now available to download.
+                        <div style="margin-left:3rem;font-size:95%">if you have the Google Map app on your device,
+                            you will be able to add the map directly as a layer to the app, so that you can use the
+                            app to track where you are and where the nearest Sales are.</div></li>
+                    <li><a href="{{ MEDIA_URL }}sellers-2025.pdf">List of Sellers Addresses</a> is also available</li>
+
+                </ul>
             </div>
       {% endif %}
       </p>
