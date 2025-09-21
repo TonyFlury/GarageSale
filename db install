@@ -4,6 +4,9 @@ sudo -u postgres psql garagesale
 
 garagesale=# CREATE USER garagesaleweb PASSWORD '7RWrbJ18tZ';
 
+garagesale=# grant usage on schema public to garagesaleweb ;
+garagesale=# grant create on schema public to garagesaleweb ;
+
 #  Fine and Edit hba.conf file
 garagesale=# SHOW hba_file;
 /etc/postgresql/14/main/pg_hba.conf ( or similar)
