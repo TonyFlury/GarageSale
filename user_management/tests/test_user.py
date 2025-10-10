@@ -15,8 +15,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.core.exceptions import ObjectDoesNotExist
 
-from .common import  IdentifyMixin
-
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core import mail
 from django.core.mail import EmailMultiAlternatives, EmailMessage
@@ -27,7 +25,7 @@ from selenium.webdriver.common.by import By
 from django.contrib.auth import authenticate
 
 
-from GarageSale.tests.common import SeleniumCommonMixin
+from GarageSale.tests.common import SeleniumCommonMixin, IdentifyMixin
 from user_management.models import RegistrationVerifier, PasswordResetApplication, AdditionalData
 from django.utils import timezone
 from datetime import timedelta
@@ -174,7 +172,6 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
 
         msg = self.selenium.find_element(By.CSS_SELECTOR, 'div.body > div.msg')
         self.assertEqual(msg.text, 'This verification link has expired - pleased wait for a few seconds to get a new code')
-        print('Test is waiting for page to refresh')
         time.sleep(15)
 
         WebDriverWait(self.selenium, 15).until(lambda driver: driver.find_element(By.TAG_NAME, 'body'))
@@ -576,7 +573,6 @@ class TestPasswordResetRequest(SeleniumCommonMixin, StaticLiveServerTestCase):
 
                         copy_paste = parent.select_one(":nth-child(2)")
                         if not copy_paste:
-                            print(content)
                             self.fail('Cannot find the 2nd bullet list entry text/html')
                         if not ('copy and paste' in copy_paste.text and expected_url in copy_paste.text):
                             self.fail(f'\n{expected_url}\n not available for copy and paste : {copy_paste.text}')

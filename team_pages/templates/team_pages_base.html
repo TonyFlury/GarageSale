@@ -16,7 +16,9 @@
 
 {% block header %}
 <div  class="breadcrumb">
-    {% breadcrumb %}
+    {% block breadcrumb %}
+        {% breadcrumb %}
+    {% endblock%}
 </div>
 {% endblock %}
 

@@ -1,17 +1,13 @@
 import abc
 import re
 import unittest.mock
-from contextlib import contextmanager
 from datetime import datetime, timedelta
-from importlib import import_module
 from typing import Type
 from urllib.parse import urlparse, parse_qs
 
 from bs4 import BeautifulSoup
-from django.conf import settings
-from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY, HASH_SESSION_KEY, get_user_model
+from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.models import AbstractUser
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core import mail
 from django.core.mail import EmailMultiAlternatives, EmailMessage
@@ -23,75 +19,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from GarageSale.tests.common import SeleniumCommonMixin
 from user_management.models import UserExtended, GuestVerifier
-
-
-class IdentifyMixin(StaticLiveServerTestCase):
-    """Simple Helper mixin to identify user via guest or login"""
-    selenium: RemoteWebDriver
-
-    def get_test_url(self):
-        return NotImplemented
-
-    def force_login(self, user, base_url):
-        SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
-        base_url = base_url if base_url else self.live_server_url
-        selenium_login_start_page = getattr(settings, 'SELENIUM_LOGIN_START_PAGE', '/')
-        self.selenium.get('{}{}'.format(base_url, selenium_login_start_page))
-
-        session = SessionStore()
-        session[SESSION_KEY] = user._meta.pk.value_to_string(user)
-        session[BACKEND_SESSION_KEY] = settings.AUTHENTICATION_BACKENDS[0]
-        session[HASH_SESSION_KEY] = user.get_session_auth_hash()
-        session.save()
-
-        cookie = {
-            'name': settings.SESSION_COOKIE_NAME,
-            'value': session.session_key,
-            'path': '/'
-        }
-        self.selenium.add_cookie(cookie)
-        self.selenium.refresh()
-
-    def force_logout(self):
-        self.selenium.delete_cookie(settings.SESSION_COOKIE_NAME)
-        self.selenium.refresh()
-
-    @contextmanager
-    def identify_as_guest(self, guest_user='test_user@test.com'):
-        """Authenticate the user as a guest"""
-        user_model: [UserExtended | AbstractUser] = get_user_model()
-        try:
-            inst = user_model.objects.get(email=guest_user)
-        except user_model.DoesNotExist:
-            inst = None
-
-        if inst is None:
-            inst = user_model.objects.create_guest_user(guest_user)
-
-        self.force_login(inst, '')
-        try:
-            yield inst
-        finally:
-            self.force_logout()
-
-    @contextmanager
-    def identify_via_login(self, user='test_user@test.com', password=None):
-        """Ensure the user is logged in"""
-        """Authenticate the user as a guest"""
-        user_model: [UserExtended | AbstractUser] = get_user_model()
-        try:
-            inst = user_model.objects.get(email=user)
-        except user_model.DoesNotExist:
-            inst = None
-
-        if inst is None:
-            inst = user_model.objects.create_user(user, password)
-
-        self.force_login(inst, self.get_test_url())
-        try:
-            yield inst
-        finally:
-            self.force_logout()
 
 
 class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):

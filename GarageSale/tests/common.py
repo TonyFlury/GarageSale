@@ -12,15 +12,21 @@ Use Case :
 Testable Statements :
     ...
 """
+from contextlib import contextmanager
+from copy import deepcopy
 from datetime import datetime
+from importlib import import_module
 from unittest import TestCase
 
 import bs4
 from django.conf import settings
+from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY, HASH_SESSION_KEY, get_user_model
+from django.contrib.auth.models import AbstractUser
+from user_management.models import UserExtended
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from bs4 import BeautifulSoup
-from typing import Optional, Union
+from typing import Optional, Union, Any, Type
 
 import selenium
 from selenium.common import NoSuchElementException
@@ -36,6 +42,11 @@ root_screenshot_directory = Path('./testing_screenshots')
 if not root_screenshot_directory.exists():
     root_screenshot_directory.mkdir()
 
+import logging
+
+logger = logging.getLogger('django')
+logger.setLevel(level=logging.INFO)
+
 
 class SmartHTMLTestMixins(TestCase):
 
@@ -43,7 +54,7 @@ class SmartHTMLTestMixins(TestCase):
         super().__init__()
 
     @staticmethod
-    def _fetch_elements_by_selector( html: str, selector: str) -> set[bs4.Tag]:
+    def fetch_elements_by_selector(html: str, selector: str) -> set[bs4.Tag]:
         """Return a set Beautifulsoup tags based on the selector
             :param html: the HTML to be searched
             :param selector : The CSS Style selector to be searched for
@@ -55,12 +66,13 @@ class SmartHTMLTestMixins(TestCase):
                               selector,
                               msg=""):
         """
-        :param html: The HTML to parse
-        :param selector: The css selector to apply
-        :param msg: The failure message to generate if no HTML matches the selector
-        :return:
+        Success only if the html provided contains the element specified in the selector
+            :param html: The HTML to parse
+            :param selector: The css selector to apply
+            :param msg: The failure message to generate if no HTML matches the selector
+            :return:
         """
-        selected = self._fetch_elements_by_selector(html, selector)
+        selected = self.fetch_elements_by_selector(html, selector)
         if not selected:
             self.fail(msg if msg else f": No html elements matching the given types, names and attributes")
 
@@ -76,7 +88,7 @@ class SmartHTMLTestMixins(TestCase):
         """
         # Build css selectors - types, names and attributes
         # The logic is - element matches any type, and matches any name and matches all attributes
-        elements = self._fetch_elements_by_selector(html, selector)
+        elements = self.fetch_elements_by_selector(html, selector)
 
         supplied_names = {element['name'] for element in elements}
         diff = names - supplied_names
@@ -90,7 +102,7 @@ class SmartHTMLTestMixins(TestCase):
             :param content - the expected content for this element - if multiple elements match the specifiers above
                             then all elements must have the same content
             :param msg - An application specific message to generated on failure"""
-        found_elements = self._fetch_elements_by_selector(html, selector=selector)
+        found_elements = self.fetch_elements_by_selector(html, selector=selector)
 
         if not all(map(lambda item: item['value'] == content, found_elements)):
             self.fail(msg if msg else f"Matching html elements don't have expected content")
@@ -105,11 +117,11 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
         """Can be overriden - by default tests using Firefox browser"""
         return selenium.webdriver.Firefox()
 
-
     def get_test_url(self):
         pass
 
     def screenshot(self, name=None):
+        logger.info(f'Taking Screenshot : {name}')
         if self.screen_shot_path:
             test_name = self.id().split('.')[-1]
             self.selenium.save_screenshot(self.screen_shot_path / f'{test_name}_{name if name else ""}.png')
@@ -118,7 +130,7 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
     def setUpClass(cls):
         super().setUpClass()
 
-        if settings.DEBUG and cls.screenshot_sub_directory:
+        if cls.screenshot_sub_directory:
             cls.screen_shot_path = (root_screenshot_directory
                                     / f'{datetime.utcnow().isoformat(sep="_", timespec="seconds")}' / cls.screenshot_sub_directory)
             cls.screen_shot_path.mkdir(exist_ok=True,parents=True)
@@ -160,6 +172,7 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
     def fill_form(self, url, **kwargs):
         """Selenium fill in forms helper method"""
 
+        logger.info(f'fill_form {url} {kwargs}')
         if url:
             self.selenium.get(url)
 
@@ -188,3 +201,94 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
                         pass
         except:
             raise
+
+
+class IdentifyMixin(StaticLiveServerTestCase):
+    """Simple Helper mixin to identify user via guest or login"""
+    selenium: RemoteWebDriver
+
+    def get_test_url(self):
+        return NotImplemented
+
+    def force_login(self, user, base_url):
+        SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
+        base_url = base_url if base_url else self.get_test_url()
+
+        self.selenium.get(base_url)
+        logger.info(f'force_login user : {user} : {base_url}')
+
+        session = SessionStore()
+        session[SESSION_KEY] = user._meta.pk.value_to_string(user)
+        session[BACKEND_SESSION_KEY] = settings.AUTHENTICATION_BACKENDS[0]
+        session[HASH_SESSION_KEY] = user.get_session_auth_hash()
+        session.save()
+
+        cookie = {
+            'name': settings.SESSION_COOKIE_NAME,
+            'value': session.session_key,
+            'path': '/'
+        }
+        self.selenium.add_cookie(cookie)
+        self.selenium.refresh()
+
+    def force_logout(self):
+        self.selenium.delete_cookie(settings.SESSION_COOKIE_NAME)
+        self.selenium.refresh()
+
+    @contextmanager
+    def identify_as_guest(self, guest_user='test_user@test.com'):
+        """Context manager to Authenticate the user as a guest"""
+        user_model: Type[UserExtended | AbstractUser] = get_user_model()
+        try:
+            inst = user_model.objects.get(email=guest_user)
+        except user_model.DoesNotExist:
+            inst = None
+
+        if inst is None:
+            inst = user_model.objects.create_guest_user(guest_user)
+        try:
+            yield inst
+        finally:
+            self.force_logout()
+
+    @contextmanager
+    def identify_via_login(self, user='test_user@test.com', password=None):
+        """Context manager to ensure the user is logged in"""
+        user_model: Type[UserExtended | AbstractUser] = get_user_model()
+        try:
+            inst = user_model.objects.get(email=user)
+        except user_model.DoesNotExist:
+            inst = None
+
+        if inst is None:
+            inst = user_model.objects.create_user(user, password)
+
+        self.force_login(inst, self.get_test_url())
+        try:
+            yield inst
+        finally:
+            self.force_logout()
+
+
+class override_settings_dict:
+    """Override a specific setting when it is stored in a dict
+
+      Does not provide a way to delete or add new settings - not required as yet.
+    """
+    def __init__(self, setting_name:str, keys:list[str]= None, value:Any = None):
+        self._setting_name = setting_name
+        self._initial_value = getattr(settings, self._setting_name, None)
+        new = deepcopy(self._initial_value)
+        d = new
+        for key in keys[:-1]:
+            d = d[key]
+        d[keys[-1]] = value
+        self._new = new
+
+    def __enter__(self):
+        # Set the new setting attribute
+        setattr(settings, self._setting_name, self._new)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Set the setting back to the original
+        setattr(settings, self._setting_name, self._initial_value)

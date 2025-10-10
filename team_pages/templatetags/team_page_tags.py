@@ -6,10 +6,37 @@ from django.core.exceptions import ObjectDoesNotExist, BadRequest
 from GarageSale.models import EventData, MOTD
 from News.models import NewsArticle
 from Sponsors.models import Sponsor
+from django.forms.boundfield import BoundField
 
 from collections import namedtuple
+import re
+from django.conf import settings
+
+numeric_test = re.compile(r"^\d+$")
 
 register = template.Library()
+
+@register.filter('is_icon')
+def is_icon(ob:BoundField):
+    # print(f'is_icon {ob.name}: {ob.widget_type} {ob.field.__class__.__name__}')
+    return ob.field.__class__.__name__ == 'ImageField'
+
+@register.filter(name='lookup')
+def lookup(value, arg):
+    return value.get(arg, None)
+
+@register.filter(name='getattribute')
+def getattribute(value, arg):
+    """Gets an attribute of an object dynamically from a string name"""
+
+    if hasattr(value, str(arg)):
+        return getattr(value, arg)
+    elif hasattr(value, 'has_key') and value.has_key(arg):
+        return value[arg]
+    elif numeric_test.match(str(arg)) and len(value) > int(arg):
+        return value[int(arg)]
+    else:
+        return f'!ERR - {arg!r}'
 
 
 @register.simple_tag(  )
@@ -29,6 +56,10 @@ def replace(value, arg):
     what, to = arg.split('|')
     return value.replace(what, to)
 
+def breadcrumb_by_event_header(event):
+    return  ([{'Team Page': reverse('TeamPagesRoot')}] +
+             ([{event.event_date: reverse('TeamPagesRoot',
+                                          kwargs={'event_id': event.id})}] if event else []))
 
 def motd_bread_crumb_segments(motd_id, action):
     """Return a list of dictionaries for each item in the bread crumb trail
@@ -52,7 +83,6 @@ def motd_bread_crumb_segments(motd_id, action):
         case (_, 'edit'):
             return [{'Team Page': reverse('TeamPagesRoot')},
                     {f'Edit : {motd.synopsis}': ''}]
-
 
 def event_breadcrumb_segments(event_id, action):
     """Return a list of dictionaries for each item in the bread crumb trail
@@ -84,7 +114,6 @@ def event_breadcrumb_segments(event_id, action):
         case ('use',_):
             return [{'Team Page': reverse('TeamPagesRoot')},
                     {event.event_date: reverse('TeamPagesRoot',  kwargs={'event_id': event_id}) },]
-
 
 def news_bread_crumb_segments(news_id, action):
     """Return a list of dictionaries for each item in the bread crumb trail
@@ -144,48 +173,31 @@ def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
 
     match (action, sponsor_id, event_id):
         case (None, None, _):
-            return [{'Team Page': reverse('TeamPagesRoot')},
-                    {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id':event_id})},
-                    {'Sponsors':''}]
+            return breadcrumb_by_event_header(event) + [{'Sponsors':''}]
         case ('view', _, _):
-            return [
-                {'Team Page': reverse('TeamPagesRoot')},
-                {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},
+            return breadcrumb_by_event_header(event) + [
                 {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id':event_id}) },
-                {f'Viewing {sponsor.company_name}': ''}
-            ]
+                        {f'Viewing {sponsor.company_name}': ''}]
         case ('create', _, _):
-            return [
-                {'Team Page': reverse('TeamPagesRoot')},
-                {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},
+            return breadcrumb_by_event_header(event) + [
                 {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id':event_id}) },
-                {f'Creating new sponsorship lead': ''}
-            ]
+                {f'Creating new sponsorship lead': ''}]
         case ('edit', _, _):
-            return [
-                {'Team Page': reverse('TeamPagesRoot')},
-                {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},
+            return  breadcrumb_by_event_header(event) + [
                 {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id':event_id}) },
-                {f'Editing {sponsor.company_name}': ''}
-            ]
+                {f'Editing {sponsor.company_name}': ''}]
         case('confirm', _, _):
-            return [
-                {'Team Page': reverse('TeamPagesRoot')},
-                {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},
+            return breadcrumb_by_event_header(event) + [
                 {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id': event_id})},
                 {f'Confirming {sponsor.company_name}': ''}
             ]
         case('delete', _, _):
-            return [
-                {'Team Page': reverse('TeamPagesRoot')},
-                {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},
+            return breadcrumb_by_event_header(event) + [
                 {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id': event_id})},
-                {f'Confirming {sponsor.company_name}': ''}
+                {f'Confirming {sponsor.company_name} deletion': ''}
             ]
         case(_,_,_,_):
-            return [
-                {'Team Page': reverse('TeamPagesRoot')},
-                {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},]
+            return breadcrumb_by_event_header(event)
 
 
 
@@ -256,6 +268,11 @@ def categoryList(context):
          categoryItem('Statistics', 'TeamPageEventStats'),
          categoryItem('Ad-Board Applications', 'TeamPageEventAdBoard')
          ]
+    framework = settings.APPS_SETTINGS.get('team_pages',{})
+
+    for item, url in framework.items():
+        c.append(categoryItem(item, url))
+
     return render_to_string('__category_list.html',
                             context={'category_list': c,
                                      'event_id': context.get('event_id', None) } )

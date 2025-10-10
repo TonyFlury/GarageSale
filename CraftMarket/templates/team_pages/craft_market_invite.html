@@ -1,0 +1,15 @@
+{% extends "team_pages/craft_market.html" %}
+{% load static %}
+{% load breadcrumb from craftmarket_framework %}
+
+{% block detail %}
+    <div>
+    {{ instance.name }} has been invited to attend the Craft Market.
+
+    {% if email %}
+        This invite has been sent to {{ instance.email }}
+    {% else %}
+        This invite has been recorded in the system, but an automated email has not been sent.
+    {% endif %}
+    </div>
+{% endblock %}

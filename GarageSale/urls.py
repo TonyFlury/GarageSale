@@ -43,6 +43,7 @@ urlpatterns = [
 
     # path('test/<int:case>/', views.testing, name='test'),
     path('sponsors/', include('Sponsors.urls')),
+    path('CraftMarket/', include('CraftMarket.urls')),
     path('mapping/', include('DjangoGoogleMap.urls')),
 ]
 

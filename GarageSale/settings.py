@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from pathlib import Path
 
 # Site specific credentials
 from credentials import db_credentials as db_credentials
@@ -17,6 +18,7 @@ from credentials import django_secret_key
 from credentials import email_credentials
 from credentials import hosts
 from credentials import GoogleMap_credentials
+import os
 
 try:
     from credentials import test_server
@@ -33,12 +35,42 @@ except ImportError:
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+if debug and TEST_SERVER:
+    LOGGING = {
+        "version": 1,
+        'formatters': { 'standard': {
+            'format': '%(asctime)s: %(levelname)s: %(funcName)s: %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S'    }
+        },
+        "disable_existing_loggers": False,
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                'formatter': 'standard',
+            },
+        },
+        "root": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+        "loggers": {
+            "django": {
+                "handlers": ["console"],
+                "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+
+                "propagate": False,
+            },
+        },
+    }
+    import logging.config
+    logging.config.dictConfig(LOGGING)
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = django_secret_key.SECRET_KEY
-DEBUG = debug.DEBUG if debug else False
+DEBUG = False if not debug else debug.DEBUG
 
 ALLOWED_HOSTS = hosts.ALLOWED_HOSTS
 INTERNAL_IPS = hosts.INTERNAL_IPS
@@ -58,6 +90,7 @@ INSTALLED_APPS = [
     #    'SaleLocation.apps.SaleLocationConfig',
     'DjangoGoogleMap.apps.DjangoWhat3WordsConfig',
     'Sponsors.apps.SponsorsConfig',
+    'CraftMarket.apps.CraftmarketConfig',
     'user_management.apps.user_managementConfig',
     'News.apps.NewsConfig',
     'django.forms',
@@ -107,6 +140,7 @@ TEMPLATES = [
                 'user_management_tags': "user_management.templatetags.user_extras",
                 'newsletter_tags': "News.templatetags.enrol",
                 'sponsor_tags': 'Sponsors.templatetags.social_media',
+                'craftmarket': 'CraftMarket.templatetags.craftmarket_framework',
             },
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -162,7 +196,10 @@ SESSION_COOKIE_AGE = 365 * 24 * 60 * 60  # Allow upto 365 days between log ins.
 APPS_SETTINGS = {
     'user_management': {'EMAIL_SENDER': 'BranthamGarageSale@gmail.com',
                         'SITE_NAME': 'Brantham Garage Sale v2',
-                        }
+                        },
+    'team_pages' : {'Craft Market':'CraftMarket:TeamPages',},
+    "CraftMarket" : {'EmailTemplateCategory': 'CraftMarket',
+                     'EmailFrom': 'CraftMarket@BranthamGarageSale'}
 }
 
 GOOGLE_MAP_SETTINGS = GoogleMap_credentials.GOOGLE_MAP_SETTINGS

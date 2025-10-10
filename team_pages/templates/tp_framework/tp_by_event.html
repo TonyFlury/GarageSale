@@ -1,0 +1,126 @@
+{% extends "team_pages_base.html" %}
+{% load team_page_tags %}
+{% load static %}
+{% load getattribute from team_page_tags %}
+{% load lookup from team_page_tags %}
+
+{% comment %}
+This template is used by the team pages framework to provide a single look and feel
+across all relevant data.
+{% endcomment %}
+
+{% block PageStyles %}
+    {{ block.super }}
+{% endblock %}
+
+{% block PageScripts %}
+    {{ block.super }}
+<script type="text/javascript" src="{% static 'team_pages/js/framework.js' %}"></script>
+    {%  endblock %}
+
+{% block SnappableSections %}
+    <div class="snappable-section">
+<script>
+    const toolbar = new Map([
+        {% for item in toolbar %}
+           ['{{item.action}}', {'path':"{{item.regex | safe}}",
+                                'label':"{{ item.label}}",
+                                'icon':"{{ item.icon | safe}}" } ]
+            {% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]);
+    const actions = new Map([
+    {% for key, data in actions.items %}
+           ['{{key}}', {'path':"{{data.regex | safe}}",
+                                'label':"{{ data.label}}",
+                                'icon':"{{ data.icon | safe}}" } ]
+        {% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ]);
+    const fields = [
+        {% for field in url_fields %}
+           '{{ field | safe }}'
+        {% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+</script>
+
+<input type="hidden" value="{{event_id}}" id="tp_event_id">
+<div id="id_item_list" class="sublist bordered">
+    <span id="filter-pop-up">
+        <h3>Filter records</h3>
+        <hr>
+            <ul id="ListOptions">
+                {% for item in filters %}
+                    {% if item.id == "--hr--" %}
+                        <hr>
+                    {% elif item.pair %}
+                        <li><input
+                                tp-fragment="{{item.fragment}}" tp-pair="tp_not_{{ item.id }}"
+                                id = "tp_{{ item.id }}" type="checkbox" />
+                        <label for="tp_{{ item.id }}">{{ item.label }}</label>
+                        <li><input
+                                tp-fragment="{{item.fragment.0}}Not{{ item.fragment|slice:"1:" }}"
+                                tp-pair="tp_{{item.id}}"
+                                id = "tp_not_{{ item.id }}" type="checkbox" />
+                        <label for="tp_not_{{ item.id }}">Not {{ item.label }}</label>
+                        <hr>
+                    {% else %}
+                        <li><input tp-fragment="{{item.fragment}}" id="tp_{{ item.id }}" type="checkbox" />
+                        <label for="tp_{{ item.id }}">{{ item.label }}</label>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+            <input type="button" id="popup-button" onclick="cancel_filter_popup()" value="Cancel"/>
+            <input type="button" id="popup-button" onclick="save_list_options()" value="Save"/>
+    </span>
+
+    <div id="id_al_toolbar" class="actions">
+            {% if can_create %}
+                <span id="tp-create" action="create"><img  class="icon" alt='New' title="New Entry" src="{%  static '/GarageSale/images/icons/create-note-alt-svgrepo-com.svg' %}" /></span>  <!-- New Icon -->
+            {% endif %}
+            {%  if filters %}
+                <span id ="tp-filters" ><img class=icon  alt='Filter' title='Filter records' src="{%  static '/GarageSale/images/icons/funnel-svgrepo-com.svg'%}" /> </span>  <!-- Gear Icon -->
+            {% endif %}
+    </div>
+    <table class="data_list" id="id_entry_list">
+        <tr class="heading">
+            {%  for column, label in columns %}
+            <th class="heading {{ column }}">
+                {{ label | safe}}
+            </th>
+            {%  endfor  %}
+            <th class="heading icons">
+            </th>
+        </tr>
+        <tbody id="tp_tbody_item_list">
+        {% for item in sub_list_data %}
+            <tr class="data-row {% cycle 'odd' 'even' %}" tp_row_id="{{item.id}}">
+                {%  for column, label in columns %}
+                        <td class="cell {{ column }}" tp_row_id="{{ item.id }}">
+                            {{ item|getattribute:column }}
+                        </td>
+                {% endfor %}
+                <td class="cell icons" tp_row_id="{{ item.id }}">
+                    {% for action in item.allowed_actions %}
+                        {% if not action  %}
+                            <br>
+                        {% else %}
+                            <span class='action' tp_row_id="{{item.id}}" tp_action="{{action}}" label="{{ actions|lookup:action|lookup:'label'}}">
+                                <img class="icon" alt='{{action}}' title="{{actions|lookup:action|lookup:'label' }}" src="{{ actions|lookup:action|lookup:'icon' }}" />
+                            </span>
+                        {% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+    <div class="detail bordered">
+    {% block detail %}
+    {% endblock %}
+    </div>
+    </div>
+{% endblock %}
+

@@ -11,3 +11,4 @@ pillow==11.3.0
 soupsieve==2.5
 sqlparse==0.4.4
 typing_extensions==4.8.0
+selenium==4.35.0
