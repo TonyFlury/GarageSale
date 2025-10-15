@@ -5,15 +5,18 @@ from django.contrib.admin import actions
 from django.core.exceptions import BadRequest
 from django.db import models
 from django.http import HttpRequest
+from django.template import Template, RequestContext
 from django.template.response import TemplateResponse
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.encoding import force_str
 from django.contrib.postgres.fields import ArrayField
+from django.views import View
 
 from django.views.generic import TemplateView
 from django.db.models import Q, Case, When, Value, QuerySet, Model, Max, F
 
+import CraftMarket.forms
 from GarageSale.models import EventData
 from .models import Marketer, MarketerState
 from .forms import MarketerForm
@@ -52,7 +55,7 @@ class TeamPages(FrameworkView):
                'invite': {'label': 'Invite to Event', 'regex': '',
                           'icon': static('GarageSale/images/icons/invite-svgrepo-com.svg')},
                'confirm': {'label': 'Confirm Attendance', 'regex': '',
-                           'icon': static('GarageSale/images/icons/accept-check-ok-process-svgrepo-com.svg')},
+                           'icon': static('GarageSale/images/icons/thumb-up-svgrepo-com.svg')},
                'reject': {'label': 'Reject Invite', 'regex': '',
                           'icon': static('GarageSale/images/icons/thumb-down-svgrepo-com.svg')}, }
     url_fields = ['<int:event_id>', '<int:marketer_id>']
@@ -257,3 +260,70 @@ class TeamPagesReject(TeamPagesGenericStateChange):
     template_name = "team_pages/craft_market_reject.html"
     view_base = "CraftMarket:TeamPages"
     new_state = MarketerState.Rejected
+
+class MarketerRSVP(View):
+    template_name = "craft_market_RSVP.html"
+
+    def _portal_login(self, request, **kwargs):
+        marketer_code = kwargs.get('marketer_code', None)
+        email = request.POST.get('email', None)
+        if not Marketer.Checksum.validate_checksum(marketer_code):
+            logging.error(f'Invalid Marketer Code checksum- provided {marketer_code} during RSVP request')
+            form = CraftMarket.forms.RSVPForm()
+            form.add_error('email', 'Invalid Request to Market Portal - please check your emails and try again')
+            return TemplateResponse(request=request, template=self.template_name,
+                                    context={'form_section':'portal_login', 'form' : form, 'valid': False})
+        else:
+            try:
+                marketer = Marketer.objects.get(email=email, code=marketer_code)
+            except Marketer.DoesNotExist:
+                logging.error(f'Invalid Marketer Code {marketer_code} for {email} during RSVP request')
+                return TemplateResponse(request=request, template=self.template_name)
+
+        tos = Template('{% lorem 5 p %}').render(context=RequestContext(request, {}))
+
+        return TemplateResponse(request=request, template=self.template_name,
+                                context={'form_section':'accept_reject',
+                                          'tos': tos
+                                        ,'marketer':marketer})
+
+
+    def _accept_reject_form(self, request, **kwargs):
+        accept, reject = request.POST.get('RSVP_Yes', False), request.POST.get('RSVP_No', False)
+        marketer = request.POST.get('marketer', None)
+
+        form_section = 'Accept' if accept else 'Reject' if reject else None
+        new_state = MarketerState.Confirmed if accept else MarketerState.Rejected if reject else None
+
+        if form_section is None:
+            logging.error(f'Invalid RSVP selection {accept=}, {reject=} for {marketer} during RSVP request')
+            return TemplateResponse(request=request, template=self.template_name,
+                                    context={form_section:'accept_reject','marketer':marketer,
+                                             'error': 'We did not understand your response - please try again'} )
+        else:
+            marketer.update_state(new_state)
+            return TemplateResponse(request=request, template=self.template_name,
+                             context={'form_section': form_section, 'marketer': marketer})
+
+    def get(self, request, **kwargs):
+        marketer_code = kwargs.get('marketer_code', None)
+        if not Marketer.Checksum.validate_checksum(marketer_code):
+            logging.error(f'Invalid Marketer Code checksum- provided {marketer_code} during RSVP request')
+            return TemplateResponse(request=request, template=self.template_name,
+                                    context={'form_section':'portal_login',
+                                             'error': 'Invalid Request to Market Portal - please check your emails and try again'})
+        else:
+            return TemplateResponse(request=request, template=self.template_name,
+                        context={'form_section': 'portal_login',
+                                 'form':CraftMarket.forms.RSVPForm()})
+
+    def post(self, request, **kwargs):
+        form_section = request.POST.get('form_section', None)
+        print(repr(form_section), request.POST)
+        match form_section:
+            case 'portal_login':
+                return self._portal_login(request, **kwargs)
+            case 'accept_reject_form':
+                return self._accept_reject_form(request, **kwargs)
+            case _:
+                raise BadRequest(f'Invalid form_section: {form_section}')

@@ -1,5 +1,6 @@
 import datetime
 import csv
+import logging
 
 from django.forms import fields
 from django.core import exceptions
@@ -21,6 +22,10 @@ from .forms import NewsForm, MotdForm, EventForm, SponsorForm
 from Sponsors.views import social_media_items
 from abc import abstractmethod
 from Location.models import Location
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 def PublishNews(request, news_id):
     publish_news(request, news_id)
@@ -194,6 +199,7 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
         if post_success:
             if instance and the_form:
                 for field_name in the_form.fields:
+                    logger.info(f'Updating {field_name} from form data')
                     image_field= isinstance(the_form.fields[field_name], fields.ImageField)
                     if image_field:
                         if f'{field_name}-clear' in request.POST:
@@ -452,7 +458,6 @@ class EventCreate(EventBase):
         return None
 
     def get_new_instance(self, request, form, **kwargs):
-        print([i for i in form.cleaned_data])
         supporting = form.cleaned_data['supporting_organisations']
         self._supporting = form.cleaned_data.pop('supporting_organisations')
         inst = self.model(**form.cleaned_data)

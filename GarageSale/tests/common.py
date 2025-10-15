@@ -215,7 +215,6 @@ class IdentifyMixin(StaticLiveServerTestCase):
         base_url = base_url if base_url else self.get_test_url()
 
         self.selenium.get(base_url)
-        logger.info(f'force_login user : {user} : {base_url}')
 
         session = SessionStore()
         session[SESSION_KEY] = user._meta.pk.value_to_string(user)

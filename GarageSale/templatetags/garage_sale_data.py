@@ -35,8 +35,6 @@ logger = logging.getLogger(__name__)
 
 logger.setLevel(level=logging.DEBUG)
 
-import pprint
-
 # settings value
 @register.simple_tag
 def settings_value(name):

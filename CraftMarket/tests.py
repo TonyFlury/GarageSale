@@ -1,6 +1,9 @@
+import random
+import string
 from datetime import timedelta
 from typing import Type
 
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.utils import popen_wrapper
@@ -42,9 +45,9 @@ class TestModel(TestCase):
     def test_001_test_creation(self):
         """Test creation of a Marketer model and automatic history"""
         now = timezone.now()
-        inst = Marketer.objects.create(event=self.event, name="Marketeer1", email="marketeer1@market.com")
+        inst = Marketer.objects.create(event=self.event, trading_name="Marketeer1", email="marketeer1@market.com")
 
-        self.assertEqual(inst.name, "Marketeer1")
+        self.assertEqual(inst.trading_name, "Marketeer1")
         self.assertEqual(inst.email, "marketeer1@market.com")
         self.assertEqual(inst.state, MarketerState.New)
 
@@ -61,7 +64,7 @@ class TestModel(TestCase):
 
     def test_010_test_update(self):
         now = timezone.now()
-        inst = Marketer.objects.create(event=self.event, name="Marketeer1", email="marketeer1@market.com")
+        inst = Marketer.objects.create(event=self.event, trading_name="Marketeer1", email="marketeer1@market.com")
 
         inst.update_state(MarketerState.Invited, send_email=False)
         self.assertEqual(inst.state, MarketerState.Invited)
@@ -74,7 +77,7 @@ class TestModel(TestCase):
         self.assertAlmostEqual(history[0].timestamp, now, delta=timedelta(seconds=0.1))
 
     def test_015_test_invalid_update(self):
-        inst = Marketer.objects.create(event=self.event, name="Marketeer1", email="marketeer1@market.com")
+        inst = Marketer.objects.create(event=self.event, trading_name="Marketeer1", email="marketeer1@market.com")
 
         with self.assertRaises(ValueError):
             inst.update_state(MarketerState.Rejected, send_email=False)
@@ -90,7 +93,7 @@ class TestEmailTemplating(TestCase):
         """Create one event, one Marketeer, and two templates - one simple and one complex"""
         cls.event = EventData.objects.create(event_date=date(month=6, day=21, year=timezone.now().year + 1),
                                              use_from=timezone.now())
-        cls.inst = Marketer.objects.create(event=cls.event, name="Marketeer1", email="marketeer1@market.com")
+        cls.inst = Marketer.objects.create(event=cls.event, trading_name="Marketeer1", email="marketeer1@market.com")
 
         cls.simple_template = CommunicationTemplate.objects.create(category="CraftMarket", transition='',
                                                                    subject="Test Subject", content="Test Body",
@@ -148,7 +151,7 @@ class TestEmailTemplating(TestCase):
         self.assertEqual(mail.outbox[0].to, [self.inst.email, ])
         self.assertEqual(mail.outbox[0].subject, self.complex_template.subject)
         self.assertEqual(mail.outbox[0].body,
-                         f"Dear {self.inst.name},\nWe hope this email finds you well.\n-- \n"
+                         f"Dear {self.inst.trading_name},\nWe hope this email finds you well.\n-- \n"
                          f"" + self.complex_template.signature)
 
 
@@ -159,7 +162,7 @@ class TestEmailsOnTransitions(TestCase):
         """Set up Testing fixtures"""
         cls.event = EventData.objects.create(event_date=date(month=6, day=21, year=timezone.now().year + 1),
                                              use_from=timezone.now())
-        cls.inst = Marketer.objects.create(event=cls.event, name="Marketeer1", email="marketeer1@market.com")
+        cls.inst = Marketer.objects.create(event=cls.event, trading_name="Marketeer1", email="marketeer1@market.com")
 
         cls.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
                                                                     transition=MarketerState.Invited,
@@ -179,7 +182,7 @@ class TestEmailsOnTransitions(TestCase):
         self.assertEqual(mail.outbox[0].to, [self.inst.email, ])
         self.assertEqual(mail.outbox[0].subject, self.invited_template.subject)
         self.assertEqual(mail.outbox[0].body,
-                         f"Dear {self.inst.name},\nWe hope this email finds you well.\n-- \n"
+                         f"Dear {self.inst.trading_name},\nWe hope this email finds you well.\n-- \n"
                          f"" + self.invited_template.signature)
 
     def test_015_email_on_transition_wrong_category_setting(self):
@@ -204,7 +207,7 @@ class TestEmailsOnTransitions(TestCase):
         self.assertEqual(mail.outbox[0].to, [self.inst.email, ])
         self.assertEqual(mail.outbox[0].subject, self.invited_template.subject)
         self.assertEqual(mail.outbox[0].body,
-                         f"Dear {self.inst.name},\nWe hope this email finds you well.\n-- \n"
+                         f"Dear {self.inst.trading_name},\nWe hope this email finds you well.\n-- \n"
                          f"" + self.invited_template.signature)
 
     def test_030_future_template(self):
@@ -218,14 +221,14 @@ class TestEmailsOnTransitions(TestCase):
         self.assertEqual(mail.outbox[0].to, [self.inst.email, ])
         self.assertEqual(mail.outbox[0].subject, self.invited_template.subject)
         self.assertEqual(mail.outbox[0].body,
-                         f"Dear {self.inst.name},\nWe hope this email finds you well.\n-- \n"
+                         f"Dear {self.inst.trading_name},\nWe hope this email finds you well.\n-- \n"
                          f"" + self.invited_template.signature)
 
 
 class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommonMixin):
     screenshot_sub_directory = 'TestCraftMarketTeamPages'
 
-    # TODO - add tests to confirm toolbar buttons, test filters, and test action buttons
+    # TODO - add tests to confirm toolbar buttons, test filters
 
     @classmethod
     def get_driver(cls):
@@ -239,13 +242,13 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
         self.event = EventData.objects.create(event_date=date(month=6, day=21, year=timezone.now().year + 1),
                                               use_from=timezone.now())
-        self.marketers = [Marketer.objects.create(event=self.event, name="Marketeer1",
+        self.marketers = [Marketer.objects.create(event=self.event, trading_name="Marketeer1",
                                                        email="marketeer1@market.com"),
-                               Marketer.objects.create(event=self.event, name="Marketeer2",
+                               Marketer.objects.create(event=self.event, trading_name="Marketeer2",
                                                        email="marketeer2@market.com"),
-                               Marketer.objects.create(event=self.event, name="Marketeer3",
+                               Marketer.objects.create(event=self.event, trading_name="Marketeer3",
                                                        email="marketeer3@market.com"),
-                               Marketer.objects.create(event=self.event, name="Marketeer4",
+                               Marketer.objects.create(event=self.event, trading_name="Marketeer4",
                                                        email="marketeer4@market.com") ]
 
         model: Type[UserExtended | AbstractBaseUser] = get_user_model()
@@ -270,6 +273,12 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
                                                                     signature='Brantham Garage Sale',
                                                                     use_from=timezone.now())
 
+        self.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
+                                                                    transition=MarketerState.Confirmed,
+                                                                    subject="Test Subject",
+                                                                    content="Dear {{name}},\nWe hope this email finds you well.",
+                                                                    signature='Brantham Garage Sale',
+                                                                    use_from=timezone.now())
 
     def get_test_url(self):
         return self.live_server_url + reverse('CraftMarket:TeamPages', kwargs={'event_id': self.event.id})
@@ -369,7 +378,6 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
     def test_070_confirm_action_buttons_for_manage_invited_marketer(self):
         """Confirm that the actions are correct for each row when the user can manage"""
-
         first = self.marketers[0]
         first.update_state(MarketerState.Invited, send_email=False)
 
@@ -417,20 +425,22 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             confirm_button.click()
             self.selenium.implicitly_wait(1)
             text = self.selenium.find_element(By.CSS_SELECTOR, f'div.detail').text
-            self.assertIn(f"{first.name} has been invited to attend the Craft Market", text)
+            self.assertIn(f"{first.trading_name} has been invited to attend the Craft Market", text)
             self.assertIn(f"This invite has been sent to {first.email}", text)
 
             self.assertEqual(len(mail.outbox), 1)
             self.assertEqual(mail.outbox[0].to, [first.email, ])
             self.assertEqual(mail.outbox[0].subject, self.invited_template.subject)
             self.assertEqual(mail.outbox[0].body,
-                             f"Dear {first.name},\nWe hope this email finds you well.\n-- \n"
+                             f"Dear {first.trading_name},\nWe hope this email finds you well.\n-- \n"
                              f"" + self.invited_template.signature)
 
             first.refresh_from_db()
             self.assertEqual(first.state, MarketerState.Invited)
 
     def test_095_invite_without_email(self):
+        """Test the invite action Without sending an email"""
+        # ToDO - could this be a sub test of 090 ?
         first = list(self.marketers)[0]
 
         with self.identify_via_login(user=self.manage_user, password='wibble'):
@@ -450,15 +460,15 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             self.selenium.implicitly_wait(1)
 
             text = self.selenium.find_element(By.CSS_SELECTOR, f'div.detail').text
-            self.assertIn(f"{first.name} has been invited to attend the Craft Market", text)
-            self.assertIn(f"This invite has been recorded in the system but am automated email has not been sent", text)
+            self.assertIn(f"{first.trading_name} has been invited to attend the Craft Market", text)
+            self.assertIn(f"This invite has been recorded in the system, but an automated email has not been sent", text)
 
             self.assertEqual(len(mail.outbox), 0)
             first.refresh_from_db()
             self.assertEqual(first.state, MarketerState.Invited)
 
-    def test_100_invite_with_email(self):
-        """Test the confirm action including sending an email"""
+    def test_100_confirm_invite_with_email(self):
+        """Test the confirmation action including sending an email"""
         first = list(self.marketers)[0]
         first.update_state(MarketerState.Invited, send_email=False)
 
@@ -480,20 +490,21 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             confirm_button.click()
             self.selenium.implicitly_wait(1)
             text = self.selenium.find_element(By.CSS_SELECTOR, f'div.detail').text
-            self.assertIn(f"{first.name} has been invited to attend the Craft Market", text)
-            self.assertIn(f"This invite has been sent to {first.email}", text)
+            self.assertIn(f"You have confirmed that {first.trading_name} will attend the Craft Market", text)
+            self.assertIn(f"An automated email has been sent to {first.email}", text)
 
             self.assertEqual(len(mail.outbox), 1)
             self.assertEqual(mail.outbox[0].to, [first.email, ])
             self.assertEqual(mail.outbox[0].subject, self.invited_template.subject)
             self.assertEqual(mail.outbox[0].body,
-                             f"Dear {first.name},\nWe hope this email finds you well.\n-- \n"
+                             f"Dear {first.trading_name},\nWe hope this email finds you well.\n-- \n"
                              f"" + self.invited_template.signature)
 
             first.refresh_from_db()
             self.assertEqual(first.state, MarketerState.Confirmed)
 
     def test_105_confirm_invite_without_email(self):
+        """Test the confirmation action Without sending an email"""
         first = list(self.marketers)[0]
         first.update_state(MarketerState.Invited, send_email=False)
 
@@ -507,15 +518,174 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             popup = self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm_popup')
             self.assertTrue(popup.is_displayed())
 
+            send_email = self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm_popup input#send_email')
+            send_email.click()
+            self.assertIsNone(send_email.get_attribute('checked'))
+
             self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm_popup input.button.confirm').click()
 
             self.selenium.implicitly_wait(1)
 
             text = self.selenium.find_element(By.CSS_SELECTOR, f'div.detail').text
-            self.assertIn(f"{first.name} has confirmed they are attending the Craft Market", text)
+            self.assertIn(f"You have confirmed that {first.trading_name} will attend the Craft Market", text)
             self.assertIn(f"This confirmation has been recorded in the system", text)
 
             first.refresh_from_db()
             self.assertEqual(first.state, MarketerState.Confirmed)
 
-    #ToDo - test action buttons actually work
+    def test_110_reject_invite(self):
+        """Test the reject action an email is never sent"""
+        first = list(self.marketers)[0]
+        first.update_state(MarketerState.Invited, send_email=False)
+
+        with self.identify_via_login(user=self.manage_user, password='wibble'):
+            self.selenium.get(self.get_test_url())
+
+            active = self.selenium.find_element(By.CSS_SELECTOR,
+                                                f'span.action[tp_row_id="{first.id}"][tp_action="reject"]')
+            active.click()
+            self.selenium.implicitly_wait(1)
+            popup = self.selenium.find_element(By.CSS_SELECTOR, f'div#reject_popup')
+            self.assertTrue(popup.is_displayed())
+
+            self.selenium.find_element(By.CSS_SELECTOR, f'div#reject_popup input.button.confirm').click()
+
+            self.selenium.implicitly_wait(1)
+
+            text = self.selenium.find_element(By.CSS_SELECTOR, f'div.detail').text
+            self.assertIn(f"You have confirmed that {first.trading_name} will not attend the Craft Market", text)
+            self.assertIn(f"This has been recorded in the system", text)
+
+            first.refresh_from_db()
+            self.assertEqual(first.state, MarketerState.Rejected)
+
+class MarketeerRSVP(SmartHTMLTestMixins, SeleniumCommonMixin):
+    """Marketeer RSVP tests - test that Marketers can RSVP to an event"""
+    screenshot_sub_directory = 'TestCraftMarketTeamPages'
+
+    @classmethod
+    def get_driver(cls):
+        return webdriver.Chrome()
+
+    def setUp(self):
+        super().setUp()
+
+        self.screenshot_on_close = True
+        general_content_type = ContentType.objects.get_for_model(GarageSale.models.General)
+        marketer_content_type = ContentType.objects.get_for_model(Marketer)
+
+        self.event = EventData.objects.create(event_date=date(month=6, day=21, year=timezone.now().year + 1),
+                                              use_from=timezone.now())
+        self.marketers = [Marketer.objects.create(event=self.event, trading_name="Marketeer1",
+                                                       email="marketeer1@market.com"),
+                               Marketer.objects.create(event=self.event, trading_name="Marketeer2",
+                                                       email="marketeer2@market.com"),
+                               Marketer.objects.create(event=self.event, trading_name="Marketeer3",
+                                                       email="marketeer3@market.com"),
+                               Marketer.objects.create(event=self.event, trading_name="Marketeer4",
+                                                       email="marketeer4@market.com") ]
+
+        self.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
+                                                                    transition=MarketerState.Invited,
+                                                                    subject="Test Subject",
+                                                                    content="Dear {{name}},\nWe hope this email finds you well.",
+                                                                    signature='Brantham Garage Sale',
+                                                                    use_from=timezone.now())
+
+        self.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
+                                                                    transition=MarketerState.Confirmed,
+                                                                    subject="Test Subject",
+                                                                    content="Dear {{name}},\nWe hope this email finds you well.",
+                                                                    signature='Brantham Garage Sale',
+                                                                    use_from=timezone.now())
+
+    def get_test_url(self):
+        return self.live_server_url + reverse('CraftMarket:TeamPages', kwargs={'event_id': self.event.id})
+
+    def test_200_unique_code_generation(self):
+        """Confirm each marketer can have a unique code"""
+
+        # With the marketers not invited as yet the codes will be None
+        codes = [marketer.code for marketer in self.marketers]
+        self.assertTrue( all(code is None for code in codes) )
+
+        # code will be based on the marketer email address and most recent invite timestamp - so we can tweak these
+        # and confirm that the code changes accordingly.
+        states = list(map( lambda x: x.update_state(MarketerState.Invited, send_email=False), self.marketers))
+
+        self.assertTrue(all(marketer.state == MarketerState.Invited for marketer in self.marketers),
+                        'Not all marketer states are now Invited')
+
+        self.assertTrue(all(i.code is not None for i in self.marketers))
+        self.assertTrue(all(i.is_valid_code(i.code) for i in self.marketers), 'Some codes are not valid')
+
+    def test_205_unique_code_generation(self):
+        """Confirm each marketers code is different if the email is tweaked or the last invite is tweaked"""
+        self.marketers[0].update_state(MarketerState.Invited, send_email=False)
+        self.marketers[0].refresh_from_db()
+        inst = self.marketers[0]
+
+        code = inst.code
+        inst.email = 'a' + inst.email
+        inst.save()
+
+        self.assertNotEqual(inst.code, code)
+
+    def test_206_unique_code_generation_tweaked_timestamp(self):
+        """Confirm each marketers code is different if the last invite is tweaked"""
+        self.marketers[0].update_state(MarketerState.Invited, send_email=False)
+        code = self.marketers[0].code
+        inst = History.most_recent.filter(state=MarketerState.Invited, marketeer=self.marketers[0])[0]
+        inst.timestamp = inst.timestamp - timedelta(seconds=1)
+        inst.save()
+        self.marketers[0].save()
+
+        self.assertNotEqual(self.marketers[0].code, code)
+
+    def test_210_rsvp_confirm(self):
+        """Confirm that the RSVP url brings up the correct page"""
+        marketer = self.marketers[0]
+        marketer.update_state(MarketerState.Invited, send_email=False)
+        code = marketer.code
+        self.selenium.get(self.live_server_url + reverse('CraftMarket:RSVP', kwargs={'marketer_code': code}))
+        self.selenium.implicitly_wait(1)
+        soup = BeautifulSoup(self.selenium.page_source, 'html.parser')
+        h1 = soup.select_one('div.body H1')
+        self.assertEqual(h1.text, 'Craft Market Portal')
+
+    def test_215_rsvp_confirm_on_error(self):
+        """Confirm that the RSVP url brings up the correct page on errors"""
+        code = ''.join(random.sample(string.ascii_letters+string.digits, 7))
+        self.selenium.get(self.live_server_url + reverse('CraftMarket:RSVP', kwargs={'marketer_code': code}))
+        self.selenium.implicitly_wait(1)
+        soup = BeautifulSoup(self.selenium.page_source, 'html.parser')
+        error = soup.select_one('div.error')
+        self.assertIn('Invalid Request to Market Portal - please check your emails and try again', error.text)
+
+    def test_220_rsvp_portal(self):
+        """Confirm that the RSVP url shows the email prompt"""
+        marketer = self.marketers[0]
+        marketer.update_state(MarketerState.Invited, send_email=False)
+        code = marketer.code
+        self.selenium.get(self.live_server_url + reverse('CraftMarket:RSVP', kwargs={'marketer_code': code}))
+        self.selenium.implicitly_wait(1)
+        email = self.selenium.find_element(By.CSS_SELECTOR, 'div.form input#email')
+        self.assertTrue(email.is_displayed())
+        submit = self.selenium.find_element(By.CSS_SELECTOR, 'div.buttons input.button.confirm')
+        self.assertTrue(submit.is_displayed())
+
+
+    def test_230_rsvp_enter(self):
+        """Confirm that the RSVP url shows the email prompt"""
+        marketer = self.marketers[0]
+        marketer.update_state(MarketerState.Invited, send_email=False)
+        code = marketer.code
+        self.selenium.get(self.live_server_url + reverse('CraftMarket:RSVP', kwargs={'marketer_code': code}))
+        email = self.selenium.find_element(By.CSS_SELECTOR, 'div.form input#email')
+        submit = self.selenium.find_element(By.CSS_SELECTOR, 'div.buttons input.button.confirm')
+        email.send_keys(self.marketers[0].email)
+        submit.click()
+        self.selenium.implicitly_wait(1)
+        soup = BeautifulSoup(self.selenium.page_source, 'html.parser')
+        h1 = soup.select_one('div.body H1')
+        self.assertEqual(h1.text, 'Craft Market Invite RSVP')

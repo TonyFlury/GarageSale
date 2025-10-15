@@ -25,5 +25,6 @@ urlpatterns = [
     path('<int:marketer>/confirm/', views.TeamPagesConfirm.as_view(), name='TeamPagesConfirm'),
     path('<int:marketer>/invite/', views.TeamPagesInvite.as_view(), name='TeamPagesInvite'),
     path('<int:marketer>/reject/', views.TeamPagesReject.as_view(), name='TeamPagesReject'),
+    path('<str:marketer_code>/RSVP/', views.MarketerRSVP.as_view(), name='RSVP'),
 
 ]

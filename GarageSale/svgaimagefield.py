@@ -16,7 +16,6 @@ class ImagePreviewWidget(FileInput):
     def render(self, name, value, attrs=None, **kwargs):
          input_html = super().render(name, value, attrs=None, **kwargs)
          return input_html
-#        print(input_html)
 #        if value.url :
 #            img_html = mark_safe(f'<br><br><img style="width:64px;height=auto;" src="{value.url}"/>')
 #        else:

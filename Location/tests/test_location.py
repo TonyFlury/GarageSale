@@ -3,8 +3,8 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from selenium.webdriver.support.expected_conditions import WebDriverOrWebElement
 
-from GarageSale.tests.common import SeleniumCommonMixin
-from user_management.tests.common import IdentifyMixin, TestUserAccessCommon
+from GarageSale.tests.common import SeleniumCommonMixin, IdentifyMixin
+from user_management.tests.common import TestUserAccessCommon
 from django.shortcuts import reverse
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from datetime import datetime

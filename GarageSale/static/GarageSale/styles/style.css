@@ -191,8 +191,7 @@ div.form select[multiple] {
     padding-right:10px;
 }
 
-
-div.form .buttons input{
+div.form div.buttons input{
     background : var(--BackGroundColor);
     padding : 5px ;
     font-size: 1rem;
@@ -202,6 +201,15 @@ div.form .buttons input{
     box-shadow: 1px 1px 1px 1px rgba(1,1,1,1);
     margin : 15px;
 }
+
+    div.form div.buttons input:hover {
+        border-color: red;
+        box-shadow: 2px 2px 2px 2px red;
+    }
+
+    div.form div.buttons input:active {
+        box-shadow: 2px 2px 2px 2px rgba(1,1,1,1) inset;
+    }
 
 div.duplicate {
     font-size: 80%;
@@ -229,10 +237,6 @@ div.duplicate {
 div.form input[type='checkbox']:checked
 {
 
-}
-
-div.form .buttons input:active {
-    box-shadow: 2px 2px 2px 2px rgba(1,1,1,1) inset;
 }
 
 div.form input[type='text']:disabled, input[type='email']:disabled

@@ -1,0 +1,82 @@
+{% extends "_base_with_toolbar.html" %}
+{% load static %}
+{% load breadcrumb from craftmarket_framework %}
+
+{% block additionalStyles %}
+    {{ block.super }}
+    <style>
+    div.body {
+        h1 {
+            text-align: center;
+        }
+        div.intro {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        div.error,
+        div.form {
+            border: 1px solid red;
+            padding: 1rem;
+            margin: 1rem;;
+            border-radius: 1rem;
+            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
+            width: 75%;
+
+            label {
+                margin-right: 2rem;
+            }
+            input[type=email] {
+                width: 35rem;
+            }
+        }
+        div.buttons {
+            text-align: center;
+            margin-top: 1rem;
+
+            input.button {
+                font-size: 90%;
+                font-weight: bold;
+            }
+
+            input.button.confirm {
+                    background-color: lightgreen;
+                }
+
+            input.button.reject {
+                    background-color: red;
+                }
+            }
+        }
+    }
+    </style>
+{% endblock %}
+
+<!--- Remove menu (and icons) and clock -->
+{% block Menu %}
+{% endblock %}
+{%block body-extra %}
+{% endblock %}
+
+{% block body %}
+    {% if form_section == 'portal_login'%}
+        <H1>Craft Market Portal</H1>
+    {% endif %}
+
+    {% if error %}
+        <div class="error">
+            {{ error }}
+        </div>
+    {% else %}
+        <div class="form">
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="form_section" value="{{form_section}}" />
+                    {% include "rsvp_form_"|add:form_section|add:".html" %}
+            </form>
+        </div>
+    {% endif %}
+
+{% endblock %}
