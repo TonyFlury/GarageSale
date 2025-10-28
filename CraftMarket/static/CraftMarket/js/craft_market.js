@@ -51,7 +51,7 @@ function __set_action_event(action, event_id, url_head)
         const parent_row = actions[i].parentElement.parentElement
         console.assert(parent_row.classList.contains('data-row'), 'Grand-Parent element is not a row')
 
-        const name = parent_row.querySelector('td.cell.name[tp_row_id="' + id + '"]').textContent
+        const name = parent_row.querySelector('td.cell.trading_name[tp_row_id="' + id + '"]').textContent
         console.log('Mame for ID : ' + id + ' is ' + name)
 
         const action_url = url_head + id + '/' + action + '/'

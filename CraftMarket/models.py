@@ -1,14 +1,13 @@
-from pipes import Template
-
 import logging
 from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Q, Max
+from django.http import HttpRequest
+from django.urls import reverse
 from django.utils import timezone
 
-from GarageSale.models import EventData, CommunicationTemplate
+from GarageSale.models import EventData, CommunicationTemplate, TemplateAttachment
 from django.utils.translation import gettext_lazy as _
-from django.core.mail import EmailMessage
 from django.template import Template, Context
 
 import typing
@@ -68,7 +67,6 @@ class MarketerManager(models.Manager):
             logging.error(f"Unable to create History entry for Marketeer {self!s}  "
                           f"{MarketerState.New.label} @ {timezone.now()} - {e}")
         return instance
-
 
 class Marketer(models.Model):
     """Model to hold data for the Marketeer"""
@@ -198,12 +196,13 @@ class Marketer(models.Model):
         """Useful friendly name of this Craft Marketeer"""
         return f'{self.event.event_date.year} - {self.id} :{self.trading_name}'
 
-    def update_state(self, new_state, send_email=True) -> MarketerState:
+    def update_state(self, new_state:MarketerState, request:HttpRequest|None=None, send_email=True) -> MarketerState:
         """Encapsulate state transition:
                 * support only valid transition
                  * add a History entry
                  * send an email if requested
 
+            :param request: The request object
             :param new_state: The new state to transition to
             :param send_email: Whether to send an email on transition
             :return: The new state after transition
@@ -214,61 +213,58 @@ class Marketer(models.Model):
 
         if new_state not in valid_transitions.get(self.state, {}):
             raise ValueError(f"Invalid transition from {self.get_state_display()} {new_state.label}") from None
-        self.state = new_state
 
         # Keep the object state and the history state in sync
-        with transaction.atomic():
-            try:
-                inst = History.objects.create(marketeer=self, state=new_state)
-            except Exception as e:
-                logging.error(f"Unable to create History entry for Marketeer {self!s} "
-                              f"{new_state.label} @ {timezone.now()} - {e}")
-                raise e from None
-            self.save()
+        try:
+            with transaction.atomic():
+                try:
+                    inst = History.objects.create(marketeer=self, state=new_state)
+                except Exception as e:
+                    logging.error(f"Unable to create History entry for Marketeer {self!s} "
+                                  f"{new_state.label} @ {timezone.now()} - {e}")
+                    raise e from None
+                logging.info(f'Changing state of {self!s} from {MarketerState(self.state).label} to {new_state.label}')
+                self.state = new_state
+                self.save()
+        except Exception as e:
+            logging.error(f"Transaction aborted on {self!s} transition to {new_state.label} - {e} ")
 
         if send_email:
             category = settings.APPS_SETTINGS.get("CraftMarket", {}).get('EmailTemplateCategory', 'CraftMarket')
+            context = self.common_context(request)
+            app_settings = settings.APPS_SETTINGS.get("CraftMarket", {})
+            from_ = app_settings.get('EmailFrom', 'CraftMarket@BranthamGarageSale.org.uk')
 
             template = CommunicationTemplate.objects.filter(category=category,
-                                                            transition=new_state,
+                                                            transition=new_state.label,
                                                             use_from__lte=timezone.now()).order_by("-use_from").first()
             if template:
-                self.send_email(template)
-            else:
-                logging.error(
-                    f"Unable to send transition email for {self!s} "
-                    f"transition: {new_state.label!r}; Expected category: {category!r} - Valid Template not found")
-                return new_state
+                try:
+                    template.send_email(request, to = self.email, from_=from_, context=context, bcc=["Trustees@branthamGarageSale.org.uk", ])
+                except Exception as e:
+                    logging.error(f'Unable to send email for {self!s}  {category} transition to {new_state.label} - {e}')
+                    return new_state
 
         # Always return the new state - regardless of email success/failure
         return new_state
 
-    def send_email(self, template):
-        """Send email to this Marketeer"""
-        if not template:
-            logging.error("Template is None in Marketeer.send_email")
-            raise ValueError(f'Template cannot be None')
+    def url(self, request: HttpRequest = None):
+        """Generate the URL for this Marketeer"""
+        local = reverse('CraftMarket:RSVP',kwargs={'marketer_code': self.code})
 
-        expected_category = settings.APPS_SETTINGS.get("CraftMarket", {}).get('EmailTemplateCategory', 'CraftMarket')
+        if request:
+            url = (request.build_absolute_uri(local) if self.code else "")
+        else :
+            url = ("https://127.0.0.1:8080" + local) if self.code else ""
 
-        if template.category != expected_category:
-            logging.error(
-                f"Invalid template for a Craft Market Email - Category {template.category}, expected {expected_category}")
-            raise ValueError(
-                f"Invalid template for a Craft Market Email - Category {template.category}, expected {expected_category}")
+        return url
 
-        body_template = Template(str(template.content))
 
-        app_settings = settings.APPS_SETTINGS.get("CraftMarket", {})
+    def common_context(self, request:HttpRequest=None):
+        return Context({'event_date': str(self.event.get_event_date_display()),
+                                                   'trading_name': self.trading_name,
+                                                    'contact_name': self.contact_name,
+                                                    'supporting':','.join(self.event.supporting_organisations.values_list('name', flat=True)),
+                                                    'url': self.url(request),
+                                                    'email': self.email}, use_tz=True)
 
-        # Only does one template at the moment
-        # ToDO - logic for the {{name}} field
-        msg = EmailMessage(
-            to=[self.email, ],
-            from_email=app_settings.get("CraftMarket", {}).get('EmailFrom', 'CraftMarket@BranthamGarageSale.org.uk'),
-            subject=template.subject,
-            body=body_template.render(Context({'name': self.trading_name, 'email': self.email}, use_tz=True))
-                 + "\n-- \n" + template.signature,
-            bcc=["Trustees@branthamGarageSale.org.uk", ]
-        )
-        return msg.send()
