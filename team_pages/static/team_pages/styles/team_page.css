@@ -111,7 +111,7 @@ div.form img {
 }
 
 .category_list ul {
-    list_style:None;
+    list-style:None;
 }
 
 .category-list ul li {
@@ -139,8 +139,57 @@ div.form img {
       margin-right:10px;
       padding-left: 5px;
       padding-right:5px;
-      font-size: 70%
+      font-size: 100%
 }
+
+#id_al_toolbar {
+    background-color: lightgray;
+    border: thin solid lightgray;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+#id_al_toolbar span
+{
+    margin:0.5rem;
+}
+
+#id_al_toolbar span:first-child {
+    margin-left:5rem;
+}
+
+#id_al_toolbar span,
+.data-row .icons span {
+    display:inline-block;
+    cursor: pointer;
+    border: darkgrey thin solid;
+    border-radius: 26%;
+    padding: 2px;
+    background-color:lightgray;
+    box-shadow: inset 2px 2px 2px -10px red, 1px 1px 2px 1px black;
+    transition: box-shadow 0.25s ease-in-out;
+
+    height: fit-content;
+}
+
+#id_al_toolbar span img,
+.data-row .icons img {
+    height: 24px;
+    padding: 2px;
+}
+
+#id_al_toolbar span:hover,
+.data-row .icons span:hover{
+    box-shadow: inset 2px 2px 2px -10px red, 1px 1px 2px 2px red;
+    transition: box-shadow 0.25s ease-in-out, border-color 0.25s ease-in-out;
+}
+
+#id_al_toolbar span:active,
+.data-row .icons span:active{
+    border-color:lightgray;
+    box-shadow: -3px -3px 5px 0 black, 2px 2px 2px -10px black;
+}
+
 
 .sublist tr td {
     text-align:center ;
@@ -162,7 +211,6 @@ div.manage-news {
     position:relative;
 }
 
-
 tr.heading th {
     border-bottom: thin solid lightgray;
 }
@@ -176,44 +224,56 @@ tr.heading th:not(:last-child), tr.data-row td:not(:last-child) {
 }
 
 tr.data-row.odd {
-    background:var(--BackgroundColor);
+    background:var(--BackgroundColour);
+
+    td {
+        border-top: thin solid lightgray;
+        border-bottom: thin solid lightgray;
+    }
+    td:first-child {
+            border-left: thin solid lightgray;
+            border-top-left-radius: 15px;
+            border-bottom-left-radius: 15px;
+        }
+
+    td:last-child {
+            border-right: thin solid lightgray;
+            border-top-right-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
 }
 
 tr.data-row.even {
-    background:#6666FF;
+    background: peachpuff;
+    border: thin solid peachpuff;
+
+    td:first-child {
+        border-bottom-left-radius: 15px;
+        border-top-left-radius: 15px;
+    }
+    td:last-child {
+        border-bottom-right-radius: 15px;
+        border-top-right-radius: 15px;
+    }
 }
 
-.actions {
-    font-size:150%;
+.cell.icons span img{
     background: lightgray;
-    padding-top:1px;
-    padding-bottom:1px;
-    border:1px solid black;
-    border-radius: 10px 10px 0 0;
 }
 
-.actions ul {
-    list-list_style:none;
- 	margin-bottom: 1px;
-	margin-top: 1px;
-}
-
-.actions ul li {
-    display:inline;
-}
-
-.actions span {
-    cursor:pointer;
-    font-size:125%;
-    color: darkblue;
-    padding: 0.1em 0.25em;
+.data-row .cell {
+    padding:0.5rem 1rem;
 }
 
 tr.data-row td.icons span {
     cursor:pointer;
-    font-size:140%;
+    font-size:100%;
+    margin:5px 5px;
 }
 
+tr.data-row td.icons span.icon img {
+    height:28px;
+}
 .detail {
     font-size: 85%;
 }
@@ -250,17 +310,32 @@ tr.data-row td.icons span {
 }
 
 #filter-pop-up {
-    display:none;
-    background: var(--BackGroundColor);
+    background: whitesmoke;
+    background: linear-gradient(45deg,white 0%, whitesmoke 70%, wheat 100%);
 
     position: absolute;
+    visibility: hidden;
+    display:none;
     z-index: 1;
     font-size:12pt;
     border: thin solid grey;
     border-radius: 5px;
     box-shadow: 3px 3px 2px black;
-    padding:10px;
+    padding:5px;
+    top:-20px;
     left:80px;
+    transition: visibility 0.25 ease-in-out;
+
+    h3 {
+        text-align: center;
+        margin-top:0.5rem;
+        margin-bottom:0.5rem;
+        padding:0.1rem;
+    }
+
+    ul {
+        padding-left:1rem;
+    }
 }
 
 #filter-pop-up li {
@@ -269,10 +344,12 @@ tr.data-row td.icons span {
 
 #filter-pop-up input[type='button'] {
     background: var(--BackGroundColor);
-    border:thin solid grey;
-    font-size:14pt;
+    border: thin solid grey;
+    font-size: 14pt;
     border-radius: 5px;
-    box-shadow: 1px 1px 9px black;
+    box-shadow: 1px 1px 4px black;
+    margin-bottom: 5px;
+    margin-left:10px
 }
 
 .warning {

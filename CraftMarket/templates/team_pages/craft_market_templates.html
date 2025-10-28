@@ -1,0 +1,93 @@
+{% extends "team_pages/craft_market_base.html" %}
+{% load static %}
+{% load breadcrumb from craftmarket_framework %}
+
+{% block PageScripts %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static 'CraftMarket/js/craft_market.js' %}"></script>
+    {%  endblock %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <style>
+
+    div.popup {
+        display:none;
+        border: 1px solid black;
+         background-color: white;
+         padding: 10px;
+         position: absolute;
+         z-index: 1000;
+        box-shadow: 2px 2px 5px black;
+        border-radius: 15px;
+
+        span.name {
+            display: inline-block;
+        }
+
+        input.button.cancel {
+            background-color: indianred;
+        }
+        input.button.confirm {
+            background-color: lightgreen;
+        }
+    }
+    </style>
+{% endblock %}
+
+{% block detail %}
+    {{  block.super }}
+    {%  if not sub_list_data  %}
+        Use the New button on the left to build your first craft Marketer entry.
+    {% else %}
+    <p>Use the grid to the left to select a craft Marketer, or the New button to add a new entry.
+    <p>Use the Funnel icon to filter the entries based on a number of different criteria.</p>
+    {% endif %}
+
+    <div id="invite_popup" class="popup">
+        <h3>Confirm Invite for <span class="name"></span></h3>
+
+        Are you sure you want to invite <span class="name"></span> to the Craft Market?
+
+        <div><label for="send_email">Invite with email</label><input type="checkbox" checked id="send_email"/></div>
+        <div class="buttons">
+            <span>
+            <input type=button class='button cancel' value="Cancel">
+            </span>
+           <span>
+            <input type=button class='button confirm' value="Invite">
+           </span>
+        </div>
+    </div>
+
+    <div id="confirm_popup" class="popup">
+        <h3>Confirm attendance for <span class="name"></span></h3>
+
+        Are you sure you want to Confirm <span class="name"></span> will attend the Craft Market?
+
+        <div><label for="send_email">Confirm with email</label><input type="checkbox" checked id="send_email"/></div>
+        <div class="buttons">
+            <span>
+            <input type=button class='button cancel' value="Cancel">
+            </span>
+           <span>
+            <input type=button class='button confirm' value="Confirm Attendance">
+           </span>
+        </div>
+    </div>
+
+    <div id="reject_popup" class="popup">
+        <h3>Confirm non-attendance for <span class="name"></span></h3>
+
+        Are you sure you want to confirm <span class="name"></span> will not attend the Craft Market?
+
+        <div class="buttons">
+            <span>
+            <input type=button class='button cancel' value="Cancel">
+            </span>
+           <span>
+            <input type=button class='button confirm' value="Confirm non-Attendance">
+           </span>
+        </div>
+    </div>
+{% endblock %}

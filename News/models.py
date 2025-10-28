@@ -33,7 +33,7 @@ class NewsQuerySet(models.query.QuerySet):
         return self.exclude(published=True)
 
     def expired(self):
-        return filter(Q(expire_by__gte=date.today()) & Q(expire_by__isnull=False))
+        return self.filter(Q(expire_by__gte=date.today()) & Q(expire_by__isnull=False))
 
     def past_publish_by(self):
         return self.filter(publish_by__lte=date.today())

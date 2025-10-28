@@ -6,6 +6,7 @@ garagesale=# CREATE USER garagesaleweb PASSWORD '7RWrbJ18tZ';
 
 garagesale=# grant usage on schema public to garagesaleweb ;
 garagesale=# grant create on schema public to garagesaleweb ;
+garagesale=# alter user garagesaleweb CreateDB;
 
 #  Fine and Edit hba.conf file
 garagesale=# SHOW hba_file;

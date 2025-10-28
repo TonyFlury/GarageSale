@@ -1,0 +1,40 @@
+{% extends "team_pages/craft_market_base.html" %}
+{% load team_page_tags %}
+{% load static %}
+{% load is_icon from team_page_tags %}
+{% load breadcrumb from craftmarket_framework %}
+
+{% block PageScripts %}
+    {{ block.super }}
+    {%  endblock %}
+
+
+{% block detail %}
+    <h2>Viewing a Craft Market record</h2>
+    {% for field in form %}
+        {{ field|is_icon }}
+        {% if field|is_icon %}
+            {% if field.value %}
+                <p><label for="tp_current_logo">Current Logo</label><img id='id_current_logo' alt="Logo" src="{{MEDIA_URL}}{{field.value}}" /></p>
+            {% endif %}
+        {% else %}
+         <p><label>{{ field.label_tag }}</label> {{ field.value }}</p>
+        {% endif %}
+    {% endfor %}
+
+    <h3>History</h3>
+    <ul>
+        {% for entry in history %}
+            {% if entry.state == 'NW' %}
+                <li>Created on {{ entry.latest_date.day }}/{{ entry.latest_date.month }}/{{ entry.latest_date.year }}</li>
+            {% elif entry.state == 'IN' %}
+                <li>Invited on {{ entry.latest_date.day }}/{{ entry.latest_date.month }}/{{ entry.latest_date.year }}</li>
+            {% elif entry.state == 'CO' %}
+                <li>Confirmed on {{ entry.latest_date.day }}/{{ entry.latest_date.month }}/{{ entry.latest_date.year }}</li>
+            {% elif entry.state == 'RE' %}
+                <li>Invite Rejected on {{ entry.latest_date.day }}/{{ entry.latest_date.month }}/{{ entry.latest_date.year }}</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+
+{% endblock %}

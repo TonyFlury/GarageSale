@@ -135,3 +135,18 @@ class EventData(models.Model):
             return e
         except EventData.DoesNotExist:
             return None
+
+class CommunicationTemplate(models.Model)   :
+    class Meta:
+        indexes = [
+            models.Index(name='CategoryByDate', fields=['category', '-use_from']),
+            models.Index(name='CategoryTransitionByDate', fields=['category', 'transition', '-use_from']),
+            models.Index(name='CategorySummaryByDate', fields=['category', 'summary', '-use_from'])
+        ]
+    category = models.CharField(max_length=20)
+    transition = models.CharField(max_length=5, null=True, blank=True)
+    summary = models.CharField(max_length=180, null=True, blank=True)
+    subject = models.CharField(max_length=180, null=False, blank=False)
+    content  = models.TextField( blank=False, null=False)
+    signature = models.TextField(max_length=500, null=True, blank=True)
+    use_from = models.DateField(null=False, blank=False)

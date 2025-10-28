@@ -1,0 +1,23 @@
+{% extends "team_pages/craft_market_base.html" %}
+{% load static %}
+{% load craftmarket_framework %}
+
+{% block PageScripts %}
+    {{ block.super }}
+    {%  endblock %}
+
+{% block detail %}
+    <h2>Creating a new Craft Marketer record</h2>
+    <div>
+        <form method="POST" >
+
+        {% csrf_token %}
+            <div class="form">
+                {{ form.as_p }}
+            </div>
+        <div class="buttons">
+            <input id="tp_save_form"  type="submit" value="Save and continue">
+            <input id='tp_cancel_form' item_id="{{form.instance.event_id}}" type="button" value="Cancel this form.">
+        </div>
+    </form>
+{% endblock %}

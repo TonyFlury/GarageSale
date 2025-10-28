@@ -1,0 +1,17 @@
+{% extends "team_pages/craft_market.html" %}
+{% load static %}
+{% load breadcrumb from craftmarket_framework %}
+
+{% block detail %}
+        {{ block.super }}
+
+    <div>
+        You have confirmed that {{ instance.name }} will attend the Craft Market.
+
+    {% if email %}
+        An automated email has been sent to {{ instance.email }}
+    {% else %}
+        This confirmation has been recorded in the system, but an automated email has not been sent.
+    {% endif %}
+    </div>
+{% endblock %}
