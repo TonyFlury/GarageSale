@@ -202,9 +202,22 @@ function __document_loaded(){
     /* Establish Actions for Sublist Toolbar buttons */
     let toolbar = document.getElementById('id_al_toolbar');
     if (toolbar) {
-        let new_button = document.getElementById('tp-create');
-        if (new_button)
-            new_button.addEventListener('click', function() {do_action( 'create', event_id );} );
+        let buttons = toolbar.querySelectorAll('span');
+        for (const button of buttons) {
+            console.log('Toolbar button : ' + button.getAttribute('tp_action'));
+
+            /* Skip the filter button */
+            if (button.getAttribute('id') === 'tp-filters')
+                continue
+
+            let action = button.getAttribute('tp_action');
+            if (action === null)
+                continue;
+            button.addEventListener('click',
+                function(){
+                    do_action( action, event_id );}
+                );
+        }
 
         let filter_button = document.getElementById('tp-filters');
         if (filter_button)

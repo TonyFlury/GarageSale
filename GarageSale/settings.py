@@ -32,6 +32,8 @@ try:
 except ImportError:
     debug = None
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -60,6 +62,11 @@ if debug and TEST_SERVER:
 
                 "propagate": False,
             },
+            "CraftMarket.views":{
+                "handlers": ["console"],
+                "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+                "propagate": False,
+            }
         },
     }
     import logging.config
@@ -101,6 +108,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_quill',
+    'django_summernote',
 ]
 
 AUTH_USER_MODEL = "user_management.UserExtended"
@@ -199,7 +207,7 @@ APPS_SETTINGS = {
                         },
     'team_pages' : {'Craft Market':'CraftMarket:TeamPages',},
     "CraftMarket" : {'EmailTemplateCategory': 'CraftMarket',
-                     'EmailFrom': 'CraftMarket@BranthamGarageSale'}
+                     'EmailFrom': 'CraftMarket@BranthamGarageSale.org.uk'}
 }
 
 GOOGLE_MAP_SETTINGS = GoogleMap_credentials.GOOGLE_MAP_SETTINGS

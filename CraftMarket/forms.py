@@ -4,7 +4,7 @@ from CraftMarket.models import Marketer
 
 
 class MarketerForm(forms.ModelForm):
-    template_name = 'craftmarket_form.html'
+    template_name = 'GarageSale/forms/default_form.html'
     form_template_name = template_name
     class Meta:
         model = Marketer

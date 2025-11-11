@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 """
-    GarageSale.views.py : 
+    GarageSale.general_views.py :
 
 Summary :
     
@@ -20,7 +20,7 @@ from News.models import NewsArticle
 
 def home(incoming_request: HttpRequest) -> TemplateResponse:
     qs = NewsArticle.FrontPageOrder.all()
-    t = TemplateResponse(incoming_request, template="home.html", context={'articles': qs} )
+    t = TemplateResponse(incoming_request, template="home.html", context={'articles': qs})
     return t
 
 #def testing(request, case=0):

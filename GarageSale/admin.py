@@ -14,7 +14,9 @@ Testable Statements :
 """
 from django.contrib import admin
 from django import forms
-from .models import MOTD, EventData, Supporting
+
+from Sponsors.models import Sponsor
+from .models import MOTD, EventData, Supporting, CommunicationTemplate, TemplateAttachment
 from Location.models import Location
 
 from Sponsors import models as sponsor_models
@@ -24,6 +26,7 @@ from django.contrib.auth.models import Permission
 from .svgaimagefield import ImagePreviewWidget
 from django.contrib import admin
 
+from django_summernote.admin import SummernoteModelAdmin
 
 admin.site.register(Permission)
 
@@ -62,7 +65,6 @@ class EventAdminForm(forms.ModelForm):
         fields = '__all__'  # edit: django >= 1.8
 
 
-
 @admin.register(EventData)
 class SettingsAdmin(admin.ModelAdmin):
     form = EventAdminForm
@@ -70,3 +72,16 @@ class SettingsAdmin(admin.ModelAdmin):
     date_hierarchy = 'event_date'
     inlines = [OrganisationsInline,SponsorsInline, LocationInline]
     exclude = ['supporting_organisations']
+
+class TemplateAttachmentInline(admin.TabularInline):
+    extra = 0
+    model = TemplateAttachment
+    list_display = ['template', 'upload', 'name', 'file']
+
+@admin.register(CommunicationTemplate)
+class TemplatesAdminForm(SummernoteModelAdmin):
+    summernote_fields = ('html_content',)
+    list_display = ['category','transition','use_from']
+    inlines = [TemplateAttachmentInline]
+    def get_queryset(self, request):
+        return super().get_queryset(request).order_by('category', 'transition', '-use_from')

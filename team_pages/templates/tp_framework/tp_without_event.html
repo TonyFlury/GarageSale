@@ -107,7 +107,7 @@ across all relevant data.
             <tr class="data-row {% cycle 'odd' 'even' %}" tp_row_id="{{item.id}}">
                 {%  for column, label in columns %}
                         <td class="cell {{ column }}" tp_row_id="{{ item.id }}">
-                            {{ item|getattribute:column }}
+                            {{ item|getattribute:column | safe }}
                         </td>
                 {% endfor %}
                 <td class="cell icons" tp_row_id="{{ item.id }}">

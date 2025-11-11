@@ -18,14 +18,14 @@ from django.contrib import admin
 from django.urls import path, include, reverse_lazy
 from django.conf import settings
 from django.conf.urls.static import static
-from . import views
+from .views import general_views
 
 from django.views.generic import TemplateView
 from django.views.generic.base import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("", views.home, name="home"),
+    path("", general_views.home, name="home"),
     path("newhome", TemplateView.as_view(template_name='home.html'), name="NewHome"),
     path("getInvolved", RedirectView.as_view(url=reverse_lazy('Location:view'))),
 #    path("getInvolved", include('Location.urls'), name="getInvolved"),
@@ -45,7 +45,9 @@ urlpatterns = [
     path('sponsors/', include('Sponsors.urls')),
     path('CraftMarket/', include('CraftMarket.urls')),
     path('mapping/', include('DjangoGoogleMap.urls')),
+    path('summernote/', include('django_summernote.urls')),
 ]
+
 
 if settings.DEBUG:
     urlpatterns += path("__debug__/", include("debug_toolbar.urls")),

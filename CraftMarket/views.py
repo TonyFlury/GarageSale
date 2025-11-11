@@ -1,31 +1,25 @@
-from copy import deepcopy
-from typing import Any
-
 import logging
 
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.contrib.auth.models import PermissionsMixin
 from django.core.exceptions import BadRequest
 from django.db import models
 from django.http import HttpRequest
 from django.shortcuts import redirect
-from django.template import Template, RequestContext
+from django.template import Template
 from django.template.response import TemplateResponse
 from django.templatetags.static import static
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.encoding import force_str
 from django.contrib.postgres.fields import ArrayField
 from django.views import View
-from django.views.defaults import ERROR_500_TEMPLATE_NAME
 
-from django.views.generic import TemplateView, ListView
-from django.db.models import Q, Case, When, Value, QuerySet, Model, Max, F
+from django.db.models import Q, Case, When, Value, QuerySet, Max
 
 import CraftMarket.forms
-import GarageSale
 from GarageSale.models import EventData, CommunicationTemplate
 from CraftMarket.models import Marketer, MarketerState
 from CraftMarket.forms import MarketerForm
+from GarageSale.views.template_views import TemplateManagement, TemplatesCreate, TemplatesView, TemplatesEdit, \
+    duplicate_template
 
 from team_pages.framework_views import FrameworkView
 
@@ -37,10 +31,13 @@ logger = logging.getLogger('CraftMarket.views')
 def craft_market_list(request):
     return None
 
+# TODO - prevent the need to repeat the full url for each action.
+# TODO - framework should be able to construct the URL based on the action name, the relevant object
+# TODO - and the base URL
 
 class TeamPages(FrameworkView):
     login_url = '/user/login'
-    permission_required = 'GarageSale.is_trustee'
+    permission_required  = 'GarageSale.is_trustee'
     template_name = "team_pages/craft_market.html"
     view_base = "CraftMarket:TeamPages"
     columns = [('trading_name', 'Trading<br>Name'), ('state_name', 'Current<br>Status')]
@@ -179,7 +176,7 @@ class TeamPages(FrameworkView):
 
 
 class TeamPagesCreate(TeamPages):
-    permission_required = ['GarageSale.is_trustee']
+    permission_required  = 'GarageSale.is_trustee'
     template_name = "team_pages/craft_market_create.html"
     form_class = MarketerForm
     model_class = Marketer
@@ -221,7 +218,6 @@ class TeamPagesEdit(TeamPagesView):
     permission_required = ['CraftMarket.can_manage']
 
     def get(self, request, **kwargs):
-        print(request.user.email, request.user.get_all_permissions())
         return super().get(request, **kwargs)
 
 class TeamPagesGenericStateChange(TeamPages):
@@ -277,12 +273,11 @@ class TeamPagesReject(TeamPagesGenericStateChange):
     new_state = MarketerState.Rejected
 
 class MarketerRSVP(View):
-    template_name = "craft_market_RSVP.html"
+    template_name = "portal/craft_market_RSVP.html"
 
     def _portal_login(self, request, **kwargs):
         marketer_code = kwargs.get('marketer_code', None)
         email = request.POST.get('email', None)
-        print('received', marketer_code, email)
 
         if not Marketer.Checksum.validate_checksum(marketer_code):
             logging.error(f'Invalid Marketer Code checksum- provided {marketer_code} during RSVP request')
@@ -374,18 +369,85 @@ class MarketerRSVP(View):
             case _:
                 raise BadRequest(f'Invalid form_section: {form_section}')
 
-class MarketerTemplates(FrameworkView):
-    template_name = "team_pages/craft_market_templates.html"
-    login_url = '/user/login'
-    permission_required = 'CraftMarket.can_manage'
-    columns = [('transition', 'Transition/Type'), ('use_from', 'Use From')]
+class MarketTemplates(TemplateManagement):
+    template_name = "team_pages/templates.html"
+    permission_required =  'CraftMarket.can_manage'
+    category = 'CraftMarket'
+    view_base = reverse_lazy('CraftMarket:templates')
 
-    def get_object(self, request, **kwargs) ->  Any | None :
-        return None
+    def get_success_url(self, request, context=None, **kwargs):
+        return reverse('CraftMarket:templates')
 
-    def get_list_query_set(self, request: HttpRequest, **kwargs):
-        return CommunicationTemplate.objects.filter(template_type='CraftMarket')
+class MarketTemplateCreate(TemplatesCreate):
+    category = 'CraftMarket'
+    permission_required =  'CraftMarket.can_manage'
+    transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    view_base = reverse_lazy('CraftMarket:templates')
+    template_help = """
+        <p>The Template system allows consistent messages to be sent to all Craft Marketers.
+        Including the ability to personalise emails, and provide key information about the event without needing
+        to change the template for every Event, by using Information tags, and attach files to outgoing emails.
+                
+        <h3>Transition/Type Field</h3>
+        The Transition/Type field identifies when or how this template is used.
+        <ul>
+        <li> Invite - Is used when a Craft Marketer is invited to participate in the event
+        <li> Confirm - Is used when a Craft Marketer has confirmed they will participate in the event
+        <li> Other - Allows you to enter your own custom Type - typically used for attachements.
+        </ul>
 
-    def get_context_data(self, request, **kwargs):
-        return super().get_context_data(request, **kwargs)
+        <h3>Information tags</h3>
+        The following tags can be used in the subject and content areas so that emails are personalised, and
+        specific to a given event (this reduces the need to update the template for every event).
+        
+        <h4>Event Information</h4>
+        <ul>
+        <li> {{event_date}} - A nicely formated date for the event
+        <li> {{supporting}} - A list of the names of the charities being supported by this event
+        </ul>
+        <h4>Craft Marketer Information</h4>
+        <ul>
+        <li> {{trading_name}} - The trading name of the Craft Marketer
+        <li> {{contact_name}} - The given contact name of the Craft Marketer
+        <li> {{email}} - The email address of the Craft Marketer
+        <li> {{url}} - The unique portal URL for this Craft Marketer - used in Invite emails.
+        </ul>
+        To make use of these tags, make sure you include the {{ }} around the name as above.
+        
+        <h3>Attachments</h3>
+        The Template system can attach one or more files to outgoing emails. Attachments can either be : 
+        <ul>
+        <li> An uploaded fixed file of any file type (eg an image or a PDF file) or
+        <li> A named template from the CraftMarket Category - in this case the Template is converted 
+        to a PDF and attached to the email,
+        </ul>
+    """
 
+    def get_success_url(self, request, context=None, **kwargs):
+        return reverse('CraftMarket:templates')
+
+
+class MarketTemplateView(TemplatesView):
+    category = 'CraftMarket'
+    permission_required =  'CraftMarket.can_manage'
+    transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    view_base = reverse_lazy('CraftMarket:templates')
+    template_help = ""
+
+class MarketTemplateEdit(TemplatesEdit):
+    category = 'CraftMarket'
+    permission_required =  'CraftMarket.can_manage'
+    transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    view_base = reverse_lazy('CraftMarket:templates')
+    template_help = MarketTemplateCreate.template_name
+
+def duplicate(request, template_id):
+
+    new_inst = duplicate_template(template_id)
+
+    return redirect(reverse('CraftMarket:template_edit', kwargs={'template_id': new_inst.id}))
+
+class MarketTemplateDelete(TeamPages):
+    permission_required =  'CraftMarket.can_manage'
+    template_name = "team_pages/templates_delete.html"
+    view_base = reverse_lazy('CraftMarket:templates')

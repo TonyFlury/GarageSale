@@ -14,7 +14,7 @@ Testable Statements :
 """
 from contextlib import contextmanager
 from copy import deepcopy
-from datetime import datetime
+import datetime
 from importlib import import_module
 from unittest import TestCase
 
@@ -51,16 +51,16 @@ logger.setLevel(level=logging.INFO)
 class SmartHTMLTestMixins(TestCase):
 
     def setUp(self):
-        super().__init__()
+        super().setUp()
 
     @staticmethod
-    def fetch_elements_by_selector(html: str, selector: str) -> set[bs4.Tag]:
+    def fetch_elements_by_selector(html: str, selector: str) -> list[bs4.Tag]:
         """Return a set Beautifulsoup tags based on the selector
             :param html: the HTML to be searched
             :param selector : The CSS Style selector to be searched for
         """
         soup = BeautifulSoup(html, 'html.parser')
-        return set(soup.css.select(selector))
+        return list(soup.css.select(selector))
 
     def assertHTMLHasElements(self, html: Union[str, bytes],
                               selector,
@@ -132,7 +132,7 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
 
         if cls.screenshot_sub_directory:
             cls.screen_shot_path = (root_screenshot_directory
-                                    / f'{datetime.utcnow().isoformat(sep="_", timespec="seconds")}' / cls.screenshot_sub_directory)
+                                    / f'{datetime.datetime.utcnow().isoformat(sep="_", timespec="seconds")}' / cls.screenshot_sub_directory)
             cls.screen_shot_path.mkdir(exist_ok=True,parents=True)
         else:
             cls.screen_shot_path = None
@@ -155,7 +155,8 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
         self._screenshot_on_close = True
 
     def tearDown(self):
-        if settings.DEBUG and self.screen_shot_path and self._screenshot_on_close:
+        super().tearDown()
+        if self.screen_shot_path and self._screenshot_on_close:
             test_name = self.id().split('.')[-1]
             self.selenium.save_screenshot(self.screen_shot_path / f'{test_name}.png')
 
