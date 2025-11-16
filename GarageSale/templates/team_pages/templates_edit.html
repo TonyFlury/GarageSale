@@ -26,7 +26,7 @@
     }
 
     function __document_loaded() {
-        let element = document.getElementById('template_creation_popup')
+        let element = document.getElementById('template_edit-popup')
         element.style.display = 'block'
         element.style.left = (window.innerWidth - element.offsetWidth)/ 2 + 'px'
         element.style.top = (window.innerHeight - element.offsetHeight)/ 2 + 'px'
@@ -55,18 +55,20 @@
     {%  endblock %}
 
 {% block detail %}
-    <div id="template_creation_popup" class="popup">
+    <div id="template_creation-popup" class="popup">
     {%  if template_help %}
-        <div id="help_popup-button">
+        <div id="help-popup-button">
             <img class="help"  alt='Help' src="{% static 'GarageSale/images/icons/help-circle-svgrepo-com.svg' %}" onclick="document.getElementById('help-popup').style.display = 'block'">
         </div>
         <div id="help-popup" class="popup">
-            <div id="help_popup-close">
+            <div id="help-popup-close">
                 <img class="close"  alt='Close Help' src="{% static 'GarageSale/images/icons/close-circle-1-svgrepo-com.svg' %}" onclick="document.getElementById('help-popup').style.display = 'none'">
                 <h2>Template Help</h2>
+                <div id="help-popup-content">
                 <p>
                     {{ template_help | safe}}
                 </p>
+                    </div>
             </div>
         </div>
     {% endif %}
@@ -80,6 +82,7 @@
                     {{ form.as_p }}
                 </div>
                 <h4>Attachments</h4>
+                <div id="AttachmentSectionWrapper">
                 <div id="AttachmentSection" class="attachments">
                     {% for attachment  in attachments %}
                         <div class="attachment" tp_row_id={{ attachment.id.value }}>
@@ -92,6 +95,7 @@
                             {% endif %}
                         </div>
                     {% endfor %}
+                </div>
                     <span class="add"><input type="submit" id="id_add_attachment" name='Add' value="Add +" class="button"></span>
                 </div>
                 <div class="buttons">

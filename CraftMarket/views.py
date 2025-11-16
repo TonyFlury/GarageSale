@@ -4,10 +4,10 @@ from django.core.exceptions import BadRequest
 from django.db import models
 from django.http import HttpRequest
 from django.shortcuts import redirect
-from django.template import Template
+from django.template import Template, Context
 from django.template.response import TemplateResponse
 from django.templatetags.static import static
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.utils.encoding import force_str
 from django.contrib.postgres.fields import ArrayField
 from django.views import View
@@ -31,9 +31,8 @@ logger = logging.getLogger('CraftMarket.views')
 def craft_market_list(request):
     return None
 
-# TODO - prevent the need to repeat the full url for each action.
-# TODO - framework should be able to construct the URL based on the action name, the relevant object
-# TODO - and the base URL
+#ToDo - prevent the need to repeat the full url for each action:
+# Remove the regex field from the toolbar and actions fields - impacts on framework.js too
 
 class TeamPages(FrameworkView):
     login_url = '/user/login'
@@ -44,30 +43,32 @@ class TeamPages(FrameworkView):
     can_create = True
     model_class = Marketer
     form_class = MarketerForm
-    toolbar = [{'action': 'create', 'label': 'Create', 'regex': '/CraftMarket/<int:event_id>/create/', 'icon': ''},
-               {'action': 'templates', 'label': 'Templates', 'regex': '/CraftMarket/templates/', 'icon': ''},
+    toolbar = [{'action': 'create', 'label': 'Create','icon': ''},
+               {'action': 'templates', 'label': 'Templates', 'icon': ''},
                ]
     filters = [{'id': 'marketer_invited', 'fragment': '!XInvited', 'pair': True, 'label': 'Invited'},
                {'id': 'marketer_responded', 'fragment': '!XResponded', 'pair': True, 'label': 'Responded'},
                {'id': 'marketer_rejected', 'fragment': '!XRejected', 'label': 'Rejected'},
                ]
-    actions = {'create': {'label': 'Create', 'regex': '/CraftMarket/<int:event_id>/create/',
+    actions = {'create': {'label': 'Create',
                           'icon': static('/GarageSale/images/icons/create-note-alt-svgrepo-com.svg')},
-               'templates': {'label': 'Templates', 'regex': '/CraftMarket/templates/',
-                             'icon': static('/GarageSale/images/icons/visit-templates-svgrepo-com.svg')},
-               'edit': {'label': 'Edit Details', 'regex': '/CraftMarket/<int:marketer_id>/edit/',
+               'templates': {'label': 'Templates','object':'false',
+                             'icon': static('/GarageSale/images/icons/folder-templates-svgrepo-com.svg')},
+               'edit': {'label': 'Edit Details',
                         'icon': static('GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg')},
-               'view': {'label': 'View Details', 'regex': '/CraftMarket/<int:marketer_id>/view/',
+               'view': {'label': 'View Details',
                         'icon': static('GarageSale/images/icons/execute-inspect-svgrepo-com.svg')},
-               'cancel': {'label': 'Cancel', 'regex': '/CraftMarket/<int:event_id>/',
+               'cancel': {'label': 'Cancel',
                           'icon': static('GarageSale/images/icons/cancel-svgrepo-com.svg')},
-               'invite': {'label': 'Invite to Event', 'regex': '',
+               'invite': {'label': 'Invite to Event',
                           'icon': static('GarageSale/images/icons/invite-svgrepo-com.svg')},
-               'confirm': {'label': 'Confirm Attendance', 'regex': '',
+               'confirm': {'label': 'Confirm Attendance',
                            'icon': static('GarageSale/images/icons/thumb-up-svgrepo-com.svg')},
-               'reject': {'label': 'Reject Invite', 'regex': '',
+               'reject': {'label': 'Reject Invite',
                           'icon': static('GarageSale/images/icons/thumb-down-svgrepo-com.svg')}, }
     url_fields = ['<int:event_id>', '<int:marketer_id>']
+    url_base = 'CraftMarket'
+    #allow_multiple = True
 
     def get_success_url(self, request, context=None, **kwargs):
         event_id = context.get('event_id')
@@ -235,6 +236,7 @@ class TeamPagesGenericStateChange(TeamPages):
         context = super().get_context_data( request, **kwargs)
         inst = self.get_object(request, **kwargs)
         event_id = inst.event.id
+        print(f'in get_context_data for {self.view_base} with {event_id=} and {inst.id=} - {"no_email" in request.GET=}')
         context |= {'action': self.new_state.label,
                     'event_id': event_id,
                     'marketer_id': inst.id,
@@ -245,6 +247,7 @@ class TeamPagesGenericStateChange(TeamPages):
     # Overriding all the get function as there is no form here - confirmation is by pop-up
     def get(self, request, **kwargs):
         send_email:bool = not 'no_email' in request.GET
+
         marketer_id = kwargs.get('marketer', None)
         try:
             marketer = Marketer.objects.get(id=marketer_id)
@@ -303,7 +306,7 @@ class MarketerRSVP(View):
             logging.error(f'Could not find a valid Terms and Conditions template for {marketer}')
             tos_html = '{% lorem 5 p %}'
 
-        tos = Template(tos_html).render(context=marketer.common_context(request=request))
+        tos = Template(tos_html).render(context=Context(marketer.common_context(request=request)))
 
         return TemplateResponse(request=request, template=self.template_name,
                                 context={'form_section':'accept_reject',
@@ -373,7 +376,7 @@ class MarketTemplates(TemplateManagement):
     template_name = "team_pages/templates.html"
     permission_required =  'CraftMarket.can_manage'
     category = 'CraftMarket'
-    view_base = reverse_lazy('CraftMarket:templates')
+    url_base = 'CraftMarket/templates'
 
     def get_success_url(self, request, context=None, **kwargs):
         return reverse('CraftMarket:templates')
@@ -382,7 +385,7 @@ class MarketTemplateCreate(TemplatesCreate):
     category = 'CraftMarket'
     permission_required =  'CraftMarket.can_manage'
     transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
-    view_base = reverse_lazy('CraftMarket:templates')
+    url_base = 'CraftMarket/templates'
     template_help = """
         <p>The Template system allows consistent messages to be sent to all Craft Marketers.
         Including the ability to personalise emails, and provide key information about the event without needing
@@ -431,15 +434,15 @@ class MarketTemplateView(TemplatesView):
     category = 'CraftMarket'
     permission_required =  'CraftMarket.can_manage'
     transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
-    view_base = reverse_lazy('CraftMarket:templates')
+    url_base = 'CraftMarket/templates'
     template_help = ""
 
 class MarketTemplateEdit(TemplatesEdit):
     category = 'CraftMarket'
     permission_required =  'CraftMarket.can_manage'
     transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
-    view_base = reverse_lazy('CraftMarket:templates')
-    template_help = MarketTemplateCreate.template_name
+    url_base = 'CraftMarket/templates'
+    template_help = MarketTemplateCreate.template_help
 
 def duplicate(request, template_id):
 
@@ -450,4 +453,4 @@ def duplicate(request, template_id):
 class MarketTemplateDelete(TeamPages):
     permission_required =  'CraftMarket.can_manage'
     template_name = "team_pages/templates_delete.html"
-    view_base = reverse_lazy('CraftMarket:templates')
+    url_base = 'CraftMarket/templates'

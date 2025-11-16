@@ -41,7 +41,7 @@ if debug and TEST_SERVER:
     LOGGING = {
         "version": 1,
         'formatters': { 'standard': {
-            'format': '%(asctime)s: %(levelname)s: %(funcName)s: %(message)s',
+            'format': '%(asctime)s: %(levelname)s: %(filename)s -> %(funcName)s: %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'    }
         },
         "disable_existing_loggers": False,
@@ -58,7 +58,7 @@ if debug and TEST_SERVER:
         "loggers": {
             "django": {
                 "handlers": ["console"],
-                "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+                "level": os.getenv("DJANGO_LOG_LEVEL", "WARNING"),
 
                 "propagate": False,
             },

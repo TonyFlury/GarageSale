@@ -522,3 +522,83 @@ div#tp_sponsor_core div.inner div.description textarea#id_description {
     width:32em;
     margin:auto;
 }
+
+div.popup {
+        display:none;
+        border: 1px solid black;
+         background-color: white;
+         padding: 10px;
+         width:50%;
+         max-height: 90%;
+         position: absolute;
+         z-index: 1000;
+        box-shadow: 2px 2px 5px black;
+        border-radius: 15px;
+
+        div.form{
+            margin: 0.25rem 0.2rem;
+            padding: 0.5rem 0.5rem;
+            width: auto;
+            p {
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+
+            div.buttons {
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+
+            div#AttachmentSection label {
+                margin-right: 0.5rem;
+            }
+
+            div#AttachmentSection span:not(:first-child) {
+                margin-left: 1rem;
+            }
+
+            }
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        span.name {
+            display: inline-block;
+        }
+
+div.popup{
+    div#help_popup-button img.help,
+    div#help_popup img.close
+    {
+            height:28px;
+            position:absolute;
+            right:10px;
+            top:10px;
+    }
+}
+
+div.popup input.button {
+    border-radius: 5pc;
+    padding: 0.2rem 0.75rem;
+}
+    div.popup input.button:hover {
+        box-shadow: 2px 2px 1px red;
+    }
+
+    div.popup input.button:active {
+        box-shadow: inset 2px 2px 5px black;
+    }
+
+    div.popup input.button.confirm {
+        background-color: lightgreen;
+    }
+
+    div.popup input.button.cancel {
+        background-color: indianred;
+    }
+
+    div.detail div.popup h2 {
+        margin: 0.2rem auto;
+    }

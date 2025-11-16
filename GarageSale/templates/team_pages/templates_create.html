@@ -26,7 +26,7 @@
     }
 
     function __document_loaded() {
-        let element = document.getElementById('template_creation_popup')
+        let element = document.getElementById('template_creation-popup')
         element.style.display = 'block'
         element.style.left = (window.innerWidth - element.offsetWidth)/ 2 + 'px'
         element.style.top = (window.innerHeight - element.offsetHeight)/ 2 + 'px'
@@ -55,7 +55,7 @@
     {%  endblock %}
 
 {% block detail %}
-    <div id="template_creation_popup" class="popup">
+    <div id="template_creation-popup" class="popup">
         <div id="help_popup-button">
             <img class="help"  alt='Help' src="{% static 'GarageSale/images/icons/help-circle-svgrepo-com.svg' %}" onclick="document.getElementById('help_popup').style.display = 'block'">
         </div>

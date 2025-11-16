@@ -7,36 +7,34 @@ Summary :
     
     
 Use Case :
-    
-    
-Testable Statements :
-    ...
+
 """
 import datetime
-from unicodedata import category
 
 import weasyprint
 import mimetypes
 import io
 import logging
 import bs4
-from django.apps import apps
-from django.contrib.admin.utils import label_for_field
 
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
-from django.db.models import Exists, Subquery
+from django.db.models import Subquery
 from django.http import HttpRequest
-from django.template import Template
+from django.template import Template, Context, Engine
 from django_quill.fields import QuillField
 from django.contrib.auth.models import User
-
 from django.contrib.auth.models import AbstractUser
-from django.conf import settings
-
-from GarageSale.svgaimagefield import SVGAndImageFormField
 
 from calendar import day_name, month_name
+import logging
+
+logger = logging.getLogger('GarageSale.models')
+logger.addHandler(logging.StreamHandler())
+logger.setLevel(logging.DEBUG)
+
+logging.getLogger('ttFont').addHandler(logging.NullHandler())
+logging.getLogger('loggingTools').addHandler(logging.NullHandler())
 
 class General(models.Model):
     class Meta:
@@ -48,8 +46,9 @@ class General(models.Model):
             ("is_manager", 'Is a manager of the website'),
         ]
 
+# ToDo - convert QuillField to Summernote
 class MOTD(models.Model):
-    """"Holder for Message of the Day"""
+    """Holder for Message of the Day"""
     use_from = models.DateField()
     content = QuillField(default='')
     synopsis = models.CharField(max_length=256, null=True)
@@ -74,12 +73,12 @@ def save_supported_logo_to(instance, filename):
     return f'supported_logo_{instance.name}/{filename}'
 
 
-class Byindex(models.Manager):
+class ByIndex(models.Manager):
     def get_queryset(self):
-        return super(Byindex, self).get_queryset().order_by('index')
+        return super().get_queryset().order_by('index')
 
 class Supporting(models.Model):
-    objects = Byindex()
+    objects = ByIndex()
     name = models.CharField(max_length = 100)
     logo = models.FileField(upload_to=save_supported_logo_to, null=True, blank=True)
     website = models.URLField()
@@ -103,7 +102,7 @@ class EventData(models.Model):
     """
     objects = models.Manager()
     CurrentFuture = CurrentFuture()
-    event_logo = models.FileField(null=True, upload_to=save_event_logo_to)    # The specific logo for this years event
+    event_logo = models.FileField(null=True, upload_to=save_event_logo_to)    # The specific logo for this event
     event_date = models.DateField()                                             # The date of the actual sale event
     open_billboard_bookings = models.DateField(null=True)                                # When Billboard bookings open
     close_billboard_bookings = models.DateField(null=True)                               # When Billboard bookings close
@@ -165,9 +164,10 @@ class TemplateAttachment(models.Model):
     def warning_text(self):
         if self.upload:
             return ''
-        CommunicationTemplate:models.Model = apps.get_model('GarageSale', 'CommunicationTemplate')
-        template_with_name = CommunicationTemplate.objects.filter(category=self.template.category, transition=self.template_name)
-        template_in_date = CommunicationTemplate.objects.filter(category=self.template.category, transition=self.template_name,
+        template_with_name = CommunicationTemplate.objects.filter(category=self.template.category,
+                                                                  transition=self.template_name)
+        template_in_date = CommunicationTemplate.objects.filter(category=self.template.category,
+                                                                transition=self.template_name,
                                                                 use_from__lte=self.template.use_from)
 
         match template_with_name.exists(), template_in_date.exists():
@@ -190,7 +190,8 @@ class CurrentActive(models.Manager):
     def get_queryset(self):
        return super().get_queryset().filter(use_from__lte=datetime.date.today()).order_by('-use_from')
 
-class CommunicationTemplate(models.Model)   :
+class CommunicationTemplate(models.Model):
+    """A template for building emails with attachments - not a generalized CMS."""
     class Meta:
         indexes = [
             models.Index(name='CategoryByDate', fields=['category', '-use_from']),
@@ -207,6 +208,9 @@ class CommunicationTemplate(models.Model)   :
     signature = models.TextField(max_length=500, null=True, blank=True)
     use_from = models.DateField(null=False, blank=False)
     fields = ['attachment_warnings',]
+
+    def get_use_from_display(self):
+        return f'{day_name[self.use_from.weekday()]} {self.use_from.day} {month_name[self.use_from.month]} {self.use_from.year}'
 
     def attachment_warnings(self) -> str|None:
         """Identify any warnings with regards the attachments"""
@@ -246,109 +250,130 @@ class CommunicationTemplate(models.Model)   :
             return ''
 
     def __str__(self):
-        return f'{self.category} {self.transition} {self.use_from}'
+        return f'"{self.category}" "{self.transition}" "{self.get_use_from_display()}"'
 
     @staticmethod
     def html_to_text(html):
+        """Simplistic conversion of HTML to text:
+            1) a p is converted to text with a newline after
+            2) a div is converted to text with a newline before and after
+            3) a span is converted to text (no new lines)
+            3) an <a> tag is converted to text and link
+            4) a <br> tag is simply a newline
+            5) Anything else is converted to text
+        """
         def tag_to_text(children):
-            segments = []
+            text_segments = []
             for tag in children:
                 match tag.name:
                     case 'p':
-                        segments.append(tag_to_text(tag.children))
-                        segments.append('\n')
+                        text_segments.append(tag_to_text(tag.children))
+                        text_segments.append('\n')
                     case 'div':
-                        segments.append('\n')
-                        segments.append(tag_to_text(tag.children))
-                        segments.append('\n')
+                        text_segments.append('\n')
+                        text_segments.append(tag_to_text(tag.children))
+                        text_segments.append('\n')
                     case 'span':
-                        segments.append(tag_to_text(tag.children))
+                        text_segments.append(tag_to_text(tag.children))
                     case 'br':
-                        segments.append('\n')
+                        text_segments.append('\n')
                     case 'a':
-                        segments.append(tag.string + ': ')
-                        segments.append('<' + tag['href'] + '>')
+                        text_segments.append(tag.string + ': ')
+                        text_segments.append('<' + tag['href'] + '>')
                     case 'img':
                         if tag.has_attr('alt'):
-                            segments.append(tag['alt'])
+                            text_segments.append(tag['alt'])
                     case _:
                         if isinstance(tag, bs4.element.NavigableString):
-                            segments.append( str(tag))
+                            text_segments.append( str(tag))
                         else:
-                            segments.append(tag_to_text(tag.children))
-            return ''.join(segments)
+                            text_segments.append(tag_to_text(tag.children))
+            return ''.join(text_segments)
 
         """Convert HTML to text"""
         from bs4 import BeautifulSoup
-        segments = []
         soup = BeautifulSoup(html, 'html.parser')
         return  tag_to_text(soup.contents)
 
     def render_template_as_email(self, request:HttpRequest, context):
+        """Convert the template to an email message - with attachments"""
 
+        logger.debug(f'Rendering template as email {self=} for {context=} ')
+        to = context.pop('email', [])
+        from_ = context.pop('from', '')
+        bcc = context.pop('bcc', [])
+
+        logger.debug(f'Rendering body  {self=} for {context=} ')
         body_template = Template(str(self.html_content))
+        html_body = body_template.render( context=Context(context)) + "<br>-- <br>" + self.signature
 
-        html_body = body_template.render( context=context) + "<br>-- <br>" + self.signature
         msg = EmailMultiAlternatives(
-            to=[to, ],
+            to=to,
             from_email=from_,
-            subject=Template(self.subject).render(context=context),
+            subject=Template(self.subject).render(context=Context(context)),
             body=self.html_to_text(html_body),
             bcc=bcc if bcc else []
         )
-        html_body = body_template.render( context=context) + "<br>-- <br>" + self.signature
 
         msg.attach_alternative(html_body, "text/html")
+        logger.debug(f'Msg built {msg.to=},  {msg.from_email=}, {msg.subject}')
+
         return msg
 
-    def render_template_as_pdf(self,request:HttpRequest, context):
-        server = request.get_host()
-        header  = (f'@page {{size: A4; margin: 6rem 0.5cm; '
-                           f'@bottom-right{{content: "Page " counter(page) " of " counter(pages); }}'
-                           f'@top-center{{ border: none;width: 100%; height: 4rem; margin-top: 0.5cm; '
-                           f'background-image: url("{server}/media/event_logo_2026-6/horse-Logo-01.png"),'
-                           f'linear-gradient(to right, rgb(80 100 115 / 100%), transparent);'  
-                           f'background-repeat: no-repeat, no-repeat;'
-                           f'background-position: top left, left;'
-                           f'background-size: 3.75rem, 100%;'
-                           f'margin-bottom: 0.5cm;'
-                           f'margin-top: 1cm;'            
-                           '}}'
-                           '@top-center{{font-size:22px; font-weight:bold;content: "Brantham Garage Sale Foundation"}}'
-                           '}}')
+    def get_header_text(self, request:HttpRequest, context):
+        """Get the header text for the email"""
+        if request:
+            host,scheme  = request.get_host(), request.scheme
+        else:
+            host, scheme = 'localhost', 'http'
 
-        doc = bytes()
-        html = io.StringIO(Template(self.html_content).render(context))
+        path = 'GarageSale/templates/css_templates/pdf_header.css'
+        with open(path) as f:
+            header_template = Template(f.read())
+        text =  header_template.render(Context({'summary': self.summary, 'scheme': scheme, 'host': host}, context))
+        return text
+
+    def render_template_as_pdf(self,request:HttpRequest, context):
+        """Convert a given template to a PDF - with headers etc."""
+        logger.info(f'Rendering template {self} for {context} as a PDF')
+
+        header = self.get_header_text(request, context)
+        html = io.StringIO(Template(self.html_content).render(Context(context)))
         pdf = weasyprint.HTML(html).write_pdf(stylesheets=[weasyprint.CSS(string=header)])
         return pdf
 
-    def send_email(self, request:HttpRequest, to, from_, context, bcc=None):
+    def send_email(self, request:HttpRequest, context):
+
+        logger.info(f'Sending email for {self} for {context}')
 
         msg = self.render_template_as_email(request, context)
 
-        try:
-            attachments = self.attachments.all()
-        except TemplateAttachment.DoesNotExist:
-            attachments = []
+        attachments = self.attachments.all()
+        logger.info(f'Rendering template {self} - {len(attachments)} attachments')
 
         for attachment in attachments:
             match attachment.upload:
                 case True:
-                    mime_type = mimetypes.guess_type(attachment.file.name)[0]
-                    msg.attach_file(attachment.file, mime_type)
+                    mime_type = mimetypes.guess_type(attachment.attached_file.name)[0]
+                    msg.attach_file(attachment.attached_file.path, mime_type)
                 case False:
-                    logging.debug(f'Generating PDF for {self}, {self.category}, {self.transition} {attachment.name}')
+                    logger.debug(f'Generating PDF for {self}, {self.category}, {self.transition} {attachment.template_name}')
                     try:
-                        content = CommunicationTemplate.current_active.filter(category=self.category).filter(transition=attachment.name).order_by("-use_from").latest('use_from')
+                        content = CommunicationTemplate.current_active.filter(category=self.category).filter(transition=attachment.template_name).order_by("-use_from").latest('use_from')
                     except CommunicationTemplate.DoesNotExist:
-                        logging.error(f'Could not find a valid {attachment.name} and in date template for {self}')
-                        content = ''
-                    logging.debug(f'Found named template {content.transition} PDF for {self.category}, {self.transition} {attachment.name}')
+                        logger.error(f'Could not find a valid {attachment.template_name} and in date template for {self}')
+                        content = None
 
-                    pdf = content.render_template_as_pdf(request, context)
+                    if content:
+                        logger.debug(
+                            f'Found named template {content.transition} PDF for {self.category}, {self.transition} {attachment.template_name}')
+                        pdf = content.render_template_as_pdf(request, context)
+                        msg.attach( attachment.template_name+'-'+datetime.datetime.now().isoformat(sep='-')+'.pdf', pdf, 'application/pdf')
 
-                    msg.attach( attachment.name+'-'+datetime.datetime.now().isoformat(sep='-')+'.pdf', pdf, 'application/pdf')
-
-        return msg.send()
+        try:
+            ret = msg.send()
+        except Exception as e:
+            logger.error(f'Could not send email for {self} for {context} - {e}')
+        return ret
 
 

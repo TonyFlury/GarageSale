@@ -6,12 +6,13 @@ from unittest.mock import MagicMock
 import pypdf
 import io
 
-import selenium
+from PIL.SpiderImagePlugin import iforms
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
 from django.template import RequestContext, Template
+from django.utils.html import escape
 from selenium import webdriver
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -22,7 +23,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.datetime_safe import date
 from selenium.common import NoSuchElementException, TimeoutException
-from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -127,11 +127,11 @@ class TestEmailTemplating(TestCase):
         cls.request.build_absolute_uri = MagicMock(return_value="https://127.0.0.1:8080/")
         cls.request.META = {'HTTP_HOST': '127.0.0.1:8080'}
 
-
-    def test_010_simple_template(self):
+    def test_050_simple_template(self):
         """Test a simple template with no replacements"""
 
-        self.inst.send_email(self.request, self.simple_template)
+        c = self.inst.common_context()
+        self.simple_template.send_email(self.request,context=c)
         self.assertEqual(len(mail.outbox), 1)
 
         self.assertEqual(mail.outbox[0].from_email, settings.APPS_SETTINGS['CraftMarket']['EmailFrom'])
@@ -140,14 +140,15 @@ class TestEmailTemplating(TestCase):
         self.assertEqual(mail.outbox[0].body,
                          self.simple_template.html_content + "\n-- " + "\n" + self.simple_template.signature)
 
-    def test_015_simple_template_reads_settings(self):
+    def test_055_simple_template_reads_settings(self):
         """Test a simple template with no replacements and confirm that the settings are used"""
 
         # Override the sending email for this category
         with override_settings_dict(setting_name='APPS_SETTINGS',
                                     keys=['CraftMarket', 'EmailFrom'],
                                     value='test@test1.com'):
-            self.inst.send_email(self.request, self.simple_template)
+            c = self.inst.common_context()
+            self.simple_template.send_email(self.request, context=c)
 
         self.assertEqual(len(mail.outbox), 1)
 
@@ -157,10 +158,11 @@ class TestEmailTemplating(TestCase):
         self.assertEqual(mail.outbox[0].body,
                          self.simple_template.html_content + "\n-- " + "\n" + self.simple_template.signature)
 
-    def test_020_complex_template(self):
+    def test_060_complex_template(self):
         """Test replacement within body of template"""
 
-        self.inst.send_email(self.request, self.complex_template)
+        c = self.inst.common_context()
+        self.complex_template.send_email(self.request, context=c)
         self.assertEqual(len(mail.outbox), 1)
 
         self.assertEqual(mail.outbox[0].to, [self.inst.email, ])
@@ -436,10 +438,10 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             active.click()
             self.selenium.implicitly_wait(1)
 
-            invite_popup = self.selenium.find_element(By.CSS_SELECTOR, f'div#invite_popup')
+            invite_popup = self.selenium.find_element(By.CSS_SELECTOR, f'div#invite-popup')
             self.assertTrue(invite_popup.is_displayed(), "popup not displayed")
 
-            send_email = self.selenium.find_element(By.CSS_SELECTOR, f'div#invite_popup input#send_email')
+            send_email = self.selenium.find_element(By.CSS_SELECTOR, f'div#invite-popup input#send_email')
             self.assertEqual(send_email.get_attribute('checked'), 'true')
 
             confirm_button = invite_popup.find_element(By.CSS_SELECTOR, f'input.button.confirm')
@@ -471,11 +473,11 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             active.click()
             self.selenium.implicitly_wait(1)
 
-            send_email = self.selenium.find_element(By.CSS_SELECTOR, f'div#invite_popup input#send_email')
+            send_email = self.selenium.find_element(By.CSS_SELECTOR, f'div#invite-popup input#send_email')
             send_email.click()
             self.assertIsNone(send_email.get_attribute('checked') )
 
-            self.selenium.find_element(By.CSS_SELECTOR, f'div#invite_popup input.button.confirm').click()
+            self.selenium.find_element(By.CSS_SELECTOR, f'div#invite-popup input.button.confirm').click()
 
             self.selenium.implicitly_wait(1)
             state_name = self.selenium.find_element(By.CSS_SELECTOR, f'td.state_name[tp_row_id="{first.id}"]').text
@@ -498,10 +500,10 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             active.click()
             self.selenium.implicitly_wait(1)
 
-            popup = self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm_popup')
+            popup = self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm-popup')
             self.assertTrue(popup.is_displayed(), "popup not displayed")
 
-            send_email = self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm_popup input#send_email')
+            send_email = self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm-popup input#send_email')
             self.assertEqual(send_email.get_attribute('checked'), 'true')
 
             confirm_button = popup.find_element(By.CSS_SELECTOR, f'input.button.confirm')
@@ -534,14 +536,14 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
                                                 f'span.action[tp_row_id="{first.id}"][tp_action="confirm"]')
             active.click()
             self.selenium.implicitly_wait(1)
-            popup = self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm_popup')
+            popup = self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm-popup')
             self.assertTrue(popup.is_displayed())
 
-            send_email = self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm_popup input#send_email')
+            send_email = self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm-popup input#send_email')
             send_email.click()
             self.assertIsNone(send_email.get_attribute('checked'))
 
-            self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm_popup input.button.confirm').click()
+            self.selenium.find_element(By.CSS_SELECTOR, f'div#confirm-popup input.button.confirm').click()
 
             self.selenium.implicitly_wait(1)
 
@@ -565,10 +567,10 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
                                                 f'span.action[tp_row_id="{first.id}"][tp_action="reject"]')
             active.click()
             self.selenium.implicitly_wait(1)
-            popup = self.selenium.find_element(By.CSS_SELECTOR, f'div#reject_popup')
+            popup = self.selenium.find_element(By.CSS_SELECTOR, f'div#reject-popup')
             self.assertTrue(popup.is_displayed())
 
-            self.selenium.find_element(By.CSS_SELECTOR, f'div#reject_popup input.button.confirm').click()
+            self.selenium.find_element(By.CSS_SELECTOR, f'div#reject-popup input.button.confirm').click()
 
             self.selenium.implicitly_wait(1)
 
@@ -592,8 +594,6 @@ class MarketeerRSVP(SmartHTMLTestMixins, SeleniumCommonMixin):
         super().setUp()
 
         self.screenshot_on_close = True
-        general_content_type = ContentType.objects.get_for_model(GarageSale.models.General)
-        marketer_content_type = ContentType.objects.get_for_model(Marketer)
 
         self.event = EventData.objects.create(event_date=date(month=6, day=21, year=timezone.now().year + 1),
                                               use_from=timezone.now())
@@ -621,7 +621,7 @@ class MarketeerRSVP(SmartHTMLTestMixins, SeleniumCommonMixin):
                             signature='',
                             use_from=timezone.now())
 
-        self.confirm_template.attachments.create(name=self.tos_template.transition, upload=False)
+        self.confirm_template.attachments.create(template_name=self.tos_template.transition, upload=False)
         self.request = MagicMock(HttpRequest)
         self.request.build_absolute_uri = MagicMock(side_effect=lambda u : "https://127.0.0.1:8080"+u)
         self.request.META = {'HTTP_HOST': '127.0.0.1:8080'}
@@ -632,25 +632,25 @@ class MarketeerRSVP(SmartHTMLTestMixins, SeleniumCommonMixin):
     def assertStartsWith(self, a, b, msg=None):
         """Assert that a string starts with another string"""
         if not a.startswith(b):
-            standardMsg = f"{a!r} does not start with {b!r}"
-            self.fail(self._formatMessage(msg, standardMsg))
+            standard_msg = f"{a!r} does not start with {b!r}"
+            self.fail(self._formatMessage(msg, standard_msg))
 
     def assertEndsWith(self, a, b, msg=None):
         """Assert that a string starts with another string"""
         if not a.endswith(b):
-            standardMsg = f"{a!r} does not start with {b!r}"
-            self.fail(self._formatMessage(msg, standardMsg))
+            standard_msg = f"{a!r} does not start with {b!r}"
+            self.fail(self._formatMessage(msg, standard_msg))
 
     def test_400_unique_code_generation(self):
         """Confirm each marketer can have a unique code"""
 
-        # With the marketers not invited as yet the codes will be None
+        # With the marketers not yet invited, the codes will be None
         codes = [marketer.code for marketer in self.marketers]
         self.assertTrue( all(code is None for code in codes) )
 
         # code will be based on the marketer email address and most recent invite timestamp - so we can tweak these
         # and confirm that the code changes accordingly.
-        states = list(map( lambda x: x.update_state(MarketerState.Invited, send_email=False), self.marketers))
+        _ = list(map( lambda x: x.update_state(MarketerState.Invited, send_email=False), self.marketers))
 
         self.assertTrue(all(marketer.state == MarketerState.Invited for marketer in self.marketers),
                         'Not all marketer states are now Invited')
@@ -659,7 +659,7 @@ class MarketeerRSVP(SmartHTMLTestMixins, SeleniumCommonMixin):
         self.assertTrue(all(i.is_valid_code(i.code) for i in self.marketers), 'Some codes are not valid')
 
     def test_405_unique_code_generation(self):
-        """Confirm each marketers code is different if the email is tweaked or the last invite is tweaked"""
+        """Confirm each marketer code is different if the email is tweaked or the last invite is tweaked"""
         self.marketers[0].update_state(MarketerState.Invited, send_email=False)
         self.marketers[0].refresh_from_db()
         inst = self.marketers[0]
@@ -671,7 +671,7 @@ class MarketeerRSVP(SmartHTMLTestMixins, SeleniumCommonMixin):
         self.assertNotEqual(inst.code, code)
 
     def test_406_unique_code_generation_tweaked_timestamp(self):
-        """Confirm each marketers code is different if the last invite is tweaked"""
+        """Confirm each marketer code is different if the last invite is tweaked"""
         self.marketers[0].update_state(MarketerState.Invited, send_email=False)
         code = self.marketers[0].code
         inst = History.most_recent.filter(state=MarketerState.Invited, marketeer=self.marketers[0])[0]
@@ -827,16 +827,21 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
                           for delta in [-10, 0, 10] }
 
 
-        self.tos = CommunicationTemplate.objects.create(category="CraftMarket", transition='TermsAndConditions',
-                                                        subject="",
+        self.tos = {('TermsAndConditions', delta): CommunicationTemplate.objects.create(category="CraftMarket", transition='TermsAndConditions',
+                                                        subject="T&Cs",
                                                         summary="Terms and Conditions",
                                                         html_content="Terms and Conditions",
                                                         signature='',
-                                                        use_from=date.today())
+                                                        use_from=date.today() + timedelta(days=delta)) for delta in [-10, 0, 10] }
 
+        # Add the T&C to all the 'confirm' templates.
         for (transition, delta), template in self.templates.items():
             if transition == MarketerState.Confirmed.label:
-                template.attachments.create(name=self.tos.transition, upload=False)
+                    template.attachments.create(template_name='TermsAndConditions', upload=False)
+
+        # We need to have some templates that aren't attached to any templates - the deletion rules should be different.
+        self.unused =  {('Unused', delta) : CommunicationTemplate.objects.create(category="CraftMarket", summary='Unused',subject='not used at all', transition='Unused',
+                                                             use_from=date.today() + timedelta(days=delta)) for delta in [-10, 0, 10] }
 
         self.request = MagicMock(HttpRequest)
         self.request.build_absolute_uri = MagicMock(side_effect=lambda u : "https://127.0.0.1:8080"+u)
@@ -857,13 +862,11 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
 
             # Count Rows
             data_rows = self.fetch_elements_by_selector(html, 'div#id_item_list table tbody tr.data-row')
-            self.assertEqual(len(data_rows), len(self.templates)+1)
-            self._dump_page_source('templaterows.html', html)
+            self.assertEqual(len(data_rows), len(self.templates | self.tos | self.unused))
 
     def test_910_templates_filters(self):
         with self.identify_via_login(user=self.manage_user, password='wibble'):
             self.selenium.get(self.get_test_url())
-            html = self.selenium.page_source
             try:
                 filter_button = self.selenium.find_element( By.CSS_SELECTOR, 'div#id_al_toolbar span#tp-filters')
             except NoSuchElementException:
@@ -874,17 +877,17 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
             except TimeoutException:
                 self.fail('No filter pop up displayed within timeout')
 
-            popUp = self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up')
+            pop_up = self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up')
             # Choose the first filter
             try:
-                popUp.find_element( By.CSS_SELECTOR, 'input#tp_future')
-                popUp.find_element( By.CSS_SELECTOR, 'input#tp_active')
-                popUp.find_element( By.CSS_SELECTOR, 'input#tp_old')
+                pop_up.find_element( By.CSS_SELECTOR, 'input#tp_future')
+                pop_up.find_element( By.CSS_SELECTOR, 'input#tp_active')
+                pop_up.find_element( By.CSS_SELECTOR, 'input#tp_old')
             except NoSuchElementException:
                 self.fail('No Future filter button found')
             try:
-                popUp.find_element( By.CSS_SELECTOR, 'input#popup-button[value="Save"]')
-                popUp.find_element( By.CSS_SELECTOR, 'input#popup-button[value="Cancel"]')
+                pop_up.find_element( By.CSS_SELECTOR, 'input#popup-button[value="Save"]')
+                pop_up.find_element( By.CSS_SELECTOR, 'input#popup-button[value="Cancel"]')
             except NoSuchElementException:
                 self.fail('No Save button found')
 
@@ -895,138 +898,138 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
                 self.selenium.find_element( By.CSS_SELECTOR, 'div#id_al_toolbar span#tp-filters').click()
                 WebDriverWait(self.selenium,timeout=10).until(lambda _: self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up').is_displayed())
 
-                popUp = self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up')
+                pop_up = self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up')
 
-                popUp.find_element( By.CSS_SELECTOR, 'input#tp_future').click()
-                popUp.find_element( By.CSS_SELECTOR, 'input#popup-button[value="Save"]').click()
-                self.selenium.implicitly_wait(10) # We can't do a wait until because this is the same page being reloaded.
+                pop_up.find_element( By.CSS_SELECTOR, 'input#tp_future').click()
+                pop_up.find_element( By.CSS_SELECTOR, 'input#popup-button[value="Save"]').click()
+                WebDriverWait(self.selenium,timeout=10).until(lambda _: self.selenium.find_element(By.CSS_SELECTOR,
+                                                                'span#filter-pop-up').is_displayed() == False)
 
-                data_rows = self.fetch_elements_by_selector(html, 'div#id_item_list table tbody tr.data-row')
-                xfutures = [template for (type_, delta), template in self.templates.items() if delta <= 0] + [self.tos]
-                for i in xfutures:
+                data_rows = self.selenium.find_elements(By.CSS_SELECTOR, 'div#id_item_list table tbody tr.data-row')
+                templates = (self.templates | self.tos | self.unused)
+                exclude_futures = [template for (type_, delta), template in templates.items() if delta <= 0]
+                self.assertEqual(len(data_rows), len(exclude_futures))
+
+                for i in exclude_futures:
                     try:
-                        data_row = self.fetch_elements_by_selector(html, f'div#id_item_list table tbody tr.data-row[tp_row_id="{i}"]')
+                        _ = self.fetch_elements_by_selector(html, f'div#id_item_list table tbody tr.data-row[tp_row_id="{i.id}"]')
                     except NoSuchElementException:
                         self.fail(f'No row for element {i} found')
 
-            self.assertFalse(popUp.find_element(By.CSS_SELECTOR, 'input#tp_future').is_selected())
-
     def test_930_templates_filter_in_date(self):
-
-        #ToDo - This is a naive test as every current entry has an old version.
-        #ToDo - need to test where some templates have an old version in date
 
         with self.identify_via_login(user=self.manage_user, password='wibble'):
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
             self.selenium.find_element( By.CSS_SELECTOR, 'div#id_al_toolbar span#tp-filters').click()
             WebDriverWait(self.selenium,timeout=10).until(lambda _: self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up').is_displayed())
-            popUp = self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up')
-            self._dump_page_source(name='popup.html', source=str(popUp))
+            pop_up = self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up')
 
-            popUp.find_element(By.CSS_SELECTOR, 'input#tp_active').click()
-            popUp.find_element(By.CSS_SELECTOR, 'input#popup-button[value="Save"]').click()
-            self.selenium.implicitly_wait(10)  # We can't do a wait until because this is the same page being reloaded.
+            pop_up.find_element(By.CSS_SELECTOR, 'input#tp_active').click()
+            pop_up.find_element(By.CSS_SELECTOR, 'input#popup-button[value="Save"]').click()
+            WebDriverWait(self.selenium, timeout=10).until(lambda _: self.selenium.find_element(By.CSS_SELECTOR,
+                                                                                                'span#filter-pop-up').is_displayed() == False)
 
-            data_rows = self.fetch_elements_by_selector(html, 'div#id_item_list table tbody tr.data-row')
-            xactives = [template for (type_, delta), template in self.templates.items() if delta > 0] + [self.tos]
-            for i in xactives:
+            rows = self.fetch_elements_by_selector(self.selenium.page_source, 'div#id_item_list table tbody tr.data-row')
+            exc_actives = [template for (type_, delta), template in (self.templates | self.tos | self.unused).items() if delta > 0]
+            self.assertEqual(len(rows), len(exc_actives))
+            for i in exc_actives:
                 try:
-                    data_row = self.fetch_elements_by_selector(html,
-                                f'div#id_item_list table tbody tr.data-row[tp_row_id="{i}"]')
+                    _ = self.fetch_elements_by_selector(html,
+                                f'div#id_item_list table tbody tr.data-row[tp_row_id="{i.id}"]')
                 except NoSuchElementException:
                     self.fail(f'No row for element {i} found')
-
-            popUp = self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up')
-            self.assertFalse(popUp.find_element(By.CSS_SELECTOR, 'input#tp_active').is_selected())
 
     def test_940_templates_filter_out_of_date(self):
 
         # Identify one or more current templates to delete to ensure the test
         # picks up a range of use_from dates
-        current = [template for (type_, delta), template in self.templates.items() if delta==0]
+        all_templates = self.templates | self.tos | self.unused
+        current = [template for (type_, delta), template in all_templates.items() if delta==0]
         to_delete = random.sample(current, 2)
         for i in to_delete:
-            self.templates.pop((i.transition, 0))
+            all_templates.pop((i.transition, 0))
             i.delete()
-            i.save()
 
-        xold = ([template for (type_, delta), template in self.templates.items() if delta > 0]+
-                [template for (type_, delta), template in self.templates.items() if delta == 0 if
-                                 (type_, -10) not in self.templates] +
-                [template for (type_, delta), template in self.templates.items() if delta < 0 if
-                                    (type_, 0) not in self.templates])
+        exclude_old = [template for (type_, delta), template in  all_templates.items() if
+                       not (delta < 0 and (type_, 0) in all_templates)  ]
 
         with self.identify_via_login(user=self.manage_user, password='wibble'):
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
             self.selenium.find_element( By.CSS_SELECTOR, 'div#id_al_toolbar span#tp-filters').click()
             WebDriverWait(self.selenium,timeout=10).until(lambda _: self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up').is_displayed())
-            popUp = self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up')
-            self._dump_page_source(name='popup.html', source=str(popUp))
+            pop_up = self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up')
 
-            popUp.find_element(By.CSS_SELECTOR, 'input#tp_old').click()
-            popUp.find_element(By.CSS_SELECTOR, 'input#popup-button[value="Save"]').click()
-            self.selenium.implicitly_wait(10)  # We can't do a wait until because this is the same page being reloaded.
+            pop_up.find_element(By.CSS_SELECTOR, 'input#tp_old').click()
+            pop_up.find_element(By.CSS_SELECTOR, 'input#popup-button[value="Save"]').click()
+            WebDriverWait(self.selenium, timeout=10).until(lambda _: self.selenium.find_element(By.CSS_SELECTOR,
+                                                                                                'span#filter-pop-up').is_displayed() == False)
+            rows = self.fetch_elements_by_selector(self.selenium.page_source, 'div#id_item_list table tbody tr.data-row')
+            self.assertEqual(len(rows), len(exclude_old))
 
-            for i in xold:
+            for i in exclude_old:
                 try:
-                    data_row = self.fetch_elements_by_selector(html,
-                                f'div#id_item_list table tbody tr.data-row[tp_row_id="{i}"]')
+                    _ = self.fetch_elements_by_selector(self.selenium.page_source,
+                                f'div#id_item_list table tbody tr.data-row[tp_row_id="{i.id}"]')
                 except NoSuchElementException:
-                    missing = CommunicationTemplate.objects.get(id=i)
-                    self.fail(f'No row for element {i} found : {missing.transition}, {missing.use_from}')
-
-            popUp = self.selenium.find_element(By.CSS_SELECTOR, 'span#filter-pop-up')
-            self.assertFalse(popUp.find_element(By.CSS_SELECTOR, 'input#tp_old').is_selected())
+                    missing = CommunicationTemplate.objects.get(id=i.id)
+                    self.fail(f'No row for element {i.id} found : {missing.transition}, {missing.use_from}')
 
     def test_950_templates_buttons(self):
         with self.identify_via_login(user=self.manage_user, password='wibble'):
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
 
+            # Find all the rows of templates
             data_rows = self.fetch_elements_by_selector(html, 'div#id_item_list table tbody tr.data-row')
+            self.assertEqual(len(data_rows), len(self.templates)+len(self.unused)+len(self.tos))
             for index, row in enumerate(data_rows):
                 row_id = row['tp_row_id']
                 inst = CommunicationTemplate.objects.get(id=row_id)
+
+                # Identify the action buttons
                 for action in ['edit','view', 'copy', 'delete']:
                     with self.subTest(msg=f'{action} for {index} (id {row_id})'):
                         if action != 'delete':
                             self.assertNotEqual(row.select(f'span[tp_row_id="{row_id}"][tp_action="{action}"]'),[],
                                                          f'No {action} button found for row {index} : {row_id}')
                         else:
-                            # Can't delete a template if there is nothing younger than it
-                            # The data set has old, today and future entries - so delete row should be missing for the old rows
-
-                            # TODO test for and implement date matching for attached templates
-                            # Ignore the Terms and Conditions template for Now
-
-                            if (inst.transition != 'TermsAndConditions') and (inst.use_from >= date.today()):
+                            # Any unused template should be deletable
+                            if inst in self.unused:
                                 self.assertNotEqual(row.select(f'span[tp_row_id="{row_id}"][tp_action="delete"]'), [],
                                           f'No delete button found for row {index} : {row_id} - {inst.transition} {inst.use_from}')
                             else:
-                                self.assertEqual(row.select(f'span[tp_row_id="{row_id}"][tp_action="delete"]'),[],
-                                          f'Delete button found for row {index} : {row_id} - {inst.transition} {inst.use_from}')
+                                # Can't delete a template if there is nothing younger than it
+                                # The data set has old, today and future entries - so delete row should be missing for the old rows
+                                # This criteria should only apply if the template is in-use.
+                                # Ignore the Terms and Conditions template for Now - since the test data only has one entry
+                                if inst.use_from >= date.today():
+                                    self.assertNotEqual(row.select(f'span[tp_row_id="{row_id}"][tp_action="delete"]'), [],
+                                              f'No delete button found for row {index} : {row_id} - {inst.transition} {inst.use_from}')
+                                else:
+                                    self.assertEqual(row.select(f'span[tp_row_id="{row_id}"][tp_action="delete"]'),[],
+                                              f'Delete button found for row {index} : {row_id} - {inst.transition} {inst.use_from}')
 
 
     def test_960_templates_view(self):
         with self.identify_via_login(user=self.manage_user, password='wibble'):
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
-            self._dump_page_source(name='test_960_templates.html', source=html)
             ids = [template.id for template in CommunicationTemplate.objects.all()]
-            buttons = self.selenium.find_elements(By.CSS_SELECTOR,
-                                    'div#id_item_list table tbody tr.data-row span[tp_action="view"]')
             for index in ids:
                 button = self.selenium.find_element(By.CSS_SELECTOR,f'div#id_item_list table tbody tr.data-row span[tp_row_id="{index}"][tp_action="view"]')
                 row_id = button.get_attribute('tp_row_id')
                 inst = CommunicationTemplate.objects.get(id=row_id)
                 with self.subTest(msg=f'View for id {row_id} - idx {index}'):
                     button.click()
-                    WebDriverWait(self.selenium,timeout=10).until(lambda _: self.selenium.find_element(By.CSS_SELECTOR, 'div#template_view_popup').is_displayed())
+                    WebDriverWait(self.selenium,timeout=10).until(lambda _: self.selenium.find_element(By.CSS_SELECTOR, 'div#template_view-popup').is_displayed())
 
-                    self.assertIn(inst.subject, self.selenium.page_source)
-                    self.assertIn(inst.summary, self.selenium.page_source)
+                    self.assertIn(escape(inst.subject), self.selenium.page_source)
+                    self.assertIn(escape(inst.summary), self.selenium.page_source)
 
-                    self.selenium.find_element(By.CSS_SELECTOR, 'div#template_view_popup input#tp_close_form').click()
+                    self.selenium.find_element(By.CSS_SELECTOR, 'div#template_view-popup input#tp_close_form').click()
+                    self.selenium.implicitly_wait(10)
+                    self.assertTrue(self.selenium.current_url, reverse('CraftMarket:templates'))
+
             #ToDO - test Create, View, Edit, Delete and Copy features

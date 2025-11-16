@@ -17,7 +17,7 @@
     <script type="text/javascript" >
 
     function __document_loaded() {
-        let element = document.getElementById('template_view_popup')
+        let element = document.getElementById('template_view-popup')
         element.style.display = 'block'
         element.style.left = (window.innerWidth - element.offsetWidth)/ 2 + 'px'
         element.style.top = (window.innerHeight - element.offsetHeight)/ 2 + 'px'
@@ -38,7 +38,7 @@
     {%  endblock %}
 
 {% block detail %}
-    <div id="template_view_popup" class="popup">
+    <div id="template_view-popup" class="popup">
 
     <h2>{{form.summary.value }}</h2>
     <div class="form" >

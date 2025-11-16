@@ -69,6 +69,8 @@ class FrameworkView(LoginRequiredMixin, PermissionRequiredMixin, View):
     actions:dict[str, dict[str,str]] = {}          # The URLS for valid actions
     can_create = True                   # Whether this view should display the New button
     url_fields = []                     # List of fields that can be replaced within the action url
+    url_base = ''                       # The base string for all action urls - urls are <host>://<url_base>/[<object>/]action
+    allow_multiple = False
 
     def post_save(self, request, instance, form, **kwargs):
         return None
@@ -95,7 +97,10 @@ class FrameworkView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'toolbar' : self.toolbar,
                 "filters": self.filters,
                 "actions": self.actions,
-                "url_fields":self.url_fields}
+                "url_fields":self.url_fields,
+                "url_base":self.url_base,
+                "allow_multiple":self.allow_multiple,
+                }
 
 
     @abstractmethod

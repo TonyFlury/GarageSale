@@ -25,6 +25,13 @@ def is_icon(ob:BoundField):
 def lookup(value, arg):
     return value.get(arg, None)
 
+@register.simple_tag(name='missing', takes_context=True)
+def missing(context, value, option_name, missing_value):
+    if option_name in value:
+        return value[option_name]
+    else:
+        return missing_value
+
 @register.filter(name='getattribute')
 def getattribute(value, arg):
     """Gets an attribute of an object dynamically from a string name"""

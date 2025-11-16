@@ -19,6 +19,12 @@ from GarageSale.models import CommunicationTemplate, TemplateAttachment
 from team_pages.framework_views import FrameworkView
 
 
+#ToDo Ensure that Template deletion depends on :
+# 1. Whether the template is in use - one of the fixed transition types for this category or is mentioned in
+#               Attachments for a fixed type.
+# 2. if the template is in use, then it can't be the current one - you can delete old templates and
+#    future ones so long as one of the named templates still exists.
+
 class TemplateManagement(FrameworkView):
     template_name = "team_pages/templates.html"
     login_url = '/user/login'
@@ -27,11 +33,11 @@ class TemplateManagement(FrameworkView):
     model_class = CommunicationTemplate
     form_class = TemplateForm
     category = 'General'
-    toolbar = [{'action': 'create', 'label': 'Create', 'regex': '/CraftMarket/<int:event_id>/create/', 'icon': ''},]
+    toolbar = [{'action': 'create', 'label': 'Create'},]
 
-    filters = [ {'id': 'future', 'fragment': '!XFuture','label': 'Future Use'},
+    filters = [ {'id': 'future', 'fragment': '!XFuture','label': 'For Future Use'},
                {'id': 'active', 'fragment': '!XActive', 'label': 'In Use'},
-               {'id': 'old', 'fragment': '!OutOfDate', 'label': 'Out of Date'},
+               {'id': 'old', 'fragment': '!XOutOfDate', 'label': 'Out of Date'},
                ]
     template_help = "Help goes here"
     url_fields = ['<int:template_id>']
@@ -39,22 +45,19 @@ class TemplateManagement(FrameworkView):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         cls = self.__class__
-        self.actions = {'create': {'label': 'Create', 'regex': f'{cls.view_base}create/',
+        self.actions = {'create': {'label': 'Create',
                               'icon': static('/GarageSale/images/icons/create-note-alt-svgrepo-com.svg')},
-                   'edit': {'label': 'Edit Details', 'regex': f'{cls.view_base}<int:template_id>/edit/',
+                   'edit': {'label': 'Edit Details',
                             'icon': static('GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg')},
-                   'view': {'label': 'View Details', 'regex': f'{cls.view_base}<int:template_id>/view/',
+                   'view': {'label': 'View Details',
                             'icon': static('GarageSale/images/icons/execute-inspect-svgrepo-com.svg')},
-                   'copy': {'label': 'Duplicate Template', 'regex': f'{cls.view_base}<int:template_id>/duplicate/',
+                   'copy': {'label': 'Duplicate Template',
                             'icon': static('GarageSale/images/icons/duplicate-svgrepo-com.svg')},
-                   'delete': {'label': 'Delete', 'regex': '',
+                   'delete': {'label': 'Delete',
                             'icon': static('GarageSale/images/icons/backspace-svgrepo-com.svg')},}
 
     def get_success_url(self, request, context=None, **kwargs):
         return reverse('CraftMarket:templates')
-
-    # ToDo - change how framework handles popups - maybe the Framework should have the url in a fixed format ?
-    # ToDO - And each action either triggers the url directly or through a popup.
 
     def get_object(self, request, **kwargs) ->  Any | None :
         return None
@@ -107,19 +110,20 @@ class TemplateManagement(FrameworkView):
 
     def _add_filters(self, qs: QuerySet, request: HttpRequest) -> QuerySet:
         """Add filters to the base queryset based on the requested filters"""
-        newer = CommunicationTemplate.objects.filter(category = self.category, transition=OuterRef('transition'), use_from__gte = OuterRef('use_from'))
+        newer = CommunicationTemplate.objects.filter(category = self.category, use_from__lte=datetime.date.today(), transition=OuterRef('transition'), use_from__gt = OuterRef('use_from'))
 
         qi = Q()
-        if 'XInDate' in request.GET:
+        if 'XActive' in request.GET:
             qi &= ~Q(use_from__lte = datetime.date.today())
 
         if 'XFuture' in request.GET:
-            qi &= ~Q(use_from__gte = datetime.date.today())
+            qi &= ~Q(use_from__gt = datetime.date.today())
 
         if 'XOutOfDate' in request.GET:
-            qi = ~(Q(use_from__lte = datetime.date.today()) & Q(Exists(newer)))
+            qi &= ~(Q(use_from__lt = datetime.date.today()) & Q(Exists(newer)))
 
-        return qs.filter(qi)
+        qs = qs.filter(qi)
+        return qs
 
     def get_list_query_set(self, request: HttpRequest, **kwargs):
         qs =  CommunicationTemplate.objects.filter(category=self.category)
@@ -326,13 +330,7 @@ class TemplatesEdit(TemplatesView):
         formset = self.get_attachments_form(request, instance, **kwargs)
 
         if formset.is_valid():
-
             formset.save()
-
-          #  print(f'deleting {len(formset.deleted_objects)}')
-          #  for form in formset.deleted_objects:
-          #      print(f'deleting {form}')
-          #      form.delete()
         else:
             print(formset.errors)
 
