@@ -51,10 +51,14 @@ class TemplateManagement(FrameworkView):
                             'icon': static('GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg')},
                    'view': {'label': 'View Details',
                             'icon': static('GarageSale/images/icons/execute-inspect-svgrepo-com.svg')},
-                   'copy': {'label': 'Duplicate Template',
+                   'duplicate': {'label': 'Duplicate Template',
                             'icon': static('GarageSale/images/icons/duplicate-svgrepo-com.svg')},
                    'delete': {'label': 'Delete',
                             'icon': static('GarageSale/images/icons/backspace-svgrepo-com.svg')},}
+
+    def get_cancel_url(self, request, **kwargs):
+        """Get a separate cancellation url for forms - can be overriden"""
+        return self.get_success_url(request, **kwargs)
 
     def get_success_url(self, request, context=None, **kwargs):
         return reverse('CraftMarket:templates')
@@ -103,8 +107,8 @@ class TemplateManagement(FrameworkView):
         """Add in the relevant actions column based on the template dates"""
         older = CommunicationTemplate.objects.filter(category = self.category, transition=OuterRef('transition'), use_from__lt = OuterRef('use_from'))
 
-        the_case = Case(When(condition=Exists(older), then='view,edit,copy,delete'.split(',')),
-                         When(condition=~Exists(older), then='view,edit,copy'.split(',')),
+        the_case = Case(When(condition=Exists(older), then='view,edit,duplicate,delete'.split(',')),
+                         When(condition=~Exists(older), then='view,edit,duplicate'.split(',')),
                         output_field=ArrayField(models.CharField()))
         return qs.annotate(allowed_actions=the_case)
 
@@ -138,6 +142,8 @@ class TemplateManagement(FrameworkView):
         context |= {'data_type': 'Communication Template',
                     'sub_list_data': self.get_list_query_set(request, **kwargs),
                     'base_url' : self.view_base,
+                    'success_url': self.get_success_url(request, **kwargs),
+                    'cancel_url': self.get_cancel_url(request, **kwargs),
                     'template_help':self.template_help}
         return context
 
@@ -269,6 +275,7 @@ class TemplatesEdit(TemplatesView):
         context = super().get_context_data(request, **kwargs)
         instance = self.get_object(request, **kwargs)
         context |= {'action': 'edit',
+                    'cancel_url' : self.get_cancel_url(request, **kwargs),
                     'attachments': self.get_attachments_form(request, instance, **kwargs)}
         return context
 
