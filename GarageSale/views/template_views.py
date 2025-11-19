@@ -242,7 +242,8 @@ class TemplatesView(TemplateManagement):
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request, **kwargs)
         instance = self.get_object(request, **kwargs)
-        context |= {'action': 'create',
+        context |= {'action': 'view',
+                    'success_url' : self.get_success_url(request, context=context, **kwargs),
                     'attachments': self.get_attachments_form(request, instance=instance, **kwargs)}
         return context
 

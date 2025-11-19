@@ -39,6 +39,22 @@
 
 {% block detail %}
     <div id="template_view-popup" class="popup">
+       {%  if template_help %}
+        <div id="help-popup-button">
+            <img class="help"  alt='Help' src="{% static 'GarageSale/images/icons/help-circle-svgrepo-com.svg' %}" onclick="document.getElementById('help-popup').style.display = 'block'">
+        </div>
+        <div id="help-popup" class="popup">
+            <div id="help-popup-close">
+                <img class="close"  alt='Close Help' src="{% static 'GarageSale/images/icons/close-circle-1-svgrepo-com.svg' %}" onclick="document.getElementById('help-popup').style.display = 'none'">
+                <h2>Template Help</h2>
+                <div id="help-popup-content">
+                <p>
+                    {{ template_help | safe}}
+                </p>
+                    </div>
+            </div>
+        </div>
+    {% endif %}
 
     <h2>{{form.summary.value }}</h2>
     <div class="form" >
@@ -69,7 +85,7 @@
         </div>
     </div>
         <div class="buttons">
-            <input type="button" id="tp_close_form"  class='button confirm'  value="Exit View" onclick="document.location.href='{{ base_url }}'">
+            <input type="button" id="tp_close_form"  class='button confirm'  value="Exit View" onclick="document.location.href='{{ success_url }}'">
         </div>
     </div>
 </div>

@@ -435,7 +435,10 @@ class MarketTemplateView(TemplatesView):
     permission_required =  'CraftMarket.can_manage'
     transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
     url_base = 'CraftMarket/templates'
-    template_help = ""
+    template_help = MarketTemplateCreate.template_help
+
+    def get_success_url(self, request, context=None, **kwargs):
+        return reverse('CraftMarket:templates')
 
 class MarketTemplateEdit(TemplatesEdit):
     category = 'CraftMarket'
