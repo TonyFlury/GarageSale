@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <style>
+
+        div#transactions { width: 80%;}
+
+        header {background-color: #ddd; font-weight: bold;font-size: 120%; border-bottom: 1px solid black;}
+        header > .col {padding: 1rem;}
+
+        table tr.row:last-child td {border-bottom: 1px solid black;}
+
+        tr:not(.expanded).child  {display: none;}
+        tr.parent:not(.expanded) > td:first-child {
+            background: url("/static/GarageSale/images/icons/expand-down-double-svgrepo-com.svg") no-repeat center;
+            background-size: 1rem 1rem;
+        }
+
+        tr.expanded.child {display: table-row;}
+        tr.expanded.child > td:nth-child(2) {background: url("/static/GarageSale/images/icons/corner-down-right-svgrepo-com.svg") no-repeat center;
+                                                                background-size: 1rem 1rem; }
+        tr.expanded.parent > td:first-child {
+            background: url("/static/GarageSale/images/icons/expand-up-double-svgrepo-com.svg") no-repeat center;
+            background-size: 1rem 1rem;
+        }
+
+        tr.odd {background-color: lightblue;}
+        tr.even {background-color: white;}
+
+        tr:not(.child) td {border-bottom: 1px dashed black; border-right: 1px dashed black;}
+        tr.child.even, tr.child.odd {background-color: white}
+        tr.child td {border:none}
+        tr.child:has(+ tr:not(.child)) td {border-bottom: 1px double black;}
+        tr.child.odd td:nth-child(n+3):nth-child(-n+5){background-color:
+                lightgray; border-right: 1px dashed black; border-bottom: 1px dashed black;}
+        tr.child.even {background-color: lightgreen;}
+        tr th {background-color: #ddd; font-weight: bold;font-size: 120%; border-bottom: 1px solid black;}
+        th, td {padding: 1rem; border-right: 1px dashed black;}
+        tr td.date {text-align: right;}
+
+
+        tr.editing {background-color: orangered;}
+
+        .edit_button {display: none;
+            background: url("/static/GarageSale/images/icons/edit-svgrepo-com.svg") no-repeat center;
+            background-size: 2rem; height: 2rem;
+            padding: 0 1rem;}
+
+        .revert_button {display:none;
+            background: url("/static/GarageSale/images/icons/revert-svgrepo-com.svg") no-repeat center;
+            background-size: 2rem; height: 2rem;
+            padding: 0 1rem;}
+
+        tr.editing .edit_button {display:table-cell;
+            background: url("/static/GarageSale/images/icons/save-svgrepo-com.svg") no-repeat center;
+            background-size: 2rem; height: 2rem;
+            padding: 0 1rem;}
+        tr.editing .revert_button {display: table-cell;}
+        tr:not(.editing) .revert_button {display: none;}
+
+    </style>
+</head>
+<body>
+<script language="javascript">
+
+    function revert_edit(row_element) {
+        row_element.classList.remove("editing");
+        let id = row_element.id
+        let name_element = document.getElementById(id + "__name");
+        let category_element = document.getElementById(id + "__category");
+        name_element.innerHTML = name_element.children[0].value;
+        category_element.innerHTML = category_element.children[0].value;
+    }
+
+    function save_edit(row_element) {
+        row_element.classList.remove("editing");
+        let id = row_element.id
+        let name_element = document.getElementById(id + "__name_edit");
+        let category_element = document.getElementById(id + "__category_edit");
+
+        let request = new Request(`/Account/edit_transaction/${id}/`,
+            {method: "PUT", headers: {"X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/json"},
+            body: JSON.stringify({name: name_element.value, category: category_element.value})
+            });
+        fetch(request).
+                then(response => {
+                    if (!response.ok)
+                        console.log("Error: " + response.statusText);
+                    return response.json() }).
+            then(data => {
+                console.log(data)
+                name_element.parentElement.innerHTML = name_element.value;
+                category_element.parentElement.innerHTML = category_element.value;
+                row_element.classList.remove("editing");
+            });
+    }
+
+    function edit_transaction(event) {
+        let id = event.target.id.split("__")[0];
+        const row = document.getElementById(id);
+        if (row.classList.contains("editing"))
+        {
+            console.log("Saving ....");
+            save_edit(row);
+            return;
+        }
+
+        const currently_editing = document.querySelectorAll(".editing");
+        for(let i=0; i<currently_editing.length; i++) {
+            revert_edit(currently_editing[i]);
+        }
+
+        if (row.classList.contains("editing"))  {
+            revert_edit(row);
+            return ;
+        }
+
+        row.classList.toggle("editing");
+
+        const name_element = document.getElementById(id + "__name");
+        const category_element = document.getElementById(id + "__category");
+        let name = document.createElement("input");
+        name.id = id + "__name_edit";
+        name.type = "text";
+        name.value = name_element.innerText;
+        name_element.innerHTML = "";
+        name_element.appendChild(name);
+        let category = document.createElement("input");
+        category.id = id + "__category_edit";
+        category.type = "text";
+        category.value = category_element.innerText;
+        category_element.innerHTML = "";
+        category_element.appendChild(category);
+    }
+
+    function _toggle_edit() {
+        let button = document.getElementById("toggle_edit");
+        button.value = button.value==="Edit" ? "Stop Editing":"Edit";
+        let edit_flag = button.value!=="Edit";
+        let edit_buttons = document.getElementsByClassName("edit_button");
+        for (let i=0; i<edit_buttons.length; i++) {
+            edit_buttons[i].style.display = edit_flag ? "table-cell" : "none";
+            let parent=edit_buttons[i].parentElement;
+            if (parent.classList.contains("editing")) {
+                revert_edit(parent);
+            }
+        }
+
+    }
+
+    function _set_year_selected_event() {
+        const year_element= document.getElementById("id_year")
+        year_element.addEventListener("change", function() {
+            console.log("year changed");
+            const year_selected = document.getElementById("year_selected").value;
+            const queryString = window.location.search;
+            let urlParams = new URLSearchParams(queryString);
+            if (year_element.value !== year_selected) {
+                if (year_element.value !== "all")
+                    urlParams.set("year", year_element.value);
+                else
+                    urlParams.delete("year");
+                urlParams.set("page", "1");
+                window.location.search = urlParams.toString();
+            }
+        });
+    }
+
+    function _set_edit_and_revert_event()
+    {
+        let rows = document.querySelectorAll(".row:not(.child)");
+        for (let i=0; i<rows.length; i++) {
+            const edit_button = rows[i].querySelector(".edit_button");
+            edit_button.addEventListener("click", edit_transaction);
+            const revert_button = rows[i].querySelector(".revert_button");
+            revert_button.addEventListener("click", function(event) {revert_edit(event.target.parentElement)});
+        }
+    };
+
+    function _toggle_collapse() {
+        let button = document.getElementById("toggle_collapse");
+        const rows = document.querySelectorAll(".row.parent, .row.child");
+        for (let i=0; i<rows.length; i++) {
+            if (button.value==="Expand")
+                rows[i].classList.add("expanded");
+            else
+                rows[i].classList.remove("expanded");
+        }
+        button.value = button.value==="Collapse" ? "Expand":"Collapse";
+    }
+
+    function _set_collapse_expand_event() {
+        const rows  = document.querySelectorAll(".row.parent");
+        for (let i=0; i<rows.length; i++) {
+            const button = rows[i].querySelector(".col.button");
+            const parent_row = rows[i]
+            button.addEventListener("click", function() {
+                parent_row.classList.toggle("expanded");
+                let t_id = parent_row.getAttribute("t_id")
+                let child_rows = document.querySelectorAll(".row.child[parent_id='" + t_id + "']");
+                for (let j=0; j<child_rows.length; j++) {
+                    child_rows[j].classList.toggle("expanded");
+                }
+            });
+        }
+    }
+
+    function _on_load() {
+        _set_year_selected_event();
+        _set_collapse_expand_event();
+        _set_edit_and_revert_event();
+    }
+
+document.addEventListener('DOMContentLoaded', _on_load);
+</script>
+
+<h2>{{ account }}</h2>
+<div>
+    <label for="id_year">Year</label><select id='id_year' name="year">
+    <option value="">Filter by Calendar Year</option>
+    <option value="all">All</option>
+    {% for year in years %}
+        <option value="{{ year }}" {% if year == year_selected %}selected{% endif %}>{{ year }}</option>
+    {% endfor %}
+</select>
+<input type="hidden" id="year_selected" value="{{ year_selected }}">
+</div>
+<div class="buttons">
+    <input id="toggle_edit" type="button" onclick="_toggle_edit()" value="Edit">
+    <input id="toggle_collapse" type="button" onclick="_toggle_collapse()" value="Collapse">
+
+</div>
+
+<table id="transactions">
+        <tr>
+            <th class="button"></th><th class="col date">Date</th><th class="col name">Description</th><th class="col">Debit</th><th class="col">Credit</th><th class="col">Balance</th><th class="col">Category</th>
+        </tr>
+    {% for transaction in page_obj %}
+        {%  if not transaction.is_child %}
+            <tr id='{{ transaction.id }}' class="row {% cycle 'odd' 'even' %} {% if transaction.has_children %}parent expanded{% else %}{% endif %}" t_id={{ transaction.id }}>
+            <td class="col {% if transaction.has_children %}button{% endif %}"></td>
+            <td class="col date">{{ transaction.transaction_date }}</td>
+                <td id='{{ transaction.id }}__name' class="col name">{{ transaction.name }}</td>
+                <td class="col">{{ transaction.debit|default_if_none:"" }}</td>
+                <td class="col">{{ transaction.credit|default_if_none:"" }}</td>
+                <td class="col">{{transaction.balance}}</td>
+                <td id='{{ transaction.id }}__category' class="col">{{ transaction.category}}</td>
+                <td id='{{ transaction.id }}__edit' class="edit_button"></td>
+                <td id='{{ transaction.id }}__revert' class="revert_button"></td>
+        {% else %}
+            <tr class="child row {% cycle 'odd' 'even' %} expanded" parent_id={{ transaction.parent.id }}>
+            <td class="col"></td>
+            <td class="col date"></td><td class="col name">{{ transaction.name }}</td>
+            <td class="col">{{ transaction.debit|default_if_none:""}}</td>
+            <td class="col">{{ transaction.credit|default_if_none:"" }}</td><td class="col"></td><td class="col">{{ transaction.category}}</td>
+        {% endif %}
+        </tr>
+    {% endfor %}
+</table>
+
+<div class="pagination" >
+    <div class="step-links" style="position:fixed; bottom:10px; border: 1px solid black; border-radius: 1rem; padding: 1rem;display:flex; width:80%; justify-content: space-between;">
+        <div>
+            {% if page_obj.has_previous %}
+                <a href="?page=1&year={{ year_selected }}">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}&year={{ year_selected }}">previous</a>
+            {% endif %}
+        </div>
+
+        <div class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </div>
+
+        <div>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&year={{ year_selected }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&year={{ year_selected }}">last &raquo;</a>
+        {% endif %}
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
