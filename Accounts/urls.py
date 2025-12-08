@@ -6,25 +6,15 @@ app_name = "Account"
 
 urlpatterns = [
     path('upload/', views.upload_transactions, name='upload_transactions'),
-    path('report/<int:account_id>/transactions/', views.TransactionList.as_view(), name='TransactionList'),
+    path('report/transactions/', views.TransactionList.as_view(), name='TransactionList'),
+    path('report/transactions/<int:account_id>/', views.TransactionList.as_view(), name='TransactionList'),
 
-    path('report/', views.summary, name='report'),
-    path('report/<int:account_id>/', views.summary, name='report'),
-    path('report/', include([
-            path('<str:report>/', include([
-                path('', views.download_report, name='download_report'),
-                path('<int:account>/', include([
-                    path('', views.download_report, name='download_report'),
-                    path('<int:year>/', include([
-                        path('', views.download_report, name='download_report'),
-                        path('<str:month>/', views.download_report, name='Summary'),
-                    ])
-                         )
-                ])
-                     )
-            ])
-                 )
-         ])
-         ),
-    path('edit_transaction/<int:transaction_id>/', views.edit_transaction, name='edit_transaction')
+    path('report/', views.FinancialReport.as_view(), name='report'),
+    path('report/<int:account_id>/', views.FinancialReport.as_view(), name='report'),
+
+    #ToDo - a single REST API with actions - maybe ?
+    path('edit_transaction/<int:transaction_id>/', views.edit_transaction, name='edit_transaction'),
+    path('edit_split/<int:transaction_id>/', views.edit_split, name='edit_split'),
+    path('add_split/<int:transaction_id>/', views.add_split, name='edit_split'),
+
 ]

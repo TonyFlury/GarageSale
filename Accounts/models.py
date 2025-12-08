@@ -6,8 +6,9 @@ from django.db import models
 import re
 import string
 
-from django.db.models import Lookup, OuterRef, Subquery, F, Sum, Case, When, Value, Q
+from django.db.models import Lookup, OuterRef, Subquery, F, Sum, Case, When, Value, Q, Exists
 from django.db.models.sql import Query
+from django.template.defaultfilters import default
 from django.utils.translation.reloader import translation_file_changed
 
 
@@ -48,7 +49,19 @@ class FinancialYear(models.Model):
     year_end = models.DateField()
 
     def __str__(self):
-        return f'{self.year} {self.year_start} {self.year_end}'
+        return f'{self.year}  ({self.get_year_start_display()} to {self.get_year_end_display()})'
+
+    def _get_date_display(self, date_item:datetime.date):
+        return date_item.strftime('%d %b %Y')
+
+    def get_year_start_display(self):
+        return self._get_date_display(self.year_start)
+
+    def get_year_end_display(self):
+        return self._get_date_display(self.year_end)
+
+    def is_complete(self):
+        return self.year_end < datetime.date.today()
 
 
 class TransactionManager(models.Manager):
@@ -64,7 +77,14 @@ class TransactionManager(models.Manager):
 
     def bank_only(self):
         """An ordered query set of just those transactions that would appear on a bank statement"""
-        return self.get_queryset().filter(parent__isnull=True).annotate(actual_transaction=F('id')).order_by('transaction_date','actual_transaction')
+        splits  = (Transaction.objects.filter(parent__id=OuterRef('id')).values('parent__id').
+                           annotate(split_credit = Sum('credit', default=Decimal("0.00"))).
+                           annotate(split_debit=Sum('debit', default=Decimal("0.00"))).values('split_debit','split_credit'))
+
+        return (self.get_queryset().filter(parent__isnull=True).annotate(actual_transaction=F('id')).
+                annotate(remaining_credit=F('credit') - Case(When(Exists(splits), then=Subquery(splits.values('split_credit')[:1])), default=Value(Decimal("0.00")) )).
+                annotate(remaining_debit=F('debit') - Case(When(Exists(splits), then=Subquery(splits.values('split_debit')[:1])), default=Value(Decimal("0.00")) )).
+                order_by('transaction_date','actual_transaction'))
 
 class Transaction(models.Model):
     objects = models.Manager()

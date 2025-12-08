@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .models import Transaction, Account, Categories
+from .models import Transaction, Account, Categories, FinancialYear
+
 
 # Register your models here.
 @admin.register(Transaction)
@@ -14,4 +15,8 @@ class AccountAdmin(admin.ModelAdmin):
 
 @admin.register(Categories)
 class CategoriesAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(FinancialYear)
+class FinancialYearAdmin(admin.ModelAdmin):
     pass

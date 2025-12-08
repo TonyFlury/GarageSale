@@ -18,8 +18,29 @@
 <script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
 {% block additionalStyles%}
     <!--- Include any additional style sheets here -->
+    <style>
+        div#test_warning_close {
+            position:absolute;
+            top: 5px;
+            right : 5px;
+            background: url("{% static 'GarageSale/images/icons/close-circle-1-svgrepo-com.svg' %}") no-repeat center;
+            background-size: 24px 24px;
+            width: 24px; height: 24px;
+        }
+    </style>
 {% endblock %}
 {% block additionalScripts %}
+
+    <script type="text/javascript" >
+    document.addEventListener('DOMContentLoaded', function() {
+        let button = document.getElementById('test_warning_close');
+        button.addEventListener('click', function() {
+            const warning = document.getElementById('test_warning');
+            warning.style.display = 'none';
+        })
+    } );
+
+</script>
     <!--- Include any additional scripts here -->
 {% endblock %}
 
@@ -45,7 +66,9 @@
         {% block body %}Body Content{% endblock%}
     </div>
     {% if TEST_SERVER %}
-        <div class="test_warning">
+        <div id='test_warning' class="test_warning">
+            <div id="test_warning_close">
+            </div>
             <p>This is a test server - all features are experimental and may not work - contact Tony Flury if any bugs or strange behaviour is found.</p>
             <p>Do not use private personal data on this server.</p>
         </div>

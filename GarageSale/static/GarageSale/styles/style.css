@@ -180,6 +180,7 @@ input[type="text"], input[type="password"], input[type="email"], input[type="url
     /* margin:5px; */
     box-shadow: 1px 1px rgba(1,1,1,1) inset;
     font-size:inherit;
+    width: fit-content;
 }
 input[type="url"] {
     width:25em;

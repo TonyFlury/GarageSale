@@ -1,12 +1,33 @@
+{% extends "accounts_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block Title %}
+    Brantham Garage Sale - Financial Reports
+{% endblock %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'team_pages/styles/team_page.css' %}" xmlns="http://www.w3.org/1999/html">
     <link rel="stylesheet" href="{% static 'Accounts/styles/reports.css' %}">
-</head>
-<body>
+    <style>
+        div#Content {
+            font-size:80%;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+<div  class="breadcrumb">
+    {% block breadcrumb %}
+        {% breadcrumb %}
+    {% endblock%}
+</div>
+{% endblock %}
+
+{% block SnappableSections %}
+
 <script language="javascript">
     function report_data_changed(event) {
             const type_element = document.getElementById("id_type")
@@ -67,6 +88,7 @@ document.addEventListener('DOMContentLoaded', _on_load);
     </select>
 </div>
 {% if summary_types %}
+    <div>
     <label for="id_type">Report Type</label>
     <select id='id_type' name="type">
         <option value="">Which Report Type</option>
@@ -74,17 +96,20 @@ document.addEventListener('DOMContentLoaded', _on_load);
             <option value="{{ type.0 }}" {% if type.0 == type_selection %}selected{% endif %}>{{ type.1 }}</option>
         {% endfor %}
     </select>
-
+    </div>
     {% if years %}
+        <div>
         <label for="id_year">Year</label>
         <select id='id_year' name="year">
             <option value="">Which Year</option>
             {% for year in years %}
-                <option value="{{ year }}" {% if year == year_selection %}selected{% endif %}>{{ year }}</option>
+                <option value="{{ year.year }}" {% if year == year_selection %}selected{% endif %}>{{ year.year }}</option>
             {% endfor %}
         </select>
+    </div>
     {% endif %}
     {% if months %}
+        <div>
         <label for="id_month">Month</label>
         <select id='id_month' name="month">
             <option value="">Which month</option>
@@ -92,6 +117,7 @@ document.addEventListener('DOMContentLoaded', _on_load);
                 <option value="{{ month.index }}" {% if month.index == month_selection %}selected{% endif %}>{{ month.name }}</option>
             {% endfor %}
         </select>
+        </div>
     {% endif %}
 {% endif %}
 {% if report %}
@@ -100,11 +126,11 @@ document.addEventListener('DOMContentLoaded', _on_load);
     </div>
     <div>
         {%  if month_selection %}
-            <a type="pdf" href={% url "Accounts:download_report" report=type_selection account=account_selection year=year_selection month=month_selection %}>Download Report as pdf</a>
+            <a type="pdf" href='{% url "Account:report" account_id=account_selection %}?year={{year_selection}}&month={{month_selection}}&download' >Download Report as pdf</a>
         {% else %}
-            <a type="pdf" href={% url "Accounts:download_report" report=type_selection account=account_selection year=year_selection %}>Download Report as pdf</a>
+            <a type="pdf" href='{% url "Account:report" account_id=account_selection %}?year={{year_selection}}&download' >Download Report as pdf</a>
         {% endif %}
     </div>
 {% endif %}
-</body>
-</html>
+
+{% endblock %}

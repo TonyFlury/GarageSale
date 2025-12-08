@@ -42,11 +42,6 @@ class General(models.Model):
     class Meta:
         managed = False
         default_permissions = ()
-        permissions = [
-            ("is_trustee", "Is a member of the Charity Trustee Team"),
-           ("is_administrator", 'Is a administrator for the website'),
-            ("is_manager", 'Is a manager of the website'),
-        ]
 
 # ToDo - convert QuillField to Summernote
 class MOTD(models.Model):
@@ -64,12 +59,6 @@ class MOTD(models.Model):
 
     class Meta:
         default_permissions = ()
-        permissions = [
-            ("can_create_motd", "Can create a new MotD"),
-            ("can_edit_motd", "Can edit an existing MotD"),
-            ("can_view_motd", "Can view an existing MotD"),
-            ("can_delete_motd", "Can delete an existing MotD"),
-        ]
 
 def save_supported_logo_to(instance, filename):
     return f'supported_logo_{instance.name}/{filename}'
@@ -134,13 +123,6 @@ class EventData(models.Model):
 
     class Meta:
         default_permissions = ()
-        permissions = [
-            ("can_create_event", "Can create a new Event"),
-            ("can_edit_event", "Can edit an existing Event"),
-            ("can_view_event", "Can view an existing Event"),
-            ("can_delete_event", "Can delete an existing Event"),
-            ("can_use_event", "Can use an existing Event")
-        ]
 
     @staticmethod
     def get_current():
@@ -159,6 +141,9 @@ class TemplateAttachment(models.Model):
     upload = models.BooleanField(default=False)
     template_name = models.CharField(max_length=100, verbose_name='Name')
     attached_file = models.FileField(upload_to=save_template_attachment_to, blank=True, null=True)
+
+    class Meta:
+        default_permissions = ()
 
     def __str__(self):
         return f'{self.id} {self.upload} {self.template_name if not self.upload else self.attached_file}'
@@ -195,6 +180,7 @@ class CurrentActive(models.Manager):
 class CommunicationTemplate(models.Model):
     """A template for building emails with attachments - not a generalized CMS."""
     class Meta:
+        default_permissions = ()
         indexes = [
             models.Index(name='CategoryByDate', fields=['category', '-use_from']),
             models.Index(name='CategoryTransitionByDate', fields=['category', 'transition', '-use_from']),
@@ -210,6 +196,7 @@ class CommunicationTemplate(models.Model):
     signature = models.TextField(max_length=500, null=True, blank=True)
     use_from = models.DateField(null=False, blank=False)
     fields = ['attachment_warnings',]
+
 
     def get_use_from_display(self):
         return f'{day_name[self.use_from.weekday()]} {self.use_from.day} {month_name[self.use_from.month]} {self.use_from.year}'
@@ -388,8 +375,9 @@ class CommunicationTemplate(models.Model):
 
         try:
             ret = msg.send()
+            return ret
         except Exception as e:
             logger.error(f'Could not send email for {self} for {context} - {e}')
-        return ret
+            return None
 
 

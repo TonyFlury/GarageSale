@@ -4,6 +4,7 @@
 {% load event_data_tags %}
 
 {% block additionalScripts%}
+    {{ block.super }}
 <script type="text/javascript" src="{% static 'GarageSale/js/tooltip.js' %}"></script>
 <script type="text/javascript" src="{% static 'GarageSale/js/scrollablePanel.js' %}"></script>
     {% block PageScripts %}
@@ -15,6 +16,7 @@ Brantham Garage Sale - Home Page
 {% endblock %}
 
 {% block additionalStyles %}
+    {{ block.super }}
 <link rel="stylesheet" href="{% static 'GarageSale/styles/scrollablePanel.css' %}">
     {% block PageStyles %}
     {% endblock %}
