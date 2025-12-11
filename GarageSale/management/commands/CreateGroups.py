@@ -35,7 +35,7 @@ groups = {'ExecMember':{'*:not(CraftMarket,Accounts,Sponsors)|*|view',
           'SponsorshipManager':{'Sponsors|*|*'},
           }
 
-found_perms = WildcardDict()
+found_perms = WildcardDict( {'GarageSale': {'general': set()},})
 
 
 class Command( BaseCommand ):
@@ -87,6 +87,10 @@ class Command( BaseCommand ):
 
         self._verbose = options['verbose']
 
+        ctype = ContentType.objects.get(app_label='GarageSale', model='general')
+        trustee_perm = Permission.objects.get_or_create(codename='is_team_member', content_type=ctype, name='team_member')
+        found_perms['GarageSale']['general'].add(('is_team_member', trustee_perm[0]))
+
         group_option = options['group'] if options['group'] else None
         if not options['app_model']:
             app_option, model_option = None, None
@@ -124,14 +128,17 @@ class Command( BaseCommand ):
                 group = object()
             else:
                 group = Group.objects.get_or_create(name=group_name)[0]
+                for name, perm in found_perms['GarageSale']['general']:
+                    print(f'{name!r},{perm!r}')
+                    group.permissions.add( perm )
 
-            for perm in perm_list:
-                for app, model, name, perms in found_perms.enumerate(perm):
+            for perm_wildcard in perm_list:
+                for app, model, name, perm in found_perms.enumerate(perm_wildcard):
                     if options['fake']:
-                        logger.info(f'Adding {app}.{model} | {name} for {group_name}')
+                        logger.info(f'Adding {app}.{model} | {name} {perm!r} for {group_name}')
                     else:
-                        self.verbose(f'Adding {app}.{model} | {name} for {group_name}')
-                        group.permissions.add(perms)
+                        self.verbose(f'Adding {app}.{model} | {name} {perm!r} for {group_name}')
+                        group.permissions.add(perm)
 
 
     def _create_permissions(self, app_option, model_option, options: dict[str, Any]):
@@ -140,6 +147,9 @@ class Command( BaseCommand ):
                 continue
             for model, perms in model_perms.items():
                 if model_option and model != model_option:
+                    continue
+
+                if app == 'GarageSale' and model == 'general':
                     continue
 
                 try:
@@ -160,8 +170,8 @@ class Command( BaseCommand ):
                         logging.info(f'Adding {perm} to {app}.{model}')
                         found_perms[app][model].add((perm, object()))
                     else:
-                        self.verbose(f'Adding {perm} to {app}.{model}')
-                        p = Permission.objects.get_or_create(codename=perm, content_type=ctype, name=f'{perm}')[0]
+                        p = Permission.objects.get_or_create(codename=f'{perm}_{model}', content_type=ctype, name=f'can {perm} {model}')[0]
+                        self.verbose(f'Adding {perm} {p!r} to {app}.{model}')
                         found_perms[app][model].add((perm, p))
 
 

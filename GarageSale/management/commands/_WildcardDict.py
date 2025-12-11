@@ -9,7 +9,10 @@ class WildcardDict:
     def __init__(self, d=None):
         if d is None:
             d = {}
-        self.__dict__ = defaultdict(partial(defaultdict,set), d)
+        self.__dict__ = defaultdict(partial(defaultdict,set))
+        for a, m in d.items():
+            for model_name, perms in m.items():
+                self[a][model_name] = perms
 
     def __getitem__(self, key):
         return self.__dict__[key]

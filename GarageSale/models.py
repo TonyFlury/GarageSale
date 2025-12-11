@@ -41,7 +41,8 @@ logging.getLogger('loggingTools').addHandler(logging.NullHandler())
 class General(models.Model):
     class Meta:
         managed = False
-        default_permissions = ()
+        permissions = (('is_team_member', 'Can access admin pages'),)
+        default_permissions = ('is_team_member',)
 
 # ToDo - convert QuillField to Summernote
 class MOTD(models.Model):

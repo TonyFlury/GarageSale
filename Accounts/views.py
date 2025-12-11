@@ -3,14 +3,17 @@ from abc import abstractmethod
 from calendar import month_name
 from http import HTTPStatus
 
+from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, PermissionRequiredMixin
 from django.contrib.staticfiles import finders
+from django.core.exceptions import BadRequest
 from django.db.models import Sum
 from django.http import HttpRequest, HttpResponse, HttpResponseServerError, JsonResponse
 from django.shortcuts import render, redirect
 from django.template import Context, Template, Engine
 from django.template.loader import get_template
 from django.template.response import TemplateResponse
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import ListView
 
@@ -29,6 +32,8 @@ import json
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+@login_required( redirect_field_name='next', login_url=reverse_lazy('user_management:login') )
+@permission_required('Accounts.upload_transaction', raise_exception=True)
 def upload_transactions(request):
     if request.method == 'GET':
         form = Upload()
@@ -73,11 +78,17 @@ def upload_transactions(request):
     else:
         raise Exception('Invalid request method')
 
-class TransactionList(ListView):
+class TransactionList(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    login_url = reverse_lazy('user_management:login')
+    redirect_field_name = 'next'
     model = Transaction
     template_name = 'transaction_list.html'
     paginate_by = 10
     paginate_orphans = 3
+
+    def test_func(self):
+        user = self.request.user
+        return user.is_superuser or user.has_perm('Accounts.view_transaction') or user.has_perm('Accounts.edit_transaction')
 
     def get_yearset(self):
         years = FinancialYear.objects.all().order_by('-year_start')
@@ -88,6 +99,7 @@ class TransactionList(ListView):
         if not account_id:
             return Transaction.objects.none()
         year = self.request.GET.get('year','')
+        year_inst = None
         if year:
             try:
                 year_inst = FinancialYear.objects.get(year=year)
@@ -95,6 +107,7 @@ class TransactionList(ListView):
                 logging.error(f'Invalid year {year} specified for transaction list')
                 year = None
                 year_inst = None
+                raise BadRequest(f'Invalid year {year} specified for transaction list')
 
         qs = Transaction.details.bank_only().filter(account_id=account_id)
         if year:
@@ -112,7 +125,10 @@ class TransactionList(ListView):
 
 #TODO Refactor into a class (similar to a View).
 
-class FinancialReport(View):
+class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
+    login_url = reverse_lazy('user_management:login')
+    redirect_field_name = 'next'
+    permission_required = 'Accounts.report_transaction'
     template_name = ''
     summary = ''
     download_name = ''
@@ -266,64 +282,89 @@ class YearlyReport:
     def validate_params(context:dict) -> bool:
         return bool(context.get('year_selection', None))
 
+@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.edit_transaction'))
 def edit_transaction(request, transaction_id):
-    print(f'{request.user}')
+
     if request.method != 'PUT':
-        return JsonResponse({'message':"edit_transaction : expecting a POST action",'success':HTTPStatus.METHOD_NOT_ALLOWED})
+        logging.error(f'Expecting a PUT request - got {request.method}')
+        raise BadRequest(f'Expecting a PUT request - got {request.method}')
     else:
-       try:
+        try:
             transaction = Transaction.objects.get(id=transaction_id)
-       except Transaction.DoesNotExist as e:
-           return JsonResponse(
-               {'message': "edit_transaction : expecting a POST action", 'success': HTTPStatus.INTERNAL_SERVER_ERROR})
+        except Transaction.DoesNotExist as e:
+            logging.error(f'Transaction {transaction_id} not found')
+            raise BadRequest(f'Transaction {transaction_id} not found')
 
-       data = json.loads(request.body)
-       logger.info(f"edit_transaction : {data}")
+    data = json.loads(request.body)
+    logger.info(f"edit_transaction : {data}")
 
-       transaction.name = data['name']
-       transaction.category = data['category']
-       transaction.save()
-       return JsonResponse({'message':"edit_transaction : transaction updated successfully",'success':HTTPStatus.OK})
+    transaction.name = data['name']
+    transaction.category = data['category']
+    transaction.save()
+    return JsonResponse({'message':"edit_transaction : transaction updated successfully",'success':HTTPStatus.OK})
 
+@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.edit_transaction'))
 def edit_split(request, transaction_id):
-    print(f'{request.user}')
     if request.method != 'PUT':
-        return JsonResponse({'message':"edit_transaction : expecting a POST action",'success':HTTPStatus.METHOD_NOT_ALLOWED})
+        logging.error(f'Expecting a PUT request - got {request.method}')
+        raise BadRequest(f'Expecting a PUT request - got {request.method}')
     else:
-       try:
+        try:
             transaction = Transaction.objects.get(id=transaction_id)
-       except Transaction.DoesNotExist as e:
-           return JsonResponse(
-               {'message': "edit_transaction : expecting a POST action", 'success': HTTPStatus.INTERNAL_SERVER_ERROR})
+        except Transaction.DoesNotExist as e:
+            logging.error(f'Transaction {transaction_id} not found')
+            raise BadRequest(f'Transaction {transaction_id} not found')
 
-       data = json.loads(request.body)
-       logger.info(f"edit_transaction : {data}")
+    data = json.loads(request.body)
+    logging.info(f"edit_transaction : {data}")
 
-       amount_type = 'debit' if 'debit' in data else 'credit'
+    amount_type = 'debit' if 'debit' in data else 'credit'
 
-       transaction.name = data['name']
-       setattr(transaction, amount_type, Decimal(data[amount_type]))
-       transaction.save()
-       return JsonResponse({'message':"edit_transaction : transaction updated successfully",'success':HTTPStatus.OK})
+    transaction.name = data['name']
+    setattr(transaction, amount_type, Decimal(data[amount_type]))
+    transaction.save()
+    return JsonResponse({'message':"edit_transaction : transaction updated successfully",'success':HTTPStatus.OK})
 
+@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.edit_transaction'))
 def add_split(request, transaction_id):
     if request.method != 'PUT':
-        return JsonResponse({'message':"edit_transaction : expecting a POST action",'success':HTTPStatus.METHOD_NOT_ALLOWED})
+        logging.error(f'Expecting a PUT request - got {request.method}')
+        raise BadRequest(f'Expecting a PUT request - got {request.method}')
     else:
        try:
             transaction = Transaction.objects.get(id=transaction_id)
        except Transaction.DoesNotExist as e:
-           return JsonResponse(
-               {'message': "edit_transaction : expecting a POST action", 'success': HTTPStatus.INTERNAL_SERVER_ERROR})
+           logging.error(f'Transaction {transaction_id} not found')
+           raise BadRequest(f'Transaction {transaction_id} not found')
 
-       data = json.loads(request.body)
+    data = json.loads(request.body)
 
-       amount_type = 'debit' if 'debit' in data else 'credit'
+    amount_type = 'debit' if 'debit' in data else 'credit'
 
-       new_id = Transaction.objects.create(account=transaction.account, parent=transaction, transaction_date=transaction.transaction_date,
+    new_id = Transaction.objects.create(account=transaction.account, parent=transaction, transaction_date=transaction.transaction_date,
                                             financial_year=transaction.financial_year,
                                             category=transaction.category,
                                             description=data['name'],
                                             name=data['name'], **{amount_type:Decimal(data[amount_type])})
+    logging.info(f"add_transaction : {new_id}")
 
-       return JsonResponse({'message':"add_transaction : transaction updated successfully",'id':new_id.id, 'success':HTTPStatus.OK})
+    return JsonResponse({'message':"add_transaction : transaction updated successfully",'id':new_id.id, 'success':HTTPStatus.OK})
+
+@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.edit_transaction'))
+def delete_transaction(request, transaction_id):
+    if request.method != 'PUT':
+        logging.error(f'Expecting a PUT request - got {request.method}')
+        raise BadRequest(f'Expecting a PUT request - got {request.method}')
+    else:
+       try:
+            transaction = Transaction.objects.get(id=transaction_id)
+       except Transaction.DoesNotExist as e:
+           logging.error(f'Transaction {transaction_id} not found')
+           raise BadRequest(f'Transaction {transaction_id} not found')
+
+    data = json.loads(request.body)
+
+    transaction.delete()
+    logging.info(f"delete transaction: {transaction_id} deleted")
+
+    return JsonResponse({'message':"delete_transaction : transaction delete successfully",'success':HTTPStatus.OK})

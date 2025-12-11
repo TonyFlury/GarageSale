@@ -17,4 +17,5 @@ urlpatterns = [
     path('edit_split/<int:transaction_id>/', views.edit_split, name='edit_split'),
     path('add_split/<int:transaction_id>/', views.add_split, name='edit_split'),
 
+    path( 'delete_transaction/<int:transaction_id>/', views.delete_transaction, name='delete_transaction')
 ]
