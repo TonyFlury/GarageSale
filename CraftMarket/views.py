@@ -34,9 +34,9 @@ def craft_market_list(request):
 #ToDo - prevent the need to repeat the full url for each action:
 # Remove the regex field from the toolbar and actions fields - impacts on framework.js too
 
-class TeamPages(FrameworkView):
+class CraftMarketView(FrameworkView):
     login_url = '/user/login'
-    permission_required  = 'GarageSale.is_trustee'
+    permission_required  = 'CraftMarket.suggest_marketer'
     template_name = "team_pages/craft_market.html"
     view_base = "CraftMarket:TeamPages"
     columns = [('trading_name', 'Trading<br>Name'), ('state_name', 'Current<br>Status')]
@@ -171,13 +171,13 @@ class TeamPages(FrameworkView):
                     'marketer_id': kwargs.get('marketer_id', None),
                     'sub_list_data': self.get_list_query_set(request, **kwargs)}
         # Remove the 'templates button' if the user does not have the required permissions
-        if not request.user.has_perm('CraftMarket.can_manage'):
-            context['toolbar'] = [i for i in context['toolbar'] if i['action'] != 'templates']
+        if not (request.user.has_perm('CraftMarket.edit_marketer') and request.user.has_perm('GarageSale.edit_communicationtemplate')):
+            context['toolbar'] = [i for i in self.toolbar if i['action'] != 'templates']
         return context
 
 
-class TeamPagesCreate(TeamPages):
-    permission_required  = 'GarageSale.is_trustee'
+class MarketerCreate(CraftMarketView):
+    permission_required  = 'CraftMarket.suggest_marketer'
     template_name = "team_pages/craft_market_create.html"
     form_class = MarketerForm
     model_class = Marketer
@@ -197,9 +197,9 @@ class TeamPagesCreate(TeamPages):
         inst = self.model_class.objects.create(event=event, **form.cleaned_data)
         return inst
 
-class TeamPagesView(TeamPages):
+class MarketerView(CraftMarketView):
     template_name = "team_pages/craft_market_view.html"
-    permission_required = ['GarageSale.is_trustee']
+    permission_required = 'CraftMarket.view_marketer'
 
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request, **kwargs)
@@ -214,15 +214,16 @@ class TeamPagesView(TeamPages):
                 f'Cannot view a record for a Craft Marketer without a valid marketer {kwargs.get("marketer")}')
         return Marketer.objects.get(id=kwargs.get('marketer'))
 
-class TeamPagesEdit(TeamPagesView):
+class MarketerEdit(MarketerView):
     template_name = "team_pages/craft_market_edit.html"
-    permission_required = ['CraftMarket.can_manage']
+    permission_required = 'CraftMarket.edit_marketer'
 
     def get(self, request, **kwargs):
         return super().get(request, **kwargs)
 
-class TeamPagesGenericStateChange(TeamPages):
+class MarketerGenericStateChange(CraftMarketView):
     template_name = "team_pages/craft_market_invite.html"
+    permission_required = 'CraftMarket.edit_marketer'
     view_base = "CraftMarket:TeamPages"
     new_state: MarketerState
 
@@ -260,17 +261,17 @@ class TeamPagesGenericStateChange(TeamPages):
 
         return redirect(reverse(self.view_base, kwargs={'event_id': marketer.event.id}))
 
-class TeamPagesInvite(TeamPagesGenericStateChange):
+class MarketerInvite(MarketerGenericStateChange):
     template_name = "team_pages/craft_market_invite.html"
     view_base = "CraftMarket:TeamPages"
     new_state =  MarketerState.Invited
 
-class TeamPagesConfirm(TeamPagesGenericStateChange):
+class MarketerConfirm(MarketerGenericStateChange):
     template_name = "team_pages/craft_market_confirm.html"
     view_base = "CraftMarket:TeamPages"
     new_state =  MarketerState.Confirmed
 
-class TeamPagesReject(TeamPagesGenericStateChange):
+class MarketerReject(MarketerGenericStateChange):
     template_name = "team_pages/craft_market_reject.html"
     view_base = "CraftMarket:TeamPages"
     new_state = MarketerState.Rejected
@@ -383,7 +384,7 @@ class MarketTemplates(TemplateManagement):
 
 class MarketTemplateCreate(TemplatesCreate):
     category = 'CraftMarket'
-    permission_required =  'CraftMarket.can_manage'
+    permission_required =  ['CraftMarket.edit_marketer', 'GarageSale.edit_communicationtemplate']
     transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
     url_base = 'CraftMarket/templates'
     template_help = """

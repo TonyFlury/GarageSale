@@ -62,6 +62,7 @@ class FrameworkView(LoginRequiredMixin, PermissionRequiredMixin, View):
     template_name = ''                  # The templated to be used for the view - should be defined in the class
     form_class = None                   # The form to be used for the detail view - can be None
     model_class = None                  # The default model class to be used for the detail view - can be None
+    toolbar = []                        # The actions to be displayed on the toolbar
     success_url = ''                    # The static success url to be used if the POST succeeds - can be None/empty
     columns:list[str] = []              # The columns to be displayed in the list - should be defined in the class
     toolbar:list[dict[str,str]] = []    # The actions that are displayed in the toolbar - should be defined in the class
@@ -97,6 +98,7 @@ class FrameworkView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'toolbar' : self.toolbar,
                 "filters": self.filters,
                 "actions": self.actions,
+                "toolbar": self.toolbar,
                 "url_fields":self.url_fields,
                 "url_base":self.url_base,
                 "allow_multiple":self.allow_multiple,
