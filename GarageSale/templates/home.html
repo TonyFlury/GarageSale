@@ -55,7 +55,7 @@ Brantham Garage Sale - Home Page
     </div>
 
         {% if perms.GarageSale.is_trustee %}
-            <div class="sidebar entry direct tooltip" item="team" xmlns="http://www.w3.org/1999/html">
+            <div class="sidebar entry direct tooltip" item="team_page" xmlns="http://www.w3.org/1999/html">
             <a href="{% url 'TeamPagesRoot' %}">
                 <img class="sidebar icon" alt="About Us" id='id_team' src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %}>
                 <label for="id_team">Team Access</label>

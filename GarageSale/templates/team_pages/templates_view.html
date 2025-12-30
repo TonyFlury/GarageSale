@@ -1,0 +1,76 @@
+{% extends "team_pages/templates.html" %}
+{% load static %}
+{% load getattribute from team_page_tags %}
+{% load craftmarket_framework %}
+
+{% block Title %}
+    Brantham Garage Sale - Viewing Template {{ form.summary.value }}
+{% endblock %}
+
+{% block PageStyles %}
+    {{ block.super }}
+{% endblock %}
+
+{% block PageScripts %}
+    {{ block.super }}
+
+    <script type="text/javascript" >
+
+    function __document_loaded() {
+        let element = document.getElementById('template_view-popup')
+        element.style.display = 'block'
+        element.style.left = (window.innerWidth - element.offsetWidth)/ 2 + 'px'
+        element.style.top = (window.innerHeight - element.offsetHeight)/ 2 + 'px'
+
+        let transition = document.getElementById('id_transition_0')
+        document.getElementById('id_transition_1').disabled = !(transition.value === 'Other');
+
+        transition.addEventListener('change', function() {
+            let transition = document.getElementById('id_transition_0')
+            let value = transition.value
+            document.getElementById('id_transition_1').disabled = !(value === 'Other');
+        })
+    }
+
+    document.addEventListener('DOMContentLoaded', __document_loaded);
+
+    </script>
+    {%  endblock %}
+
+{% block detail %}
+    <div id="template_view-popup" class="popup">
+
+    <h2>{{form.summary.value }}</h2>
+    <div class="form" >
+    <div id="TemplateDetails">
+        {% csrf_token %}
+        {%  for field in form %}
+            {% if field.name == 'html_content' or field.name == 'signature' %}
+                <p>{{ field.label_tag }}<div id="{{ field.name }}">{{ field.value | safe}}</div>
+            {% else %}
+                <p>{{ field.label_tag }}<span id="{{ field.name }}" class="field">{{ field.value }}</span>
+            {% endif %}
+        {% endfor %}
+    </div>
+        <p>
+        <h4>Attachments</h4>
+        <div id="AttachmentSection"  class="attachments">
+            {% for attachment in attachments %}
+                <div class="attachment" tp_row_id={{ attachment.id }}>
+                    {{ attachment| getattribute:"warning_as_html_fragment" | safe }}
+                    <span id='upload {{ attachment.id }}' class="upload"><label for="upload {{ attachment.id }}">Upload</label> <input id="upload {{ attachment.id }}" type="checkbox" disabled {% if attachment.upload %}checked{% endif %} /input></span>
+                    {%  if attachment.upload %}
+                    <span><label>File</label> : {{ attachment.attached_file }}</span>
+                    {% else %}
+                        <span><label>Name</label> : {{ attachment.template_name }}</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+        <div class="buttons">
+            <input type="button" id="tp_close_form"  class='button confirm'  value="Exit View" onclick="document.location.href='{{ base_url }}'">
+        </div>
+    </div>
+</div>
+{% endblock %}

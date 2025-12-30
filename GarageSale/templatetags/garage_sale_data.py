@@ -35,6 +35,11 @@ logger = logging.getLogger(__name__)
 
 logger.setLevel(level=logging.DEBUG)
 
+@register.simple_tag(takes_context=True)
+def breadcrumb(context):
+    return mark_safe('')
+
+
 # settings value
 @register.simple_tag
 def settings_value(name):

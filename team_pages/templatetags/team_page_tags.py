@@ -25,12 +25,22 @@ def is_icon(ob:BoundField):
 def lookup(value, arg):
     return value.get(arg, None)
 
+@register.simple_tag(name='missing', takes_context=True)
+def missing(context, value, option_name, missing_value):
+    if option_name in value:
+        return value[option_name]
+    else:
+        return missing_value
+
 @register.filter(name='getattribute')
 def getattribute(value, arg):
     """Gets an attribute of an object dynamically from a string name"""
 
     if hasattr(value, str(arg)):
-        return getattr(value, arg)
+        if callable(getattr(value, str(arg))):
+            return getattr(value, arg)()
+        else:
+            return getattr(value, arg)
     elif hasattr(value, 'has_key') and value.has_key(arg):
         return value[arg]
     elif numeric_test.match(str(arg)) and len(value) > int(arg):

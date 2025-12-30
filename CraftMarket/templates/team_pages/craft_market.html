@@ -4,7 +4,7 @@
 
 {% block PageScripts %}
     {{ block.super }}
-    <script type="text/javascript" src="{% static 'CraftMarket/js/craft_market.js' %}"></script>
+<!--    <script type="text/javascript" src="{% static 'CraftMarket/js/craft_market.js' %}"></script> -->
     {%  endblock %}
 
 {% block PageStyles %}
@@ -44,12 +44,12 @@
     <p>Use the Funnel icon to filter the entries based on a number of different criteria.</p>
     {% endif %}
 
-    <div id="invite_popup" class="popup">
+    <div id="invite-popup" class="popup">
         <h3>Confirm Invite for <span class="name"></span></h3>
 
         Are you sure you want to invite <span class="name"></span> to the Craft Market?
 
-        <div><label for="send_email">Invite with email</label><input type="checkbox" checked id="send_email"/></div>
+        <div><label for="send_email">Invite with email</label><input type="checkbox" checked tp_fragment='!no_email' id="send_email"/></div>
         <div class="buttons">
             <span>
             <input type=button class='button cancel' value="Cancel">
@@ -60,12 +60,12 @@
         </div>
     </div>
 
-    <div id="confirm_popup" class="popup">
+    <div id="confirm-popup" class="popup">
         <h3>Confirm attendance for <span class="name"></span></h3>
 
         Are you sure you want to Confirm <span class="name"></span> will attend the Craft Market?
 
-        <div><label for="send_email">Confirm with email</label><input type="checkbox" checked id="send_email"/></div>
+        <div><label for="send_email">Confirm with email</label><input type="checkbox" tp_fragment='!no_email' checked id="send_email"/></div>
         <div class="buttons">
             <span>
             <input type=button class='button cancel' value="Cancel">
@@ -76,7 +76,7 @@
         </div>
     </div>
 
-    <div id="reject_popup" class="popup">
+    <div id="reject-popup" class="popup">
         <h3>Confirm non-attendance for <span class="name"></span></h3>
 
         Are you sure you want to confirm <span class="name"></span> will not attend the Craft Market?

@@ -1,31 +1,25 @@
-from copy import deepcopy
-from typing import Any
-
 import logging
 
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.contrib.auth.models import PermissionsMixin
 from django.core.exceptions import BadRequest
 from django.db import models
 from django.http import HttpRequest
 from django.shortcuts import redirect
-from django.template import Template, RequestContext
+from django.template import Template, Context
 from django.template.response import TemplateResponse
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.encoding import force_str
 from django.contrib.postgres.fields import ArrayField
 from django.views import View
-from django.views.defaults import ERROR_500_TEMPLATE_NAME
 
-from django.views.generic import TemplateView, ListView
-from django.db.models import Q, Case, When, Value, QuerySet, Model, Max, F
+from django.db.models import Q, Case, When, Value, QuerySet, Max
 
 import CraftMarket.forms
-import GarageSale
 from GarageSale.models import EventData, CommunicationTemplate
 from CraftMarket.models import Marketer, MarketerState
 from CraftMarket.forms import MarketerForm
+from GarageSale.views.template_views import TemplateManagement, TemplatesCreate, TemplatesView, TemplatesEdit, \
+    duplicate_template
 
 from team_pages.framework_views import FrameworkView
 
@@ -37,40 +31,44 @@ logger = logging.getLogger('CraftMarket.views')
 def craft_market_list(request):
     return None
 
+#ToDo - prevent the need to repeat the full url for each action:
+# Remove the regex field from the toolbar and actions fields - impacts on framework.js too
 
-class TeamPages(FrameworkView):
+class CraftMarketView(FrameworkView):
     login_url = '/user/login'
-    permission_required = 'GarageSale.is_trustee'
+    permission_required  = 'CraftMarket.suggest_marketer'
     template_name = "team_pages/craft_market.html"
     view_base = "CraftMarket:TeamPages"
     columns = [('trading_name', 'Trading<br>Name'), ('state_name', 'Current<br>Status')]
     can_create = True
     model_class = Marketer
     form_class = MarketerForm
-    toolbar = [{'action': 'create', 'label': 'Create', 'regex': '/CraftMarket/<int:event_id>/create/', 'icon': ''},
-               {'action': 'templates', 'label': 'Templates', 'regex': '/CraftMarket/templates/', 'icon': ''},
+    toolbar = [{'action': 'create', 'label': 'Create','icon': ''},
+               {'action': 'templates', 'label': 'Templates', 'icon': ''},
                ]
     filters = [{'id': 'marketer_invited', 'fragment': '!XInvited', 'pair': True, 'label': 'Invited'},
                {'id': 'marketer_responded', 'fragment': '!XResponded', 'pair': True, 'label': 'Responded'},
                {'id': 'marketer_rejected', 'fragment': '!XRejected', 'label': 'Rejected'},
                ]
-    actions = {'create': {'label': 'Create', 'regex': '/CraftMarket/<int:event_id>/create/',
+    actions = {'create': {'label': 'Create',
                           'icon': static('/GarageSale/images/icons/create-note-alt-svgrepo-com.svg')},
-               'templates': {'label': 'Templates', 'regex': '/CraftMarket/templates/',
-                             'icon': static('/GarageSale/images/icons/visit-templates-svgrepo-com.svg')},
-               'edit': {'label': 'Edit Details', 'regex': '/CraftMarket/<int:marketer_id>/edit/',
+               'templates': {'label': 'Templates','object':'false',
+                             'icon': static('/GarageSale/images/icons/folder-templates-svgrepo-com.svg')},
+               'edit': {'label': 'Edit Details',
                         'icon': static('GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg')},
-               'view': {'label': 'View Details', 'regex': '/CraftMarket/<int:marketer_id>/view/',
+               'view': {'label': 'View Details',
                         'icon': static('GarageSale/images/icons/execute-inspect-svgrepo-com.svg')},
-               'cancel': {'label': 'Cancel', 'regex': '/CraftMarket/<int:event_id>/',
+               'cancel': {'label': 'Cancel',
                           'icon': static('GarageSale/images/icons/cancel-svgrepo-com.svg')},
-               'invite': {'label': 'Invite to Event', 'regex': '',
+               'invite': {'label': 'Invite to Event',
                           'icon': static('GarageSale/images/icons/invite-svgrepo-com.svg')},
-               'confirm': {'label': 'Confirm Attendance', 'regex': '',
+               'confirm': {'label': 'Confirm Attendance',
                            'icon': static('GarageSale/images/icons/thumb-up-svgrepo-com.svg')},
-               'reject': {'label': 'Reject Invite', 'regex': '',
+               'reject': {'label': 'Reject Invite',
                           'icon': static('GarageSale/images/icons/thumb-down-svgrepo-com.svg')}, }
     url_fields = ['<int:event_id>', '<int:marketer_id>']
+    url_base = 'CraftMarket'
+    #allow_multiple = True
 
     def get_success_url(self, request, context=None, **kwargs):
         event_id = context.get('event_id')
@@ -173,13 +171,13 @@ class TeamPages(FrameworkView):
                     'marketer_id': kwargs.get('marketer_id', None),
                     'sub_list_data': self.get_list_query_set(request, **kwargs)}
         # Remove the 'templates button' if the user does not have the required permissions
-        if not request.user.has_perm('CraftMarket.can_manage'):
-            context['toolbar'] = [i for i in context['toolbar'] if i['action'] != 'templates']
+        if not (request.user.has_perm('CraftMarket.edit_marketer') and request.user.has_perm('GarageSale.edit_communicationtemplate')):
+            context['toolbar'] = [i for i in self.toolbar if i['action'] != 'templates']
         return context
 
 
-class TeamPagesCreate(TeamPages):
-    permission_required = ['GarageSale.is_trustee']
+class MarketerCreate(CraftMarketView):
+    permission_required  = 'CraftMarket.suggest_marketer'
     template_name = "team_pages/craft_market_create.html"
     form_class = MarketerForm
     model_class = Marketer
@@ -199,9 +197,9 @@ class TeamPagesCreate(TeamPages):
         inst = self.model_class.objects.create(event=event, **form.cleaned_data)
         return inst
 
-class TeamPagesView(TeamPages):
+class MarketerView(CraftMarketView):
     template_name = "team_pages/craft_market_view.html"
-    permission_required = ['GarageSale.is_trustee']
+    permission_required = 'CraftMarket.view_marketer'
 
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request, **kwargs)
@@ -216,16 +214,16 @@ class TeamPagesView(TeamPages):
                 f'Cannot view a record for a Craft Marketer without a valid marketer {kwargs.get("marketer")}')
         return Marketer.objects.get(id=kwargs.get('marketer'))
 
-class TeamPagesEdit(TeamPagesView):
+class MarketerEdit(MarketerView):
     template_name = "team_pages/craft_market_edit.html"
-    permission_required = ['CraftMarket.can_manage']
+    permission_required = 'CraftMarket.edit_marketer'
 
     def get(self, request, **kwargs):
-        print(request.user.email, request.user.get_all_permissions())
         return super().get(request, **kwargs)
 
-class TeamPagesGenericStateChange(TeamPages):
+class MarketerGenericStateChange(CraftMarketView):
     template_name = "team_pages/craft_market_invite.html"
+    permission_required = 'CraftMarket.edit_marketer'
     view_base = "CraftMarket:TeamPages"
     new_state: MarketerState
 
@@ -239,6 +237,7 @@ class TeamPagesGenericStateChange(TeamPages):
         context = super().get_context_data( request, **kwargs)
         inst = self.get_object(request, **kwargs)
         event_id = inst.event.id
+        print(f'in get_context_data for {self.view_base} with {event_id=} and {inst.id=} - {"no_email" in request.GET=}')
         context |= {'action': self.new_state.label,
                     'event_id': event_id,
                     'marketer_id': inst.id,
@@ -249,6 +248,7 @@ class TeamPagesGenericStateChange(TeamPages):
     # Overriding all the get function as there is no form here - confirmation is by pop-up
     def get(self, request, **kwargs):
         send_email:bool = not 'no_email' in request.GET
+
         marketer_id = kwargs.get('marketer', None)
         try:
             marketer = Marketer.objects.get(id=marketer_id)
@@ -261,28 +261,27 @@ class TeamPagesGenericStateChange(TeamPages):
 
         return redirect(reverse(self.view_base, kwargs={'event_id': marketer.event.id}))
 
-class TeamPagesInvite(TeamPagesGenericStateChange):
+class MarketerInvite(MarketerGenericStateChange):
     template_name = "team_pages/craft_market_invite.html"
     view_base = "CraftMarket:TeamPages"
     new_state =  MarketerState.Invited
 
-class TeamPagesConfirm(TeamPagesGenericStateChange):
+class MarketerConfirm(MarketerGenericStateChange):
     template_name = "team_pages/craft_market_confirm.html"
     view_base = "CraftMarket:TeamPages"
     new_state =  MarketerState.Confirmed
 
-class TeamPagesReject(TeamPagesGenericStateChange):
+class MarketerReject(MarketerGenericStateChange):
     template_name = "team_pages/craft_market_reject.html"
     view_base = "CraftMarket:TeamPages"
     new_state = MarketerState.Rejected
 
 class MarketerRSVP(View):
-    template_name = "craft_market_RSVP.html"
+    template_name = "portal/craft_market_RSVP.html"
 
     def _portal_login(self, request, **kwargs):
         marketer_code = kwargs.get('marketer_code', None)
         email = request.POST.get('email', None)
-        print('received', marketer_code, email)
 
         if not Marketer.Checksum.validate_checksum(marketer_code):
             logging.error(f'Invalid Marketer Code checksum- provided {marketer_code} during RSVP request')
@@ -308,7 +307,7 @@ class MarketerRSVP(View):
             logging.error(f'Could not find a valid Terms and Conditions template for {marketer}')
             tos_html = '{% lorem 5 p %}'
 
-        tos = Template(tos_html).render(context=marketer.common_context(request=request))
+        tos = Template(tos_html).render(context=Context(marketer.common_context(request=request)))
 
         return TemplateResponse(request=request, template=self.template_name,
                                 context={'form_section':'accept_reject',
@@ -374,18 +373,85 @@ class MarketerRSVP(View):
             case _:
                 raise BadRequest(f'Invalid form_section: {form_section}')
 
-class MarketerTemplates(FrameworkView):
-    template_name = "team_pages/craft_market_templates.html"
-    login_url = '/user/login'
-    permission_required = 'CraftMarket.can_manage'
-    columns = [('transition', 'Transition/Type'), ('use_from', 'Use From')]
+class MarketTemplates(TemplateManagement):
+    template_name = "team_pages/templates.html"
+    permission_required =  'CraftMarket.can_manage'
+    category = 'CraftMarket'
+    url_base = 'CraftMarket/templates'
 
-    def get_object(self, request, **kwargs) ->  Any | None :
-        return None
+    def get_success_url(self, request, context=None, **kwargs):
+        return reverse('CraftMarket:templates')
 
-    def get_list_query_set(self, request: HttpRequest, **kwargs):
-        return CommunicationTemplate.objects.filter(template_type='CraftMarket')
+class MarketTemplateCreate(TemplatesCreate):
+    category = 'CraftMarket'
+    permission_required =  ['CraftMarket.edit_marketer', 'GarageSale.edit_communicationtemplate']
+    transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    url_base = 'CraftMarket/templates'
+    template_help = """
+        <p>The Template system allows consistent messages to be sent to all Craft Marketers.
+        Including the ability to personalise emails, and provide key information about the event without needing
+        to change the template for every Event, by using Information tags, and attach files to outgoing emails.
+                
+        <h3>Transition/Type Field</h3>
+        The Transition/Type field identifies when or how this template is used.
+        <ul>
+        <li> Invite - Is used when a Craft Marketer is invited to participate in the event
+        <li> Confirm - Is used when a Craft Marketer has confirmed they will participate in the event
+        <li> Other - Allows you to enter your own custom Type - typically used for attachements.
+        </ul>
 
-    def get_context_data(self, request, **kwargs):
-        return super().get_context_data(request, **kwargs)
+        <h3>Information tags</h3>
+        The following tags can be used in the subject and content areas so that emails are personalised, and
+        specific to a given event (this reduces the need to update the template for every event).
+        
+        <h4>Event Information</h4>
+        <ul>
+        <li> {{event_date}} - A nicely formated date for the event
+        <li> {{supporting}} - A list of the names of the charities being supported by this event
+        </ul>
+        <h4>Craft Marketer Information</h4>
+        <ul>
+        <li> {{trading_name}} - The trading name of the Craft Marketer
+        <li> {{contact_name}} - The given contact name of the Craft Marketer
+        <li> {{email}} - The email address of the Craft Marketer
+        <li> {{url}} - The unique portal URL for this Craft Marketer - used in Invite emails.
+        </ul>
+        To make use of these tags, make sure you include the {{ }} around the name as above.
+        
+        <h3>Attachments</h3>
+        The Template system can attach one or more files to outgoing emails. Attachments can either be : 
+        <ul>
+        <li> An uploaded fixed file of any file type (eg an image or a PDF file) or
+        <li> A named template from the CraftMarket Category - in this case the Template is converted 
+        to a PDF and attached to the email,
+        </ul>
+    """
 
+    def get_success_url(self, request, context=None, **kwargs):
+        return reverse('CraftMarket:templates')
+
+
+class MarketTemplateView(TemplatesView):
+    category = 'CraftMarket'
+    permission_required =  'CraftMarket.can_manage'
+    transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    url_base = 'CraftMarket/templates'
+    template_help = ""
+
+class MarketTemplateEdit(TemplatesEdit):
+    category = 'CraftMarket'
+    permission_required =  'CraftMarket.can_manage'
+    transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    url_base = 'CraftMarket/templates'
+    template_help = MarketTemplateCreate.template_help
+
+def duplicate(request, template_id):
+
+    new_inst = duplicate_template(template_id)
+
+    return redirect(reverse('CraftMarket:template_edit', kwargs={'template_id': new_inst.id}))
+
+class MarketTemplateDelete(TeamPages):
+    permission_required =  'CraftMarket.can_manage'
+    template_name = "team_pages/templates_delete.html"
+    url_base = 'CraftMarket/templates'

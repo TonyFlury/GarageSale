@@ -1,0 +1,101 @@
+{% extends "team_pages/templates.html" %}
+{% load static %}
+{% load craftmarket_framework %}
+
+{% block PageStyles %}
+    {{ block.super }}
+{% endblock %}
+
+{% block PageScripts %}
+    {{ block.super }}
+
+    <script type="text/javascript" >
+
+    function _swap_name_and_file(upload) {
+
+        let id = upload.getAttribute('id').split('-')[1]
+
+        if (upload.checked) {
+            document.getElementById('name_' + id ).style.display = 'none';
+            document.getElementById('attached_file_' + id ).style.display = 'inline';
+        }
+        else {
+            document.getElementById('name_' + id ).style.display = 'inline';
+            document.getElementById('attached_file_' + id ).style.display = 'none';
+        }
+    }
+
+    function __document_loaded() {
+        let element = document.getElementById('template_creation-popup')
+        element.style.display = 'block'
+        element.style.left = (window.innerWidth - element.offsetWidth)/ 2 + 'px'
+        element.style.top = (window.innerHeight - element.offsetHeight)/ 2 + 'px'
+
+        let transition = document.getElementById('id_transition_0')
+        document.getElementById('id_transition_1').disabled = !(transition.value === 'Other');
+
+        transition.addEventListener('change', function() {
+            let transition = document.getElementById('id_transition_0')
+            let value = transition.value
+            document.getElementById('id_transition_1').disabled = !(value === 'Other');
+        })
+
+        let uploads = document.querySelectorAll('span.upload input[type="checkbox"]');
+            uploads.forEach(function(upload) {
+                _swap_name_and_file(upload)
+                upload.addEventListener( 'change', function(event) {
+                    _swap_name_and_file(event.target);
+            })
+        })
+    }
+
+    document.addEventListener('DOMContentLoaded', __document_loaded);
+
+    </script>
+    {%  endblock %}
+
+{% block detail %}
+    <div id="template_creation-popup" class="popup">
+        <div id="help_popup-button">
+            <img class="help"  alt='Help' src="{% static 'GarageSale/images/icons/help-circle-svgrepo-com.svg' %}" onclick="document.getElementById('help_popup').style.display = 'block'">
+        </div>
+        <div id="help_popup" class="popup">
+            <div id="help_popup-close">
+                <img class="close"  alt='Close Help' src="{% static 'GarageSale/images/icons/close-circle-1-svgrepo-com.svg' %}" onclick="document.getElementById('help_popup').style.display = 'none'">
+                <h2>Template Help</h2>
+                <p>
+                    {{ template_help | safe}}
+                </p>
+            </div>
+        </div>
+    <h2>Create a new Communication Template</h2>
+    <div class="form">
+        <form method="POST" novalidate enctype='multipart/form-data'>
+
+        {% csrf_token %}
+            {{ attachments.management_form }}
+            <div id="TemplateDetails">
+                {{ form.as_p }}
+            </div>
+            <h4>Attachments</h4>
+            <div id="AttachmentSection" class="attachments">
+                {% for attachment  in attachments %}
+                    <div class="attachment" tp_row_id={{ attachment.id }}>
+                        <span id='upload_{{ attachment.forloop.counter0 }}' class="upload">{{ attachment.upload.label_tag }}{{ attachment.upload }}</span>
+                        <span id="name_{{ forloop.counter0 }}">{{ attachment.name.label_tag }}{{ attachment.template_name }}</span>
+                        <span id="attached_file_{{ forloop.counter0 }}">{{ attachment.attached_file.label_tag }}{{ attachment.attached_file }}</span>
+                        {% if attachments.can_delete %}
+                            <span class="delete" id="delete_{{forloop.counter0}}">{{ attachment.DELETE.label_tag }}{{ attachment.DELETE }}</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <span class="add"><input type="submit" id="id_add_attachment" name='Add' value="Add +" class="button"></span>
+            </div>
+        <div class="buttons">
+            <input type="button" id='tp_cancel_form' onclick="document.location.href='{{ base_url }}'" class='button cancel' value="Cancel this form.">
+            <input type="submit" id="tp_save_form"  class='button confirm'  value="Save and continue">
+        </div>
+    </form>
+    </div>
+    </div>
+{% endblock %}
