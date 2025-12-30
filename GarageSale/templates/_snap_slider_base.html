@@ -1,9 +1,11 @@
 {% extends "_base.html" %}
 {% load static %}
 {% load user_management_tags %}
+{% load user_info from user_management_tags %}
 {% load event_data_tags %}
 
 {% block additionalScripts%}
+    {{ block.super }}
 <script type="text/javascript" src="{% static 'GarageSale/js/tooltip.js' %}"></script>
 <script type="text/javascript" src="{% static 'GarageSale/js/scrollablePanel.js' %}"></script>
     {% block PageScripts %}
@@ -15,6 +17,7 @@ Brantham Garage Sale - Home Page
 {% endblock %}
 
 {% block additionalStyles %}
+    {{ block.super }}
 <link rel="stylesheet" href="{% static 'GarageSale/styles/scrollablePanel.css' %}">
     {% block PageStyles %}
     {% endblock %}
@@ -41,6 +44,7 @@ Brantham Garage Sale - Home Page
 </div>
 <div class="menubar">
     <div id="Buttons">
+    <span>{%  user_info %}</span>
     <a href="mailto:branthamGarageSale@gmail.com"><img id=Email class="Button Animate browser" src="{% static 'GarageSale/images/icons/email-open-svgrepo-com.svg' %}" ></a>
     <a href="https://www.facebook.com/BranthamGarageSale"><img id=Facebook class="Button Animate browser" src="{% static 'GarageSale/images/icons/facebook-color-svgrepo-com.svg' %}"></a>
     <span id=user_management class="Button browser dropdown">

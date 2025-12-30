@@ -165,11 +165,6 @@ class Marketer(models.Model):
     class Meta:
         """Customise permissions for the Craft Market """
         default_permissions = ()
-        permissions = [
-            ("can_view", "Is able to view Craft Market participants"),
-            ("can_suggest", "Is able to suggest Craft Market participants"),
-            ("can_manage", "Is able to manage Craft Market participants"),
-        ]
         indexes = [models.Index(fields=['event', 'trading_name']),
                    models.Index(name='with_code', fields=['email', 'code'],
                                 condition=Q(code__isnull=False, state=MarketerState.Invited))]

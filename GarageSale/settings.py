@@ -98,6 +98,7 @@ INSTALLED_APPS = [
     'DjangoGoogleMap.apps.DjangoWhat3WordsConfig',
     'Sponsors.apps.SponsorsConfig',
     'CraftMarket.apps.CraftmarketConfig',
+    'Accounts.apps.AccountsConfig',
     'user_management.apps.user_managementConfig',
     'News.apps.NewsConfig',
     'django.forms',

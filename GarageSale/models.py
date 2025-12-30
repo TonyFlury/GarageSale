@@ -16,11 +16,14 @@ import mimetypes
 import io
 import logging
 import bs4
+from django.contrib.staticfiles import finders
 
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.db.models import Subquery
 from django.http import HttpRequest
+from django.template import Template, Context, loader
+from django.template.loader import get_template
 from django.template import Template, Context, Engine
 from django_quill.fields import QuillField
 from django.contrib.auth.models import User
@@ -39,12 +42,8 @@ logging.getLogger('loggingTools').addHandler(logging.NullHandler())
 class General(models.Model):
     class Meta:
         managed = False
-        default_permissions = ()
-        permissions = [
-            ("is_trustee", "Is a member of the Charity Trustee Team"),
-           ("is_administrator", 'Is a administrator for the website'),
-            ("is_manager", 'Is a manager of the website'),
-        ]
+        permissions = (('is_team_member', 'Can access admin pages'),)
+        default_permissions = ('is_team_member',)
 
 # ToDo - convert QuillField to Summernote
 class MOTD(models.Model):
@@ -62,12 +61,6 @@ class MOTD(models.Model):
 
     class Meta:
         default_permissions = ()
-        permissions = [
-            ("can_create_motd", "Can create a new MotD"),
-            ("can_edit_motd", "Can edit an existing MotD"),
-            ("can_view_motd", "Can view an existing MotD"),
-            ("can_delete_motd", "Can delete an existing MotD"),
-        ]
 
 def save_supported_logo_to(instance, filename):
     return f'supported_logo_{instance.name}/{filename}'
@@ -132,13 +125,6 @@ class EventData(models.Model):
 
     class Meta:
         default_permissions = ()
-        permissions = [
-            ("can_create_event", "Can create a new Event"),
-            ("can_edit_event", "Can edit an existing Event"),
-            ("can_view_event", "Can view an existing Event"),
-            ("can_delete_event", "Can delete an existing Event"),
-            ("can_use_event", "Can use an existing Event")
-        ]
 
     @staticmethod
     def get_current():
@@ -157,6 +143,9 @@ class TemplateAttachment(models.Model):
     upload = models.BooleanField(default=False)
     template_name = models.CharField(max_length=100, verbose_name='Name')
     attached_file = models.FileField(upload_to=save_template_attachment_to, blank=True, null=True)
+
+    class Meta:
+        default_permissions = ()
 
     def __str__(self):
         return f'{self.id} {self.upload} {self.template_name if not self.upload else self.attached_file}'
@@ -193,6 +182,7 @@ class CurrentActive(models.Manager):
 class CommunicationTemplate(models.Model):
     """A template for building emails with attachments - not a generalized CMS."""
     class Meta:
+        default_permissions = ()
         indexes = [
             models.Index(name='CategoryByDate', fields=['category', '-use_from']),
             models.Index(name='CategoryTransitionByDate', fields=['category', 'transition', '-use_from']),
@@ -208,6 +198,7 @@ class CommunicationTemplate(models.Model):
     signature = models.TextField(max_length=500, null=True, blank=True)
     use_from = models.DateField(null=False, blank=False)
     fields = ['attachment_warnings',]
+
 
     def get_use_from_display(self):
         return f'{day_name[self.use_from.weekday()]} {self.use_from.day} {month_name[self.use_from.month]} {self.use_from.year}'
@@ -320,27 +311,41 @@ class CommunicationTemplate(models.Model):
 
         return msg
 
+    @classmethod
+    def pdf_header_template(cls, context:dict):
+        result = finders.find('GarageSale/styles/pdf_header.css')
+        print(result)
+        if not result:
+            print(finders.searched_locations)
+            return ''
+
+        with open(result) as f:
+            template = Template(f.read())
+        return template.render( context=Context(context))
+
     def get_header_text(self, request:HttpRequest, context):
         """Get the header text for the email"""
         if request:
             host,scheme  = request.get_host(), request.scheme
         else:
             host, scheme = 'localhost', 'http'
+        context['host'] = host
+        context['scheme'] = scheme
+        context['summary'] = self.summary
+        return CommunicationTemplate.pdf_header_template(context)
 
-        path = 'GarageSale/templates/css_templates/pdf_header.css'
-        with open(path) as f:
-            header_template = Template(f.read())
-        text =  header_template.render(Context({'summary': self.summary, 'scheme': scheme, 'host': host}, context))
-        return text
+    @classmethod
+    def pdf_from_template_str(cls, context:dict, template_str:str, header:str = ""):
+        html = io.StringIO(Template(template_str).render(Context(context)))
+        pdf = weasyprint.HTML(html).write_pdf(stylesheets=[weasyprint.CSS(string=header)])
+        return pdf
 
     def render_template_as_pdf(self,request:HttpRequest, context):
         """Convert a given template to a PDF - with headers etc."""
         logger.info(f'Rendering template {self} for {context} as a PDF')
 
         header = self.get_header_text(request, context)
-        html = io.StringIO(Template(self.html_content).render(Context(context)))
-        pdf = weasyprint.HTML(html).write_pdf(stylesheets=[weasyprint.CSS(string=header)])
-        return pdf
+        return CommunicationTemplate.pdf_from_template_str(context, self.html_content, header)
 
     def send_email(self, request:HttpRequest, context):
 
@@ -372,8 +377,9 @@ class CommunicationTemplate(models.Model):
 
         try:
             ret = msg.send()
+            return ret
         except Exception as e:
             logger.error(f'Could not send email for {self} for {context} - {e}')
-        return ret
+            return None
 
 

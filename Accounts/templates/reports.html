@@ -1,0 +1,136 @@
+{% extends "accounts_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block Title %}
+    Brantham Garage Sale - Financial Reports
+{% endblock %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'team_pages/styles/team_page.css' %}" xmlns="http://www.w3.org/1999/html">
+    <link rel="stylesheet" href="{% static 'Accounts/styles/reports.css' %}">
+    <style>
+        div#Content {
+            font-size:80%;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+<div  class="breadcrumb">
+    {% block breadcrumb %}
+        {% breadcrumb %}
+    {% endblock%}
+</div>
+{% endblock %}
+
+{% block SnappableSections %}
+
+<script language="javascript">
+    function report_data_changed(event) {
+            const type_element = document.getElementById("id_type")
+            const year_element = document.getElementById("id_year")
+            const month_element = document.getElementById("id_month")
+            let params = new URLSearchParams(window.location.search);
+            let year = (year_element != null) ? year_element.value : "";
+            let month = (month_element != null) ? month_element.value : "";
+
+            /* Have any changes been made ? */
+            if (params.get('type') === type_element.value && params.get('year') === year  && params.get('month') === month)
+                return;
+
+            /* Type is always set */
+            params.set('type', type_element.value);
+            if (year === "")
+                params.delete('year');
+            else
+                params.set('year', year);
+            if (type_element.value !== 'monthly' || month === "")
+                params.delete('month');
+            else
+                if (month !== "")
+                    params.set('month', month);
+        window.location.search = params.toString()
+    }
+
+    function _on_load() {
+        const account_element = document.getElementById("id_account")
+        account_element.addEventListener("change", function() {
+                const account = account_element.value;
+                if (account == null || account.trim() === "")
+                    return;
+                window.location.href = "/Account/report/" + account + "/";
+                });
+
+        const type_element = document.getElementById("id_type")
+        if (type_element != null)
+            type_element.addEventListener("change", report_data_changed)
+
+        const year_element = document.getElementById("id_year")
+        if (year_element != null)
+            year_element.addEventListener("change", report_data_changed)
+
+        const month_element = document.getElementById("id_month")
+        if (month_element != null)
+            month_element.addEventListener("change", report_data_changed)
+}
+document.addEventListener('DOMContentLoaded', _on_load);
+</script>
+<div>
+<label for="id_account">Account</label>
+    <select id='id_account' name="account">
+        <option value="">Bank Account ?</option>
+        {% for account in accounts %}
+            <option value="{{ account.id }}" {% if account.id == account_selection %}selected{% endif %}>{{ account }}</option>
+        {% endfor %}
+    </select>
+</div>
+{% if summary_types %}
+    <div>
+    <label for="id_type">Report Type</label>
+    <select id='id_type' name="type">
+        <option value="">Which Report Type</option>
+        {% for type in summary_types %}
+            <option value="{{ type.0 }}" {% if type.0 == type_selection %}selected{% endif %}>{{ type.1 }}</option>
+        {% endfor %}
+    </select>
+    </div>
+    {% if years %}
+        <div>
+        <label for="id_year">Year</label>
+        <select id='id_year' name="year">
+            <option value="">Which Year</option>
+            {% for year in years %}
+                <option value="{{ year.year }}" {% if year == year_selection %}selected{% endif %}>{{ year.year }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+    {% if months %}
+        <div>
+        <label for="id_month">Month</label>
+        <select id='id_month' name="month">
+            <option value="">Which month</option>
+            {% for month in months %}
+                <option value="{{ month.index }}" {% if month.index == month_selection %}selected{% endif %}>{{ month.name }}</option>
+            {% endfor %}
+        </select>
+        </div>
+    {% endif %}
+{% endif %}
+{% if report %}
+    <div id="report">
+    {{ report | safe}}
+    </div>
+    <div>
+        {%  if month_selection %}
+            <a type="pdf" href='{% url "Account:report" account_id=account_selection %}?year={{year_selection}}&month={{month_selection}}&download' >Download Report as pdf</a>
+        {% else %}
+            <a type="pdf" href='{% url "Account:report" account_id=account_selection %}?year={{year_selection}}&download' >Download Report as pdf</a>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% endblock %}

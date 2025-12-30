@@ -1,0 +1,139 @@
+{% extends "accounts_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block Title %}
+    Brantham Garage Sale - Banking Transactions
+{% endblock %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'team_pages/styles/team_page.css' %}" xmlns="http://www.w3.org/1999/html">
+    <link rel="stylesheet" href="{% static 'Accounts/styles/transaction_list.css' %}" xmlns="http://www.w3.org/1999/html">
+{% endblock %}
+
+{% block header %}
+<div  class="breadcrumb">
+    {% block breadcrumb %}
+        {% breadcrumb %}
+    {% endblock%}
+</div>
+{% endblock %}
+
+{% block PageScripts %}
+    {{ block.super }}
+    <script type="text/javascript" csrf="{{ csrf_token }}" src="{% static 'Accounts/js/transaction_list.js' %}"></script>
+
+{% endblock %}
+
+{% block SnappableSections %}
+
+<div>
+<label for="id_account">Account</label>
+    <select id='id_account' name="account">
+        <option value="">Bank Account ?</option>
+        {% for account in accounts %}
+            <option value="{{ account.id }}" {% if account.id == account_selection %}selected{% endif %}>{{ account }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+{% if years %}
+    <div id="details">
+        <div>
+            <label for="id_year">Year</label><select id='id_year' name="year">
+            <option value="">Filter by Calendar Year</option>
+            <option value="all">All</option>
+            {% for year in years %}
+                <option value="{{ year }}" {% if year == year_selected %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+            </select>
+            <input type="hidden" id="year_selected" value="{{ year_selected }}">
+        </div>
+        <div id="buttons">
+            <input id="toggle_collapse" type="button" onclick="_toggle_collapse()" value="Expand All">
+            <input id="toggle_edit" type="button" onclick="_toggle_edit()" value="Edit">
+        </div>
+
+        <table id="transactions">
+                <tr>
+                    <th class="button"></th><th class="col date">Date</th><th class="col name">Description</th><th class="col">Debit</th><th class="col">Credit</th><th class="col">Balance</th><th class="col">Category</th>
+                </tr>
+            {% for transaction in page_obj %}
+                    <tr id='{{ transaction.id }}' class="row {% cycle 'odd' 'even' %} {% if transaction.has_children %}parent{% else %}{% endif %}" t_id={{ transaction.id }} remaining_credit="{{ transaction.remaining_credit }}" remaining_debit="{{ transaction.remaining_debit }}">
+                        <td class="col {% if transaction.has_children %}button{% endif %}"></td>
+                        <td class="col date">{{ transaction.transaction_date }}</td>
+                        <td id='{{ transaction.id }}__name' class="col name">{{ transaction.name }}</td>
+                        <td class="col debit">{{ transaction.debit|default_if_none:"" }}</td>
+                        <td class="col credit">{{ transaction.credit|default_if_none:"" }}</td>
+                        <td class="col balance">{{transaction.balance}}</td>
+                        <td id='{{ transaction.id }}__category' class="col category">{{ transaction.category}}</td>
+                        <td id='{{ transaction.id }}__edit' class="row_button edit_button"></td>
+                        <td id='{{ transaction.id }}__delete' class="row_button delete_button"></td>
+                        <td id='{{ transaction.id }}__revert' class="row_button revert_button"></td>
+                        <td id='{{ transaction.id }}__link' class="row_button link_button"></td>
+                </tr>
+                {%  if transaction.children.all %}
+                {% for split in transaction.children.all %}
+                    <tr class="child row" id='{{ split.id }}' parent_id={{ transaction.id }}>
+                    <td class="col"></td>
+                    <td class="col date"></td>
+                    <td id='{{ split.id }}__name' class="col name">{{ split.name }}</td>
+                    <td id='{{ split.id }}__debit' class="col debit">{{ split.debit|default_if_none:""}}</td>
+                    <td id='{{ split.id }}__credit' class="col credit">{{ split.credit|default_if_none:"" }}</td>
+                    <td class="col balance"></td>
+                    <td class="col category"></td>
+                    <td id='{{ split.id }}__edit' class="row_button edit_button"></td>
+                    <td id='{{ split.id }}__delete' class="row_button delete_button"></td>
+                    <td id='{{ split.id }}__revert' class="row_button revert_button"></td>
+                    <td id='{{ split.id }}__link' class="row_button link_button"></td>
+                    </tr>
+                {% endfor %}
+                    <tr class="child row summary" parent_id={{ transaction.id }}>
+                    <td class="col"></td>
+                    <td class="col date"></td>
+                    <td class="col name">Remaining</td>
+                    <td class="col debit">{{ transaction.remaining_debit|default_if_none:'' }}</td>
+                    <td class="col credit">{{ transaction.remaining_credit|default_if_none:'' }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+
+        <div class="pagination" >
+            <div class="step-links" >
+                <div>
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1&year={{ year_selected }}">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}&year={{ year_selected }}">previous</a>
+                    {% endif %}
+                </div>
+
+                <div class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </div>
+
+                <div>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&year={{ year_selected }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}&year={{ year_selected }}">last &raquo;</a>
+                {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="delete-popup">
+        <h3>Confirm Deletion</h3>
+
+        <div id="delete-popup-details">
+
+        </div>
+        <div class="buttons">
+            <input type="button" id="delete-close" value="Cancel">
+            <input type="button" id="delete-confirm" value="Confirm">
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

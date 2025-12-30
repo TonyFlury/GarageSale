@@ -12,3 +12,5 @@ static/
 debug.log
 
 *.log
+/credentials_deployment/
+/credentials_development/

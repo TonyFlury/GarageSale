@@ -1,0 +1,17 @@
+{% extends "accounts_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block Title %}
+    Brantham Garage Sale - Upload Transactions
+{% endblock %}
+
+{% block SnappableSections %}
+<h1>Upload Transactions</h1>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Upload</button>
+</form>
+{% endblock %}

@@ -44,11 +44,14 @@ urlpatterns = [
     # path('test/<int:case>/', views.testing, name='test'),
     path('sponsors/', include('Sponsors.urls')),
     path('CraftMarket/', include('CraftMarket.urls')),
+    path('Account/', include('Accounts.urls')),
+
     path('mapping/', include('DjangoGoogleMap.urls')),
     path('summernote/', include('django_summernote.urls')),
 ]
 
 
 if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT, show_indexes=True)
     urlpatterns += path("__debug__/", include("debug_toolbar.urls")),
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
