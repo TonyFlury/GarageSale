@@ -1,46 +1,25 @@
-{% extends "team_pages/craft_market_base.html" %}
+{% extends "team_pages/templates_base.html" %}
 {% load static %}
-{% load breadcrumb from craftmarket_framework %}
 
 {% block PageScripts %}
     {{ block.super }}
-    <script type="text/javascript" src="{% static 'CraftMarket/js/craft_market.js' %}"></script>
+
     {%  endblock %}
 
 {% block PageStyles %}
     {{ block.super }}
     <style>
 
-    div.popup {
-        display:none;
-        border: 1px solid black;
-         background-color: white;
-         padding: 10px;
-         position: absolute;
-         z-index: 1000;
-        box-shadow: 2px 2px 5px black;
-        border-radius: 15px;
 
-        span.name {
-            display: inline-block;
-        }
-
-        input.button.cancel {
-            background-color: indianred;
-        }
-        input.button.confirm {
-            background-color: lightgreen;
-        }
-    }
     </style>
 {% endblock %}
 
 {% block detail %}
     {{  block.super }}
     {%  if not sub_list_data  %}
-        Use the New button on the left to build your first communication Template.
+        Use the New button on the left to build your first craft Marketer entry.
     {% else %}
-    <p>Use the grid to the left to select a communication Template, or the New button to add a new entry.
+    <p>Use the grid to the left to select a craft Marketer, or the New button to add a new entry.
     <p>Use the Funnel icon to filter the entries based on a number of different criteria.</p>
     {% endif %}
 

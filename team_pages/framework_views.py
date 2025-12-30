@@ -62,23 +62,30 @@ class FrameworkView(LoginRequiredMixin, PermissionRequiredMixin, View):
     template_name = ''                  # The templated to be used for the view - should be defined in the class
     form_class = None                   # The form to be used for the detail view - can be None
     model_class = None                  # The default model class to be used for the detail view - can be None
+    toolbar = []                        # The actions to be displayed on the toolbar
     success_url = ''                    # The static success url to be used if the POST succeeds - can be None/empty
     columns:list[str] = []              # The columns to be displayed in the list - should be defined in the class
+    toolbar:list[dict[str,str]] = []    # The actions that are displayed in the toolbar - should be defined in the class
     filters:list[dict[str,str]] = {}          # The filters to be displayed in the list - should be defined in the class
-    actions:list[dict[str,str]] = {}          # The URLS for valid actions
+    actions:dict[str, dict[str,str]] = {}          # The URLS for valid actions
     can_create = True                   # Whether this view should display the New button
     url_fields = []                     # List of fields that can be replaced within the action url
+    url_base = ''                       # The base string for all action urls - urls are <host>://<url_base>/[<object>/]action
+    allow_multiple = False
 
     def post_save(self, request, instance, form, **kwargs):
         return None
 
     def get_form(self, form_instance=None):
-        return form_instance
+        if form_instance:
+            return form_instance
+        else:
+            return self.form_class()
 
     def get_success_url(self, request, context, **kwargs):
         """Returns the URL to be used when the POST succeeds"""
         fragments = [key for key, item in self.request.GET.items() if item == '']
-        return reverse(self.ViewBase) + ('?' + '&'.join(fragments)) if fragments else ''
+        return reverse(self.view_base) + ('?' + '&'.join(fragments)) if fragments else ''
 
     def get_list_query_set(self, request, **kwargs):
         """Returns a filtered and ordered queryset for the sub-list"""
@@ -88,9 +95,14 @@ class FrameworkView(LoginRequiredMixin, PermissionRequiredMixin, View):
         """Must be extended n to provide extra context data for the templates"""
         return {'columns':self.columns,
                 "can_create": self.can_create,
+                'toolbar' : self.toolbar,
                 "filters": self.filters,
                 "actions": self.actions,
-                "url_fields":self.url_fields}
+                "toolbar": self.toolbar,
+                "url_fields":self.url_fields,
+                "url_base":self.url_base,
+                "allow_multiple":self.allow_multiple,
+                }
 
 
     @abstractmethod
@@ -120,7 +132,7 @@ class FrameworkView(LoginRequiredMixin, PermissionRequiredMixin, View):
             if instance:
                 context['form'] = self.get_form(self.form_class(instance=instance))
             else:
-                context['form'] = self.get_form(self.form_class())
+                context['form'] = self.get_form(None)
         else:
             context['form'] = None
 

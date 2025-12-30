@@ -6,59 +6,79 @@
 
 {% block PageScripts %}
     {{ block.super }}
-    {%  endblock %}
+
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+            let popup_element = document.getElementById('details-popup');
+            let event_id = document.getElementById('tp_event_id').value;
+            let cancel_path = __current_base_url('CraftMarket') + '/' + event_id + '/' + __params_as_url();
+            let full_path = __current_base_url('CraftMarket') + '/' + event_id + '/create' + __params_as_url();
+
+            _popup_element(null, popup_element, 'visible')
+
+            popup_element.querySelector('#tp_cancel_form').addEventListener('click', function() {
+                _popup_element(null, popup_element, 'hidden');
+                window.location.href = cancel_path
+            });
+
+        } );
+    </script>
+{%  endblock %}
 
 
 {% block detail %}
-    <h2>Viewing a Craft Market record</h2>
-    <div class="form" >
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-    {% for field in form %}
-         <div class="fieldWrapper">
-            {% if field.name == 'id' %}
-                <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
-             {% endif %}
-            {% if field.fieldErrors %}
-                <div class="fieldErrors">
-                    {{ field.errors }}
-                </div>
-            {% endif %}
-            {% if field|is_icon %}
-                    {% if field.value %}
-                        <span><label for="tp_current_logo">Current Logo</label><img id='id_current_logo' alt="{{field.value}}" src="{{MEDIA_URL}}{{field.value}}" /></span>
-                    {% endif %}
-                    <div class="edit-{{field.name}}">
-                        <span class="clear-{{field.name}}">
-                        <label for="id_{{field.name}}_clear">Clear</label>
-                        <input type="checkbox" name="{{field.name}}-clear" id="id_{{field.name}}_clear">
-                        </span>
-                        <span class="change-{{field.name}}">
-                        <label for="id_{{field.name}}">Change</label>
-                        <input type="file" onchange="preview_image(event, {{field.name}} )" name="{{field.name}}" accept="image/*" id="id_{{field.name}}">
-                        <span id="id_{{ field.name }}_preview" style="display:none;">Preview : <img id="output_{{field.name}}_image" height=50px width=50px\></span>
-                        </span>
+
+    <div id = 'details-popup' class='popup'>
+
+        <h2>Viewing a Craft Market record</h2>
+        <div class="form" >
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+        {% for field in form %}
+             <div class="fieldWrapper">
+                {% if field.name == 'id' %}
+                    <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+                 {% endif %}
+                {% if field.fieldErrors %}
+                    <div class="fieldErrors">
+                        {{ field.errors }}
                     </div>
-            {% else %}
-                 <p><label>{{ field.label_tag }}</label> {{ field }}</p>
-             {% endif %}
-             </div>
-    {% endfor %}
-    <div class="buttons">
-        <input id='tp_cancel_form' tp_action="cancel" item_id="{{form.instance.event_id}}" type="button" value="Cancel">
-        <input id="tp_save_form"  type="submit" value="Save this entry">
-    </div>
+                {% endif %}
+                {% if field|is_icon %}
+                        {% if field.value %}
+                            <span><label for="tp_current_logo">Current Logo</label><img id='id_current_logo' alt="{{field.value}}" src="{{MEDIA_URL}}{{field.value}}" /></span>
+                        {% endif %}
+                        <div class="edit-{{field.name}}">
+                            <span class="clear-{{field.name}}">
+                            <label for="id_{{field.name}}_clear">Clear</label>
+                            <input type="checkbox" name="{{field.name}}-clear" id="id_{{field.name}}_clear">
+                            </span>
+                            <span class="change-{{field.name}}">
+                            <label for="id_{{field.name}}">Change</label>
+                            <input type="file" onchange="preview_image(event, {{field.name}} )" name="{{field.name}}" accept="image/*" id="id_{{field.name}}">
+                            <span id="id_{{ field.name }}_preview" style="display:none;">Preview : <img id="output_{{field.name}}_image" height=50px width=50px\></span>
+                            </span>
+                        </div>
+                {% else %}
+                     <p><label>{{ field.label_tag }}</label> {{ field }}</p>
+                 {% endif %}
+                 </div>
+        {% endfor %}
+        <div class="buttons">
+            <input id='tp_cancel_form' tp_action="cancel" item_id="{{form.instance.event_id}}" type='button' class="button cancel" value="Cancel">
+            <input id="tp_save_form" type="submit" class='button confirm' value="Save this entry">
+        </div>
     </form>
     </div>
-    <h3>History</h3>
-    <ul>
-        {% for entry in history %}
-            {% if entry.state == 'NW' %}
-                <li>Created on {{ entry.latest_date.day }}/{{ entry.latest_date.month }}/{{ entry.latest_date.year }}</li>
-            {% elif entry.state == 'IN' %}
-                <li>Invited on {{ entry.latest_date.day }}/{{ entry.latest_date.month }}/{{ entry.latest_date.year }}</li>
-            {% endif %}
-        {% endfor %}
-    </ul>
-
+        <h3>History</h3>
+        <ul>
+            {% for entry in history %}
+                {% if entry.state == 'NW' %}
+                    <li>Created on {{ entry.latest_date.day }}/{{ entry.latest_date.month }}/{{ entry.latest_date.year }}</li>
+                {% elif entry.state == 'IN' %}
+                    <li>Invited on {{ entry.latest_date.day }}/{{ entry.latest_date.month }}/{{ entry.latest_date.year }}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
 {% endblock %}

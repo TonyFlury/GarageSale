@@ -6,13 +6,31 @@
 
 {% block PageScripts %}
     {{ block.super }}
+    <!--
+    <script type="text/javascript" src="{% static 'CraftMarket/js/craft_market.js' %}" ></script> -->
+
+    <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+            let popup_element = document.getElementById('details-popup');
+            let event_id = document.getElementById('tp_event_id').value;
+            let full_path = __current_base_url('CraftMarket') + '/' + event_id + '/' + __params_as_url();
+
+            _popup_element(null, popup_element, 'visible')
+
+            popup_element.querySelector('#tp_close_form').addEventListener('click', function() {
+                _popup_element(null, popup_element, 'hidden');
+                window.location.href = full_path
+            });
+        } );
+    </script>
     {%  endblock %}
 
 
 {% block detail %}
+
+    <div id = 'details-popup' class='popup'>
     <h2>Viewing a Craft Market record</h2>
     {% for field in form %}
-        {{ field|is_icon }}
         {% if field|is_icon %}
             {% if field.value %}
                 <p><label for="tp_current_logo">Current Logo</label><img id='id_current_logo' alt="Logo" src="{{MEDIA_URL}}{{field.value}}" /></p>
@@ -21,7 +39,9 @@
          <p><label>{{ field.label_tag }}</label> {{ field.value }}</p>
         {% endif %}
     {% endfor %}
-
+    <div class="buttons">
+        <input id='tp_close_form' class='button confirm' tp_action="cancel" item_id="{{form.instance.event_id}}" type="button" value="Exit View">
+    </div>
     <h3>History</h3>
     <ul>
         {% for entry in history %}
@@ -36,5 +56,6 @@
             {% endif %}
         {% endfor %}
     </ul>
+    </div>
 
 {% endblock %}

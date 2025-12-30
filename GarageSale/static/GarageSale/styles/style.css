@@ -3,7 +3,7 @@
   --BackGroundColor: rgba(255, 255, 255, 90%);
   --fontColor : black;
   --PaperColor : #CCCB9D;
-  --fontSize: 14pt;
+  --fontSize: 12pt;
 }
 
 body {
@@ -186,6 +186,13 @@ input[type="url"] {
     width:25em;
 }
 
+input[type="text"][readonly]
+{
+    box-shadow: none;
+    border: thin dashed grey;
+    font-weight: bold;
+}
+
 div.form select[multiple] {
     accent-color: lightblue;
     padding-left: 10px;
@@ -193,9 +200,7 @@ div.form select[multiple] {
 }
 
 div.form div.buttons input{
-    background : var(--BackGroundColor);
     padding : 5px ;
-    font-size: 1rem;
     color : var(--fontColor) ;
     border : thin solid darkgray;
     border-radius : 0.5rem; ;
@@ -587,7 +592,7 @@ div.blaze-slider button {
   background-color: black;
   color: #fff;
   text-align: center;
-  padding: 5px 0;
+  padding: 5px;
   border-radius: 6px;
 
   /* Position the tooltip text - see examples below! */
@@ -606,8 +611,10 @@ div.blaze-slider button {
     top: -5px;
     left: 105%;
     bottom: auto;
-    width: 120px;
+    min-width: 120px;
     margin-left: 0.5rem;
+    width: max-content;
+    word-wrap: break-word;
 }
 
 .tooltip a:hover {

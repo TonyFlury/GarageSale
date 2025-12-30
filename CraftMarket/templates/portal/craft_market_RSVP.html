@@ -72,7 +72,7 @@
             <form method="POST">
                 {% csrf_token %}
                 <input type="hidden" name="form_section" value="{{form_section}}" />
-                    {% include "rsvp_form_"|add:form_section|add:".html" %}
+                    {% include "portal/rsvp_form_"|add:form_section|add:".html" %}
             </form>
         </div>
     {% endif %}

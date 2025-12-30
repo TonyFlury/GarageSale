@@ -22,12 +22,10 @@ across all relevant data.
 {% block SnappableSections %}
     <div class="snappable-section">
 <script>
-    const allow_multiple = !!{{ allow_multiple|yesno:'true,false'}};
-    const url_base = "{{ url_base | safe }}";
-
     const toolbar = new Map([
         {% for item in toolbar %}
-           ['{{item.action}}', {'label':"{{ item.label}}",
+           ['{{item.action}}', {'path':"{{item.regex | safe}}",
+                                'label':"{{ item.label}}",
                                 'icon':"{{ item.icon | safe}}" } ]
             {% if not forloop.last %},{% endif %}
         {% endfor %}
@@ -35,8 +33,8 @@ across all relevant data.
     const actions = new Map([
     {% for key, data in actions.items %}
            ['{{key}}', { 'object':{% missing data 'object' 'true' %},
-                         'label':"{{ data.label}}",
-                         'icon':"{{ data.icon | safe}}" } ]
+                                'label':"{{ data.label}}",
+                                'icon':"{{ data.icon | safe}}" } ]
         {% if not forloop.last %},{% endif %}
     {% endfor %}
     ]);
@@ -46,6 +44,7 @@ across all relevant data.
         {% if not forloop.last %},{% endif %}
         {% endfor %}
     ]
+    const url_base = "{{ url_base | safe }}"
 </script>
 
 {%  if event_id %}
@@ -53,7 +52,6 @@ across all relevant data.
 {% endif %}
 
 <div id="id_item_list" class="sublist bordered">
-    <!--ToDo - this span should be a div -->
     <span id="filter-pop-up">
         <h3>Filter records</h3>
         <hr>
@@ -98,11 +96,6 @@ across all relevant data.
     </div>
     <table class="data_list" id="id_entry_list">
         <tr class="heading">
-            {%  if allow_multiple %}
-            <th class="heading SelectAll">
-                <input type="checkbox" name="selectAll" id="selectAll" />
-            </th>
-            {% endif %}
             {%  for column, label in columns %}
             <th class="heading {{ column }}">
                 {{ label | safe}}
@@ -114,14 +107,9 @@ across all relevant data.
         <tbody id="tp_item_list">
         {% for item in sub_list_data %}
             <tr class="data-row {% cycle 'odd' 'even' %}" tp_row_id="{{item.id}}">
-                {%  if allow_multiple %}
-                    <td class="call Select" tp_row_id="{{ item.id }}">
-                        <input type="checkbox" id="select_{{ item.id }}" name="Select" value="{{ item.id }}" />
-                    </td>
-                {% endif %}
                 {%  for column, label in columns %}
                         <td class="cell {{ column }}" tp_row_id="{{ item.id }}">
-                            {{ item|getattribute:column }}
+                            {{ item|getattribute:column | safe }}
                         </td>
                 {% endfor %}
                 <td class="cell icons" tp_row_id="{{ item.id }}">

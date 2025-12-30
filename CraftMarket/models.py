@@ -15,6 +15,7 @@ import typing
 # Create your models here.
 
 from django.utils.text import slugify
+from django.conf import settings
 
 
 class MarketerState(models.TextChoices):
@@ -67,6 +68,23 @@ class MarketerManager(models.Manager):
             logging.error(f"Unable to create History entry for Marketeer {self!s}  "
                           f"{MarketerState.New.label} @ {timezone.now()} - {e}")
         return instance
+
+#ToDo - Make Marketer a many to many relationship to Events :
+# Need a new Jira - and a new branch etc.
+# Changes:
+# 1 Change the Model - including recording state against the Markerter/Event.
+#    1a New Model to hold the Relationship and the state and derived code.
+#    1b Change the history model to link to the new model in 1a.
+#    1c change to the Marketer model to remove the current link to the event data.
+#    1d Managers on the Marketer model to emulate a simpler relationship.
+#    1e Code generation is at the relationship level - not the Marketer - index on the code: expend the code to 8 digits ?
+# 2 Change the test scripts:
+#     2a build marketer without event data
+#     2b Change Marketer state for a given event
+# 3 Change the views - to ensure that the Views work as now, but the data is separated
+#   3a Creation of Marketer wont be again the current event.
+#   3b Invites, confirmation and rejection will be against the Marketer/Event relationship.
+#   3c Views will need to be updated to reflect the new relationship.
 
 class Marketer(models.Model):
     """Model to hold data for the Marketeer"""
@@ -228,17 +246,20 @@ class Marketer(models.Model):
             category = settings.APPS_SETTINGS.get("CraftMarket", {}).get('EmailTemplateCategory', 'CraftMarket')
             context = self.common_context(request)
             app_settings = settings.APPS_SETTINGS.get("CraftMarket", {})
-            from_ = app_settings.get('EmailFrom', 'CraftMarket@BranthamGarageSale.org.uk')
+            context['from'] = app_settings.get('EmailFrom', 'CraftMarket@BranthamGarageSale.org.uk')
+            context['bcc'] = ["Trustees@branthamGarageSale.org.uk", ]
 
             template = CommunicationTemplate.objects.filter(category=category,
                                                             transition=new_state.label,
                                                             use_from__lte=timezone.now()).order_by("-use_from").first()
             if template:
                 try:
-                    template.send_email(request, to = self.email, from_=from_, context=context, bcc=["Trustees@branthamGarageSale.org.uk", ])
+                    template.send_email(request, context=context)
                 except Exception as e:
                     logging.error(f'Unable to send email for {self!s}  {category} transition to {new_state.label} - {e}')
                     return new_state
+            else:
+                logging.error(f'Valid Template not found for {category=} for transition to {new_state.label}')
 
         # Always return the new state - regardless of email success/failure
         return new_state
@@ -254,12 +275,16 @@ class Marketer(models.Model):
 
         return url
 
-
     def common_context(self, request:HttpRequest=None):
-        return Context({'event_date': str(self.event.get_event_date_display()),
+        """Generate a context dictionary for this Marketeer and this event"""
+        from_ = settings.APPS_SETTINGS.get('CraftMarket',{}).get('EmailFrom','trustees@BranthamGarageSale.org.uk')
+        bcc = ['trustees@BranthamGarageSale.org.uk']
+        return {'event_date': str(self.event.get_event_date_display()),
                                                    'trading_name': self.trading_name,
                                                     'contact_name': self.contact_name,
                                                     'supporting':','.join(self.event.supporting_organisations.values_list('name', flat=True)),
                                                     'url': self.url(request),
-                                                    'email': self.email}, use_tz=True)
+                                                    'email': [self.email],
+                                                    'from': from_,
+                                                    'bcc': bcc,}
 
