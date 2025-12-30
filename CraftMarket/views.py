@@ -88,7 +88,7 @@ class CraftMarketView(FrameworkView):
         for state, label in MarketerState.choices:
             actions_per_row[state] = ['view']
 
-            if current_user.has_perm('CraftMarket.can_manage'):
+            if current_user.has_perm('CraftMarket.edit_marketer'):
                 match label:
                     case 'New':
                         actions_per_row[state] += ['edit','invite']
@@ -237,7 +237,6 @@ class MarketerGenericStateChange(CraftMarketView):
         context = super().get_context_data( request, **kwargs)
         inst = self.get_object(request, **kwargs)
         event_id = inst.event.id
-        print(f'in get_context_data for {self.view_base} with {event_id=} and {inst.id=} - {"no_email" in request.GET=}')
         context |= {'action': self.new_state.label,
                     'event_id': event_id,
                     'marketer_id': inst.id,
@@ -375,7 +374,7 @@ class MarketerRSVP(View):
 
 class MarketTemplates(TemplateManagement):
     template_name = "team_pages/templates.html"
-    permission_required =  'CraftMarket.can_manage'
+    permission_required =  'CraftMarket.edit_marketer'
     category = 'CraftMarket'
     url_base = 'CraftMarket/templates'
 
@@ -433,14 +432,14 @@ class MarketTemplateCreate(TemplatesCreate):
 
 class MarketTemplateView(TemplatesView):
     category = 'CraftMarket'
-    permission_required =  'CraftMarket.can_manage'
+    permission_required =  ['CraftMarket.edit_marketer', 'GarageSale.view_communicationtemplate']
     transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
     url_base = 'CraftMarket/templates'
     template_help = ""
 
 class MarketTemplateEdit(TemplatesEdit):
     category = 'CraftMarket'
-    permission_required =  'CraftMarket.can_manage'
+    permission_required =  ['CraftMarket.edit_marketer', 'GarageSale.edit_communicationtemplate']
     transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
     url_base = 'CraftMarket/templates'
     template_help = MarketTemplateCreate.template_help
@@ -451,7 +450,7 @@ def duplicate(request, template_id):
 
     return redirect(reverse('CraftMarket:template_edit', kwargs={'template_id': new_inst.id}))
 
-class MarketTemplateDelete(TeamPages):
-    permission_required =  'CraftMarket.can_manage'
+class MarketTemplateDelete(TemplatesView):
+    permission_required =  ['CraftMarket.edit_marketer', 'GarageSale.delete_communicationtemplate']
     template_name = "team_pages/templates_delete.html"
     url_base = 'CraftMarket/templates'

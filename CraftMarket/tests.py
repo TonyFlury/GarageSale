@@ -265,7 +265,7 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
     def setUp(self):
         super().setUp()
         self.screenshot_on_close = True
-        general_content_type = ContentType.objects.get_for_model(GarageSale.models.General)
+        template_content_type = ContentType.objects.get_for_model(GarageSale.models.CommunicationTemplate)
         marketer_content_type = ContentType.objects.get_for_model(Marketer)
 
         self.event = EventData.objects.create(event_date=date(month=6, day=21, year=timezone.now().year + 1),
@@ -283,11 +283,13 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
                                                                    is_verified=True,
                                                                    first_name='Test', last_name='User',
                                                                    phone='01111 111111')
-        trustee_permission = Permission.objects.get(codename='is_trustee', content_type=general_content_type)
-        manage_permission = Permission.objects.get(codename='can_manage', content_type=marketer_content_type)
+        edit_marketer_permission = Permission.objects.get(codename='edit_marketer', content_type=marketer_content_type)
+        template_permission = Permission.objects.get(codename='edit_communication_template',
+                                                     content_type=template_content_type)
 
-        self.view_user.user_permissions.add(trustee_permission)
-        self.manage_user.user_permissions.set((manage_permission, trustee_permission))
+        self.view_user.user_permissions.add(edit_marketer_permission)
+        self.manage_user.user_permissions.set(edit_marketer_permission)
+        self.manage_user.user_permissions.add(template_permission)
 
         self.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
                                                                     transition=MarketerState.Invited.label,
@@ -801,7 +803,7 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
     def setUp(self):
         super().setUp()
 
-        general_content_type = ContentType.objects.get_for_model(GarageSale.models.General)
+        template_content_type = ContentType.objects.get_for_model(GarageSale.models.CommunicationTemplate)
         marketer_content_type = ContentType.objects.get_for_model(Marketer)
 
         self.screenshot_on_close = True
@@ -812,10 +814,15 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
                                                                    is_verified=True,
                                                                    first_name='Test', last_name='User',
                                                                    phone='01111 111111')
-        trustee_permission = Permission.objects.get(codename='is_trustee', content_type=general_content_type)
-        manage_permission = Permission.objects.get(codename='can_manage', content_type=marketer_content_type)
+        marketer_permissions = Permission.objects.get(codename='edit_marketer', content_type=marketer_content_type)
 
-        self.manage_user.user_permissions.set((manage_permission, trustee_permission))
+        print(Permission.objects.filter(content_type=template_content_type).values_list('codename', flat=True))
+        template_permissions = [Permission.objects.get(codename=f'{i}_communicationtemplate', content_type=template_content_type)
+                              for i in ['add', 'change', 'view', 'delete']]
+
+        self.manage_user.user_permissions.set(template_permissions)
+        self.manage_user.user_permissions.add(marketer_permissions)
+
         self.templates = {(transition, delta) : CommunicationTemplate.objects.create(category="CraftMarket",
                                                                     transition=transition,
                                                                     subject="Test Subject",
@@ -989,7 +996,7 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
                 inst = CommunicationTemplate.objects.get(id=row_id)
 
                 # Identify the action buttons
-                for action in ['edit','view', 'copy', 'delete']:
+                for action in ['edit','view', 'duplicate', 'delete']:
                     with self.subTest(msg=f'{action} for {index} (id {row_id})'):
                         if action != 'delete':
                             self.assertNotEqual(row.select(f'span[tp_row_id="{row_id}"][tp_action="{action}"]'),[],
