@@ -36,7 +36,7 @@ def craft_market_list(request):
 
 class CraftMarketView(FrameworkView):
     login_url = '/user/login'
-    permission_required  = 'CraftMarket.suggest_marketer'
+    permission_required  = 'CraftMarket.can_suggest_marketer'
     template_name = "team_pages/craft_market.html"
     view_base = "CraftMarket:TeamPages"
     columns = [('trading_name', 'Trading<br>Name'), ('state_name', 'Current<br>Status')]
@@ -199,7 +199,7 @@ class MarketerCreate(CraftMarketView):
 
 class MarketerView(CraftMarketView):
     template_name = "team_pages/craft_market_view.html"
-    permission_required = 'CraftMarket.view_marketer'
+    permission_required = 'CraftMarket.can_view_marketer'
 
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request, **kwargs)
@@ -216,14 +216,14 @@ class MarketerView(CraftMarketView):
 
 class MarketerEdit(MarketerView):
     template_name = "team_pages/craft_market_edit.html"
-    permission_required = 'CraftMarket.edit_marketer'
+    permission_required = 'CraftMarket.can_edit_marketer'
 
     def get(self, request, **kwargs):
         return super().get(request, **kwargs)
 
 class MarketerGenericStateChange(CraftMarketView):
     template_name = "team_pages/craft_market_invite.html"
-    permission_required = 'CraftMarket.edit_marketer'
+    permission_required = 'CraftMarket.can_edit_marketer'
     view_base = "CraftMarket:TeamPages"
     new_state: MarketerState
 
