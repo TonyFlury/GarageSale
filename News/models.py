@@ -7,6 +7,8 @@ from django_quill.fields import QuillField
 from datetime import date
 from django.utils.text import slugify
 
+from GarageSale.management.commands.CheckGroups import default_permissions
+
 
 class NewsPageOrder(models.Manager):
     """Manager that returns all news articles in published order"""
@@ -84,7 +86,9 @@ class NewsArticle(models.Model):
     published = models.BooleanField(default=False)
 
     class Meta:
-        fields = "__all__"
+        permissions = [ ("publish_news", "Can publish a news Article"),
+        ]
+
 
     @property
     def is_live(self):
@@ -113,17 +117,6 @@ class NewsArticle(models.Model):
             ie currently un-published and not expired
         """
         return not self.published and (self.expire_by is None or self.expire_by > datetime.date.today())
-
-    class Meta:
-        default_permissions = ()
-        permissions = [
-            ("can_manage_news", "Can manage the news Articles"),
-            ("can_create_news", "Can create a news Article"),
-            ("can_publish_news", "Can publish a news Article"),
-            ("can_edit_news", "Can edit a news Article"),
-            ("can_view_news", "Can view a news Article"),
-            ("can_delete_news", "Can delete a news Article")
-        ]
 
 
 class NewsLetterMailingList(models.Model):

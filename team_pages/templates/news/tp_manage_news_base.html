@@ -85,7 +85,7 @@
                         {% if perms.News.can_publish_news and item.published %}
                             <span tp_row_id="{{item.id}}" tp_action="publish">&#128721;</span>
                         {% endif %}
-                        {% if perms.News.can_delete_news and not item.is_live %}
+                        {% if perms.News.delete_news and not item.is_live %}
                             <span tp_row_id="{{item.id}}" tp_action="delete">&#128465;</span>
                         {% endif %}
                     </td>

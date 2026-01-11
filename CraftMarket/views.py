@@ -88,7 +88,7 @@ class CraftMarketView(FrameworkView):
         for state, label in MarketerState.choices:
             actions_per_row[state] = ['view']
 
-            if current_user.has_perm('CraftMarket.edit_marketer'):
+            if current_user.has_perm('CraftMarket.change_marketer'):
                 match label:
                     case 'New':
                         actions_per_row[state] += ['edit','invite']
@@ -216,14 +216,14 @@ class MarketerView(CraftMarketView):
 
 class MarketerEdit(MarketerView):
     template_name = "team_pages/craft_market_edit.html"
-    permission_required = 'CraftMarket.edit_marketer'
+    permission_required = 'CraftMarket.change_marketer'
 
     def get(self, request, **kwargs):
         return super().get(request, **kwargs)
 
 class MarketerGenericStateChange(CraftMarketView):
     template_name = "team_pages/craft_market_invite.html"
-    permission_required = 'CraftMarket.edit_marketer'
+    permission_required = 'CraftMarket.change_marketer'
     view_base = "CraftMarket:TeamPages"
     new_state: MarketerState
 
@@ -374,7 +374,7 @@ class MarketerRSVP(View):
 
 class MarketTemplates(TemplateManagement):
     template_name = "team_pages/templates.html"
-    permission_required =  'CraftMarket.edit_marketer'
+    permission_required =  'CraftMarket.change_marketer'
     category = 'CraftMarket'
     url_base = 'CraftMarket/templates'
 
@@ -383,7 +383,7 @@ class MarketTemplates(TemplateManagement):
 
 class MarketTemplateCreate(TemplatesCreate):
     category = 'CraftMarket'
-    permission_required =  ['CraftMarket.edit_marketer', 'GarageSale.edit_communicationtemplate']
+    permission_required =  ['CraftMarket.change_marketer', 'GarageSale.change_communicationtemplate']
     transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
     url_base = 'CraftMarket/templates'
     template_help = """
@@ -432,14 +432,14 @@ class MarketTemplateCreate(TemplatesCreate):
 
 class MarketTemplateView(TemplatesView):
     category = 'CraftMarket'
-    permission_required =  ['CraftMarket.edit_marketer', 'GarageSale.view_communicationtemplate']
+    permission_required =  ['CraftMarket.change_marketer', 'GarageSale.view_communicationtemplate']
     transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
     url_base = 'CraftMarket/templates'
     template_help = ""
 
 class MarketTemplateEdit(TemplatesEdit):
     category = 'CraftMarket'
-    permission_required =  ['CraftMarket.edit_marketer', 'GarageSale.edit_communicationtemplate']
+    permission_required =  ['CraftMarket.change_marketer', 'GarageSale.edit_communicationtemplate']
     transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
     url_base = 'CraftMarket/templates'
     template_help = MarketTemplateCreate.template_help
@@ -451,6 +451,6 @@ def duplicate(request, template_id):
     return redirect(reverse('CraftMarket:template_edit', kwargs={'template_id': new_inst.id}))
 
 class MarketTemplateDelete(TemplatesView):
-    permission_required =  ['CraftMarket.edit_marketer', 'GarageSale.delete_communicationtemplate']
+    permission_required =  ['CraftMarket.change_marketer', 'GarageSale.delete_communicationtemplate']
     template_name = "team_pages/templates_delete.html"
     url_base = 'CraftMarket/templates'

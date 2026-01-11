@@ -35,6 +35,7 @@ from .models import Marketer, MarketerState, History
 from user_management.models import UserExtended
 from pathlib import Path
 
+from django.core import management
 root_screenshot_directory = Path('./testing_screenshots')
 
 if not root_screenshot_directory.exists():
@@ -256,17 +257,44 @@ class TestEmailsOnTransitions(TestCase):
 class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommonMixin):
     screenshot_sub_directory = 'TestCraftMarketTeamPages'
 
-    # TODO - add tests to confirm toolbar buttons, test filters
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
 
+    def _create_users(self):
+        template_content_type = ContentType.objects.get_for_model(GarageSale.models.CommunicationTemplate)
+        marketer_content_type = ContentType.objects.get_for_model(Marketer)
+
+        self.suggest_marketer_permission = Permission.objects.get(codename='suggest_marketer', content_type=marketer_content_type)
+
+        self.edit_marketer_permission = Permission.objects.get(codename='change_marketer', content_type=marketer_content_type)
+        self.template_permission = Permission.objects.get(codename='change_communicationtemplate',
+                                                     content_type=template_content_type)
+
+        model: Type[UserExtended | AbstractBaseUser] = get_user_model()
+        self.view_user: UserExtended = model.objects.create_user(email='user_view@user.com', password='wibble',
+                                                             is_verified=True,
+                                                             first_name='Test', last_name='User',
+                                                             phone='01111 111111')
+        self.manage_user: UserExtended = model.objects.create_user(email='user_manage@user.com', password='wibble',
+                                                               is_verified=True,
+                                                               first_name='Test', last_name='User',
+                                                               phone='01111 111111')
+
+        self.view_user.user_permissions.add(self.suggest_marketer_permission)
+        self.manage_user.user_permissions.set([self.suggest_marketer_permission, self.edit_marketer_permission,self.template_permission])
+
+
+    # TODO - add tests to confirm toolbar buttons, test filters
     @classmethod
     def get_driver(cls):
         return webdriver.Chrome()
 
     def setUp(self):
         super().setUp()
+
+        self._create_users()
         self.screenshot_on_close = True
-        template_content_type = ContentType.objects.get_for_model(GarageSale.models.CommunicationTemplate)
-        marketer_content_type = ContentType.objects.get_for_model(Marketer)
 
         self.event = EventData.objects.create(event_date=date(month=6, day=21, year=timezone.now().year + 1),
                                               use_from=timezone.now())
@@ -274,22 +302,7 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
                                                        contact_name=f'Fred {i}',
                                                        email=f"marketeer{1}@market.com") for i in range(1, 5)]
 
-        model: Type[UserExtended | AbstractBaseUser] = get_user_model()
-        self.view_user: UserExtended = model.objects.create_user(email='user_view@user.com', password='wibble',
-                                                                 is_verified=True,
-                                                                 first_name='Test', last_name='User',
-                                                                 phone='01111 111111')
-        self.manage_user: UserExtended = model.objects.create_user(email='user_manage@user.com', password='wibble',
-                                                                   is_verified=True,
-                                                                   first_name='Test', last_name='User',
-                                                                   phone='01111 111111')
-        edit_marketer_permission = Permission.objects.get(codename='edit_marketer', content_type=marketer_content_type)
-        template_permission = Permission.objects.get(codename='edit_communication_template',
-                                                     content_type=template_content_type)
 
-        self.view_user.user_permissions.add(edit_marketer_permission)
-        self.manage_user.user_permissions.set(edit_marketer_permission)
-        self.manage_user.user_permissions.add(template_permission)
 
         self.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
                                                                     transition=MarketerState.Invited.label,
@@ -310,7 +323,7 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
     def test_201_confirm_article_list_div(self):
         """Test the view team page - that the list of items exists"""
-        with self.identify_via_login(user=self.view_user, password='wibble'):
+        with self.identify_via_login(user=self.view_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
             self.screenshot('InitialTest')
             html = self.selenium.page_source
@@ -318,19 +331,23 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             segments = self.fetch_elements_by_selector(html, 'div#id_item_list')
             self.assertEqual(len(segments), 1)
 
-    def test_220_confirm_filter_pop_up(self):
+    def test_205_confirm_filter_pop_up(self):
         """Confirm the filter pop-up exists in the HTML"""
-        with self.identify_via_login(user=self.view_user, password='wibble'):
+        self.assertTrue(self.view_user.has_perm('CraftMarket.' + self.suggest_marketer_permission.codename))
+        with self.identify_via_login(user=self.view_user.email, password='wibble'):
+            self.assertTrue(self.view_user.has_perm('CraftMarket.suggest_marketer'))
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
-
+            self.screenshot('FilterPopUp')
+            self._dump_page_source('FilterPopUp.html', html)
             self.assertHTMLHasElements(html, selector='div#id_item_list span#filter-pop-up')
             filters = self.fetch_elements_by_selector(html, 'div#id_item_list span#filter-pop-up')
             self.assertEqual(len(filters), 1)
 
     def test_225_confirm_filter_checkboxes(self):
         """Confirm the filter pop-up contains the correct checkboxes"""
-        with self.identify_via_login(user=self.view_user, password='wibble'):
+        self.assertTrue(self.view_user.has_perm('CraftMarket.' + self.suggest_marketer_permission.codename))
+        with self.identify_via_login(user=self.view_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
 
@@ -345,7 +362,8 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
     def test_230_confirm_data_rows(self):
         """Confirm that a table for the data rows exists in the HTML"""
-        with self.identify_via_login(user=self.view_user, password='wibble'):
+        self.assertTrue(self.view_user.has_perm('CraftMarket.' + self.suggest_marketer_permission.codename))
+        with self.identify_via_login(user=self.view_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
             segments = self.fetch_elements_by_selector(html, 'div#id_item_list table#id_entry_list.data_list')
@@ -353,7 +371,8 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
     def test_235_correct_number_of_data_rows(self):
         """Confirm that the expected number of data rows exists in the table"""
-        with self.identify_via_login(user=self.view_user, password='wibble'):
+        self.assertTrue(self.view_user.has_perm('CraftMarket.' + self.suggest_marketer_permission.codename))
+        with self.identify_via_login(user=self.view_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
 
@@ -363,7 +382,8 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
     def test_240_correct_data_in_rows(self):
         """Confirm that the correct data is in the data rows"""
-        with self.identify_via_login(user=self.view_user, password='wibble'):
+        self.assertTrue(self.view_user.has_perm('CraftMarket.' + self.suggest_marketer_permission.codename))
+        with self.identify_via_login(user=self.view_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
 
@@ -375,7 +395,8 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
     def test_250_confirm_action_buttons_for_view(self):
         """Confirm that the actions are correct for each row when the user can only view the data."""
-        with self.identify_via_login(user=self.view_user, password='wibble'):
+        self.assertTrue(self.view_user.has_perm('CraftMarket.' + self.suggest_marketer_permission.codename))
+        with self.identify_via_login(user=self.view_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
 
@@ -387,7 +408,8 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
     def test_260_confirm_action_buttons_for_manage(self):
         """Confirm that the actions are correct for each row when the user can manage"""
-        with self.identify_via_login(user=self.manage_user, password='wibble'):
+        self.assertTrue(self.manage_user.has_perm('CraftMarket.' + self.edit_marketer_permission.codename))
+        with self.identify_via_login(user=self.manage_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
 
@@ -405,8 +427,9 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
         """Confirm that the actions are correct for each row when the user can manage"""
         first = self.marketers[0]
         first.update_state(MarketerState.Invited, send_email=False)
+        self.assertTrue(self.manage_user.has_perm('CraftMarket.' + self.edit_marketer_permission.codename))
 
-        with self.identify_via_login(user=self.manage_user, password='wibble'):
+        with self.identify_via_login(user=self.manage_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
             html = self.selenium.page_source
 
@@ -431,8 +454,9 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
     def test_290_invite_with_email(self):
         """Test the invite action including sending an email"""
         first = list(self.marketers)[0]
+        self.assertTrue(self.manage_user.has_perm('CraftMarket.' + self.edit_marketer_permission.codename))
 
-        with self.identify_via_login(user=self.manage_user, password='wibble'):
+        with self.identify_via_login(user=self.manage_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
 
             active = self.selenium.find_element(By.CSS_SELECTOR,
@@ -466,8 +490,9 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
         """Test the invite action Without sending an email"""
         # ToDO - could this be a sub test of 090 ?
         first = list(self.marketers)[0]
+        self.assertTrue(self.manage_user.has_perm('CraftMarket.' + self.edit_marketer_permission.codename))
 
-        with self.identify_via_login(user=self.manage_user, password='wibble'):
+        with self.identify_via_login(user=self.manage_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
 
             active = self.selenium.find_element(By.CSS_SELECTOR,
@@ -493,8 +518,9 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
         """Test the confirmation action including sending an email"""
         first = list(self.marketers)[0]
         first.update_state(MarketerState.Invited, send_email=False)
+        self.assertTrue(self.manage_user.has_perm('CraftMarket.' + self.edit_marketer_permission.codename))
 
-        with self.identify_via_login(user=self.manage_user, password='wibble'):
+        with self.identify_via_login(user=self.manage_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
 
             active = self.selenium.find_element(By.CSS_SELECTOR,
@@ -530,8 +556,9 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
         """Test the confirmation action Without sending an email"""
         first = list(self.marketers)[0]
         first.update_state(MarketerState.Invited, send_email=False)
+        self.assertTrue(self.manage_user.has_perm('CraftMarket.' + self.edit_marketer_permission.codename))
 
-        with self.identify_via_login(user=self.manage_user, password='wibble'):
+        with self.identify_via_login(user=self.manage_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
 
             active = self.selenium.find_element(By.CSS_SELECTOR,
@@ -561,8 +588,9 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
         """Test the reject action an email is never sent"""
         first = list(self.marketers)[0]
         first.update_state(MarketerState.Invited, send_email=False)
+        self.assertTrue(self.manage_user.has_perm('CraftMarket.' + self.edit_marketer_permission.codename))
 
-        with self.identify_via_login(user=self.manage_user, password='wibble'):
+        with self.identify_via_login(user=self.manage_user.email, password='wibble'):
             self.selenium.get(self.get_test_url())
 
             active = self.selenium.find_element(By.CSS_SELECTOR,
@@ -814,9 +842,8 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
                                                                    is_verified=True,
                                                                    first_name='Test', last_name='User',
                                                                    phone='01111 111111')
-        marketer_permissions = Permission.objects.get(codename='edit_marketer', content_type=marketer_content_type)
+        marketer_permissions = Permission.objects.get(codename='change_marketer', content_type=marketer_content_type)
 
-        print(Permission.objects.filter(content_type=template_content_type).values_list('codename', flat=True))
         template_permissions = [Permission.objects.get(codename=f'{i}_communicationtemplate', content_type=template_content_type)
                               for i in ['add', 'change', 'view', 'delete']]
 

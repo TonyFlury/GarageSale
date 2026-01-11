@@ -265,7 +265,7 @@ class NewsRoot(CombinedView):
 
 
 class NewsEdit(NewsRoot):
-    permission_required = ["News.can_edit_news"]
+    permission_required = ["News.change_news"]
     form_class = NewsForm
     template_name = 'news/tp_edit_news.html'
 
@@ -285,7 +285,7 @@ class NewsEdit(NewsRoot):
 
 class NewsView(NewsEdit):
     """get_object is the same in both cases"""
-    permission_required = ["News.can_view_news"]
+    permission_required = ["News.view_news"]
     template_name = 'news/tp_view_news.html'
 
     def get_context_data(self, request, **request_kwargs):
@@ -309,7 +309,7 @@ class NewsCreate(NewsRoot):
 
 class NewsDelete(NewsView):
     template_name = 'news/tp_delete_news.html'
-    permission_required = ["News.can_delete_news"]
+    permission_required = ["News.delete_news"]
     form_class = None
 
     def get_context_data(self, request, **kwargs):
@@ -337,7 +337,7 @@ class MotDBase(CombinedView):
 
 
 class MotDView(MotDBase):
-    permission_required = ["GarageSale.can_view_motd"]
+    permission_required = ["GarageSale.view_motd"]
     template_name = 'motd/tp_view_motd.html'
 
     def get_context_data(self, request, **kwargs):
@@ -358,7 +358,7 @@ class MotDView(MotDBase):
 
 
 class MotDEdit(MotDView):
-    permission_required = ["GarageSale.can_edit_motd"]
+    permission_required = ["GarageSale.change_motd"]
     template_name = 'motd/tp_edit_motd.html'
 
     def get_context_data(self, request, **kwargs):
@@ -391,7 +391,7 @@ def delete_motd(request, motd_id=None):
 
 
 class EventBase(CombinedView):
-    permission_required = ["GarageSale.can_view_event"]
+    permission_required = ["GarageSale.view_event"]
     template_name = 'motd/tp_view_event.html'
     form_class = EventForm
     model = EventData
@@ -423,7 +423,7 @@ class EventBase(CombinedView):
 
 
 class EventView(EventBase):
-    permission_required = ["GarageSale.can_view_event"]
+    permission_required = ["GarageSale.view_event"]
     template_name = 'event/tp_view_event.html'
 
     def get_context_data(self, request, **kwargs):
@@ -433,7 +433,7 @@ class EventView(EventBase):
 
 
 class EventEdit(EventView):
-    permission_required = ["GarageSale.can_edit_event"]
+    permission_required = ["GarageSale.change_event"]
     template_name = 'event/tp_edit_event.html'
     success_url = reverse_lazy( 'TeamPagesEvent')
 
@@ -486,7 +486,7 @@ class TeamPage(LoginRequiredMixin, View):
 class SponsorsRoot(CombinedView):
     login_url = "/user/login"
     redirect_field_name = "/team_page"
-    permission_required = ["Sponsors.can_view_sponsor"]
+    permission_required = ["Sponsors.view_sponsor"]
     model_class = Sponsor
     form_class = SponsorForm
     template_name = 'sponsors/tp_event_sponsor.html'
@@ -549,7 +549,7 @@ class SponsorCreate(SponsorsRoot):
 
 class SponsorView(SponsorsRoot):
     template_name = 'sponsors/tp_view_sponsor.html'
-    permission_required = ["Sponsors.can_view_sponsor"]
+    permission_required = ["Sponsors.view_sponsor"]
 
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request, **kwargs)
@@ -570,7 +570,7 @@ class SponsorView(SponsorsRoot):
 
 class SponsorEdit(SponsorView):
     template_name = 'sponsors/tp_edit_sponsor.html'
-    permission_required = ["Sponsors.can_edit_sponsor"]
+    permission_required = ["Sponsors.change_sponsor"]
 
     def get_context_data(self, request, **kwargs):
         return super().get_context_data(request,**kwargs) | {'action':'edit'}
@@ -594,7 +594,7 @@ class SponsorConfirm(SponsorView):
 
 class SponsorDelete(SponsorView):
     template_name = 'sponsors/tp_delete_sponsor.html'
-    permission_required = ["Sponsors.can_delete_sponsor"]
+    permission_required = ["Sponsors.delete_sponsor"]
     form_class = None
 
     def get_context_data(self, request, **kwargs):
