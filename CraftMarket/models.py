@@ -12,6 +12,8 @@ from django.template import Template, Context
 
 import typing
 
+logger = logging.getLogger('CraftMarket.models')
+
 # Create your models here.
 
 from django.utils.text import slugify
@@ -57,7 +59,7 @@ class MarketerManager(models.Manager):
             instance.state = MarketerState.New
             instance.save()
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Unable to create or save entry for Marketeer {obj_data.get("trading_name")} on {event.event_date} - {e}")
             raise e from None
 
@@ -65,7 +67,7 @@ class MarketerManager(models.Manager):
         try:
             History.objects.create(marketeer=instance, state=MarketerState.New)
         except Exception as e:
-            logging.error(f"Unable to create History entry for Marketeer {self!s}  "
+            logger.error(f"Unable to create History entry for Marketeer {self!s}  "
                           f"{MarketerState.New.label} @ {timezone.now()} - {e}")
         return instance
 
@@ -163,17 +165,14 @@ class Marketer(models.Model):
             return final
 
     class Meta:
-        """Customise permissions for the Craft Market """
-        default_permissions = ()
-        permissions = [
-            ("suggest_marketer", "Is able to suggest Craft Market participants"),
-            ("view_marketer", "Is able to view details of Craft Market participants"),
-            ("edit_marketer", "Is able to change details and states Craft Market participants"),
-            ("delete_marketer", "Is able to remove Craft Market participants"),
-        ]
         indexes = [models.Index(fields=['event', 'trading_name']),
                    models.Index(name='with_code', fields=['email', 'code'],
                                 condition=Q(code__isnull=False, state=MarketerState.Invited))]
+        default_permissions = ()
+        permissions = (("suggest_marketer", "Can suggest a marketeer"),
+                       ("view_marketer", "Can view a marketeer"),
+                       ("change_marketer", "Can edit a marketeer"),
+                       ("delete_marketer", "Can delete a marketeer"),)
 
     objects = MarketerManager()
     event: EventData = models.ForeignKey(EventData, related_name="CraftMarketeers", on_delete=models.CASCADE)
@@ -239,14 +238,14 @@ class Marketer(models.Model):
                 try:
                     inst = History.objects.create(marketeer=self, state=new_state)
                 except Exception as e:
-                    logging.error(f"Unable to create History entry for Marketeer {self!s} "
+                    logger.error(f"Unable to create History entry for Marketeer {self!s} "
                                   f"{new_state.label} @ {timezone.now()} - {e}")
                     raise e from None
-                logging.info(f'Changing state of {self!s} from {MarketerState(self.state).label} to {new_state.label}')
+                logger.info(f'Changing state of {self!s} from {MarketerState(self.state).label} to {new_state.label}')
                 self.state = new_state
                 self.save()
         except Exception as e:
-            logging.error(f"Transaction aborted on {self!s} transition to {new_state.label} - {e} ")
+            logger.error(f"Transaction aborted on {self!s} transition to {new_state.label} - {e} ")
 
         if send_email:
             category = settings.APPS_SETTINGS.get("CraftMarket", {}).get('EmailTemplateCategory', 'CraftMarket')
@@ -262,10 +261,10 @@ class Marketer(models.Model):
                 try:
                     template.send_email(request, context=context)
                 except Exception as e:
-                    logging.error(f'Unable to send email for {self!s}  {category} transition to {new_state.label} - {e}')
+                    logger.error(f'Unable to send email for {self!s}  {category} transition to {new_state.label} - {e}')
                     return new_state
             else:
-                logging.error(f'Valid Template not found for {category=} for transition to {new_state.label}')
+                logger.error(f'Valid Template not found for {category=} for transition to {new_state.label}')
 
         # Always return the new state - regardless of email success/failure
         return new_state

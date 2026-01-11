@@ -41,10 +41,10 @@ if debug and TEST_SERVER:
     LOGGING = {
         "version": 1,
         'formatters': { 'standard': {
-            'format': '%(asctime)s: %(levelname)s: %(filename)s -> %(funcName)s: %(message)s',
+            'format': '%(asctime)s: %(levelname)s: %(name)s %(module)s %(filename)s -> %(funcName)s: %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'    }
         },
-        "disable_existing_loggers": False,
+        "disable_existing_loggers": True,
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
@@ -53,18 +53,25 @@ if debug and TEST_SERVER:
         },
         "root": {
             "handlers": ["console"],
-            "level": "INFO",
+            "level": "WARNING",
         },
         "loggers": {
-            "django": {
+            "fontTools.ttLib.ttFont" : {"level": "ERROR"},
+            "fontTools.subset" : {"level": "ERROR"},
+            "fontTools.subset.timer" : {"level": "ERROR"},
+            "django.request": {
                 "handlers": ["console"],
-                "level": os.getenv("DJANGO_LOG_LEVEL", "WARNING"),
-
+                "level": os.getenv("DJANGO_LOG_LEVEL", "ERROR"),
                 "propagate": False,
             },
             "CraftMarket.views":{
                 "handlers": ["console"],
                 "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+                "propagate": False,
+            },
+            "GarageSale.models": {
+                "handlers": ["console"],
+                "level": os.getenv("DJANGO_LOG_LEVEL", "WARNING"),
                 "propagate": False,
             }
         },

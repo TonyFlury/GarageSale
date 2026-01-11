@@ -101,6 +101,8 @@ class Transaction(models.Model):
     balance_before = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     class Meta:
+        permissions = [ ('can_upload_transaction','Can upload upload'),
+                         ('can_report_transaction','Can upload report')]
         ordering = ['transaction_date']
         unique_together = [['transaction_date', 'description', 'debit', 'credit']]
 

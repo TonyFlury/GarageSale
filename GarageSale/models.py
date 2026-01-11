@@ -34,16 +34,10 @@ import logging
 
 logger = logging.getLogger('GarageSale.models')
 logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 
 logging.getLogger('ttFont').addHandler(logging.NullHandler())
 logging.getLogger('loggingTools').addHandler(logging.NullHandler())
-
-class General(models.Model):
-    class Meta:
-        managed = False
-        permissions = (('is_team_member', 'Can access admin pages'),)
-        default_permissions = ('is_team_member',)
 
 # ToDo - convert QuillField to Summernote
 class MOTD(models.Model):
@@ -58,9 +52,6 @@ class MOTD(models.Model):
             return MOTD.objects.filter(use_from__lte = datetime.date.today()).latest('use_from')
         except MOTD.DoesNotExist:
             return None
-
-    class Meta:
-        default_permissions = ()
 
 def save_supported_logo_to(instance, filename):
     return f'supported_logo_{instance.name}/{filename}'
@@ -79,6 +70,8 @@ class Supporting(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        permissions = [('can_create_supporting', 'Can create a record for a supporting organisation'),]
 
 class CurrentFuture(models.Manager):
     def get_queryset(self):
@@ -123,8 +116,6 @@ class EventData(models.Model):
     def __str__(self):
             return f'{self.get_event_date_display()}'
 
-    class Meta:
-        default_permissions = ()
 
     @staticmethod
     def get_current():
@@ -144,8 +135,6 @@ class TemplateAttachment(models.Model):
     template_name = models.CharField(max_length=100, verbose_name='Name')
     attached_file = models.FileField(upload_to=save_template_attachment_to, blank=True, null=True)
 
-    class Meta:
-        default_permissions = ()
 
     def __str__(self):
         return f'{self.id} {self.upload} {self.template_name if not self.upload else self.attached_file}'
@@ -182,7 +171,6 @@ class CurrentActive(models.Manager):
 class CommunicationTemplate(models.Model):
     """A template for building emails with attachments - not a generalized CMS."""
     class Meta:
-        default_permissions = ()
         indexes = [
             models.Index(name='CategoryByDate', fields=['category', '-use_from']),
             models.Index(name='CategoryTransitionByDate', fields=['category', 'transition', '-use_from']),
@@ -314,9 +302,7 @@ class CommunicationTemplate(models.Model):
     @classmethod
     def pdf_header_template(cls, context:dict):
         result = finders.find('GarageSale/styles/pdf_header.css')
-        print(result)
         if not result:
-            print(finders.searched_locations)
             return ''
 
         with open(result) as f:

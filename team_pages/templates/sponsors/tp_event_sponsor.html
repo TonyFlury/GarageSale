@@ -54,13 +54,13 @@
                 </td>
                 <td class="icons">
                     <span tp_row_id="{{item.id}}" tp_action="view">&#x1F50D;</span>
-                    {% if perms.Sponsors.can_edit_sponsor %}
+                    {% if perms.Sponsors.change_sponsor %}
                         <span tp_row_id="{{item.id}}" tp_action="edit">&#x270E;</span>
                     {% endif %}
                     {% if perms.Sponsors.can_confirm_sponsor and not item.confirmed %}
                         <span tp_row_id="{{item.id}}" tp_action="confirm">&#128077;</span>
                     {% endif %}
-                    {% if perms.Sponsors.can_delete_sponsor and not item.confirmed %}
+                    {% if perms.Sponsors.delete_sponsor and not item.confirmed %}
                         <span tp_row_id="{{item.id}}" tp_action="delete">&#128465;</span>
                     {% endif %}
                 </td>
