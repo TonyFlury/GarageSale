@@ -144,7 +144,6 @@ class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def get(self, request: HttpRequest, account_id: int = None):
 
-        print(f'{request.GET.get("type")=} {request.GET.get("year")=}')
         report_context = { 'accounts': Account.objects.all()}
         if account_id is None:
             return TemplateResponse(request, 'reports.html', report_context)
