@@ -1,0 +1,85 @@
+{% extends "accounts_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block Title %}
+    Brantham Garage Sale - Upload Errors
+{% endblock %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'team_pages/styles/team_page.css' %}" xmlns="http://www.w3.org/1999/html">
+    <link rel="stylesheet" href="{% static 'Accounts/styles/transaction_list.css' %}" xmlns="http://www.w3.org/1999/html">
+{% endblock %}
+
+{% block header %}
+<div  class="breadcrumb">
+    {% block breadcrumb %}
+        {% breadcrumb %}
+    {% endblock%}
+</div>
+{% endblock %}
+
+{% block PageScripts %}
+    {{ block.super }}
+    <script type="module" csrf="{{ csrf_token }}" src="{% static 'Accounts/js/error_list.js' %}"></script>
+
+{% endblock %}
+
+{% block SnappableSections %}
+
+<div>
+<label for="id_account">Account</label>
+    <select id='id_account' name="account">
+        <option value="">Bank Account ?</option>
+        {% for account in accounts %}
+            <option value="{{ account.id }}" {% if account.id == account_selected %}selected{% endif %}>{{ account }}</option>
+        {% endfor %}
+    </select>
+</div>
+{% if account_selected %}
+<div>
+    <label for="id_upload">Uploads With Errors</label>
+    <select id='id_upload' name="UploadErrors">
+        <option value="">Choose an Upload to correct</option>
+        {% for upload in upload_histories %}
+            <option value="{{ upload.id }}" {% if upload.id == upload_selected %}selected{% endif %}>{{ upload.error_repr }}</option>
+        {% endfor %}
+    </select>
+</div>
+{% endif %}
+    <div id="details">
+        {% if errors %}
+            <table id="id_transactions">
+            <thead>
+                <tr class="header">
+                <th class="col date">Date</th><th class="col name">Description</th><th class="col">Debit</th><th class="col">Credit</th><th class="col">Category</th><th class="col">Error</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for error in errors %}
+                <tr id="id_{{error.transaction.id }}" class="row {% cycle 'odd' 'even' %}">
+                    <td>{{ error.transaction.transaction_date|date:'j/n/Y'}}</td>
+                    <td>{{ error.transaction.name }}</td>
+                    <td class="debit">{{ error.transaction.debit }}</td>
+                    <td class="credit">{{ error.transaction.credit }}</td>
+                    <td class="category cell">
+                        <select id="{{ error.transaction_id }}_category" class='category' name="{{ error.transaction_id }}_category">
+                            <option value="">Choose a correct category</option>
+                                {% for item in categories %}
+                                    {% if error.transaction.debit and item.credit_debit == 'D' or error.transaction.credit and item.credit_debit == 'C'%}
+                                        <option value="{{ item.category_name }}">{{ item.category_name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                        </select>
+                    </td>
+                    <td>{{ error.error_message }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        {% endif %}
+    </div>
+{% endblock %}

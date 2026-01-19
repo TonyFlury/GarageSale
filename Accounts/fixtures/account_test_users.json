@@ -1,0 +1,28 @@
+[
+  {
+    "model": "user_management.userextended",
+    "fields": {
+      "password": "pbkdf2_sha256$390000$qrnuTMC71HVXwUAmitGwmV$TGqgREyomNb6BQ5aPHaNf70i+a7039hEds6sKO4tF28=",
+      "last_login": "2025-12-12T11:28:32.822Z",
+      "is_superuser": false,
+      "first_name": "Test",
+      "last_name": "Treasurer",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2025-09-21T08:10:52.685Z",
+      "email": "treasurer@test.com",
+      "phone": "0555 555 555",
+      "is_guest": false,
+      "is_verified": true,
+      "groups": [
+        [
+          "Financier"
+        ],
+        [
+          "WebAdmin"
+        ]
+      ],
+      "user_permissions": []
+    }
+  }
+]

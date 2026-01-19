@@ -1,0 +1,117 @@
+[
+    {
+        "model": "Accounts.uploaderror",
+        "fields": {
+            "transaction": [
+                [
+                    "Floyd's Bank",
+                    "55-55-55",
+                    "12345678"
+                ],
+                11
+            ],
+            "upload_history": [
+                [
+                    "Floyd's Bank",
+                    "55-55-55",
+                    "12345678"
+                ],
+                "2023-03-02",
+                "2023-03-31"
+            ],
+            "error_message": "Invalid category for debit"
+        }
+    },
+    {
+        "model": "Accounts.uploaderror",
+        "fields": {
+            "transaction": [
+                [
+                    "Floyd's Bank",
+                    "55-55-55",
+                    "12345678"
+                ],
+                1
+            ],
+            "upload_history": [
+                [
+                    "Floyd's Bank",
+                    "55-55-55",
+                    "12345678"
+                ],
+                "2023-03-02",
+                "2023-03-31"
+            ],
+            "error_message": "Unknown category specified"
+        }
+    },
+    {
+        "model": "Accounts.uploaderror",
+        "fields": {
+            "transaction": [
+                [
+                    "Floyd's Bank",
+                    "55-55-55",
+                    "12345678"
+                ],
+                7
+            ],
+            "upload_history": [
+                [
+                    "Floyd's Bank",
+                    "55-55-55",
+                    "12345678"
+                ],
+                "2023-03-02",
+                "2023-03-31"
+            ],
+            "error_message": "Unknown category specified"
+        }
+    },
+    {
+        "model": "Accounts.uploaderror",
+        "fields": {
+            "transaction": [
+                [
+                    "Floyd's Bank",
+                    "55-55-55",
+                    "12345678"
+                ],
+                5
+            ],
+            "upload_history": [
+                [
+                    "Floyd's Bank",
+                    "55-55-55",
+                    "12345678"
+                ],
+                "2023-05-01",
+                "2023-05-30"
+            ],
+            "error_message": "Invalid category for credit"
+        }
+    },
+    {
+        "model": "Accounts.uploaderror",
+        "fields": {
+            "transaction": [
+                [
+                    "Floyd's Bank",
+                    "55-55-55",
+                    "12345678"
+                ],
+                6
+            ],
+            "upload_history": [
+                [
+                    "Floyd's Bank",
+                    "55-55-55",
+                    "12345678"
+                ],
+                "2023-05-01",
+                "2023-05-30"
+            ],
+            "error_message": "Invalid category for credit"
+        }
+    }
+]

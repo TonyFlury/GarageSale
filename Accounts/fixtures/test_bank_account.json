@@ -1,0 +1,11 @@
+[
+  {
+    "model": "Accounts.account",
+    "fields": {
+      "bank_name": "Floyd's Bank",
+      "sort_code": "55-55-55",
+      "account_number": "12345678",
+      "starting_balance": "0.00"
+    }
+  }
+]

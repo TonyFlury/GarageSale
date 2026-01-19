@@ -44,7 +44,7 @@ if debug and TEST_SERVER:
             'format': '%(asctime)s: %(levelname)s: %(name)s %(module)s %(filename)s -> %(funcName)s: %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'    }
         },
-        "disable_existing_loggers": True,
+        "disable_existing_loggers": False,
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",

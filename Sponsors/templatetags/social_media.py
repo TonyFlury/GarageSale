@@ -16,6 +16,7 @@ Testable Statements :
 from django.template import Library
 from django.template import Template, Context
 from django.templatetags.static import static
+from django.utils.safestring import mark_safe
 
 register = Library()
 
@@ -31,7 +32,7 @@ social_media_icons ={
 @register.simple_tag()
 def get_social_icon( social):
     default = '<img src="{% static  \'/GarageSale/icons/logos/' + social + '.png\' %}">'
-    return format_html(social_media_icons.get(social, default))
+    return mark_safe(social_media_icons.get(social, default))
 
 
 @register.simple_tag
@@ -49,4 +50,4 @@ def social_media_link( sponsor, social ):
                            '</a>'
                            '<span class="tooltiptext top arrow">{{item.company_name}} '+ social +'</span>'
                            '</div>')
-    return format_html(social_link.render( Context({'item': sponsor}) ))
+    return mark_safe(social_link.render( Context({'item': sponsor}) ))

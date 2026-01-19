@@ -1,0 +1,82 @@
+[
+    {
+        "model": "Accounts.uploadhistory",
+        "fields": {
+            "account": [
+                "Floyd's Bank",
+                "55-55-55",
+                "12345678"
+            ],
+            "start_date": "2023-01-01",
+            "end_date": "2023-01-30",
+            "uploaded_by": [
+                "treasurer@test.com"
+            ],
+            "uploaded_at": "2023-01-02 00:00Z"
+        }
+    },
+    {
+        "model": "Accounts.uploadhistory",
+        "fields": {
+            "account": [
+                "Floyd's Bank",
+                "55-55-55",
+                "12345678"
+            ],
+            "start_date": "2023-01-31",
+            "end_date": "2023-03-01",
+            "uploaded_by": [
+                "treasurer@test.com"
+            ],
+            "uploaded_at": "2023-02-01 00:00Z"
+        }
+    },
+    {
+        "model": "Accounts.uploadhistory",
+        "fields": {
+            "account": [
+                "Floyd's Bank",
+                "55-55-55",
+                "12345678"
+            ],
+            "start_date": "2023-03-02",
+            "end_date": "2023-03-31",
+            "uploaded_by": [
+                "treasurer@test.com"
+            ],
+            "uploaded_at": "2023-03-03 00:00Z"
+        }
+    },
+    {
+        "model": "Accounts.uploadhistory",
+        "fields": {
+            "account": [
+                "Floyd's Bank",
+                "55-55-55",
+                "12345678"
+            ],
+            "start_date": "2023-04-01",
+            "end_date": "2023-04-30",
+            "uploaded_by": [
+                "treasurer@test.com"
+            ],
+            "uploaded_at": "2023-04-02 00:00Z"
+        }
+    },
+    {
+        "model": "Accounts.uploadhistory",
+        "fields": {
+            "account": [
+                "Floyd's Bank",
+                "55-55-55",
+                "12345678"
+            ],
+            "start_date": "2023-05-01",
+            "end_date": "2023-05-30",
+            "uploaded_by": [
+                "treasurer@test.com"
+            ],
+            "uploaded_at": "2023-05-02 00:00Z"
+        }
+    }
+]

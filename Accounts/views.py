@@ -1,27 +1,26 @@
-import datetime
-from abc import abstractmethod
-from calendar import month_name
 from http import HTTPStatus
+from typing import Any
 
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, PermissionRequiredMixin
 from django.contrib.staticfiles import finders
 from django.core.exceptions import BadRequest
-from django.db.models import Sum
-from django.http import HttpRequest, HttpResponse, HttpResponseServerError, JsonResponse
-from django.shortcuts import render, redirect
-from django.template import Context, Template, Engine
+from django.db import transaction as db_transaction
+from django.db.models import Sum, F, Count
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import redirect
 from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.urls import reverse, reverse_lazy
 from django.views import View
+from django.views.decorators.http import require_http_methods
 from django.views.generic import ListView
 
 from GarageSale.models import CommunicationTemplate
 # Create your views here.
 
-from .models import Transaction, Account, Categories, FinancialYear
-from .forms import Upload, SummaryForm
+from .models import Transaction, Account, Categories, FinancialYear, UploadError, UploadHistory
+from .forms import Upload
 
 from csv import DictReader
 from decimal import Decimal
@@ -31,6 +30,8 @@ import json
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+expected_fields = ['Transaction Date','Sort Code','Account Number','Transaction Description','Debit Amount','Credit Amount','Balance','Category']
 
 @login_required( redirect_field_name='next', login_url=reverse_lazy('user_management:login') )
 @permission_required('Accounts.upload_transaction', raise_exception=True)
@@ -43,40 +44,145 @@ def upload_transactions(request):
         if form.is_valid():
             account = form.cleaned_data['account']
             file = form.cleaned_data['file']
+
+            categories = set(Categories.objects.all().values_list('category_name', flat=True))
+
             transactions_data = file.read().decode('utf-8').splitlines()
             transactions = DictReader(transactions_data, delimiter=',')
-            fields =transactions.fieldnames
-            for f in ['Transaction Date','Transaction Description','Debit Amount','Credit Amount','Category']:
-                if f not in fields:
-                    form.add_error('file', f'Missing column {f} in {file.name}')
 
-            if form.errors:
+            missing = set(expected_fields) - set(transactions.fieldnames)
+
+            next_tx = account.last_transaction_number + 1
+
+            if missing and 'Category' in missing:
+                missing.remove('Category')
+
+            # Check for expected fields
+            if missing:
+                form.add_error('file', f'Missing columns {','.join(missing)} in {file.name}')
                 return TemplateResponse(request, 'upload_transactions.html', {'form': form})
 
-            t_count = Transaction.objects.filter(account=account).count()
+            data = list(transactions)
 
-            for line in transactions:
-                debit, credit = line['Debit Amount'], line['Credit Amount']
-                debit = debit if debit else "0"
-                credit = credit if credit else "0"
-                data_dict = {'transaction_date':datetime.strptime(line['Transaction Date'],'%d/%m/%Y'),
-                              'description':line['Transaction Description'],
-                              'debit':Decimal(debit),
-                               'credit':Decimal(credit),
-                              'category':line.get('Category','Unknown'), }
+            # Check for data overlap this account
+            first_date = datetime.strptime(data[0]['Transaction Date'],'%d/%m/%Y')
+            last_date  = datetime.strptime(data[-1]['Transaction Date'],'%d/%m/%Y')
 
-                cat_row = Categories.objects.get_or_create(category_name=data_dict['category'])
-                instance = Transaction.objects.get_or_create(account=account, **data_dict)
+            # Currently check all transactions - and not the upload history.
+            existing = Transaction.objects.filter(account=account, transaction_date__range=(first_date,last_date)).exists()
+            if existing:
+                form.add_error('file', f'Transactions already uploaded for {account.bank_name} between {first_date.strftime('%d/%m/%Y')} and {last_date.strftime('%d/%m/%Y')}')
+                return TemplateResponse(request, 'upload_transactions.html', {'form': form})
 
-            if t_count == Transaction.objects.filter(account=account).count():
+            if not data :
                 form.add_error('file', f'No new transactions found in {file.name}')
                 return TemplateResponse(request, 'upload_transactions.html', {'form': form})
 
-            return redirect(reverse('Accounts:TransactionList', kwargs={'account_id':account.id}))
+            # Check for out-of-order insertion.
+            # We know there is no overlap - so we need to identify the right number to start from
+            # Is there a transaction before the last data in the upload file
+            try:
+                prev_tx = Transaction.objects.filter(account=account,
+                                                     transaction_date__gt = first_date).earliest('transaction_date')
+            except Transaction.DoesNotExist:
+                prev_tx = None
+
+            if prev_tx:
+                next_tx = prev_tx.tx_number
+                shift = len(data)
+            else:
+                shift = 0
+
+            with db_transaction.atomic():
+                # Shift update transaction numbers of existing data to ensure that all data has
+                #  unique increasing number.
+                if shift:
+                    Transaction.objects.filter(account=account,
+                                               transaction_date__gt=first_date).update(tx_number=F('tx_number')+shift)
+
+                history_inst = UploadHistory.objects.create(account=account,
+                                                         start_date=first_date,
+                                                         end_date=last_date,
+                                                         uploaded_by=request.user
+                                                         )
+                for index, row in enumerate(data, start=0):
+                    category, credit, debit, instance = _build_tx_record(account, history_inst, next_tx+ index, row)
+
+                    if category not in categories:
+                        UploadError.objects.create(transaction=instance[0], upload_history=history_inst,
+                                                   error_message=f'Unknown category {category}')
+                    else:
+                        try:
+                            category_inst = Categories.objects.get(category_name=category)
+                            if (category and category_inst.credit_debit == 'C' and debit != "0") or\
+                                        (category and category_inst.credit_debit == 'D' and credit != "0"):
+                                UploadError.objects.create(transaction=instance[0], upload_history=history_inst,
+                                                           error_message= f'Invalid category for debit' if category_inst.credit_debit == 'D' else f'Invalid category for credit')
+                        except Categories.DoesNotExist:
+                            UploadError.objects.create(transaction=instance[0], upload_history=history_inst,
+                                                       error_message= f'Unknown category {category}')
+
+            return redirect(reverse('Account:TransactionList', kwargs={'account_id':account.id}))
         else:
             return TemplateResponse(request, 'upload_transactions.html', {'form': form})
     else:
         raise Exception('Invalid request method')
+
+
+def _build_tx_record(account, history_inst: UploadHistory, tx_number: int, row) -> tuple[
+    Any, tuple[Transaction, bool], str | Any, str | Any]:
+    debit, credit = row['Debit Amount'], row['Credit Amount']
+    debit = debit if debit else "0"
+    credit = credit if credit else "0"
+    category = row.get('Category', '')
+
+    data_dict = {'transaction_date': datetime.strptime(row['Transaction Date'], '%d/%m/%Y'),
+                 'description': row['Transaction Description'],
+                 'tx_number': tx_number,
+                 'upload_history': history_inst,
+                 'debit': Decimal(debit), 'credit': Decimal(credit),
+                 'balance': Decimal(row['Balance']),
+                 'category': category}
+
+    instance = Transaction.objects.get_or_create(account=account, **data_dict)
+    return category, credit, debit, instance
+
+
+class UploadErrorList(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    login_url = reverse_lazy('user_management:login')
+    redirect_field_name = 'next'
+    permission_required = 'Accounts.view_uploadhistory'
+    template_name = 'upload_errors.html'
+
+    def get_queryset(self):
+        return UploadError.objects.all()
+
+    def get_context_data( self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        account_selected = self.kwargs.get('account_id', None)
+        upload_selected = self.kwargs.get('upload_id', None)
+        context |= {'accounts' : Account.objects.all(),
+                          'account_selected': account_selected,
+                    'errors':None}
+        if account_selected:
+            context |= {'upload_histories': self.get_history_list(account_selected),
+                          'upload_selected': upload_selected }
+
+        if account_selected and upload_selected:
+            context |= {'errors': self.get_error_list(account_selected, upload_selected),
+                        'categories': Categories.objects.all()}
+        return context
+
+    @staticmethod
+    def get_error_list(account_id, upload_id):
+        return UploadError.objects.filter(upload_history__account__pk=account_id, upload_history__pk=upload_id).order_by('transaction__transaction_date')
+
+    @staticmethod
+    def get_history_list(account_id=None):
+        if account_id:
+            return UploadHistory.objects.filter(account__pk=account_id).annotate(error_count=Count('errors')).filter(error_count__gt=0).order_by('-error_count','start_date')
+        else:
+            return UploadHistory.objects.none()
 
 class TransactionList(LoginRequiredMixin, UserPassesTestMixin, ListView):
     login_url = reverse_lazy('user_management:login')
@@ -90,7 +196,8 @@ class TransactionList(LoginRequiredMixin, UserPassesTestMixin, ListView):
         user = self.request.user
         return user.is_superuser or user.has_perm('Accounts.view_transaction') or user.has_perm('Accounts.edit_transaction')
 
-    def get_yearset(self):
+    @staticmethod
+    def get_yearset():
         years = FinancialYear.objects.all().order_by('-year_start')
         return [i.year for i in years]
 
@@ -106,12 +213,12 @@ class TransactionList(LoginRequiredMixin, UserPassesTestMixin, ListView):
             except FinancialYear.DoesNotExist:
                 logging.error(f'Invalid year {year} specified for transaction list')
                 year = None
-                year_inst = None
                 raise BadRequest(f'Invalid year {year} specified for transaction list')
 
         qs = Transaction.details.bank_only().filter(account_id=account_id)
         if year:
-            qs = qs.filter(financial_year=year_inst)
+            start, end = year_inst.year_start, year_inst.year_end
+            qs = qs.filter(transaction_date__range=(start,end))
         return qs
 
     def get_context_data(self, *args, **kwargs):
@@ -119,11 +226,7 @@ class TransactionList(LoginRequiredMixin, UserPassesTestMixin, ListView):
         account_id = self.kwargs.get('account_id')
         if not account_id:
             return context | {'account_selection': None, 'accounts': Account.objects.all() }
-
-        inst = Account.objects.get(id=account_id)
         return context | {'account_selection':account_id,  'accounts': Account.objects.all(), 'years':self.get_yearset(), 'year_selected':self.request.GET.get('year','')}
-
-#TODO Refactor into a class (similar to a View).
 
 class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = reverse_lazy('user_management:login')
@@ -281,38 +384,59 @@ class YearlyReport:
     def validate_params(context:dict) -> bool:
         return bool(context.get('year_selection', None))
 
-@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.edit_transaction'))
-def edit_transaction(request, transaction_id):
+@require_http_methods(['GET'])
+def get_categories(request, transaction_id):
+    """Return the valid categories for the specified transaction"""
+    try:
+        transaction = Transaction.objects.get(id=transaction_id)
+    except Transaction.DoesNotExist:
+        logging.error(f'Transaction {transaction_id} not found')
+        raise BadRequest(f'Transaction {transaction_id} not found')
 
-    if request.method != 'PUT':
-        logging.error(f'Expecting a PUT request - got {request.method}')
-        raise BadRequest(f'Expecting a PUT request - got {request.method}')
+    if transaction.parent is None:
+        tx_type = 'C' if transaction.credit > 0 else 'D'
+        cat_list = list(Categories.objects.filter(credit_debit=tx_type, parent__isnull=True).values_list('category_name', flat=True))
     else:
-        try:
-            transaction = Transaction.objects.get(id=transaction_id)
-        except Transaction.DoesNotExist as e:
-            logging.error(f'Transaction {transaction_id} not found')
-            raise BadRequest(f'Transaction {transaction_id} not found')
+        parent_category = transaction.parent.category
+        cat_list = list(i for i in Categories.objects.filter(parent__category_name=parent_category).
+                                               values_list('category_name', flat=True))
+
+    return JsonResponse({'categories':cat_list, 'success':HTTPStatus.OK})
+
+
+@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.change_transaction'))
+@require_http_methods(['PUT'])
+def edit_transaction(request, transaction_id):
+    try:
+        transaction = Transaction.objects.get(id=transaction_id)
+    except Transaction.DoesNotExist:
+        logging.error(f'Transaction {transaction_id} not found')
+        raise BadRequest(f'Transaction {transaction_id} not found')
 
     data = json.loads(request.body)
     logger.info(f"edit_transaction : {data}")
 
-    transaction.name = data['name']
-    transaction.category = data['category']
+    if 'name' in data:
+        transaction.name = data['name']
+    if category := data.get('category'):
+        transaction.category = category
     transaction.save()
+    errors = UploadError.objects.filter(transaction=transaction)
+    if errors:
+        logger.error(f"edit_transaction : {errors}")
+        errors.delete()
+
     return JsonResponse({'message':"edit_transaction : transaction updated successfully",'success':HTTPStatus.OK})
 
-@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.edit_transaction'))
+
+@require_http_methods(['PUT'])
+@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.change_transaction'))
 def edit_split(request, transaction_id):
-    if request.method != 'PUT':
-        logging.error(f'Expecting a PUT request - got {request.method}')
-        raise BadRequest(f'Expecting a PUT request - got {request.method}')
-    else:
-        try:
-            transaction = Transaction.objects.get(id=transaction_id)
-        except Transaction.DoesNotExist as e:
-            logging.error(f'Transaction {transaction_id} not found')
-            raise BadRequest(f'Transaction {transaction_id} not found')
+    try:
+        transaction = Transaction.objects.get(id=transaction_id)
+    except Transaction.DoesNotExist:
+        logging.error(f'Transaction {transaction_id} not found')
+        raise BadRequest(f'Transaction {transaction_id} not found')
 
     data = json.loads(request.body)
     logging.info(f"edit_transaction : {data}")
@@ -324,17 +448,14 @@ def edit_split(request, transaction_id):
     transaction.save()
     return JsonResponse({'message':"edit_transaction : transaction updated successfully",'success':HTTPStatus.OK})
 
-@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.edit_transaction'))
+@require_http_methods(['PUT'])
+@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.change_transaction'))
 def add_split(request, transaction_id):
-    if request.method != 'PUT':
-        logging.error(f'Expecting a PUT request - got {request.method}')
-        raise BadRequest(f'Expecting a PUT request - got {request.method}')
-    else:
-       try:
-            transaction = Transaction.objects.get(id=transaction_id)
-       except Transaction.DoesNotExist as e:
-           logging.error(f'Transaction {transaction_id} not found')
-           raise BadRequest(f'Transaction {transaction_id} not found')
+    try:
+        transaction = Transaction.objects.get(id=transaction_id)
+    except Transaction.DoesNotExist:
+       logging.error(f'Transaction {transaction_id} not found')
+       raise BadRequest(f'Transaction {transaction_id} not found')
 
     data = json.loads(request.body)
 
@@ -349,19 +470,14 @@ def add_split(request, transaction_id):
 
     return JsonResponse({'message':"add_transaction : transaction updated successfully",'id':new_id.id, 'success':HTTPStatus.OK})
 
-@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.edit_transaction'))
+@require_http_methods(['PUT'])
+@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.change_transaction'))
 def delete_transaction(request, transaction_id):
-    if request.method != 'PUT':
-        logging.error(f'Expecting a PUT request - got {request.method}')
-        raise BadRequest(f'Expecting a PUT request - got {request.method}')
-    else:
-       try:
-            transaction = Transaction.objects.get(id=transaction_id)
-       except Transaction.DoesNotExist as e:
-           logging.error(f'Transaction {transaction_id} not found')
-           raise BadRequest(f'Transaction {transaction_id} not found')
-
-    data = json.loads(request.body)
+    try:
+        transaction = Transaction.objects.get(id=transaction_id)
+    except Transaction.DoesNotExist:
+       logging.error(f'Transaction {transaction_id} not found')
+       raise BadRequest(f'Transaction {transaction_id} not found')
 
     transaction.delete()
     logging.info(f"delete transaction: {transaction_id} deleted")

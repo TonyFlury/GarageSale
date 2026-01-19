@@ -1,46 +1,6 @@
+import {_build_DOM_element, _decimal2int, _int2decimal, _invoke_rest_api} from "./common.js";
 
-    function _decimal2int(decimal_string) {
-        /* Convert a decimal string to an integer */
-        let parts = decimal_string.split(".");
-        if (parts.length === 1)
-            return parseInt(decimal_string)*100;
-        else
-            parts[1] = parts[1].padEnd(2, '0');
-        return parseInt(decimal_string.split(".").join(''));
-    }
-
-    function _int2decimal(integer) {
-        /* Convert an integer to a decimal string */
-        return String(Math.floor(integer / 100) )+ "." + String(integer % 100).padStart(2, '0');
-    }
-
-    function _build_DOM_element(name, options) {
-        /** build a DDOM element with the given name and options **/
-       let element = document.createElement(name)
-        for (let key in options) {
-            element[key] = options[key];
-        }
-        return element;
-    }
-
-    function _invoke_rest_api( verb, object_id, data, callback) {
-        /* Send a REST API request to the server */
-        let request = new Request(`/Account/${verb}/${object_id}/`,
-            {method: "PUT", headers: {"X-CSRFToken": csrf_token,
-                "Content-Type": "application/json"},
-            body: JSON.stringify(data)
-            });
-
-        fetch(request).
-                then(response => {
-                    if (!response.ok)
-                        console.log("Error: " + response.statusText);
-                    return response.json();
-                }).
-        then( response => {callback(object_id, response)}).catch(error => console.log(error));
-    }
-
-    function _revert_edit_on_child(row_element) {
+function _revert_edit_on_child(row_element) {
         /* Discard any edits made to a child row */
         const table = document.getElementById("transactions");
             if (row_element.classList.contains("new")) {
@@ -79,8 +39,6 @@
     }
 
     function _child_edit_complete(id, response) {
-
-        console.log(response)
 
         let row_element = document.getElementById(id);
 
@@ -169,7 +127,7 @@
             return;
         }
 
-        _invoke_rest_api(verb, object_id, {name: name_element.value, [type]: amount_element.value}, _child_edit_complete);
+        _invoke_rest_api(verb, object_id, csrf_token, {name: name_element.value, [type]: amount_element.value}, _child_edit_complete);
     }
 
     function _non_child_edit_complete(id, response) {
@@ -189,7 +147,7 @@
         let name_element = document.getElementById(id + "__name_edit");
         let category_element = document.getElementById(id + "__category_edit");
 
-        _invoke_rest_api("edit_transaction", id, {name: name_element.value, category: category_element.value}, _non_child_edit_complete);
+        _invoke_rest_api("edit_transaction", id,  csrf_token, {name: name_element.value, category: category_element.value}, _non_child_edit_complete);
     }
 
     function save_edit(row_element) {
@@ -210,13 +168,12 @@
         let type = (parent_row.querySelector(".debit").innerText !== "")? "debit":"credit";
         const amount_element = document.getElementById(`${id}__${type}`);
 
-        let name = _build_DOM_element("input", { id : `${id}__name_edit`,
-                                                type: "text",
-                                                required: true,
-                                                defaultValue: name_element.innerText,
-                                                value: name_element.innerText});
+        let category_element = _build_DOM_element("SELECT", { id : `${id}__name_edit`,
+                                                multiple: false,
+                                                required: true });
+        build_Category(category_element, id, name_element.innerText)
         name_element.innerHTML = "";
-        name_element.appendChild(name);
+        name_element.appendChild(category_element);
 
         let amount = _build_DOM_element("input", { id : `${id}__${type}_edit`, type:"text",
                                                     required: true,
@@ -258,6 +215,17 @@
         revert_button.addEventListener("click", function(event) {revert_edit(event.target.parentElement)});
     }
 
+    function build_Category(category_element, tx_id, default_category) {
+        _invoke_rest_api( 'get_category_list',
+            tx_id,
+            csrf_token,
+            {},
+            function(tx_id, response) {
+            let categories = response.categories;
+            let options = categories.map(function(item) {return item===default_category ?`<option selected value="${item}">${item}</option>`: `<option value="${item}">${item}</option>`});
+            category_element.innerHTML = options.join("");
+            }, 'GET')
+    }
 
     function _edit_non_child(row_id) {
         /** Specific editing of a non-child row - can change name and category **/
@@ -272,9 +240,12 @@
         name_element.innerHTML = "";
         name_element.appendChild(name);
 
-        let category = _build_DOM_element("input", { id : `${row_id}__category_edit`, type:"text",
-                                                    required: true,
-                                                    value:category_element.innerText});
+        const tx_id = row_id.split("__")[0];
+        /* need to build a Select element for the category */
+        let category = _build_DOM_element("SELECT", { id : `${row_id}__category_edit`, multiple: false,
+                                                    required: true });
+
+        build_Category(category, tx_id, category_element.innerText)
         category_element.innerHTML = "";
         category_element.appendChild(category);
     }
@@ -285,7 +256,6 @@
         const row = event.target.parentElement;
         if (row.classList.contains("editing"))
         {
-            console.log("Saving ....");
             save_edit(row);
             return;
         }
@@ -314,7 +284,7 @@
         }
     }
 
-    function _toggle_edit() {
+    export function _toggle_edit() {
         /** Toggle the global edit mode on and off **/
         let button = document.getElementById("toggle_edit");
         button.value = button.value==="Edit" ? "Stop Editing":"Edit";
@@ -341,7 +311,6 @@
         /** Set the change listener on the year pull down **/
         const year_element= document.getElementById("id_year")
         year_element.addEventListener("change", function() {
-            console.log("year changed");
             const year_selected = document.getElementById("year_selected").value;
             const queryString = window.location.search;
             let urlParams = new URLSearchParams(queryString);
@@ -490,8 +459,6 @@
             delete_button.addEventListener("click", function(event) {delete_transaction(event.target.parentElement)});
 
         }
-
-        /** Need to set the listeners on new child rows too **/
     }
 
     function _expand_collapse(parent_row, force_state ) {
@@ -511,7 +478,7 @@
         }
     }
 
-    function _toggle_collapse() {
+    export function _toggle_collapse() {
         /** Expand or collapse all parent rows, depending on the current state of the button**/
         let button = document.getElementById("toggle_collapse");
         const rows = document.querySelectorAll(".row.parent, .row.child");
@@ -556,9 +523,14 @@
         _set_year_selected_event();
         _set_collapse_expand_event();
         _set_edit_and_revert_event();
+
+        const _toggle_edit_button = document.getElementById("toggle_edit");
+        _toggle_edit_button.addEventListener("click", _toggle_edit);
+        const _toggle_collapse_button = document.getElementById("toggle_collapse");
+        _toggle_edit_button.addEventListener("click", _toggle_collapse);
     }
 
-script_tag = document.querySelector('script[src$="transaction_list.js"]');
+const script_tag = document.querySelector('script[src$="transaction_list.js"]');
 const csrf_token = script_tag.getAttribute("csrf");
 
 document.addEventListener('DOMContentLoaded', _on_load);
