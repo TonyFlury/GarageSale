@@ -5,6 +5,7 @@ from decimal import Decimal
 from random import choice
 from pathlib import Path
 
+import selenium
 from django.contrib import auth
 from django.db.models import Count, Value, F, Func, CharField
 from django.db.models.functions import Cast
@@ -70,7 +71,7 @@ class AccountUploadTests(UploadMixin, SmartHTMLTestMixins, IdentifyMixin, Seleni
         with self.identify_via_login(user=self.treasurer, password='wibble'):
             content = self.data_module.test_data(**{'sort_code': self.account.sort_code,
                                                         'account_number': self.account.account_number})
-            self._upload_data(content, expect_errors=True)
+            self._upload_data(content, expect_error_count=1)
 
     def test_930_invalid_upload_missing_columns(self):
         with self.identify_via_login(user=self.treasurer, password='wibble'):
@@ -171,7 +172,7 @@ class UploadErrorPageTests(UploadMixin, IdentifyMixin,SmartHTMLTestMixins, Selen
         return webdriver.Chrome()
 
     def get_test_url(self, **kwargs):
-        return self.live_server_url + reverse('Account:upload_error_list', kwargs=kwargs)
+        return self.live_server_url + reverse('Account:UploadErrorList', kwargs=kwargs)
 
     def setUp(self):
         super().setUp()
@@ -264,11 +265,17 @@ class UploadErrorPageTests(UploadMixin, IdentifyMixin,SmartHTMLTestMixins, Selen
 
     def test_1040_test_upload_history_correct_errors(self):
         """Test that a transaction correctly updates when a new category is selected."""
+        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+        # enable browser logging
+        options = webdriver.ChromeOptions()
+        options.set_capability('goog:loggingPrefs', {'browser': 'ALL'})
+
         uploads_with_errors = UploadHistory.objects.filter(account__pk=self.account.id).annotate(error_count=Count("errors")).filter(error_count__gt=0)
         with self.identify_via_login(user=self.treasurer, password='wibble'):
             for upload in uploads_with_errors:
                 with self.subTest(upload=upload):
-                    error_count = upload.error_count
+                    error_count = upload.errors.count()
                     self.selenium.get(self.get_test_url(account_id=self.account.id, upload_id=upload.id))
                     errors = UploadError.objects.filter(upload_history_id=upload.id)
 
@@ -285,9 +292,9 @@ class UploadErrorPageTests(UploadMixin, IdentifyMixin,SmartHTMLTestMixins, Selen
 
                     time.sleep(2)
 
-                    u = UploadError.objects.filter(upload_history_id=upload.id)
-
+                    u = [(i.transaction_id, i.error_message) for i in UploadError.objects.all() if i.upload_history.id== upload.id]
                     upload.refresh_from_db()
+
                     self.assertEqual(len(u), error_count-1)
                     tx = Transaction.objects.get(pk=tx_id)
                     self.assertEqual(tx.category, chosen_select)

@@ -12,12 +12,12 @@ def test_data(data_batch='A',**kwargs ):
         case 'B':
             tx_date = date.today() - td(days=90)
             return DataStream(data=[{'date':tx_date, 'name': 'Petes Photo Workshop', 'credit': '500.00', 'balance': '650.00'},
-                            {'date':tx_date + td(days=1), 'name':'Bammer Guy\'s','debit':'50.00', 'balance':'600.00','category':'Sponsorship'}, ],
+                            {'date':tx_date + td(days=1), 'name':'Bammer Guy\'s','debit':'50.00', 'balance':'600.00','category':'Advertisement'}, ],
                              **kwargs)
         case 'C':
             tx_date = date.today() - td(days=80)
             return DataStream(data=[{'date':tx_date, 'name': 'Mr Smith', 'credit': '8.00', 'balance': '608.00'},
-                            {'date':tx_date + td(days=1), 'name':'Mr Jones','credit':'11.00', 'balance':'618.00','category':'Sponsorship'}, ],
+                            {'date':tx_date + td(days=1), 'name':'Mr Jones','credit':'11.00', 'balance':'618.00','category':'Sale'}, ],
                              **kwargs)
         case _:
             return DataStream(data=[], **kwargs)

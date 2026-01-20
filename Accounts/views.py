@@ -94,7 +94,7 @@ def upload_transactions(request):
                 shift = 0
 
             with db_transaction.atomic():
-                # Shift update transaction numbers of existing data to ensure that all data has
+                # Shift : update transaction numbers of existing data to ensure that all data has
                 #  unique increasing number.
                 if shift:
                     Transaction.objects.filter(account=account,
@@ -121,6 +121,9 @@ def upload_transactions(request):
                         except Categories.DoesNotExist:
                             UploadError.objects.create(transaction=instance[0], upload_history=history_inst,
                                                        error_message= f'Unknown category {category}')
+
+                if history_inst.errors.count():
+                    return redirect(reverse('Account:UploadErrorList', kwargs={'account_id':account.id, 'upload_id':history_inst.pk}))
 
             return redirect(reverse('Account:TransactionList', kwargs={'account_id':account.id}))
         else:
@@ -404,8 +407,8 @@ def get_categories(request, transaction_id):
     return JsonResponse({'categories':cat_list, 'success':HTTPStatus.OK})
 
 
-@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.change_transaction'))
-@require_http_methods(['PUT'])
+#@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.change_transaction'))
+#@require_http_methods(['PUT'])
 def edit_transaction(request, transaction_id):
     try:
         transaction = Transaction.objects.get(id=transaction_id)
@@ -414,16 +417,14 @@ def edit_transaction(request, transaction_id):
         raise BadRequest(f'Transaction {transaction_id} not found')
 
     data = json.loads(request.body)
-    logger.info(f"edit_transaction : {data}")
 
     if 'name' in data:
         transaction.name = data['name']
     if category := data.get('category'):
         transaction.category = category
     transaction.save()
-    errors = UploadError.objects.filter(transaction=transaction)
+    errors = UploadError.objects.get(transaction=transaction)
     if errors:
-        logger.error(f"edit_transaction : {errors}")
         errors.delete()
 
     return JsonResponse({'message':"edit_transaction : transaction updated successfully",'success':HTTPStatus.OK})
@@ -439,7 +440,6 @@ def edit_split(request, transaction_id):
         raise BadRequest(f'Transaction {transaction_id} not found')
 
     data = json.loads(request.body)
-    logging.info(f"edit_transaction : {data}")
 
     amount_type = 'debit' if 'debit' in data else 'credit'
 

@@ -27,7 +27,7 @@ class Account(models.Model):
 
     @property
     def last_transaction_number(self):
-        return Transaction.objects.filter(account=self).aggregate(models.Max('tx_number'))['tx_number__max']
+        return last if (last := Transaction.objects.filter(account=self).aggregate(models.Max('tx_number'))['tx_number__max']) else 0
 
     class Meta:
         ordering = ['bank_name']

@@ -6,9 +6,9 @@ app_name = "Account"
 
 urlpatterns = [
     path('upload/', views.upload_transactions, name='upload_transactions'),
-    path('uploadErrors/', views.UploadErrorList.as_view(), name='upload_error_list'),
-    path('uploadErrors/<int:account_id>/', views.UploadErrorList.as_view(), name='upload_error_list'),
-    path('uploadErrors/<int:account_id>/<int:upload_id>/', views.UploadErrorList.as_view(), name='upload_error_list'),
+    path('uploadErrors/', views.UploadErrorList.as_view(), name='UploadErrorList'),
+    path('uploadErrors/<int:account_id>/', views.UploadErrorList.as_view(), name='UploadErrorList'),
+    path('uploadErrors/<int:account_id>/<int:upload_id>/', views.UploadErrorList.as_view(), name='UploadErrorList'),
 
     path('report/transactions/', views.TransactionList.as_view(), name='TransactionList'),
     path('report/transactions/<int:account_id>/', views.TransactionList.as_view(), name='TransactionList'),

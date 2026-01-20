@@ -12,12 +12,15 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.wait import WebDriverWait
 
 from Accounts.models import Transaction, UploadHistory, UploadError
+from GarageSale.tests.common import SeleniumCommonMixin
 
-class UploadMixin:
-    def _upload_data(self, data, expect_invalid=False, expect_errors=False, remove=None):
+
+class UploadMixin(SeleniumCommonMixin):
+    def _upload_data(self, data, expect_invalid=False, expect_error_count=0, remove=None):
         remove = remove or set()
         with TestFileContent(content=data, remove=remove) as f:
             self.selenium.get(self.live_server_url + reverse('Account:upload_transactions'))
+            last_tx = self.account.last_transaction_number
             select_element = self.selenium.find_element(By.ID, 'id_account')
             select = Select(select_element)
             select.select_by_value(str(self.account.id))
@@ -42,7 +45,6 @@ class UploadMixin:
             self.assertEqual(uh.uploaded_by, self.treasurer)
             first_date, last_date = f.data.range()
             length = len(f)
-            last_tx = self.account.last_transaction_number
             self.assertEqual(uh.start_date, first_date)
             self.assertEqual(uh.end_date, last_date)
             tx = Transaction.objects.filter(account=self.account, upload_history=uh)
@@ -51,19 +53,17 @@ class UploadMixin:
             self.assertEqual(self.account.last_transaction_number, last_tx + len(f))
 
             # Test the upload history was created
-            if not expect_errors:
+            if not expect_error_count:
                 errors = UploadError.objects.filter(upload_history=uh)
                 self.assertEqual(len(errors), 0)
                 return self.account, tx, uh, None
             else:
                 errors = UploadError.objects.filter(upload_history=uh)
 
-                # Missing/incorrect categories are the only errors that can occur here
-                error_tx = tx.filter(category='')
 
                 # Check that all upload errors are recorded correctly
-                self.assertEqual(set(t.id for t in error_tx),
-                                 set(e.transaction.id for e in errors))
+                self.assertEqual(len(errors),
+                                 expect_error_count)
 
                 errors = UploadError.objects.filter(upload_history=uh)
                 return self.account, tx, uh, errors
