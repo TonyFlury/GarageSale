@@ -22,6 +22,9 @@ import bs4
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY, HASH_SESSION_KEY, get_user_model
 from django.contrib.auth.models import AbstractUser
+from django.db import transaction
+
+from Accounts.models import Transaction
 from user_management.models import UserExtended
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
@@ -38,9 +41,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 from pathlib import Path
 
 root_screenshot_directory = Path('./testing_screenshots')
-
-if not root_screenshot_directory.exists():
-    root_screenshot_directory.mkdir()
 
 import logging
 
@@ -122,20 +122,20 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
 
     def screenshot(self, name=None):
         logger.info(f'Taking Screenshot : {name}')
-        if self.screen_shot_path:
+        if self.screenshot_sub_directory:
+            screen_shot_path = (root_screenshot_directory
+                                    / f'{datetime.datetime.now(datetime.timezone.utc).isoformat(sep="_", timespec="seconds")}' / self.screenshot_sub_directory)
+            screen_shot_path.mkdir(exist_ok=True,parents=True)
+        else:
+            screen_shot_path = None
+
+        if screen_shot_path:
             test_name = self.id().split('.')[-1]
-            self.selenium.save_screenshot(self.screen_shot_path / f'{test_name}_{name if name else ""}.png')
+            self.selenium.save_screenshot(screen_shot_path / f'{test_name}_{name if name else ""}.png')
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-
-        if cls.screenshot_sub_directory:
-            cls.screen_shot_path = (root_screenshot_directory
-                                    / f'{datetime.datetime.utcnow().isoformat(sep="_", timespec="seconds")}' / cls.screenshot_sub_directory)
-            cls.screen_shot_path.mkdir(exist_ok=True,parents=True)
-        else:
-            cls.screen_shot_path = None
 
         cls.selenium: RemoteWebDriver = cls.get_driver()
         cls.selenium.implicitly_wait(5)
@@ -156,9 +156,16 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
 
     def tearDown(self):
         super().tearDown()
-        if self.screen_shot_path and self._screenshot_on_close:
+        if self.screenshot_sub_directory:
+            screen_shot_path = (root_screenshot_directory
+                                    / f'{datetime.datetime.now(datetime.timezone.utc).isoformat(sep="_", timespec="seconds")}' / self.screenshot_sub_directory)
+            screen_shot_path.mkdir(exist_ok=True,parents=True)
+        else:
+            screen_shot_path = None
+
+        if screen_shot_path and hasattr(self, "_screenshot_on_close") and self._screenshot_on_close:
             test_name = self.id().split('.')[-1]
-            self.selenium.save_screenshot(self.screen_shot_path / f'{test_name}.png')
+            self.selenium.save_screenshot(screen_shot_path / f'{test_name}.png')
 
     @classmethod
     def tearDownClass(cls):
@@ -209,13 +216,14 @@ class IdentifyMixin(StaticLiveServerTestCase):
     selenium: RemoteWebDriver
 
     def get_test_url(self):
-        return NotImplemented
+        return None
 
     def force_login(self, user, base_url):
         SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
-        base_url = base_url if base_url else self.get_test_url()
+        base_url = base_url if base_url else (self.get_test_url() if hasattr(self, 'get_test_url') else '')
 
-        self.selenium.get(base_url)
+        if base_url:
+            self.selenium.get(base_url)
 
         session = SessionStore()
         session[SESSION_KEY] = user._meta.pk.value_to_string(user)
@@ -262,8 +270,12 @@ class IdentifyMixin(StaticLiveServerTestCase):
 
         if inst is None:
             inst = user_model.objects.create_user(user, password)
+        try:
+            url = self.get_test_url()
+        except AttributeError:
+            url = None
 
-        self.force_login(inst, self.get_test_url())
+        self.force_login(inst, url)
         try:
             yield inst
         finally:

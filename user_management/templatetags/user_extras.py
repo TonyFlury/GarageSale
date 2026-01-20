@@ -34,13 +34,18 @@ def user_info(context):
 @register.simple_tag
 def login_form_link(redirect):
     login_url = reverse('user_management:login')
-    return format_html(f'<a href="{login_url}?redirect={redirect}">Login</a>')
+    return format_html(f'<a href="{login_url}?redirect={redirect}">Login</a>',
+                       kwargs={'login_url': reverse('user_management:login'),
+                           'redirect': redirect})
 
 
 @register.simple_tag()
 def register_form_link(redirect):
     register_url = reverse('user_management:register')
-    return format_html(f'<a href="{register_url}?redirect={redirect}">Register</a>')
+    return format_html(f'<a href="{register_url}?redirect={redirect}">Register</a>',
+                       kwargs={'register_url': reverse('user_management:register'),
+                               'redirect': redirect}
+                       )
 
 
 @register.inclusion_tag("user_menu.html", name="User_menu", takes_context=True)

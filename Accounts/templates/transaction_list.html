@@ -24,7 +24,7 @@
 
 {% block PageScripts %}
     {{ block.super }}
-    <script type="text/javascript" csrf="{{ csrf_token }}" src="{% static 'Accounts/js/transaction_list.js' %}"></script>
+    <script type="module" csrf="{{ csrf_token }}" src="{% static 'Accounts/js/transaction_list.js' %}"></script>
 
 {% endblock %}
 
@@ -43,8 +43,8 @@
 {% if years %}
     <div id="details">
         <div>
-            <label for="id_year">Year</label><select id='id_year' name="year">
-            <option value="">Filter by Calendar Year</option>
+            <label for="id_year">Financial Year </label><select id='id_year' name="year">
+            <option value="">Filter by Financial Year</option>
             <option value="all">All</option>
             {% for year in years %}
                 <option value="{{ year }}" {% if year == year_selected %}selected{% endif %}>{{ year }}</option>
@@ -53,23 +53,23 @@
             <input type="hidden" id="year_selected" value="{{ year_selected }}">
         </div>
         <div id="buttons">
-            <input id="toggle_collapse" type="button" onclick="_toggle_collapse()" value="Expand All">
-            <input id="toggle_edit" type="button" onclick="_toggle_edit()" value="Edit">
+            <input id="toggle_collapse" type="button" value="Expand All">
+            <input id="toggle_edit" type="button" value="Edit">
         </div>
 
         <table id="transactions">
                 <tr>
-                    <th class="button"></th><th class="col date">Date</th><th class="col name">Description</th><th class="col">Debit</th><th class="col">Credit</th><th class="col">Balance</th><th class="col">Category</th>
+                    <th class="button"></th><th class="col date">Date</th><th class="col name">Description</th><th class="col">Category</th><th class="col">Debit</th><th class="col">Credit</th><th class="col">Balance</th>
                 </tr>
             {% for transaction in page_obj %}
                     <tr id='{{ transaction.id }}' class="row {% cycle 'odd' 'even' %} {% if transaction.has_children %}parent{% else %}{% endif %}" t_id={{ transaction.id }} remaining_credit="{{ transaction.remaining_credit }}" remaining_debit="{{ transaction.remaining_debit }}">
                         <td class="col {% if transaction.has_children %}button{% endif %}"></td>
                         <td class="col date">{{ transaction.transaction_date }}</td>
                         <td id='{{ transaction.id }}__name' class="col name">{{ transaction.name }}</td>
+                        <td id='{{ transaction.id }}__category' class="col category">{{ transaction.category}}</td>
                         <td class="col debit">{{ transaction.debit|default_if_none:"" }}</td>
                         <td class="col credit">{{ transaction.credit|default_if_none:"" }}</td>
                         <td class="col balance">{{transaction.balance}}</td>
-                        <td id='{{ transaction.id }}__category' class="col category">{{ transaction.category}}</td>
                         <td id='{{ transaction.id }}__edit' class="row_button edit_button"></td>
                         <td id='{{ transaction.id }}__delete' class="row_button delete_button"></td>
                         <td id='{{ transaction.id }}__revert' class="row_button revert_button"></td>
@@ -80,11 +80,11 @@
                     <tr class="child row" id='{{ split.id }}' parent_id={{ transaction.id }}>
                     <td class="col"></td>
                     <td class="col date"></td>
+                        <td class="col"></td>
                     <td id='{{ split.id }}__name' class="col name">{{ split.name }}</td>
                     <td id='{{ split.id }}__debit' class="col debit">{{ split.debit|default_if_none:""}}</td>
                     <td id='{{ split.id }}__credit' class="col credit">{{ split.credit|default_if_none:"" }}</td>
                     <td class="col balance"></td>
-                    <td class="col category"></td>
                     <td id='{{ split.id }}__edit' class="row_button edit_button"></td>
                     <td id='{{ split.id }}__delete' class="row_button delete_button"></td>
                     <td id='{{ split.id }}__revert' class="row_button revert_button"></td>
@@ -94,6 +94,7 @@
                     <tr class="child row summary" parent_id={{ transaction.id }}>
                     <td class="col"></td>
                     <td class="col date"></td>
+                        <td class="col"></td>
                     <td class="col name">Remaining</td>
                     <td class="col debit">{{ transaction.remaining_debit|default_if_none:'' }}</td>
                     <td class="col credit">{{ transaction.remaining_credit|default_if_none:'' }}</td>

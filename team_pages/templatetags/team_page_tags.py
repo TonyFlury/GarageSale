@@ -52,7 +52,9 @@ def getattribute(value, arg):
 @register.simple_tag(  )
 def get_form_field( form_object, social):
     default = getattr(form_object.instance, social)
-    return format_html(f'<input type="url" name="{social}" id="id_{social}" value="{default}">')
+    return format_html(f'<input type="url" name="{social}" id="id_{social}" value="{default}">',
+                       social=social,
+                       default=default)
 
 @register.filter
 def replace(value, arg):
