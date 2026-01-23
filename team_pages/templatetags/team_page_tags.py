@@ -23,7 +23,27 @@ def is_icon(ob:BoundField):
 
 @register.filter(name='lookup')
 def lookup(value, arg):
+    if not isinstance(value, dict):
+        print(f'lookup: {value} is not a dict - so can\'t find {arg}')
+        return None
     return value.get(arg, None)
+
+@register.filter(name='get_action_icon')
+def get_action_icon(value, arg):
+    if not isinstance(value, dict):
+        print(f'get_action_icon: {value} is not a dict - so can\'t find {arg}')
+        return None
+#    print(f'get_action_icon {arg}\n{value.get(arg, {})}\n{value.get(arg, {}).get("icon", None)}\n\n')
+    return value.get(arg, {}).get('icon', None)
+
+@register.filter(name='get_action_label')
+def get_action_label(value, arg):
+    if not isinstance(value, dict):
+        print(f'get_action_label: {value} is not a dict - so can\'t find {arg}')
+        return None
+#    print(f'get_action_label {arg}\n{value.get(arg, {})}\n{value.get(arg, {}).get("label", None)}\n\n')
+    return value.get(arg, {}).get('label', None)
+
 
 @register.simple_tag(name='missing', takes_context=True)
 def missing(context, value, option_name, missing_value):

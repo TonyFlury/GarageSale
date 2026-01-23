@@ -186,6 +186,9 @@ class Marketer(models.Model):
     state: MarketerState = models.CharField(max_length=2, choices=MarketerState.choices, default=MarketerState.New)
     code: str | None = models.CharField(max_length=7, null=True)
 
+    def get_state_display(self):
+        return MarketerState(self.state).label
+
     def save(self, *args, **kwargs):
         """Ensure that any save generates a new security code"""
         new_code = None if self.state != MarketerState.Invited \
@@ -211,7 +214,7 @@ class Marketer(models.Model):
         return f'{self.trading_name}'
 
     def __repr__(self) -> str:
-        """Useful friendly name of this Craft Marketeer"""
+        """Useful friendly representation of this Craft Marketeer"""
         return f'{self.event.event_date.year} - {self.id} :{self.trading_name}'
 
     def update_state(self, new_state:MarketerState, request:HttpRequest|None=None, send_email=True) -> MarketerState:

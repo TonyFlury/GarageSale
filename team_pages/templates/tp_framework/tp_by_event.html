@@ -3,6 +3,7 @@
 {% load static %}
 {% load getattribute from team_page_tags %}
 {% load lookup from team_page_tags %}
+{% load get_action_icon from team_page_tags %}
 {% load missing from team_page_tags %}
 
 {% comment %}
@@ -86,14 +87,14 @@ across all relevant data.
             {% for action in toolbar %}
                 {% if action.action == 'create' %}
                     {% if can_create %}
-                        <span id="tp-create" tp_action="create"><img  class="icon" alt='New' title="New Entry" src="{{ actions|lookup:action.action|lookup:'icon' }}" /></span>  <!-- New Icon -->
+                        <span id="tp-create" tp_action="create"><img  class="icon" alt='New' title="New Entry" src="{{ actions|get_action_icon:action.action }}" /></span>  <!-- New Icon -->
                     {%  endif %}
                 {% else %}
-                        <span id="tp-{{ action.action }}" tp_action="{{ action.action }}"><img  class="icon" alt='{{ action.label }}' title="{{action.label}}" src="{{ actions|lookup:action.action|lookup:'icon' }}" /></span>
+                        <span id="tp-{{ action.action }}" tp_action="{{ action.action }}"><img  class="icon" alt='{{ action.label }}' title="{{action.label}}" src="{{ actions|get_action_icon:action.action }}" /></span>
                 {% endif %}
             {%  endfor %}
             {%  if filters %}
-                <span id ="tp-filters" ><img class=icon  alt='Filter' title='Filter records' src="{%  static '/GarageSale/images/icons/funnel-svgrepo-com.svg'%}" /> </span>
+                <span id ="tp-filters" ><img class=icon  alt='Filter' title='Filter records' src="{%  static 'GarageSale/images/icons/funnel-svgrepo-com.svg'%}" /> </span>
             {% endif %}
     </div>
     <table class="data_list" id="id_entry_list">
@@ -125,12 +126,14 @@ across all relevant data.
                         </td>
                 {% endfor %}
                 <td class="cell icons" tp_row_id="{{ item.id }}">
+                    {{ item.allowed_actions }}
                     {% for action in item.allowed_actions %}
+                        {{ action }}
                         {% if not action  %}
                             <br>
                         {% else %}
-                            <span class='action' tp_row_id="{{item.id}}" tp_action="{{action}}" label="{{ actions|lookup:action|lookup:'label'}}">
-                                <img class="icon" alt='{{action}}' title="{{actions|lookup:action|lookup:'label' }}" src="{{ actions|lookup:action|lookup:'icon' }}" />
+                            <span class='action' tp_row_id="{{item.id}}" tp_action="{{action}}" label="{{ actions|get_action_label:action}}">
+                                <img class="icon" alt='{{action}}' title="{{actions|get_action_label:action }}" src="{{ actions|get_action_icon:action }}" />
                             </span>
                         {% endif %}
                     {% endfor %}

@@ -1,4 +1,5 @@
 import logging
+from django.contrib.postgres.aggregates import ArrayAgg
 
 from django.core.exceptions import BadRequest
 from django.db import models
@@ -39,7 +40,7 @@ class CraftMarketView(FrameworkView):
     permission_required  = 'CraftMarket.suggest_marketer'
     template_name = "team_pages/craft_market.html"
     view_base = "CraftMarket:TeamPages"
-    columns = [('trading_name', 'Trading<br>Name'), ('state_name', 'Current<br>Status')]
+    columns = [('trading_name', 'Trading<br>Name'), ('get_state_display', 'Current<br>Status')]
     can_create = True
     model_class = Marketer
     form_class = MarketerForm
@@ -51,9 +52,9 @@ class CraftMarketView(FrameworkView):
                {'id': 'marketer_rejected', 'fragment': '!XRejected', 'label': 'Rejected'},
                ]
     actions = {'create': {'label': 'Create',
-                          'icon': static('/GarageSale/images/icons/create-note-alt-svgrepo-com.svg')},
+                          'icon': static('GarageSale/images/icons/create-note-alt-svgrepo-com.svg')},
                'templates': {'label': 'Templates','object':'false',
-                             'icon': static('/GarageSale/images/icons/folder-templates-svgrepo-com.svg')},
+                             'icon': static('GarageSale/images/icons/folder-templates-svgrepo-com.svg')},
                'edit': {'label': 'Edit Details',
                         'icon': static('GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg')},
                'view': {'label': 'View Details',
@@ -78,6 +79,17 @@ class CraftMarketView(FrameworkView):
         """There is no relevant object for the base class"""
         return None
 
+    def _new_add_action(self, qs: QuerySet, request: HttpRequest):
+        """Add in the relevant actions column based on the user permissions"""
+        current_user = request.user
+        actions_per_row = {state: ["view"] for state in MarketerState}
+        if request.user.has_perm("CraftMarket.change_marketer"):
+            actions_per_row[MarketerState.New] += ["edit", "invite"]
+            actions_per_row[MarketerState.Invited] += ["confirm", "reject"]
+        for row in qs:
+            row.allowed_actions = actions_per_row[row.state]
+            yield row
+
     @staticmethod
     def __add_actions(qs: QuerySet, request: HttpRequest) -> QuerySet:
         """Add in the relevant actions column based on the user permissions"""
@@ -96,8 +108,10 @@ class CraftMarketView(FrameworkView):
                         actions_per_row[state] += ['confirm','reject']
                     case '_' | 'Confirmed' | 'Rejected' :
                         pass
-
-        the_case = Case(*[When(state=key, then=action_list) for key, action_list in actions_per_row.items()],
+        print(f'actions_per_row = {[q for q in actions_per_row.values()]}')
+        when = [When(state=key, then=Value(action_list)) for key, action_list in actions_per_row.items()]
+        the_case = Case(*when,
+                        default=Value([]),
                         output_field=ArrayField(models.CharField()))
 
         new_qs = qs.annotate(allowed_actions=the_case)
@@ -149,20 +163,10 @@ class CraftMarketView(FrameworkView):
             logging.error(f'Unable to identify the event for {request.path}')
             raise BadRequest(f'Unable to identify the event for {request.path}')
 
-        qs = Marketer.objects.filter(event__id=event_id).annotate(
-            state_name=Case(
-                *[
-                    When(state=key, then=Value(force_str(val))) for key, val in MarketerState.choices
-                ],
-                default=Value("New!"),
-                output_field=models.CharField()
-            )
-        )
+        qs = Marketer.objects.filter(event__id=event_id)
 
-        qs = self.__add_actions(qs, request)
         qs = self.__add_filters(qs, request)
-
-        return qs
+        yield from self._new_add_action(qs, request)
 
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request, **kwargs)
