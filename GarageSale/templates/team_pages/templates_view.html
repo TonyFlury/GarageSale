@@ -22,13 +22,10 @@
         element.style.left = (window.innerWidth - element.offsetWidth)/ 2 + 'px'
         element.style.top = (window.innerHeight - element.offsetHeight)/ 2 + 'px'
 
-        let transition = document.getElementById('id_transition_0')
-        document.getElementById('id_transition_1').disabled = !(transition.value === 'Other');
-
-        transition.addEventListener('change', function() {
-            let transition = document.getElementById('id_transition_0')
-            let value = transition.value
-            document.getElementById('id_transition_1').disabled = !(value === 'Other');
+        let exit = document.getElementById('tp_close_form')
+        exit.addEventListener('click', function() {
+                element.hidden = true;
+                document.location.href = '{{ base_url }}'
         })
     }
 
@@ -69,7 +66,7 @@
         </div>
     </div>
         <div class="buttons">
-            <input type="button" id="tp_close_form"  class='button confirm'  value="Exit View" onclick="document.location.href='{{ base_url }}'">
+            <input type="button" id="tp_close_form"  class='button confirm'  value="Exit View" >
         </div>
     </div>
 </div>

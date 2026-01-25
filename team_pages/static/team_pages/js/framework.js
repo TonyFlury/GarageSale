@@ -253,24 +253,22 @@ function __set_row_actions()
     }
 }
 
-    function  __set_multi_select_actions()
-    {
-        /** Set the various actions for the multiple select buttons **/
-        if (!allow_multiple)
-            return;
+function  __set_multi_select_actions()
+{
+    /** Set the various actions for the multiple select buttons **/
+    if (!allow_multiple)
+        return;
 
-        const select_all = document.querySelector('table tr.heading th.SelectAll input[type="checkbox"]');
-        if (select_all) {
-            select_all.addEventListener('change', function() {
-                let checkboxes = document.querySelectorAll('table tbody#tp_item_list tr.data-row input[type="checkbox"][name=Select]');
-                for (const checkbox of checkboxes) {
-                    checkbox.checked = select_all.checked;
-                }
-            });
-        }
-
-
+    const select_all = document.querySelector('table tr.heading th.SelectAll input[type="checkbox"]');
+    if (select_all) {
+        select_all.addEventListener('change', function() {
+            let checkboxes = document.querySelectorAll('table tbody#tp_item_list tr.data-row input[type="checkbox"][name=Select]');
+            for (const checkbox of checkboxes) {
+                checkbox.checked = select_all.checked;
+            }
+        });
     }
+}
 
 
 function __document_loaded(){
@@ -322,7 +320,7 @@ function __document_loaded(){
 
     __set_row_actions();
 
-    __set_multi_select_actions();
+   /** __set_multi_select_actions(); **/
      /**
     const cancel_button = document.getElementById('tp_cancel_form');
     if (cancel_button)

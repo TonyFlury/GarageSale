@@ -98,7 +98,6 @@ class FrameworkView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'toolbar' : self.toolbar,
                 "filters": self.filters,
                 "actions": self.actions,
-                "toolbar": self.toolbar,
                 "url_fields":self.url_fields,
                 "url_base":self.url_base,
                 "allow_multiple":self.allow_multiple,
