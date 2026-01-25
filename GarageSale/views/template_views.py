@@ -46,7 +46,7 @@ class TemplateManagement(FrameworkView):
         super().__init__(**kwargs)
         cls = self.__class__
         self.actions = {'create': {'label': 'Create',
-                              'icon': static('/GarageSale/images/icons/create-note-alt-svgrepo-com.svg')},
+                              'icon': static('GarageSale/images/icons/create-note-alt-svgrepo-com.svg')},
                    'edit': {'label': 'Edit Details',
                             'icon': static('GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg')},
                    'view': {'label': 'View Details',
@@ -103,14 +103,17 @@ class TemplateManagement(FrameworkView):
         return qs
 
 
-    def _get_actions(self, qs: QuerySet, request: HttpRequest) -> models.QuerySet:
+    def _get_actions(self, qs: QuerySet, request: HttpRequest) :
         """Add in the relevant actions column based on the template dates"""
         older = CommunicationTemplate.objects.filter(category = self.category, transition=OuterRef('transition'), use_from__lt = OuterRef('use_from'))
 
-        the_case = Case(When(condition=Exists(older), then='view,edit,duplicate,delete'.split(',')),
-                         When(condition=~Exists(older), then='view,edit,duplicate'.split(',')),
-                        output_field=ArrayField(models.CharField()))
-        return qs.annotate(allowed_actions=the_case)
+        for row in qs:
+            older = CommunicationTemplate.objects.filter(category = self.category, transition=row.transition, use_from__lt = row.use_from)
+            if older.exists():
+                row.allowed_actions = 'view,edit,duplicate,delete'.split(',')
+            else:
+                row.allowed_actions = 'view,edit,duplicate'.split(',')
+            yield row
 
     def _add_filters(self, qs: QuerySet, request: HttpRequest) -> QuerySet:
         """Add filters to the base queryset based on the requested filters"""
@@ -131,11 +134,10 @@ class TemplateManagement(FrameworkView):
 
     def get_list_query_set(self, request: HttpRequest, **kwargs):
         qs =  CommunicationTemplate.objects.filter(category=self.category)
-        qs = self._get_actions(qs, request)
         qs = self._add_filters(qs, request)
         qs = self._get_template_warning(qs, request)
         qs = qs.order_by('transition', '-use_from')
-        return qs
+        yield from self._get_actions(qs, request)
 
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request, **kwargs)
@@ -249,7 +251,8 @@ class TemplatesView(TemplateManagement):
         context = super().get_context_data(request, **kwargs)
         instance = self.get_object(request, **kwargs)
         context |= {'action': 'create',
-                    'attachments': self.get_attachments_form(request, instance=instance, **kwargs)}
+                    'attachments': self.get_attachments_form(request, instance=instance, **kwargs),
+                    'base_url' : reverse('CraftMarket:templates')}
         return context
 
     def get_form(self, form_instance=None):
@@ -275,6 +278,7 @@ class TemplatesEdit(TemplatesView):
         context = super().get_context_data(request, **kwargs)
         instance = self.get_object(request, **kwargs)
         context |= {'action': 'edit',
+                    'base_url': reverse('CraftMarket:templates'),
                     'cancel_url' : self.get_cancel_url(request, **kwargs),
                     'attachments': self.get_attachments_form(request, instance, **kwargs)}
         return context

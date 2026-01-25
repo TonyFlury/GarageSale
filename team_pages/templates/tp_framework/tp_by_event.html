@@ -126,9 +126,7 @@ across all relevant data.
                         </td>
                 {% endfor %}
                 <td class="cell icons" tp_row_id="{{ item.id }}">
-                    {{ item.allowed_actions }}
                     {% for action in item.allowed_actions %}
-                        {{ action }}
                         {% if not action  %}
                             <br>
                         {% else %}
