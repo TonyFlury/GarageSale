@@ -210,8 +210,8 @@ DATABASES = db_credentials.db_credentials(BASE_DIR)
 SESSION_COOKIE_AGE = 365 * 24 * 60 * 60  # Allow upto 365 days between log ins.
 
 APPS_SETTINGS = {
-    'user_management': {'EMAIL_SENDER': 'BranthamGarageSale@gmail.com',
-                        'SITE_NAME': 'Brantham Garage Sale v2',
+    'user_management': {'EMAIL_SENDER': 'website@BranthamGarageSale.org.uk',
+                        'SITE_NAME': 'Brantham Garage Sale',
                         },
     'team_pages' : {'Craft Market':'CraftMarket:TeamPages',},
     "CraftMarket" : {'EmailTemplateCategory': 'CraftMarket',
