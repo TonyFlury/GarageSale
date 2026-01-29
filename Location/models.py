@@ -1,3 +1,7 @@
+from datetime import datetime
+from datetime import timezone
+import string
+
 from django.db import models
 
 import DjangoGoogleMap.models.fields
@@ -48,6 +52,30 @@ class Location(models.Model):
     town = models.CharField(max_length=100, default='Brantham', null=False, blank=True,)
     lng_lat = DjangoGoogleMap.models.fields.GoogleLocation(verbose_name='Sale/AdBoard location')
     creation_timestamp = models.DateTimeField(auto_now_add=True)
+    ad_board_timestamp = models.DateTimeField(null=True, blank=True, default=None)
+    sale_timestamp = models.DateTimeField(null=True, blank=True, default=None)
+
+    def save(self, *args, **kwargs):
+        """Record the timestamps for the ad-board and sale events being set.
+            Ensures the timestamps are set to None when the flags are cleared.
+        """
+        # Remove any trailing spaces and punctuation
+        self.house_number = self.house_number.strip()
+        self.house_number = self.house_number.replace(string.punctuation,'')
+
+        # Set the timestamp for the ad-board and sale events
+        if self.ad_board :
+            if self.ad_board_timestamp is None:
+                self.ad_board_timestamp = datetime.now(tz=timezone.utc)
+        else:
+            self.ad_board_timestamp = None
+
+        if self.sale_event:
+            if self.sale_timestamp is None:
+                self.sale_timestamp = datetime.now(tz=timezone.utc)
+        else:
+            self.sale_timestamp = None
+        super().save(*args, **kwargs)
 
     def full_address(self):
         return f'{self.house_number}, {self.street_name}, {self.town}.'
@@ -65,12 +93,11 @@ class Location(models.Model):
     def possible_duplicate(self):
         """Is this location already entered"""
         inst = Location.objects.filter(user=self.user, house_number=self.house_number, postcode=self.postcode).exclude(pk=self.pk)
-        if inst:
-            return True
+        return True if inst.exists() else False
 
     def simple_hash(self, length=4):
         """This is not a cryptographic hash - this function simply serves to
-        to generate an obsfucated 'value' for the row to prevent accidental access"""
+        to generate an obfuscated 'value' for the row to prevent accidental access"""
         modulo = 2**(2**length)-1
         rawdata:bytes = (self.user.email + self.house_number + self.postcode).encode('utf-8')
         return f'{(sum(c for c in rawdata) % modulo):04X}'

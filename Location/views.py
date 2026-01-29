@@ -1,12 +1,13 @@
 from django.http import Http404
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
+from django.views import View
 
 from user_management.decorators.guest import UserRecognisedMixin
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 from .models import Location as LocationModel
 from .forms import LocationForm
 from django.conf import settings
@@ -25,7 +26,6 @@ class LocationCreateView(UserRecognisedMixin, CreateView):
     form_class = LocationForm
     login_url = reverse_lazy("user_management:identify")
     transaction_type = "locations"
-    success_url = reverse_lazy('Location:view')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -41,8 +41,19 @@ class LocationCreateView(UserRecognisedMixin, CreateView):
         inst.save()
 
         #To DO - send confirmation email.
-        return redirect(self.success_url)
+        return redirect(reverse('Location:confirm', kwargs={'pk':inst.id,}))
 
+class LocationConfirmView(UserRecognisedMixin, TemplateView):
+    model = LocationModel
+    template_name = "location_confirm.html"
+    login_url = reverse_lazy("user_management:identify")
+    context_object_name = "location"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context |= {'GOOGLE_MAP_API' : settings.GOOGLE_MAP_SETTINGS.get('API_KEY')}
+        context |= {self.context_object_name: self.model.objects.get(id=self.kwargs.get('pk'))}
+        return context
 
 class LocationView(UserRecognisedMixin, ListView):
     model = LocationModel
