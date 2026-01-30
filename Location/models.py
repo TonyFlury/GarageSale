@@ -40,8 +40,6 @@ class MultipleChoiceField(models.CharField):
 # ToDO - How to spot duplicates ?
 
 class Location(models.Model):
-    objects = models.Manager()
-
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='UserLocations', on_delete=models.CASCADE)
     event = models.ForeignKey(EventData,related_name='EventLocations', on_delete=models.CASCADE)
     ad_board = models.BooleanField(help_text="Do you want an advertising board at this location ?")
