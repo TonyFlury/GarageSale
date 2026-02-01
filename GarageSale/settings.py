@@ -198,7 +198,7 @@ if DEBUG:
     EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
 else:
     EMAIL_BACKEND = 'GarageSale.middleware.email.EmailExtended'
-    EMAIL_DEFAULT = 'website@BranthamGarageSale.org.uk'
+    EMAIL_DEFAULT = 'BranthemGarageSale@gmail.com'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -215,9 +215,7 @@ APPS_SETTINGS = {
                         },
     'team_pages' : {'Craft Market':'CraftMarket:TeamPages',},
     "CraftMarket" : {'EmailTemplateCategory': 'CraftMarket',
-                     'EmailFrom': 'CraftMarket@BranthamGarageSale.org.uk'},
-    "Location": {'EmailTemplateCategory': 'Location',
-                    'EmailFrom': 'Website@BranthamGarageSale.org.uk'}
+                     'EmailFrom': 'CraftMarket@BranthamGarageSale.org.uk'}
 }
 
 GOOGLE_MAP_SETTINGS = GoogleMap_credentials.GOOGLE_MAP_SETTINGS
