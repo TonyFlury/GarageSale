@@ -198,7 +198,7 @@ if DEBUG:
     EMAIL_BACKEND = 'mail_panel.backend.MailToolbarBackend'
 else:
     EMAIL_BACKEND = 'GarageSale.middleware.email.EmailExtended'
-    EMAIL_DEFAULT = 'BranthemGarageSale@gmail.com'
+    EMAIL_DEFAULT = 'website@BranthamGarageSale.org.uk'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -210,12 +210,14 @@ DATABASES = db_credentials.db_credentials(BASE_DIR)
 SESSION_COOKIE_AGE = 365 * 24 * 60 * 60  # Allow upto 365 days between log ins.
 
 APPS_SETTINGS = {
-    'user_management': {'EMAIL_SENDER': 'BranthamGarageSale@gmail.com',
-                        'SITE_NAME': 'Brantham Garage Sale v2',
+    'user_management': {'EMAIL_SENDER': 'website@BranthamGarageSale.org.uk',
+                        'SITE_NAME': 'Brantham Garage Sale',
                         },
     'team_pages' : {'Craft Market':'CraftMarket:TeamPages',},
     "CraftMarket" : {'EmailTemplateCategory': 'CraftMarket',
-                     'EmailFrom': 'CraftMarket@BranthamGarageSale.org.uk'}
+                     'EmailFrom': 'CraftMarket@BranthamGarageSale.org.uk'},
+    "Location": {'EmailTemplateCategory': 'Location',
+                    'EmailFrom': 'Website@BranthamGarageSale.org.uk'}
 }
 
 GOOGLE_MAP_SETTINGS = GoogleMap_credentials.GOOGLE_MAP_SETTINGS

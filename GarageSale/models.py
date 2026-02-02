@@ -22,8 +22,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.db.models import Subquery
 from django.http import HttpRequest
-from django.template import Template, Context, loader
-from django.template.loader import get_template
+from django.utils import timezone
 from django.template import Template, Context, Engine
 from django_quill.fields import QuillField
 from django.contrib.auth.models import User
@@ -187,6 +186,13 @@ class CommunicationTemplate(models.Model):
     use_from = models.DateField(null=False, blank=False)
     fields = ['attachment_warnings',]
 
+    @classmethod
+    def get_template_for_category(cls, category:str, transition:str=None):
+        """Get the latest valid template for a given category and transition"""
+        try:
+            return CommunicationTemplate.objects.filter(category=category, transition=transition, use_from__lte=timezone.now() ).order_by('-use_from').first()
+        except CommunicationTemplate.DoesNotExist:
+            return None
 
     def get_use_from_display(self):
         return f'{day_name[self.use_from.weekday()]} {self.use_from.day} {month_name[self.use_from.month]} {self.use_from.year}'

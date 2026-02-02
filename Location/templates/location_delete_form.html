@@ -1,43 +1,101 @@
-{% extends "_base_with_toolbar.html" %}
+{% extends "_snap_slider_base.html" %}
 {% load static %}
 {% load user_management_tags %}
 {% load location_tags %}
 {% block additionalScripts%}
-<script type="text/javascript" src="{% static 'Location/js/tooltip.js' %}"></script>
+<script type="text/javascript" src="{% static 'GarageSale/js/tooltip.js' %}"></script>
 {% endblock %}
 
-{% block body %}
-<p>You requested to delete this location from your account :</p>
-<div class="form" style="width:auto;float:left;">
-    <form method="post">{% csrf_token %}
-        <div class="location">
-             <div style="margin-bottom:1rem;">
-                    <div class="location_type">
-                        <span class="location_type">Sale : {% location_type_icon location 'sale_event' %}</span>
-                        <span class="location_type">Ad Board : {% location_type_icon location 'ad_board' %}</span>
-                    </div>
-                    <div class="address">
-                        {{location.house_number}}, {{location.street_name}}<br/>
-                        {{location.town}}<br/>
-                        {{location.postcode}}
-                    </div>
-                 <div style="margin-top:1rem;">
-                     <strong>Are you sure ?</strong>
-                     </div>
-            </div>
+{% block PageStyles %}
+    <style>
+        div.address {
+            width:40%;
+        }
+        div.premarked-map {
+            float:left;
+            width:40%;
+        }
+
+        dialog#location_detail {
+            border: thin solid darkslategray;
+            box-shadow: black 2px 2px 5px;
+            width: fit-content;
+        }
+        div#dialog_close{
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            img {
+                height:20px;
+                width:20px;
+            }
+        }
+
+    </style>
+
+{% endblock %}
+
+{% block sidebar %}
+        <div class="sidebar entry direct tooltip" item="{% url 'home' %}" xmlns="http://www.w3.org/1999/html">
+            <a href="{% url 'home' %}">
+                <img class="sidebar icon" alt="Home Page" id='id_home_page' src={% static "GarageSale/images/icons/menu/home-svgrepo-com.svg" %} >
+                <label for="id_team">Home Page</label></a>
+                <span class="tooltiptext right arrow">Return to Home Page</span>
         </div>
-        <script>
-            /* Implement cancel button as a simple return to the GetInvolved page */
-            function cancel_LocationDelete()
-            {
-                window.location.replace( '{% url "Location:view" %}' );
-             }
+           <div class="sidebar entry direct tooltip" item="{% url 'Location:view' %}" xmlns="http://www.w3.org/1999/html">
+            <a href="{% url 'Location:view' %}">
+                <img class="sidebar icon" alt="Return to Previous Page" id='id_back' src={% static "GarageSale/images/icons/menu/back-svgrepo-com.svg" %} location_view.html >
+                <label for="id_team">Back to Previous Page</label></a>
+                <span class="tooltiptext right arrow">Return to Previous Page</span>
+        </div>
+{%  endblock %}
+
+{%  block SnappableSections %}
+
+            <script type="text/javascript">
+
+            function close_dialog(event) {
+                const dialog = document.getElementById('delete_location_dialog');
+                dialog.close();
+                window.location.href = "{% url 'Location:view' %}";
+            }
+
+            function open_dialog() {
+                const dialog = document.getElementById('delete_location_dialog');
+                dialog.left = (window.innerWidth - dialog.offsetWidth)/ 2 + 'px';
+                dialog.top = (window.innerHeight - dialog.offsetHeight)/ 2 + 'px';
+                dialog.addEventListener('close', close_dialog);
+                dialog.showModal();
+            }
+
+            document.addEventListener('DOMContentLoaded', open_dialog);
         </script>
-        <div class="buttons">
-            {{ form }}
-            <input type="button" name='action' onclick="cancel_LocationDelete()" value="Cancel" id="CancelButton">
-            <input type="submit" value="Confirm">
+<dialog id="delete_location_dialog">
+    <div id="dialog_close">
+    <img  alt='close' src="{% static 'GarageSale/images/icons/close-circle-1-svgrepo-com.svg' %}" onclick="close_dialog( event)">
+    </div>
+    <h2>Confirming deletion</h2>
+    <p>You requested to delete this location from your account :</p>
+    <div class="form" >
+        <form method="post">{% csrf_token %}
+            <div class="location">
+                 <div style="margin-bottom:1rem;">
+                        <div class="location_type">
+                            <span class="location_type">Sale : {% location_type_icon location 'sale_event' %}</span>
+                            <span class="location_type">Ad Board : {% location_type_icon location 'ad_board' %}</span>
+                        </div>
+                        <div class="address">
+                            {{location.house_number}}, {{location.street_name}}<br/>
+                            {{location.town}}<br/>
+                            {{location.postcode}}
+                        </div>
+            </div>
+            <div class="buttons">
+                 <H3>Are you sure ?</H3>
+                <input type="button" name='action' onclick="close_dialog()" value="Cancel" id="CancelButton">
+                <input type="submit" value="Confirm">
+            </div>
+        </form>
         </div>
-    </form>
-</div>
+</dialog>
 {% endblock %}
