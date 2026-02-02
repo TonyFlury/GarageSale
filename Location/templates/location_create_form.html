@@ -32,11 +32,39 @@
             margin-left: 2rem;
             text-align: left;
 
-            ul {
-                margin-top: 0;
+            .tooltip .tooltiptext.bottom {
+                left: -250%;
+                bottom: -160%;
+              }
+            div#HelpIcon {
+                float:right;
+                img {
+                    width: 24px;
+                    height: 24px;
+                }
+                 display: inline-block;
+                 cursor: pointer;
+             }
+            dialog#MapInstructions {
+                max-width: 60%;
+                box-shadow: black 2px 2px 5px;
 
-                li {
-                    margin-bottom: 0.25rem;
+                div#CloseIcon {
+                    position: absolute;
+                    right:5px;
+                    top:5px;
+                    img {
+                        width: 24px;
+                        height: 24px;
+                    }
+                }
+
+                ul {
+                    margin-top: 0;
+
+                    li {
+                        margin-bottom: 0.25rem;
+                    }
                 }
             }
         }
@@ -52,7 +80,7 @@
             div.header, div.footer {
                 background-color: darkslategray;
                 color: white;
-                font-size: 150%;
+                font-size: 130%;
                 border-radius: 10px;
                 margin-bottom: 1rem;
                 margin-top: 1rem;
@@ -83,7 +111,7 @@
             div.footer button,
             div.footer input[type=button],
             div.footer input[type=submit] {
-                font-size: 100%;
+                font-size: 80%;
                 background-color: gray;
                 border-radius: 10px;
                 color: white;
@@ -123,6 +151,10 @@
             width: auto;
             }
         }
+        div#RightSideBar {
+            min-width: 50%;
+            margin-left: 1rem;
+        }
     </style>
 {% endblock %}
 
@@ -144,7 +176,28 @@
 {%  block SnappableSections %}
 
     <script lang="javascript">
+
+        function help_popup() {
+            const popup = document.getElementById("MapInstructions")
+            popup.left = (window.innerWidth - popup.clientWidth) / 2;
+            popup.top = (window.innerHeight - popup.clientHeight) / 2;
+            popup.showModal();
+            const help_button = document.getElementById("HelpIcon");
+            help_button.style.display = "none";
+        }
+
+        function dialog_close() {
+            const popup = document.getElementById("MapInstructions")
+            if (popup.open) popup.close();
+            const help_button = document.getElementById("HelpIcon");
+            help_button.style.display = "inline-block";
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
+
+            const popup = document.getElementById("MapInstructions")
+            popup.addEventListener('close', dialog_close)
+
             let section1_fields = ["AdBoard", "HouseNumber", "StreetName", "Postocde", "Town" ];
 
             for (var i = 0; i < section1_fields.length; i++) {
@@ -163,6 +216,7 @@
             let section2 = document.getElementById("section2");
             section1.style.display = "none";
             section2.style.display = "block";
+
         });
 
     </script>
@@ -276,12 +330,20 @@
                                         <span class="helptext">{{ form.lng_lat.help_text | safe}}</span>
                                     {%  endif %}
                                 </div>
-                            <div>
-
+                            <div id="RightSideBar">
                                 <div class="map-notes">
+                                    <div id="HelpIcon" class="tooltip" onclick="help_popup()">
+                                        <img alt='Help' src="{% static 'GarageSale/images/icons/help-circle-svgrepo-com.svg' %}" />
+                                        <span class="tooltiptext bottom arrow">Help using<br>the map</span>
+                                    </div>
                                     <div id="MapError" class="errors">
                                         {{ form.lng_lat.errors }}
                                     </div>
+                                    <dialog id="MapInstructions">
+                                        <div id="CloseIcon"  onclick="dialog_close()">
+                                        <img alt='Help' src="{% static 'GarageSale/images/icons/close-circle-1-svgrepo-com.svg' %}" />
+                                    </div>
+                                        <h2>How to use the map</h2>
                                     <ul>
                                     <li>Use the mouse wheel (or the +/- buttons) to zoom in and out: doing a two finger pinch
                                     works on touch screens (such as phones/tablets).<br>
@@ -289,8 +351,10 @@
                                     <li>Click and hold to place a marker on the map - you can move the marker by click/hold somewhere else on the map.<br>
                                     <li>Sometimes not all the buildings appear on the map view and
                                     house numbers can be wrong or missing, so you can use the satellite view to identify your location.<br>
-                                    <li>Unfortunately We have no control over the accuracy of the map.
-                                    </ul>
+                                    </ul
+                                    ><i>Unfortunately We have no control over the accuracy of the map -
+                                        please report issues to Google.</i>
+                                    </dialog>
                                 </div>
                             </div>
                         </div>

@@ -601,12 +601,21 @@ div.blaze-slider button {
 }
 
 .tooltip .tooltiptext.top {
-    width: auto;
     bottom: 120%;
     left: -75%;
-    margin-left: 0;
+    min-width: 120px;
+    margin-left: 0.5rem;
+    width: max-content;
+    word-wrap: break-word;
 }
-
+.tooltip .tooltiptext.bottom {
+    bottom: -120%;
+    left: -75%;
+    min-width: 120px;
+    margin-left: 0.5rem;
+    width: max-content;
+    word-wrap: break-word;
+}
 .tooltip .tooltiptext.right {
     top: -5px;
     left: 105%;
@@ -648,6 +657,17 @@ div.blaze-slider button {
   border-width: 5px;
   border-style: solid;
   border-color: black transparent transparent transparent;
+}
+
+.tooltip .tooltiptext.bottom.arrow::after {
+  content: " ";
+  position: absolute;
+  bottom: 100%; /* At the bottom of the tooltip */
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  transparent transparent black transparent;
 }
 
 
