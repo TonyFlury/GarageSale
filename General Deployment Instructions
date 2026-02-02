@@ -5,18 +5,33 @@
         static images
         python files
 
+..bash:
+    cd /Development/GarageSaleClone
+    git clone https://github.com/TonyFlury/BranthamGarageSale.git
+    git checkout master
+    catalog check
 
 2) Open a bash console on Pythonanywhere
 
-        cd BranthamGarageSale
+..bash:
+        cd BranthamGarageSale or cd TestBranthamGarageSale
         git pull origin master
+        catalog check
 
-        if js, css or static images have been changed :
-            python manage.py collectstatic
+        python manage.py collectstatic
 
-        If changes involed models field
-            python manage.py migrate
+        python manage.py migrate
 
-3) On python anywhere Dashboard
-        If changes involed models fields or any python file (including settings)
+if you have a new databse :
+    python manage.py loaddata ContentTypes.json
+    python manage.py loaddata Permissions.json
+    python manage.py loaddata Groups.json
+    python manage.py loaddata transaction_categories.json
+    python manage.py loaddata TemplateData.json
+
+3) Credentials files :
+    Using the files app on the python anywhere website
+    Copy the appropriate files to the credentials folder
+
+4) On python anywhere Dashboard
         Restart Server.
