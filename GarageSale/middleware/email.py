@@ -8,7 +8,7 @@ class EmailExtended(BaseEmailBackend):
     def send_messages(self, email_messages):
         for message in email_messages:
             sender = message.from_email
-            connection_details = settings.EMAIL_CREDENTIALS.get(sender)
+            connection_details = settings.EMAIL_CREDENTIALS.get(sender.casefold())
             if not connection_details:
                 raise ImproperlyConfigured(f'No credentials for the email sender {sender}')
             else:

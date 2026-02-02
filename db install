@@ -1,6 +1,6 @@
-sudo apt-get install postgresql postgesql-contrib
-sudo -u postgres createdb garagesale
-sudo -u postgres psql garagesale
+sudo apt-get install postgresql-12 postgesql-contrib
+sudo -u postgres createdb garagesale                    # or appropriate db name
+sudo -u postgres psql garagesale                        # or relevant db name
 
 garagesale=# CREATE USER garagesaleweb PASSWORD '7RWrbJ18tZ';
 
@@ -13,7 +13,7 @@ garagesale=# SHOW hba_file;
 /etc/postgresql/14/main/pg_hba.conf ( or similar)
 
 \q
-$ sudo -u postgres nano /etc/postgresql/14/main/pg_hba.conf
+$ sudo -u postgres nano /etc/postgresql/12/main/pg_hba.conf
 
 Add line
 local garagesale garagesaleweb password
