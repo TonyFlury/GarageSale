@@ -5,6 +5,6 @@
 {% elif request.user.is_active %}
     <li><a href="{% url 'user_management:change_password' %}?redirect={{request.path}}">Change Password</a></li>
     <li><a href="{% url 'user_management:logoff' %}?redirect={{request.path}}">Logoff</a></li>
-{% else %}h
+{% else %}
     <li>Waiting for email confirmation</li>
 {%endif%}
