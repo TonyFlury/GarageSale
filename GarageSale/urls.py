@@ -48,6 +48,8 @@ urlpatterns = [
 
     path('mapping/', include('DjangoGoogleMap.urls')),
     path('summernote/', include('django_summernote.urls')),
+    path("GoogleDrive/", include("GoogleDrive.urls")),
+
 ]
 
 

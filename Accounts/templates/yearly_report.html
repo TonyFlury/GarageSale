@@ -1,5 +1,5 @@
 {% now 'N d, Y' as Today %}
-<h3 class="" style="text-align: center; ">{% if not year.is_complete %}Partial {% endif %}Summary for {% if year.is_complete %}{{year}}{% else %}{{ year.year }} ({{ year.year_start }} to {{ Today }}){% endif %}</h3>
+<h3 class="" style="text-align: center; ">{{ summary }}</h3>
 <div class="summary">
   <div id="Income">
 <h3>Income</h3>
@@ -13,7 +13,7 @@
     <div class="entry">
     <span class="category">{{category}}</span>
     <span class="amount">{{amount.0}}</span>
-    <span class="amount">({{amount.1|default_if_none:'0.00'}})</span>
+    <span class="amount">({{amount.1|default_if_none:''}})</span>
 
     </div>
   {% endfor %}
@@ -29,11 +29,11 @@
     <div class="entry">
     <span class="category">{{entry}}</span>
 <span class="amount">{{amount.0}}</span>
-<span class="amount">({{amount.1 |default_if_none:'0.00'}})</span>
+<span class="amount">({{amount.1 |default_if_none:''}})</span>
     </div>
   {% endfor %}
   <div>
-    Total : {{expenditure_total}}
+    Total : {{expenditure_total|default_if_none:''}}
   </div>
   </div>
 </div>
@@ -41,7 +41,7 @@
 <h3>Main Sponsors</h3>
   {% for entry in main_sponsors %}
     <div class="entry">
-    <span class="entity">{{entry.name}}</span><span class="credit">{{entry.credit}}</span>
+    <span class="entity">{{entry.name}}</span><span class="credit">{{entry.total}}</span>
     </div>
   {% endfor %}
 </div>
