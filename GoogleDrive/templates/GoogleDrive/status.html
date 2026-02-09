@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Google Drive Connection Status</h1>
+
+    {% if cred.is_connected %}
+      <p><strong>Connected:</strong> Yes</p>
+      <p><strong>Google email:</strong> {{ cred.google_email|default:"(unknown)" }}</p>
+      <p><strong>Google sub:</strong> {{ cred.google_sub|default:"(unknown)" }}</p>
+      <p><strong>Root folder ID:</strong> {{ cred.root_folder_id|default:"(not set)" }}</p>
+    {% else %}
+      <p><strong>Connected:</strong> No</p>
+      <p><a href="{% url 'drive_connect' %}">Connect company Google Drive</a></p>
+    {% endif %}
+  </body>
+</html>
