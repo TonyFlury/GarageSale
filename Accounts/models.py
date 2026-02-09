@@ -1,6 +1,8 @@
 import datetime
 from decimal import Decimal
 
+from gdstorage.storage import GoogleDriveStorage
+
 from django.apps import apps
 from django.conf import settings
 from django.db import models
@@ -12,6 +14,28 @@ from django.db.models.sql import Query
 from django.template.defaultfilters import default
 from django.utils.translation.reloader import translation_file_changed
 
+
+class ReportType(models.TextChoices):
+    YEARLY = 'Y', 'Yearly'
+    Periodic = 'P', 'Periodic'
+
+def save_uploaded_file(instance, filename):
+    return f'accounts/reports/{instance.account.natural_key()[0]}/{filename}'
+
+class PublishedReports(models.Model):
+    report_type = models.CharField(max_length=1, choices=ReportType)
+    period_start = models.DateField()
+    period_end = models.DateField()
+    report_file = models.ForeignKey('GoogleDrive.DriveFile', on_delete=models.CASCADE)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        indexes = [models.Index(fields=['report_type', 'period_start', 'period_end'])]
+
+    def natural_key(self):
+        return self.report_type, self.period_start, self.period_end
 
 # Create your models here.
 class AccountManager(models.Manager):

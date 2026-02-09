@@ -32,26 +32,38 @@
     function report_data_changed(event) {
             const type_element = document.getElementById("id_type")
             const year_element = document.getElementById("id_year")
-            const month_element = document.getElementById("id_month")
+            const report_type_element = document.querySelector("input[name='report_type']:checked")
+            const start_element = document.getElementById("id_start_date")
+            const end_element = document.getElementById("id_end_date")
+
             let params = new URLSearchParams(window.location.search);
             let year = (year_element != null) ? year_element.value : "";
-            let month = (month_element != null) ? month_element.value : "";
+            let report_type = (report_type_element != null) ? report_type_element.value : "";
 
             /* Have any changes been made ? */
-            if (params.get('type') === type_element.value && params.get('year') === year  && params.get('month') === month)
+            if (params.get('type') === type_element.value && params.get('year') === year  && params.get('report_type') === report_type
+            && params.get('start') === start_element.value && params.get("end") ===end_element.value)
                 return;
+
+            params = null ;
+            params = new URLSearchParams();
 
             /* Type is always set */
             params.set('type', type_element.value);
-            if (year === "")
-                params.delete('year');
-            else
-                params.set('year', year);
-            if (type_element.value !== 'monthly' || month === "")
-                params.delete('month');
-            else
-                if (month !== "")
-                    params.set('month', month);
+
+            if (type_element.value === 'yearly') {}
+                if (year !== "")
+                    params.set('year', year);
+
+            if (type_element.value === 'flexible') {
+                params.set('report_type', report_type);
+                if (report_type === "custom") {
+                    if (start_element.value !== "" && start_element.value !== null)
+                        params.set('start', start_element.value);
+                    if (end_element.value !== "" && end_element.value !== null)
+                        params.set('end', end_element.value);
+                }
+            }
         window.location.search = params.toString()
     }
 
@@ -72,9 +84,27 @@
         if (year_element != null)
             year_element.addEventListener("change", report_data_changed)
 
-        const month_element = document.getElementById("id_month")
-        if (month_element != null)
-            month_element.addEventListener("change", report_data_changed)
+        const report_types = document.querySelectorAll("input[name='report_type']")
+        for( const report_type of report_types)
+            report_type.addEventListener("change", report_data_changed)
+
+        const dates = document.querySelectorAll("input[type='date']")
+        for( const date of dates)
+            date.addEventListener("change", report_data_changed)
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('type') !== 'flexible')
+            return ;
+
+        if (params.get('report_type') !== 'custom')
+            document.getElementById("date_prompt").style.display = "none";
+        else {
+            document.getElementById("date_prompt").style.display = "block";
+            if (params.get('start') !== null && params.get('start') === "")
+                document.getElementById("id_start_date").value = params.get('start');
+            if (params.get('end') !== null && params.get('emd') === "")
+                document.getElementById("id_end_date").value = params.get('end');
+        }
 }
 document.addEventListener('DOMContentLoaded', _on_load);
 </script>
@@ -91,32 +121,43 @@ document.addEventListener('DOMContentLoaded', _on_load);
     <div>
     <label for="id_type">Report Type</label>
     <select id='id_type' name="type">
-        <option value="">Which Report Type</option>
-        {% for type in summary_types %}
-            <option value="{{ type.0 }}" {% if type.0 == type_selection %}selected{% endif %}>{{ type.1 }}</option>
+        <option value="">Select report Type</option>
+        {% for type_option in summary_types %}
+            <option value="{{ type_option.0 }}" {% if type_option.0 == type %}selected{% endif %}>{{ type_option.1 }}</option>
         {% endfor %}
     </select>
     </div>
     {% if years %}
         <div>
+        {{ year_selection }}
         <label for="id_year">Year</label>
         <select id='id_year' name="year">
-            <option value="">Which Year</option>
+            <option value="">Select Year to report on</option>
             {% for year in years %}
-                <option value="{{ year.year }}" {% if year == year_selection %}selected{% endif %}>{{ year.year }}</option>
+                <option value="{{ year.year }}" {% if year.year == year_selection %}selected{% endif %}>{{ year.year }}</option>
             {% endfor %}
         </select>
     </div>
     {% endif %}
-    {% if months %}
+    {% if type == 'flexible' %}
         <div>
-        <label for="id_month">Month</label>
-        <select id='id_month' name="month">
-            <option value="">Which month</option>
-            {% for month in months %}
-                <option value="{{ month.index }}" {% if month.index == month_selection %}selected{% endif %}>{{ month.name }}</option>
-            {% endfor %}
-        </select>
+        <label for="id_radio_buttons">Date Range: </label>
+            <div>
+                <label for="id_from_last_report">From last Report: </label>
+                <input type="radio" id="id_from_last_report" name="report_type" value="from_last`" {% if report_type == 'from_last' %} checked {% endif %}/>
+                <label for="id_flexible_dates">Flexible_dates: </label>
+                <input type="radio" id="id_flexible_dates" name="report_type" value="custom" {% if report_type == 'custom' %} checked {% endif %} />
+            <div id="date_prompt" style="display:none">
+                <label for="id_start_date">Start Date: </label>
+                <input type="date" id="id_start_date" name="start_date" value='{{ default_start_date|date:"Y-m-d"}}'
+                        {% if min_start_date %}min='{{ min_start_date|date:"Y-m-d"}}' {% endif %}
+                       {% if max_start_date %}max='{{ max_start_date|date:"Y-m-d"}}' {% endif %}/>
+                <label for="id_end_date">End Date: </label>
+                <input type="date" id="id_end_date" name="end_date" value='{{ default_end_date|date:"Y-m-d"}}'
+                        {% if min_end_date %}min='{{ min_end_date|date:"Y-m-d" }}' {% endif %}
+                       {% if max_end_date %}max='{{ max_end_date|date:"Y-m-d" }}' {% endif %}/>
+            </div>
+            </div>
         </div>
     {% endif %}
 {% endif %}
@@ -125,11 +166,8 @@ document.addEventListener('DOMContentLoaded', _on_load);
     {{ report | safe}}
     </div>
     <div>
-        {%  if month_selection %}
-            <a type="pdf" href='{% url "Account:report" account_id=account_selection %}?year={{year_selection}}&month={{month_selection}}&download' >Download Report as pdf</a>
-        {% else %}
-            <a type="pdf" href='{% url "Account:report" account_id=account_selection %}?year={{year_selection}}&download' >Download Report as pdf</a>
-        {% endif %}
+        <a href='{% url "Account:report" account_id=account_selection %}?type={{ type_selection }}&year={{year_selection}}&save' >Save report to Google Drive</a>
+        <a type="pdf" href='{% url "Account:report" account_id=account_selection %}?year={{year_selection}}&download' >Download Report as pdf</a>
     </div>
 {% endif %}
 
