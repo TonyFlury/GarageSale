@@ -12,10 +12,10 @@ function _revert_edit_on_child(row_element) {
             let parent_row = document.getElementById(parent_id);
             let type = (parent_row.querySelector(".debit").innerText !== "")? "debit":"credit";
 
-            let name_element = document.getElementById(id + "__name");
+            let category_element = document.getElementById(id + "__category");
             let amount_element = document.getElementById(id + "__" + type);
-            name_element.innerHTML = name_element.children[0].value;
-            amount_element.innerHTML = amount_element.children[0].value;
+            category_element.innerHTML = category_element.getAttribute("original_value");
+            amount_element.innerHTML = amount_element.getAttribute("original_value");
             row_element.classList.remove("editing");
     }
 
@@ -49,12 +49,12 @@ function _revert_edit_on_child(row_element) {
 
         const parent_id = row_element.getAttribute("parent_id");
         const parent_row = document.getElementById(parent_id);
-        const type = (parent_row.querySelector(".debit").innerText !== "") ? "debit" : "credit";
+        const type = (parent_row.querySelector(".debit").innerText !== "0.00") ? "debit" : "credit";
 
-        const name_element = document.getElementById(id + "__name_edit");
+        const category_element = document.getElementById(id + "__category_edit");
         const amount_element = document.getElementById(id + "__" + type + "_edit");
 
-        name_element.parentElement.innerHTML = name_element.value;
+        category_element.parentElement.innerHTML = category_element.value;
         amount_element.parentElement.innerHTML = amount_element.value;
 
         let amount_max = _decimal2int(parent_row.getAttribute("remaining_" + type)) + _decimal2int(amount_element.defaultValue);
@@ -64,11 +64,14 @@ function _revert_edit_on_child(row_element) {
         parent_row.setAttribute("remaining_" + type, _int2decimal(remaining));
 
         /* Update the summary row */
-        let summary_field = document.querySelector(`tr.child.summary[parent_id="${parent_row.id}"] td.col.${type}`)
-        summary_field.innerText = _int2decimal(remaining);
+        let summary_row = document.querySelector(`tr.child.summary[parent_id="${parent_row.id}"]`);
+        if (summary_row) {
+            let summary_field = summary_row.querySelector(`td.col.${type}`)
+            summary_field.innerText = _int2decimal(remaining);
+        }
 
         /* Delete the edit fields */
-        name_element.remove()
+        category_element.remove()
         amount_element.remove()
 
         row_element.classList.remove("editing");
@@ -83,7 +86,7 @@ function _revert_edit_on_child(row_element) {
 
             /* Record the id as returned by the server  and change the name and debit/credit cells*/
             row_element.id = response.id;
-            name_element.id = `${row_element.id}__name`;
+            category_element.id = `${row_element.id}__category`;
             amount_element.id = `${row_element.id}__${type}`;
 
             /* Set the event listeners on the edit and revert buttons so they can be edited later*/
@@ -103,17 +106,16 @@ function _revert_edit_on_child(row_element) {
         /* Save any edits made to the row - invoked when the save button is clicked*/
 
         /* Is this a debit or credit split? */
-        let type = (parent_row.querySelector(".debit").innerText !== "") ? "debit" : "credit";
+        let type = (parent_row.querySelector(".debit").innerText !== "0.00") ? "debit" : "credit";
 
-        let name_element, amount_element;
 
         /* Find the edit elements */
         let verb = row_element.classList.contains("new")? "add_split" : "edit_split";
         let id = row_element.id;
         let object_id = row_element.classList.contains("new")? row_element.getAttribute("parent_id"): row_element.id;
 
-        name_element = document.getElementById(id + "__name_edit");
-        amount_element = document.getElementById(id + "__" + type + "_edit");
+        let category_element = document.getElementById(id + "__category_edit");
+        let amount_element = document.getElementById(id + "__" + type + "_edit");
 
         /* Identify how much actually remains to be accounted for in this transaction  */
         let amount_max = _decimal2int(parent_row.getAttribute("remaining_" + type)) + _decimal2int(amount_element.defaultValue);
@@ -127,7 +129,7 @@ function _revert_edit_on_child(row_element) {
             return;
         }
 
-        _invoke_rest_api(verb, object_id, csrf_token, {name: name_element.value, [type]: amount_element.value}, _child_edit_complete);
+        _invoke_rest_api(verb, object_id, csrf_token, {category: category_element.value, [type]: amount_element.value}, _child_edit_complete);
     }
 
     function _non_child_edit_complete(id, response) {
@@ -163,21 +165,25 @@ function _revert_edit_on_child(row_element) {
 
     function _edit_child(id, parent_row) {
         /** Allow editing of a child row - can change name and amount **/
-        const name_element = document.getElementById(`${id}__name`);
 
-        let type = (parent_row.querySelector(".debit").innerText !== "")? "debit":"credit";
+        const category_element = document.getElementById(`${id}__category`);
+        const parent_id = parent_row.getAttribute("id");
+
+        let type = (parent_row.querySelector(".debit").innerText !== "0.00")? "debit":"credit";
         const amount_element = document.getElementById(`${id}__${type}`);
 
-        let category_element = _build_DOM_element("SELECT", { id : `${id}__name_edit`,
+        let category = _build_DOM_element("SELECT", { id : `${id}__category_edit`,
                                                 multiple: false,
-                                                required: true });
-        build_Category(category_element, id, name_element.innerText)
-        name_element.innerHTML = "";
-        name_element.appendChild(category_element);
+                                                required: true,
+                                                original_value: category_element.innerText});
+        build_child_Category(category, parent_id, category_element.innerText)
+
+        category_element.innerHTML = "";
+        category_element.appendChild(category);
 
         let amount = _build_DOM_element("input", { id : `${id}__${type}_edit`, type:"text",
                                                     required: true,
-                                                    defaultValue: amount_element.innerText,
+                                                    original_value: amount_element.innerText,
                                                     value:amount_element.innerText});
         amount_element.innerHTML = "";
         amount_element.appendChild(amount);
@@ -193,14 +199,17 @@ function _revert_edit_on_child(row_element) {
         new_row.id = `${parent_row.id}__new`;
         new_row.classList.add("editing");
 
-        new_row.innerHTML = `<td class="col"></td><td class="col date"></td><td class="col name"></td><td class="col debit"></td><td class="col credit"></td><td class="col balance"></td><td class="col category"></td><td class='row_button edit_button'></td><td class='row_button revert_button'></td><td class='link_button'></td>`
+        new_row.innerHTML = `<td class="col"></td><td class="col date"></td><td class="col name"></td><td class="col category"></td><td class="col debit"></td><td class="col credit"></td><td class="col balance"></td><td class='row_button edit_button'></td><td class='row_button revert_button'></td><td class='link_button'></td>`
 
-        let type = (parent_row.querySelector(".debit").innerText !== "")? "debit":"credit";
+        let type = (parent_row.querySelector(".debit").innerText !== "0.00")? "debit":"credit";
 
-        let name_element = _build_DOM_element("input", { id: `${parent_row.id}__new__name_edit`, type:"text",
-                                                        required:true });
-        let name_cell = new_row.querySelector('.col.name');
-        name_cell.innerHTML = name_element.outerHTML;
+        let name_element = new_row.querySelector('.col.category');
+        let category = _build_DOM_element("SELECT", { id : `${parent_row.id}__new__category_edit`,
+                                                    multiple: false,
+                                                    required: true });
+        build_child_Category(category, parent_row.id, '')
+        name_element.innerHTML = ''
+        name_element.appendChild(category);
 
         let amount_element = _build_DOM_element("input", { id: `${parent_row.id}__new__${type}_edit`, type:"text", required:true,
                                                             defaultValue: "0.00"});
@@ -213,6 +222,18 @@ function _revert_edit_on_child(row_element) {
 
         let revert_button = new_row.querySelector(".revert_button");
         revert_button.addEventListener("click", function(event) {revert_edit(event.target.parentElement)});
+    }
+
+    function build_child_Category(category_element, tx_id, default_category) {
+        _invoke_rest_api( 'get_child_categories',
+            tx_id,
+            csrf_token,
+            {},
+            function(tx_id, response) {
+            let categories = response.categories;
+            let options = categories.map(function(item) {return item===default_category ?`<option selected value="${item}">${item}</option>`: `<option value="${item}">${item}</option>`});
+            category_element.innerHTML = options.join("");
+            }, 'GET')
     }
 
     function build_Category(category_element, tx_id, default_category) {
@@ -292,15 +313,13 @@ function _revert_edit_on_child(row_element) {
         if (!edit_flag)
             _revert_all_edits();
 
+        let table = document.getElementById('transactions')
+        table.classList.toggle("edit_mode", edit_flag);
         let edit_buttons = document.getElementsByClassName("edit_button");
         for (let i=0; i<edit_buttons.length; i++) {
             let row = edit_buttons[i].parentElement;
-            edit_buttons[i].style.display = edit_flag ? "table-cell" : "none";
             let id = row.id.split("__")[0];
-            if (!row.classList.contains("child")) {
-                let link_button = row.querySelector(".link_button");
-                link_button.style.display = edit_flag ? "table-cell" : "none";
-            }
+
             if (row.classList.contains("editing")) {
                 revert_edit(parent);
             }
@@ -387,8 +406,11 @@ function _revert_edit_on_child(row_element) {
         parent_row.setAttribute("remaining_" + type, _int2decimal(mew_remaining));
 
         /* Update the summary row */
-        let summary_field = document.querySelector(`tr.child.summary[parent_id="${parent_row.id}"] td.col.${type}`)
-        summary_field.innerText = _int2decimal(mew_remaining);
+        let summary_row = document.querySelector(`tr.child.summary[parent_id="${parent_row.id}"]`)
+        if (summary_row) {
+            let summary_field = summary_row.querySelector(  `td.col.${type}`)
+            summary_field.innerText = _int2decimal(mew_remaining);
+        }
 
         table.deleteRow( row_element.rowIndex)
 
@@ -423,12 +445,13 @@ function _revert_edit_on_child(row_element) {
     {
         /** turn off edit buttons for all rows - used when a new child is being created **/
         let edit_buttons = document.querySelectorAll(".edit_button")
-        for (i=0;i<edit_buttons.length;i++)
+        for (let i=0;i<edit_buttons.length;i++)
             edit_buttons[i].style.display = "none";
     }
 
     function link_edit(row_element) {
         /** Allow creation of a new child row **/
+
         const table = document.getElementById("transactions");
 
         /* Discard any other editing of child rows */
@@ -454,7 +477,8 @@ function _revert_edit_on_child(row_element) {
             const revert_button = rows[i].querySelector(".revert_button");
             revert_button.addEventListener("click", function(event) {revert_edit(event.target.parentElement)});
             const link_button = rows[i].querySelector(".link_button");
-            link_button.addEventListener("click", function(event) {link_edit(event.target.parentElement)});
+            if (link_button)
+                link_button.addEventListener("click", function(event) {link_edit(event.target.parentElement)});
             const delete_button = rows[i].querySelector(".delete_button");
             delete_button.addEventListener("click", function(event) {delete_transaction(event.target.parentElement)});
 

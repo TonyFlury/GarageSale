@@ -57,13 +57,21 @@
             <input id="toggle_edit" type="button" value="Edit">
         </div>
 
-        <table id="transactions">
+        <div id="table_container">
+            <table id="transactions">
+            <thead>
                 <tr>
-                    <th class="button"></th><th class="col date">Date</th><th class="col name">Description</th><th class="col">Category</th><th class="col">Debit</th><th class="col">Credit</th><th class="col">Balance</th>
+                    <th class="button expand_button"></th><th class="col date">Date</th><th class="col name">Description</th><th class="col category">Category</th><th class="col debit">Debit</th><th class="col credit">Credit</th><th class="col balance">Balance</th>
+                    <th class="row_button edit_button"></th>
+                    <th class="row_button delete_button"></th>
+                    <th class="row_button revert_button"></th>
+                    <th class="row_button link_button"></th>
                 </tr>
+            </thead>
+            <tbody>
             {% for transaction in page_obj %}
                     <tr id='{{ transaction.id }}' class="row {% cycle 'odd' 'even' %} {% if transaction.has_children %}parent{% else %}{% endif %}" t_id={{ transaction.id }} remaining_credit="{{ transaction.remaining_credit }}" remaining_debit="{{ transaction.remaining_debit }}">
-                        <td class="col {% if transaction.has_children %}button{% endif %}"></td>
+                        <td class="col expand_button {% if transaction.has_children %}button{% endif %}"></td>
                         <td class="col date">{{ transaction.transaction_date }}</td>
                         <td id='{{ transaction.id }}__name' class="col name">{{ transaction.name }}</td>
                         <td id='{{ transaction.id }}__category' class="col category">{{ transaction.category}}</td>
@@ -73,15 +81,15 @@
                         <td id='{{ transaction.id }}__edit' class="row_button edit_button"></td>
                         <td id='{{ transaction.id }}__delete' class="row_button delete_button"></td>
                         <td id='{{ transaction.id }}__revert' class="row_button revert_button"></td>
-                        <td id='{{ transaction.id }}__link' class="row_button link_button"></td>
+                        <td id='{{ transaction.id }}__link' class="row_button  link_button {% if transaction.no_split %}no_split{% endif %}"></td>
                 </tr>
                 {%  if transaction.children.all %}
                 {% for split in transaction.children.all %}
                     <tr class="child row" id='{{ split.id }}' parent_id={{ transaction.id }}>
-                    <td class="col"></td>
+                    <td class="col expand_button"></td>
                     <td class="col date"></td>
-                        <td class="col"></td>
-                    <td id='{{ split.id }}__name' class="col name">{{ split.name }}</td>
+                    <td class="col name"></td>
+                    <td id='{{ split.id }}__category' class="col category">{{ split.category }}</td>
                     <td id='{{ split.id }}__debit' class="col debit">{{ split.debit|default_if_none:""}}</td>
                     <td id='{{ split.id }}__credit' class="col credit">{{ split.credit|default_if_none:"" }}</td>
                     <td class="col balance"></td>
@@ -92,17 +100,23 @@
                     </tr>
                 {% endfor %}
                     <tr class="child row summary" parent_id={{ transaction.id }}>
-                    <td class="col"></td>
+                    <td class="col expand_button"></td>
                     <td class="col date"></td>
-                        <td class="col"></td>
-                    <td class="col name">Remaining</td>
+                        <td class="col name"></td>
+                    <td class="col category">Remaining</td>
                     <td class="col debit">{{ transaction.remaining_debit|default_if_none:'' }}</td>
                     <td class="col credit">{{ transaction.remaining_credit|default_if_none:'' }}</td>
+                    <td class="col balance"></td>
+                    <td class="row_button edit_button"></td>
+                    <td class="row_button delete_button"></td>
+                    <td class="row_button revert_button"></td>
+                    <td class="row_button link_button"></td>
                     </tr>
                 {% endif %}
             {% endfor %}
+            </tbody>
         </table>
-
+        </div>
         <div class="pagination" >
             <div class="step-links" >
                 <div>

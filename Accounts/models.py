@@ -65,13 +65,16 @@ class CategoryManager(models.Manager):
         return self.get(category_name=category_name)
 
 class Categories(models.Model):
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
+    parent = models.ForeignKey('self', related_name='children', on_delete=models.CASCADE, null=True, blank=True)
     category_name = models.CharField(max_length=100, unique=True)
     credit_debit = models.CharField(choices=[('C','Credit'),('D','Debit')], max_length=1, default='C')
 
     class Meta:
         ordering = ['category_name']
         indexes = [models.Index(fields=['category_name']), models.Index(fields=['credit_debit'])]
+
+    def natural_key(self):
+        return self.category_name
 
     def __str__(self):
         return self.category_name

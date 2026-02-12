@@ -45,7 +45,36 @@
     </div>
   {% endfor %}
 </div>
+{%  if income_details or expenditure_details %}
 <header>Detail</header>
-<div>
-{%  lorem %}
-</div>
+    <div id="id_details_outer">
+    {% if income_details %}
+        <div>
+            <h2 style="text-align: center">Income Details</h2>
+            {% regroup income_details by parent__category as income_by_category %}
+            {% for categoryGroup, items in income_by_category %}
+                <h3>{{ categoryGroup }}</h3>
+                <ul>
+                {% for item in items %}
+                    <li>{{ item.category }} - {{ item.credit }}</li>
+                {% endfor %}
+                </ul>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% if expenditure_details %}
+        <div>
+            <h2 style="text-align: center">Expenditure Details</h2>
+            {% regroup expenditure_details by parent__category as expenditure_by_category %}
+            {% for parent_category, items in expenditure_by_category %}
+                <h3>{{ parent_category }}</h3>
+                <ul>
+                {% for item in items %}
+                    <li>{{ item.category }} - {{ item.debit }}</li>
+                {% endfor %}
+                </ul>
+            {% endfor %}
+        </div>
+    {% endif %}
+    </div>
+{% endif %}

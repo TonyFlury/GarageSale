@@ -72,6 +72,11 @@ class Report:
             'summary': self.get_summary(),
         }
 
+        # Gather details if any exists :
+        child_tx = self._context['this_period'].filter(parent__isnull=False)
+        self._context |= {'income_details': child_tx.filter(credit__isnull=False).values('parent__category', 'category','debit', 'credit')}
+        self._context |= {'expenditure_details': child_tx.filter(debit__isnull=False).values('parent__category', 'category','debit', 'credit')}
+
     def get_rendered_report(self) -> str:
         template = get_template(self.template_name)
         return template.render(self._context)
@@ -85,8 +90,8 @@ class FinancialSummary(Report):
         account = self._context['account_selection']
 
         if self._prev_start_date and self._prev_end_date:
-            last_tx_in_previous_year = Transaction.objects.filter(account=account, transaction_date__lte=self._prev_end_date).order_by('-tx_number').first() if previous_year else None
-            tx_before_previous_year = Transaction.objects.filter(account=account, transaction_date__lt=self._prev_start_date).order_by('-tx_number').first() if previous_year else None
+            last_tx_in_previous_year = Transaction.objects.filter(account=account, transaction_date__lte=self._prev_end_date).order_by('-tx_number').first()
+            tx_before_previous_year = Transaction.objects.filter(account=account, transaction_date__lt=self._prev_start_date).order_by('-tx_number').first()
         else:
             last_tx_in_previous_year, tx_before_previous_year = None, None
 
@@ -216,6 +221,7 @@ class YearlyReport(FinancialSummary):
         report_year = self._context['year_selection']
         this_year = FinancialYear.objects.get(year = report_year)
         self._start_date, self._end_date = this_year.year_start, this_year.year_end
+        self._context |= {'start_date': self._start_date, 'end_date': self._end_date}
         prev = FinancialYear.objects.filter(year__lt=report_year).order_by('-year_start').first()
         if prev:
             self._prev_start_date, self._prev_end_date = prev.year_start, prev.year_end

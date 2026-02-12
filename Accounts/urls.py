@@ -19,6 +19,7 @@ urlpatterns = [
 
     #ToDo - a single REST API with actions - maybe ?
     path('get_category_list/<int:transaction_id>/', Rest_API.get_categories, name='get_categories'),
+    path('get_child_categories/<int:transaction_id>/', Rest_API.get_child_categories, name='get_child_categories'),
     path('edit_transaction/<int:transaction_id>/', Rest_API.edit_transaction, name='edit_transaction'),
     path('edit_split/<int:transaction_id>/', Rest_API.edit_split, name='edit_split'),
     path('add_split/<int:transaction_id>/', Rest_API.add_split, name='edit_split'),
