@@ -26,7 +26,7 @@ from django.contrib.auth import authenticate
 
 
 from GarageSale.tests.common import SeleniumCommonMixin, IdentifyMixin
-from user_management.models import RegistrationVerifier, PasswordResetApplication, AdditionalData
+from user_management.models import RegistrationVerifier, PasswordResetApplication, AdditionalData, GuestVerifier
 from django.utils import timezone
 from datetime import timedelta
 from ..apps import appsettings
@@ -71,6 +71,8 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
         register.click()
 
         WebDriverWait(self.selenium, 100).until(lambda driver: driver.find_element(By.TAG_NAME, 'body'))
+
+        time.sleep(2)
 
         try:
             verifier_qs = RegistrationVerifier.objects.filter(email=email, expiry_timestamp__gte=timezone.now())
@@ -212,52 +214,33 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
             5) Registration Verifier is deleted & User is marked as verified with extra data provided.
         """
         email = 'test_user@test.com'
-        password = 'okoboje'
-        name = 'Test', 'User'
-        phone = '01111 111111'
-        next_url = '/news/'
-
-        # Create Guest Model
-        model:Type[UserExtended|AbstractBaseUser] = get_user_model()
-        user = model.objects.create_guest_user(email, is_verified=True)
+        next_url = reverse('Location:view')
 
         # Fetch and complete registration forms
-        self.fill_form(f'{self.live_server_url}{reverse("user_management:register")}?next={next_url}',
+        self.fill_form(f'{self.live_server_url}{reverse("user_management:guest_application")}?next={next_url}',
                        id_email = email,
-                       id_password = password,
-                       id_password_repeat = password,
-                       id_first_name = name[0],
-                       id_last_name = name[1],
-                       id_phone=phone
                        )
         try:
-            self.selenium.find_element(By.XPATH, '//input[@type="submit" and @value="Register"]').click()
+            self.selenium.find_element(By.XPATH, '//input[@type="submit" and @value="Guest Login"]').click()
         except NoSuchElementException:
             self.fail('No registration button')
 
-        WebDriverWait(self.selenium, 100).until(lambda driver: driver.find_element(By.TAG_NAME, 'body'))
+        time.sleep(2)
 
         # Prove RegistrationVerifier is created
         try:
-            verifier_qs = RegistrationVerifier.objects.filter(email=email)
+            verifier_qs = GuestVerifier.objects.filter(email=email)
         except RegistrationVerifier.DoesNotExist:
             self.fail('Cannot find registration verifier object.')
+        print(verifier_qs)
 
-        self.assertEqual(len(verifier_qs), 1, 'Too many registration verifiers.')
+        self.assertEqual(len(verifier_qs), 1, 'Unexpected number of verifiers.')
         verifier_inst = verifier_qs[0]
-
-        user.refresh_from_db()
-
-        # Prove User is updated correctly so far - unverified guest
-        self.assertEqual(user.is_guest, True)
-        self.assertEqual(user.is_verified, False)
 
         # Prove user name and phone are stored in an Additional Data record
         self.assertEqual(verifier_inst.email, email)
-        self.assertEqual(verifier_inst.AdditionalData.first_name, name[0])
-        self.assertEqual(verifier_inst.AdditionalData.last_name, name[1])
 
-        verify_url = verifier_inst.link_url(request=None, site_base=self.live_server_url, next_url=next_url)
+        short_code = verifier_inst.short_code
 
         # Test the only email message that should exist
         if len(mail.outbox) > 1:
@@ -268,48 +251,46 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
         # Confirm simple attributes - email destination and subject.
         msg: EmailMultiAlternatives|EmailMessage = mail.outbox[0]
         self.assertEqual(msg.to, [email])
-        self.assertEqual(msg.subject, f'{site_name}: Verify registration of your account')
+        self.assertEqual(msg.subject, f'{site_name}: Guest Account One time code')
 
         # Prove URL is contained in email
         for alt in msg.alternatives:
             match alt:
                 case [content, 'text/plain']:
                     element = content
-                    if verify_url not in element:
-                        self.fail('Unable to find URL in text/plain')
+                    if short_code not in element:
+                        self.fail('Unable to find short_code in text/plain')
 
                 case [content, 'text/html']:
                     soup = BeautifulSoup(content, 'html.parser')
-                    url_form = soup.select_one('div.forms > forms')
-                    if not url_form:
-                        self.fail('Cannot find expected structure in text/html')
+                    short_code_span = soup.select_one('div > span#short-code')
+                    self.assertEqual(short_code_span.text.strip(), f'The short-code for your guest account is : {short_code}')
 
-                    method, action = url_form.get('method'), url_form.get('action')
-                    if not (method == 'GET') or not (action == verify_url):
-                        self.fail(f'\n{verify_url}\n not in text/html : {url_form}')
+        WebDriverWait(self.selenium, 100).until(lambda driver: driver.find_element(By.CSS_SELECTOR, 'input#id_short_code'))
 
+        self.fill_form(url=None,
+                       **{'id_short_code': short_code})
 
-        # Jump to the verifier link
-        self.selenium.get(f'{verify_url}')
+        self.selenium.find_element(By.CSS_SELECTOR, 'input#id_Continue').click()
+        time.sleep(2)
 
-        # Check the verifier process does delete the data records
-        verifier_qs = RegistrationVerifier.objects.filter(email=email, expiry_timestamp__gte=timezone.now())
-        self.assertEqual(len(verifier_qs),0, 'Registration verification not deleted')
+        users = UserExtended.objects.all()
+        try:
+            user = UserExtended.objects.get(email=email)
+        except UserExtended.DoesNotExist:
+            self.fail('Cannot find user object.')
+
+        # Prove User is created correctly
+        self.assertEqual(user.is_guest, True)
+        self.assertEqual(user.is_verified, True)
+
+        verifier_qs = GuestVerifier.objects.filter(email=email)
+        self.assertEqual(len(verifier_qs),0, 'Guest Verifier not deleted')
 
         additional_qs = AdditionalData.objects.filter(verifier_id = verifier_inst.id)
         self.assertEqual(len(additional_qs),0, 'Additional Data not deleted')
 
-        user.refresh_from_db()
-
-        # Prove that the user is updated
-        self.assertEqual(user.is_guest,False)
-        self.assertEqual(user.is_verified,True)
-        self.assertEqual(user.email, email)
-        self.assertEqual(user.first_name, name[0])
-        self.assertEqual(user.last_name, name[1])
-        self.assertEqual(user.phone, phone)
-
-        self.assertTrue( user.check_password(password), "User password not correctly set")
+        self.assertEqual(self.selenium.current_url, f'{self.live_server_url}{next_url}')
 
 class TestLogin(SeleniumCommonMixin, StaticLiveServerTestCase):
     screenshot_sub_directory = 'TestLogin'
@@ -339,6 +320,8 @@ class TestLogin(SeleniumCommonMixin, StaticLiveServerTestCase):
                         id_email = email,
                         id_password = password)
         self.selenium.find_element(By.XPATH, '//input[@type="submit" and @value="Login"]').click()
+
+        time.sleep(2)
 
         WebDriverWait(self.selenium, 10).until(lambda driver: driver.find_element(By.TAG_NAME, 'body'))
 
@@ -587,6 +570,8 @@ class TestPasswordResetRequest(SeleniumCommonMixin, StaticLiveServerTestCase):
 
             WebDriverWait(self.selenium, 10).until(lambda driver: driver.find_element(By.TAG_NAME, 'body'))
 
+            time.sleep(2)
+
             # Check the password reset worked
             user.refresh_from_db()
             self.assertTrue(user.check_password(new_password))
@@ -755,6 +740,8 @@ class TestChangePassword(IdentifyMixin,SeleniumCommonMixin, StaticLiveServerTest
                        id_new_password2=new_password)
 
         self.selenium.find_element(By.XPATH, '//input[@type="submit" and @value="Change Password"]').click()
+
+        time.sleep(2)
 
         WebDriverWait(self.selenium, 10).until(lambda driver: driver.find_element(By.TAG_NAME, 'body'))
 

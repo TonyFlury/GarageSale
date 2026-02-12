@@ -153,7 +153,7 @@ class GuestVerifier(UserVerification):
 
     short_code = models.CharField(null=True, blank=True, default=None, max_length=7)
     retry_count = models.IntegerField(null=False, blank=False)
-    reason_code = models.CharField(choices=RejectionReason.choices, null=True, max_length=11)
+    reason_code = models.CharField(choices=RejectionReason, null=True, max_length=11)
 
     def save(self, *args, **kwargs):
         alphabet = '3456789ABCDEGHJKLMNPQRSTUVWXY'  # Exclude 0,1,2 and OIZ
