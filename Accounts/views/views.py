@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, 
 from django.contrib.staticfiles import finders
 from django.core.exceptions import BadRequest
 from django.db import transaction as db_transaction
-from django.db.models import F, Count
+from django.db.models import F, Count, Exists
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -21,7 +21,8 @@ from Accounts.views.restapi import _build_tx_record
 from GarageSale.models import CommunicationTemplate
 # Create your views here.
 
-from Accounts.models import Transaction, Account, Categories, FinancialYear, UploadError, UploadHistory
+from Accounts.models import Transaction, Account, Categories, FinancialYear, UploadError, UploadHistory, \
+    PublishedReports
 from Accounts.forms import Upload
 
 from csv import DictReader
@@ -187,6 +188,16 @@ class TransactionList(LoginRequiredMixin, UserPassesTestMixin, ListView):
         years = FinancialYear.objects.all().order_by('-year_start')
         return [i.year for i in years]
 
+    def _add_splittable_flag(self, qs):
+        splittable = set(Categories.objects.filter(children__isnull = False).values_list('category_name', flat=True))
+        print(splittable)
+        data = []
+        for record in qs:
+            if record.category not in splittable:
+                record.no_split = True
+            data.append(record)
+        return data
+
     def get_queryset(self):
         account_id = self.kwargs.get('account_id')
         if not account_id:
@@ -205,7 +216,8 @@ class TransactionList(LoginRequiredMixin, UserPassesTestMixin, ListView):
         if year:
             start, end = year_inst.year_start, year_inst.year_end
             qs = qs.filter(transaction_date__range=(start,end))
-        return qs
+
+        return self._add_splittable_flag(qs)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -213,13 +225,6 @@ class TransactionList(LoginRequiredMixin, UserPassesTestMixin, ListView):
         if not account_id:
             return context | {'account_selection': None, 'accounts': Account.objects.all() }
         return context | {'account_selection':account_id,  'accounts': Account.objects.all(), 'years':self.get_yearset(), 'year_selected':self.request.GET.get('year','')}
-
-# ToDO - to support flexible reporting by any time period (yearly, since last report, free-form),
-#  We need :
-#  1) A better name than periodic - since they wont be regularly published - Done - Flexible.
-#  2) A new Base class for all reports
-#  3) A new sub-class for each report type (Yearly, Flexible)
-#  4) Changes to the template to prompt for a start dates based on the last published report or entirely flexible.
 
 class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = reverse_lazy('user_management:login')
@@ -309,16 +314,20 @@ class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
                     if permissions:
                         drive.set_permissions(uploaded.drive_file_id, **permissions)
 
-                    #TODO Need to create an ReportHistory record
+                    report = PublishedReports.objects.create(report_type=report_context['type'],
+                                                             period_start=report_inst.context['start_date'],
+                                                             period_end=report_inst.context['end_date'],
+                                                             report_file=uploaded,
+                                                             uploaded_by=request.user, )
 
                     return HttpResponse(status=HTTPStatus.NO_CONTENT)
-
-                # TODO - do something different here for a save - we need to use the GoogleDrive app to save the file
-                #  And then return a 'do nothing response' - HTTPStatus.NO_CONTENT
 
                 return HttpResponse(pdf, content_type='application/pdf',
                                     headers={"Content-Disposition": f'attachment; filename={report_inst.get_file_name()}'})
 
             report_context |= {'report': report}
 
-        return TemplateResponse(request, 'reports.html', report_inst.context | {'report': report})
+        similar = PublishedReports.objects.filter(report_type=report_context['type'], period_start=report_inst.context['start_date'], period_end=report_inst.context['end_date'])
+
+        return TemplateResponse(request, 'reports.html', report_inst.context | {'report': report,
+                                                                                'save':not Exists(similar)})

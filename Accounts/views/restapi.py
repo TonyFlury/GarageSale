@@ -38,6 +38,19 @@ def _build_tx_record(account, history_inst: UploadHistory, tx_number: int, row) 
     instance = Transaction.objects.get_or_create(account=account, **data_dict)
     return category, credit, debit, instance
 
+@require_http_methods(['GET'])
+def get_child_categories(request, transaction_id):
+    try:
+        transaction = Transaction.objects.get(id=transaction_id)
+    except Transaction.DoesNotExist:
+        logging.error(f'Transaction {transaction_id} not found')
+        raise BadRequest(f'Transaction {transaction_id} not found')
+
+    parent_category = transaction.category
+    cat_list = list(i for i in Categories.objects.filter(parent__category_name=parent_category).
+                                           values_list('category_name', flat=True))
+    print(cat_list)
+    return JsonResponse({'categories':cat_list, 'success':HTTPStatus.OK})
 
 @require_http_methods(['GET'])
 def get_categories(request, transaction_id):
@@ -93,7 +106,7 @@ def edit_split(request, transaction_id):
 
     amount_type = 'debit' if 'debit' in data else 'credit'
 
-    transaction.name = data['name']
+    transaction.category = data['category']
     setattr(transaction, amount_type, Decimal(data[amount_type]))
     transaction.save()
     return JsonResponse({'message':"edit_transaction : transaction updated successfully",'success':HTTPStatus.OK})
@@ -113,10 +126,8 @@ def add_split(request, transaction_id):
     amount_type = 'debit' if 'debit' in data else 'credit'
 
     new_id = Transaction.objects.create(account=transaction.account, parent=transaction, transaction_date=transaction.transaction_date,
-                                            financial_year=transaction.financial_year,
-                                            category=transaction.category,
-                                            description=data['name'],
-                                            name=data['name'], **{amount_type:Decimal(data[amount_type])})
+                                            category=data['category'],
+                                             **{amount_type:Decimal(data[amount_type])})
     logging.info(f"add_transaction : {new_id}")
 
     return JsonResponse({'message':"add_transaction : transaction updated successfully",'id':new_id.id, 'success':HTTPStatus.OK})

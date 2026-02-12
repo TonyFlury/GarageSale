@@ -20,6 +20,9 @@
             div.entry:last-child { margin-bottom: 0.5rem; border-bottom: thin solid black;}
         }
 
+        div#id_details_outer { display: flex;
+            > div { flex-grow: 1; }}
+
         div#sponsors {
             width: 50%;
             .entry{ display: flex;
