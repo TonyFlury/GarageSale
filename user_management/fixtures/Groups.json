@@ -148,6 +148,11 @@
           "history"
         ],
         [
+          "change_marketer",
+          "CraftMarket",
+          "marketer"
+        ],
+        [
           "delete_marketer",
           "CraftMarket",
           "marketer"
@@ -773,7 +778,73 @@
     "model": "auth.group",
     "fields": {
       "name": "ExecMember",
-      "permissions": []
+      "permissions": [
+        [
+          "view_categories",
+          "Accounts",
+          "categories"
+        ],
+        [
+          "view_financialyear",
+          "Accounts",
+          "financialyear"
+        ],
+        [
+          "view_publishedreports",
+          "Accounts",
+          "publishedreports"
+        ],
+        [
+          "suggest_marketer",
+          "CraftMarket",
+          "marketer"
+        ],
+        [
+          "view_marketer",
+          "CraftMarket",
+          "marketer"
+        ],
+        [
+          "view_eventdata",
+          "GarageSale",
+          "eventdata"
+        ],
+        [
+          "is_team_member",
+          "GarageSale",
+          "general"
+        ],
+        [
+          "is_trustee",
+          "GarageSale",
+          "general"
+        ],
+        [
+          "view_motd",
+          "GarageSale",
+          "motd"
+        ],
+        [
+          "view_supporting",
+          "GarageSale",
+          "supporting"
+        ],
+        [
+          "view_location",
+          "Location",
+          "location"
+        ],
+        [
+          "suggest_sponsor",
+          "Sponsors",
+          "sponsor"
+        ],
+        [
+          "view_sponsor",
+          "Sponsors",
+          "sponsor"
+        ]
+      ]
     }
   }
 ]

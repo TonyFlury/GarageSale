@@ -1,5 +1,6 @@
 import random
 import string
+import time
 from datetime import timedelta
 from typing import Type
 from unittest.mock import MagicMock
@@ -256,12 +257,17 @@ class TestEmailsOnTransitions(TestCase):
 
 class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommonMixin):
     screenshot_sub_directory = 'TestCraftMarketTeamPages'
+    fixtures = ['ContentTypes.json','Permissions.json', 'Groups.json']
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
 
     def _create_users(self):
+        from django.contrib.auth.models import Group
+        manager_group = Group.objects.get(name='CraftMarketManager')
+        exec_member_group = Group.objects.get(name='ExecMember')
+
         template_content_type = ContentType.objects.get_for_model(GarageSale.models.CommunicationTemplate)
         marketer_content_type = ContentType.objects.get_for_model(Marketer)
 
@@ -281,8 +287,12 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
                                                                first_name='Test', last_name='User',
                                                                phone='01111 111111')
 
-        self.view_user.user_permissions.add(self.suggest_marketer_permission)
-        self.manage_user.user_permissions.set([self.suggest_marketer_permission, self.edit_marketer_permission,self.template_permission])
+        manager_group.user_set.add(self.manage_user)
+        exec_member_group.user_set.add(self.manage_user)
+        exec_member_group.user_set.add(self.view_user)
+
+      #  self.view_user.user_permissions.add(self.suggest_marketer_permission)
+      #  self.manage_user.user_permissions.set([self.suggest_marketer_permission, self.edit_marketer_permission,self.template_permission])
 
 
     # TODO - add tests to confirm toolbar buttons, test filters
@@ -434,7 +444,7 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             html = self.selenium.page_source
 
             actions = self.fetch_elements_by_selector(html,
-                                                      'div#id_item_list table#id_entry_list.data_list '
+                                                      'table#id_entry_list.data_list '
                                                       'tr.data-row td.icons span')
 
             labels = set((cell['tp_row_id'], cell['tp_action'], cell['label']) for cell in actions)
@@ -472,8 +482,10 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
             confirm_button = invite_popup.find_element(By.CSS_SELECTOR, f'input.button.confirm')
             confirm_button.click()
+            time.sleep(5)
+            self._dump_page_source('InvitePopup.html', self.selenium.page_source)
             self.selenium.implicitly_wait(1)
-            state_name = self.selenium.find_element(By.CSS_SELECTOR, f'td.state_name[tp_row_id="{first.id}"]').text
+            state_name = self.selenium.find_element(By.CSS_SELECTOR, f'td.get_state_display[tp_row_id="{first.id}"]').text
             self.assertEqual(state_name, MarketerState.Invited.label)
 
             self.assertEqual(len(mail.outbox), 1)
@@ -507,7 +519,7 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             self.selenium.find_element(By.CSS_SELECTOR, f'div#invite-popup input.button.confirm').click()
 
             self.selenium.implicitly_wait(1)
-            state_name = self.selenium.find_element(By.CSS_SELECTOR, f'td.state_name[tp_row_id="{first.id}"]').text
+            state_name = self.selenium.find_element(By.CSS_SELECTOR, f'td.get_state_display[tp_row_id="{first.id}"]').text
             self.assertEqual(state_name, MarketerState.Invited.label)
 
             self.assertEqual(len(mail.outbox), 0)
@@ -539,7 +551,7 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             self.selenium.implicitly_wait(1)
             self.assertEqual(self.selenium.current_url, self.get_test_url())
 
-            state_name = self.selenium.find_element(By.CSS_SELECTOR, f'td.state_name[tp_row_id="{first.id}"]').text
+            state_name = self.selenium.find_element(By.CSS_SELECTOR, f'td.get_state_display[tp_row_id="{first.id}"]').text
             self.assertEqual(state_name, MarketerState.Confirmed.label)
 
             self.assertEqual(len(mail.outbox), 1)
@@ -576,7 +588,7 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
             self.selenium.implicitly_wait(1)
 
-            state_name = self.selenium.find_element(By.CSS_SELECTOR, f'td.state_name[tp_row_id="{first.id}"]').text
+            state_name = self.selenium.find_element(By.CSS_SELECTOR, f'td.get_state_display[tp_row_id="{first.id}"]').text
             self.assertEqual(state_name, MarketerState.Confirmed.label)
 
             self.assertEqual(len(mail.outbox), 0)
@@ -604,7 +616,7 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
             self.selenium.implicitly_wait(1)
 
-            state_name = self.selenium.find_element(By.CSS_SELECTOR, f'td.state_name[tp_row_id="{first.id}"]').text
+            state_name = self.selenium.find_element(By.CSS_SELECTOR, f'td.get_state_display[tp_row_id="{first.id}"]').text
             self.assertEqual(state_name, MarketerState.Rejected.label)
 
             self.assertEqual(len(mail.outbox), 0)
