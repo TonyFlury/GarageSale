@@ -115,13 +115,12 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
     @classmethod
     def get_driver(cls) -> RemoteWebDriver|None:
         """Can be overriden - by default tests using Firefox browser"""
-        return selenium.webdriver.Firefox()
+        return selenium.webdriver.Chrome()
 
     def get_test_url(self):
         pass
 
     def screenshot(self, name=None):
-        logger.info(f'Taking Screenshot : {name}')
         if self.screenshot_sub_directory:
             screen_shot_path = (root_screenshot_directory
                                     / f'{datetime.datetime.now(datetime.timezone.utc).isoformat(sep="_", timespec="seconds")}' / self.screenshot_sub_directory)
@@ -180,7 +179,6 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
     def fill_form(self, url, **kwargs):
         """Selenium fill in forms helper method"""
 
-        logger.info(f'fill_form {url} {kwargs}')
         if url:
             self.selenium.get(url)
 
