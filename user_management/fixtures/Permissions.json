@@ -2,6 +2,985 @@
   {
     "model": "auth.permission",
     "fields": {
+      "name": "can add motd",
+      "content_type": [
+        "GarageSale",
+        "motd"
+      ],
+      "codename": "add_motd"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change motd",
+      "content_type": [
+        "GarageSale",
+        "motd"
+      ],
+      "codename": "change_motd"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete motd",
+      "content_type": [
+        "GarageSale",
+        "motd"
+      ],
+      "codename": "delete_motd"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view motd",
+      "content_type": [
+        "GarageSale",
+        "motd"
+      ],
+      "codename": "view_motd"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add supporting",
+      "content_type": [
+        "GarageSale",
+        "supporting"
+      ],
+      "codename": "add_supporting"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change supporting",
+      "content_type": [
+        "GarageSale",
+        "supporting"
+      ],
+      "codename": "change_supporting"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete supporting",
+      "content_type": [
+        "GarageSale",
+        "supporting"
+      ],
+      "codename": "delete_supporting"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view supporting",
+      "content_type": [
+        "GarageSale",
+        "supporting"
+      ],
+      "codename": "view_supporting"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add eventdata",
+      "content_type": [
+        "GarageSale",
+        "eventdata"
+      ],
+      "codename": "add_eventdata"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change event data",
+      "content_type": [
+        "GarageSale",
+        "eventdata"
+      ],
+      "codename": "change_eventdata"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete eventdata",
+      "content_type": [
+        "GarageSale",
+        "eventdata"
+      ],
+      "codename": "delete_eventdata"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view eventdata",
+      "content_type": [
+        "GarageSale",
+        "eventdata"
+      ],
+      "codename": "view_eventdata"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add CommunicationTemplate",
+      "content_type": [
+        "GarageSale",
+        "communicationtemplate"
+      ],
+      "codename": "add_communicationtemplate"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change communication template",
+      "content_type": [
+        "GarageSale",
+        "communicationtemplate"
+      ],
+      "codename": "change_communicationtemplate"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete communicationtemplate",
+      "content_type": [
+        "GarageSale",
+        "communicationtemplate"
+      ],
+      "codename": "delete_communicationtemplate"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view communicationtemplate",
+      "content_type": [
+        "GarageSale",
+        "communicationtemplate"
+      ],
+      "codename": "view_communicationtemplate"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add templateattachment",
+      "content_type": [
+        "GarageSale",
+        "templateattachment"
+      ],
+      "codename": "add_templateattachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change template attachment",
+      "content_type": [
+        "GarageSale",
+        "templateattachment"
+      ],
+      "codename": "change_templateattachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete templateattachment",
+      "content_type": [
+        "GarageSale",
+        "templateattachment"
+      ],
+      "codename": "delete_templateattachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view templateattachment",
+      "content_type": [
+        "GarageSale",
+        "templateattachment"
+      ],
+      "codename": "view_templateattachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add location",
+      "content_type": [
+        "Location",
+        "location"
+      ],
+      "codename": "add_location"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change location",
+      "content_type": [
+        "Location",
+        "location"
+      ],
+      "codename": "change_location"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete location",
+      "content_type": [
+        "Location",
+        "location"
+      ],
+      "codename": "delete_location"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view location",
+      "content_type": [
+        "Location",
+        "location"
+      ],
+      "codename": "view_location"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change sponsor",
+      "content_type": [
+        "Sponsors",
+        "sponsor"
+      ],
+      "codename": "change_sponsor"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete sponsor",
+      "content_type": [
+        "Sponsors",
+        "sponsor"
+      ],
+      "codename": "delete_sponsor"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view sponsor",
+      "content_type": [
+        "Sponsors",
+        "sponsor"
+      ],
+      "codename": "view_sponsor"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can confirm a Sponsor",
+      "content_type": [
+        "Sponsors",
+        "sponsor"
+      ],
+      "codename": "confirm_sponsor"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add history",
+      "content_type": [
+        "CraftMarket",
+        "history"
+      ],
+      "codename": "add_history"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change history",
+      "content_type": [
+        "CraftMarket",
+        "history"
+      ],
+      "codename": "change_history"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete history",
+      "content_type": [
+        "CraftMarket",
+        "history"
+      ],
+      "codename": "delete_history"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view history",
+      "content_type": [
+        "CraftMarket",
+        "history"
+      ],
+      "codename": "view_history"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can suggest marketer",
+      "content_type": [
+        "CraftMarket",
+        "marketer"
+      ],
+      "codename": "suggest_marketer"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view marketer",
+      "content_type": [
+        "CraftMarket",
+        "marketer"
+      ],
+      "codename": "view_marketer"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change marketer",
+      "content_type": [
+        "CraftMarket",
+        "marketer"
+      ],
+      "codename": "change_marketer"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete marketer",
+      "content_type": [
+        "CraftMarket",
+        "marketer"
+      ],
+      "codename": "delete_marketer"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add account",
+      "content_type": [
+        "Accounts",
+        "account"
+      ],
+      "codename": "add_account"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change account",
+      "content_type": [
+        "Accounts",
+        "account"
+      ],
+      "codename": "change_account"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete account",
+      "content_type": [
+        "Accounts",
+        "account"
+      ],
+      "codename": "delete_account"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view account",
+      "content_type": [
+        "Accounts",
+        "account"
+      ],
+      "codename": "view_account"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add categories",
+      "content_type": [
+        "Accounts",
+        "categories"
+      ],
+      "codename": "add_categories"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change categories",
+      "content_type": [
+        "Accounts",
+        "categories"
+      ],
+      "codename": "change_categories"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete categories",
+      "content_type": [
+        "Accounts",
+        "categories"
+      ],
+      "codename": "delete_categories"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view categories",
+      "content_type": [
+        "Accounts",
+        "categories"
+      ],
+      "codename": "view_categories"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change transaction",
+      "content_type": [
+        "Accounts",
+        "transaction"
+      ],
+      "codename": "change_transaction"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete transaction",
+      "content_type": [
+        "Accounts",
+        "transaction"
+      ],
+      "codename": "delete_transaction"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view transaction",
+      "content_type": [
+        "Accounts",
+        "transaction"
+      ],
+      "codename": "view_transaction"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can upload transaction",
+      "content_type": [
+        "Accounts",
+        "transaction"
+      ],
+      "codename": "upload_transaction"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can report transactions",
+      "content_type": [
+        "Accounts",
+        "transaction"
+      ],
+      "codename": "report_transaction"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add financialyear",
+      "content_type": [
+        "Accounts",
+        "financialyear"
+      ],
+      "codename": "add_financialyear"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change financial year",
+      "content_type": [
+        "Accounts",
+        "financialyear"
+      ],
+      "codename": "change_financialyear"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete financialyear",
+      "content_type": [
+        "Accounts",
+        "financialyear"
+      ],
+      "codename": "delete_financialyear"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view financialyear",
+      "content_type": [
+        "Accounts",
+        "financialyear"
+      ],
+      "codename": "view_financialyear"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can add upload history",
+      "content_type": [
+        "Accounts",
+        "uploadhistory"
+      ],
+      "codename": "add_uploadhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change upload history",
+      "content_type": [
+        "Accounts",
+        "uploadhistory"
+      ],
+      "codename": "change_uploadhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can delete upload history",
+      "content_type": [
+        "Accounts",
+        "uploadhistory"
+      ],
+      "codename": "delete_uploadhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can view upload history",
+      "content_type": [
+        "Accounts",
+        "uploadhistory"
+      ],
+      "codename": "view_uploadhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can add upload error",
+      "content_type": [
+        "Accounts",
+        "uploaderror"
+      ],
+      "codename": "add_uploaderror"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change upload error",
+      "content_type": [
+        "Accounts",
+        "uploaderror"
+      ],
+      "codename": "change_uploaderror"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can delete upload error",
+      "content_type": [
+        "Accounts",
+        "uploaderror"
+      ],
+      "codename": "delete_uploaderror"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can view upload error",
+      "content_type": [
+        "Accounts",
+        "uploaderror"
+      ],
+      "codename": "view_uploaderror"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add userextended",
+      "content_type": [
+        "user_management",
+        "userextended"
+      ],
+      "codename": "add_userextended"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change user",
+      "content_type": [
+        "user_management",
+        "userextended"
+      ],
+      "codename": "change_userextended"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete userextended",
+      "content_type": [
+        "user_management",
+        "userextended"
+      ],
+      "codename": "delete_userextended"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view userextended",
+      "content_type": [
+        "user_management",
+        "userextended"
+      ],
+      "codename": "view_userextended"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add additionaldata",
+      "content_type": [
+        "user_management",
+        "additionaldata"
+      ],
+      "codename": "add_additionaldata"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change additional data",
+      "content_type": [
+        "user_management",
+        "additionaldata"
+      ],
+      "codename": "change_additionaldata"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete additionaldata",
+      "content_type": [
+        "user_management",
+        "additionaldata"
+      ],
+      "codename": "delete_additionaldata"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view additionaldata",
+      "content_type": [
+        "user_management",
+        "additionaldata"
+      ],
+      "codename": "view_additionaldata"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add guestverifier",
+      "content_type": [
+        "user_management",
+        "guestverifier"
+      ],
+      "codename": "add_guestverifier"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change guest verifier",
+      "content_type": [
+        "user_management",
+        "guestverifier"
+      ],
+      "codename": "change_guestverifier"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete guestverifier",
+      "content_type": [
+        "user_management",
+        "guestverifier"
+      ],
+      "codename": "delete_guestverifier"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view guestverifier",
+      "content_type": [
+        "user_management",
+        "guestverifier"
+      ],
+      "codename": "view_guestverifier"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add passwordresetapplication",
+      "content_type": [
+        "user_management",
+        "passwordresetapplication"
+      ],
+      "codename": "add_passwordresetapplication"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change password reset application",
+      "content_type": [
+        "user_management",
+        "passwordresetapplication"
+      ],
+      "codename": "change_passwordresetapplication"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete passwordresetapplication",
+      "content_type": [
+        "user_management",
+        "passwordresetapplication"
+      ],
+      "codename": "delete_passwordresetapplication"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view passwordresetapplication",
+      "content_type": [
+        "user_management",
+        "passwordresetapplication"
+      ],
+      "codename": "view_passwordresetapplication"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add registrationverifier",
+      "content_type": [
+        "user_management",
+        "registrationverifier"
+      ],
+      "codename": "add_registrationverifier"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change registration verifier",
+      "content_type": [
+        "user_management",
+        "registrationverifier"
+      ],
+      "codename": "change_registrationverifier"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete registrationverifier",
+      "content_type": [
+        "user_management",
+        "registrationverifier"
+      ],
+      "codename": "delete_registrationverifier"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view registrationverifier",
+      "content_type": [
+        "user_management",
+        "registrationverifier"
+      ],
+      "codename": "view_registrationverifier"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add newsarticle",
+      "content_type": [
+        "News",
+        "newsarticle"
+      ],
+      "codename": "add_newsarticle"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change news article",
+      "content_type": [
+        "News",
+        "newsarticle"
+      ],
+      "codename": "change_newsarticle"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete newsarticle",
+      "content_type": [
+        "News",
+        "newsarticle"
+      ],
+      "codename": "delete_newsarticle"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view newsarticle",
+      "content_type": [
+        "News",
+        "newsarticle"
+      ],
+      "codename": "view_newsarticle"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can add newslettermailinglist",
+      "content_type": [
+        "News",
+        "newslettermailinglist"
+      ],
+      "codename": "add_newslettermailinglist"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change news letter mailing list",
+      "content_type": [
+        "News",
+        "newslettermailinglist"
+      ],
+      "codename": "change_newslettermailinglist"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can delete newslettermailinglist",
+      "content_type": [
+        "News",
+        "newslettermailinglist"
+      ],
+      "codename": "delete_newslettermailinglist"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "can view newslettermailinglist",
+      "content_type": [
+        "News",
+        "newslettermailinglist"
+      ],
+      "codename": "view_newslettermailinglist"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
       "name": "Can add log entry",
       "content_type": [
         "admin",
@@ -178,56 +1157,23 @@
   {
     "model": "auth.permission",
     "fields": {
-      "name": "team_member",
-      "content_type": [
-        "GarageSale",
-        "general"
-      ],
-      "codename": "is_team_member"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Is a member of the Charity Trustee Team",
-      "content_type": [
-        "GarageSale",
-        "general"
-      ],
-      "codename": "is_trustee"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Is a administrator for the website",
-      "content_type": [
-        "GarageSale",
-        "general"
-      ],
-      "codename": "is_administrator"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Is a manager of the website",
-      "content_type": [
-        "GarageSale",
-        "general"
-      ],
-      "codename": "is_manager"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
       "name": "Can add session",
       "content_type": [
         "sessions",
         "session"
       ],
       "codename": "add_session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change session",
+      "content_type": [
+        "sessions",
+        "session"
+      ],
+      "codename": "change_session"
     }
   },
   {
@@ -282,7 +1228,7 @@
         "django_summernote",
         "attachment"
       ],
-      "codename": "delete_templateattachement"
+      "codename": "delete_attachment"
     }
   },
   {
@@ -299,683 +1245,12 @@
   {
     "model": "auth.permission",
     "fields": {
-      "name": "can add supporting",
-      "content_type": [
-        "GarageSale",
-        "supporting"
-      ],
-      "codename": "add_supporting"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view supporting",
-      "content_type": [
-        "GarageSale",
-        "supporting"
-      ],
-      "codename": "view_supporting"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add motd",
-      "content_type": [
-        "GarageSale",
-        "motd"
-      ],
-      "codename": "add_motd"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view motd",
-      "content_type": [
-        "GarageSale",
-        "motd"
-      ],
-      "codename": "view_motd"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add eventdata",
-      "content_type": [
-        "GarageSale",
-        "eventdata"
-      ],
-      "codename": "add_eventdata"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view eventdata",
-      "content_type": [
-        "GarageSale",
-        "eventdata"
-      ],
-      "codename": "view_eventdata"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete eventdata",
-      "content_type": [
-        "GarageSale",
-        "eventdata"
-      ],
-      "codename": "delete_eventdata"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add templateattachment",
-      "content_type": [
-        "GarageSale",
-        "templateattachment"
-      ],
-      "codename": "add_templateattachment"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view templateattachment",
-      "content_type": [
-        "GarageSale",
-        "templateattachment"
-      ],
-      "codename": "view_templateattachment"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view communicationtemplate",
-      "content_type": [
-        "GarageSale",
-        "communicationtemplate"
-      ],
-      "codename": "view_communicationtemplate"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can suggest marketer",
-      "content_type": [
-        "CraftMarket",
-        "marketer"
-      ],
-      "codename": "suggest_marketer"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view marketer",
-      "content_type": [
-        "CraftMarket",
-        "marketer"
-      ],
-      "codename": "view_marketer"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete marketer",
-      "content_type": [
-        "CraftMarket",
-        "marketer"
-      ],
-      "codename": "delete_marketer"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add history",
-      "content_type": [
-        "CraftMarket",
-        "history"
-      ],
-      "codename": "add_history"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view history",
-      "content_type": [
-        "CraftMarket",
-        "history"
-      ],
-      "codename": "view_history"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view transaction",
-      "content_type": [
-        "Accounts",
-        "transaction"
-      ],
-      "codename": "view_transaction"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add account",
-      "content_type": [
-        "Accounts",
-        "account"
-      ],
-      "codename": "add_account"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view account",
-      "content_type": [
-        "Accounts",
-        "account"
-      ],
-      "codename": "view_account"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete account",
-      "content_type": [
-        "Accounts",
-        "account"
-      ],
-      "codename": "delete_account"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add categories",
-      "content_type": [
-        "Accounts",
-        "categories"
-      ],
-      "codename": "add_categories"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view categories",
-      "content_type": [
-        "Accounts",
-        "categories"
-      ],
-      "codename": "view_categories"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add financialyear",
-      "content_type": [
-        "Accounts",
-        "financialyear"
-      ],
-      "codename": "add_financialyear"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view financialyear",
-      "content_type": [
-        "Accounts",
-        "financialyear"
-      ],
-      "codename": "view_financialyear"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add location",
-      "content_type": [
-        "Location",
-        "location"
-      ],
-      "codename": "add_location"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view location",
-      "content_type": [
-        "Location",
-        "location"
-      ],
-      "codename": "view_location"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete location",
-      "content_type": [
-        "Location",
-        "location"
-      ],
-      "codename": "delete_location"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view sponsor",
-      "content_type": [
-        "Sponsors",
-        "sponsor"
-      ],
-      "codename": "view_sponsor"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add userextended",
-      "content_type": [
-        "user_management",
-        "userextended"
-      ],
-      "codename": "add_userextended"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view userextended",
-      "content_type": [
-        "user_management",
-        "userextended"
-      ],
-      "codename": "view_userextended"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete userextended",
-      "content_type": [
-        "user_management",
-        "userextended"
-      ],
-      "codename": "delete_userextended"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add registrationverifier",
-      "content_type": [
-        "user_management",
-        "registrationverifier"
-      ],
-      "codename": "add_registrationverifier"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view registrationverifier",
-      "content_type": [
-        "user_management",
-        "registrationverifier"
-      ],
-      "codename": "view_registrationverifier"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete registrationverifier",
-      "content_type": [
-        "user_management",
-        "registrationverifier"
-      ],
-      "codename": "delete_registrationverifier"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add additionaldata",
-      "content_type": [
-        "user_management",
-        "additionaldata"
-      ],
-      "codename": "add_additionaldata"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view additionaldata",
-      "content_type": [
-        "user_management",
-        "additionaldata"
-      ],
-      "codename": "view_additionaldata"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add guestverifier",
-      "content_type": [
-        "user_management",
-        "guestverifier"
-      ],
-      "codename": "add_guestverifier"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view guestverifier",
-      "content_type": [
-        "user_management",
-        "guestverifier"
-      ],
-      "codename": "view_guestverifier"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add passwordresetapplication",
-      "content_type": [
-        "user_management",
-        "passwordresetapplication"
-      ],
-      "codename": "add_passwordresetapplication"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view passwordresetapplication",
-      "content_type": [
-        "user_management",
-        "passwordresetapplication"
-      ],
-      "codename": "view_passwordresetapplication"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete passwordresetapplication",
-      "content_type": [
-        "user_management",
-        "passwordresetapplication"
-      ],
-      "codename": "delete_passwordresetapplication"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add newsarticle",
-      "content_type": [
-        "News",
-        "newsarticle"
-      ],
-      "codename": "add_newsarticle"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view newsarticle",
-      "content_type": [
-        "News",
-        "newsarticle"
-      ],
-      "codename": "view_newsarticle"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add newslettermailinglist",
-      "content_type": [
-        "News",
-        "newslettermailinglist"
-      ],
-      "codename": "add_newslettermailinglist"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can view newslettermailinglist",
-      "content_type": [
-        "News",
-        "newslettermailinglist"
-      ],
-      "codename": "view_newslettermailinglist"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete newslettermailinglist",
-      "content_type": [
-        "News",
-        "newslettermailinglist"
-      ],
-      "codename": "delete_newslettermailinglist"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can confirm a Sponsor",
-      "content_type": [
-        "Sponsors",
-        "sponsor"
-      ],
-      "codename": "confirm_sponsor"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete supporting",
-      "content_type": [
-        "GarageSale",
-        "supporting"
-      ],
-      "codename": "delete_supporting"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete motd",
-      "content_type": [
-        "GarageSale",
-        "motd"
-      ],
-      "codename": "delete_motd"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete templateattachment",
-      "content_type": [
-        "GarageSale",
-        "templateattachment"
-      ],
-      "codename": "delete_templateattachment"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete communicationtemplate",
-      "content_type": [
-        "GarageSale",
-        "communicationtemplate"
-      ],
-      "codename": "delete_communicationtemplate"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete history",
-      "content_type": [
-        "CraftMarket",
-        "history"
-      ],
-      "codename": "delete_history"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete transaction",
-      "content_type": [
-        "Accounts",
-        "transaction"
-      ],
-      "codename": "delete_transaction"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete categories",
-      "content_type": [
-        "Accounts",
-        "categories"
-      ],
-      "codename": "delete_categories"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete financialyear",
-      "content_type": [
-        "Accounts",
-        "financialyear"
-      ],
-      "codename": "delete_financialyear"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete sponsor",
-      "content_type": [
-        "Sponsors",
-        "sponsor"
-      ],
-      "codename": "delete_sponsor"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete additionaldata",
-      "content_type": [
-        "user_management",
-        "additionaldata"
-      ],
-      "codename": "delete_additionaldata"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete guestverifier",
-      "content_type": [
-        "user_management",
-        "guestverifier"
-      ],
-      "codename": "delete_guestverifier"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can delete newsarticle",
-      "content_type": [
-        "News",
-        "newsarticle"
-      ],
-      "codename": "delete_newsarticle"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can upload transaction",
-      "content_type": [
-        "Accounts",
-        "transaction"
-      ],
-      "codename": "upload_transaction"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can report transactions",
-      "content_type": [
-        "Accounts",
-        "transaction"
-      ],
-      "codename": "report_transaction"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
       "name": "Can create a record for a supporting organisation",
       "content_type": [
         "GarageSale",
         "supporting"
       ],
       "codename": "create_supporting"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "can add CommunicationTemplate",
-      "content_type": [
-        "GarageSale",
-        "communicationtemplate"
-      ],
-      "codename": "add_communicationtemplate"
     }
   },
   {
@@ -1003,232 +1278,45 @@
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can change motd",
+      "name": "team_member",
       "content_type": [
         "GarageSale",
-        "motd"
+        "general"
       ],
-      "codename": "change_motd"
+      "codename": "is_team_member"
     }
   },
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can change supporting",
+      "name": "Is a member of the Charity Trustee Team",
       "content_type": [
         "GarageSale",
-        "supporting"
+        "general"
       ],
-      "codename": "change_supporting"
+      "codename": "is_trustee"
     }
   },
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can change event data",
+      "name": "Is a administrator for the website",
       "content_type": [
         "GarageSale",
-        "eventdata"
+        "general"
       ],
-      "codename": "change_eventdata"
+      "codename": "is_administrator"
     }
   },
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can change communication template",
+      "name": "Is a manager of the website",
       "content_type": [
         "GarageSale",
-        "communicationtemplate"
+        "general"
       ],
-      "codename": "change_communicationtemplate"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change template attachment",
-      "content_type": [
-        "GarageSale",
-        "templateattachment"
-      ],
-      "codename": "change_templateattachment"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change location",
-      "content_type": [
-        "Location",
-        "location"
-      ],
-      "codename": "change_location"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change sponsor",
-      "content_type": [
-        "Sponsors",
-        "sponsor"
-      ],
-      "codename": "change_sponsor"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change history",
-      "content_type": [
-        "CraftMarket",
-        "history"
-      ],
-      "codename": "change_history"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change marketer",
-      "content_type": [
-        "CraftMarket",
-        "marketer"
-      ],
-      "codename": "change_marketer"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change account",
-      "content_type": [
-        "Accounts",
-        "account"
-      ],
-      "codename": "change_account"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change categories",
-      "content_type": [
-        "Accounts",
-        "categories"
-      ],
-      "codename": "change_categories"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change transaction",
-      "content_type": [
-        "Accounts",
-        "transaction"
-      ],
-      "codename": "change_transaction"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change financial year",
-      "content_type": [
-        "Accounts",
-        "financialyear"
-      ],
-      "codename": "change_financialyear"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change user",
-      "content_type": [
-        "user_management",
-        "userextended"
-      ],
-      "codename": "change_userextended"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change additional data",
-      "content_type": [
-        "user_management",
-        "additionaldata"
-      ],
-      "codename": "change_additionaldata"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change guest verifier",
-      "content_type": [
-        "user_management",
-        "guestverifier"
-      ],
-      "codename": "change_guestverifier"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change password reset application",
-      "content_type": [
-        "user_management",
-        "passwordresetapplication"
-      ],
-      "codename": "change_passwordresetapplication"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change registration verifier",
-      "content_type": [
-        "user_management",
-        "registrationverifier"
-      ],
-      "codename": "change_registrationverifier"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change news article",
-      "content_type": [
-        "News",
-        "newsarticle"
-      ],
-      "codename": "change_newsarticle"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change news letter mailing list",
-      "content_type": [
-        "News",
-        "newslettermailinglist"
-      ],
-      "codename": "change_newslettermailinglist"
-    }
-  },
-  {
-    "model": "auth.permission",
-    "fields": {
-      "name": "Can change session",
-      "content_type": [
-        "sessions",
-        "session"
-      ],
-      "codename": "change_session"
+      "codename": "is_manager"
     }
   },
   {
@@ -1239,7 +1327,7 @@
         "django_summernote",
         "attachment"
       ],
-      "codename": "delete_attachment"
+      "codename": "delete_templateattachement"
     }
   },
   {
@@ -1289,89 +1377,177 @@
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can add upload history",
+      "name": "Can add category proxy",
       "content_type": [
         "Accounts",
-        "uploadhistory"
+        "categoryproxy"
       ],
-      "codename": "add_uploadhistory"
+      "codename": "add_categoryproxy"
     }
   },
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can change upload history",
+      "name": "Can change category proxy",
       "content_type": [
         "Accounts",
-        "uploadhistory"
+        "categoryproxy"
       ],
-      "codename": "change_uploadhistory"
+      "codename": "change_categoryproxy"
     }
   },
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can delete upload history",
+      "name": "Can delete category proxy",
       "content_type": [
         "Accounts",
-        "uploadhistory"
+        "categoryproxy"
       ],
-      "codename": "delete_uploadhistory"
+      "codename": "delete_categoryproxy"
     }
   },
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can view upload history",
+      "name": "Can view category proxy",
       "content_type": [
         "Accounts",
-        "uploadhistory"
+        "categoryproxy"
       ],
-      "codename": "view_uploadhistory"
+      "codename": "view_categoryproxy"
     }
   },
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can add upload error",
+      "name": "Can add published reports",
       "content_type": [
         "Accounts",
-        "uploaderror"
+        "publishedreports"
       ],
-      "codename": "add_uploaderror"
+      "codename": "add_publishedreports"
     }
   },
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can change upload error",
+      "name": "Can change published reports",
       "content_type": [
         "Accounts",
-        "uploaderror"
+        "publishedreports"
       ],
-      "codename": "change_uploaderror"
+      "codename": "change_publishedreports"
     }
   },
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can delete upload error",
+      "name": "Can delete published reports",
       "content_type": [
         "Accounts",
-        "uploaderror"
+        "publishedreports"
       ],
-      "codename": "delete_uploaderror"
+      "codename": "delete_publishedreports"
     }
   },
   {
     "model": "auth.permission",
     "fields": {
-      "name": "Can view upload error",
+      "name": "Can view published reports",
       "content_type": [
         "Accounts",
-        "uploaderror"
+        "publishedreports"
       ],
-      "codename": "view_uploaderror"
+      "codename": "view_publishedreports"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can add google drive company credential",
+      "content_type": [
+        "GoogleDrive",
+        "googledrivecompanycredential"
+      ],
+      "codename": "add_googledrivecompanycredential"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change google drive company credential",
+      "content_type": [
+        "GoogleDrive",
+        "googledrivecompanycredential"
+      ],
+      "codename": "change_googledrivecompanycredential"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can delete google drive company credential",
+      "content_type": [
+        "GoogleDrive",
+        "googledrivecompanycredential"
+      ],
+      "codename": "delete_googledrivecompanycredential"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can view google drive company credential",
+      "content_type": [
+        "GoogleDrive",
+        "googledrivecompanycredential"
+      ],
+      "codename": "view_googledrivecompanycredential"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can add drive file",
+      "content_type": [
+        "GoogleDrive",
+        "drivefile"
+      ],
+      "codename": "add_drivefile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change drive file",
+      "content_type": [
+        "GoogleDrive",
+        "drivefile"
+      ],
+      "codename": "change_drivefile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can delete drive file",
+      "content_type": [
+        "GoogleDrive",
+        "drivefile"
+      ],
+      "codename": "delete_drivefile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can view drive file",
+      "content_type": [
+        "GoogleDrive",
+        "drivefile"
+      ],
+      "codename": "view_drivefile"
     }
   }
 ]
