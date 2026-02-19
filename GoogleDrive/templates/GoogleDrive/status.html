@@ -1,6 +1,13 @@
-<!doctype html>
-<html>
-  <body>
+{% extends "GoogleDrive/_google_drive_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block Title %}
+    Brantham Garage Sale - Google Drive Utilities
+{% endblock %}
+
+{% block SnappableSections %}
     <h1>Google Drive Connection Status</h1>
 
     {% if cred.is_connected %}
@@ -8,9 +15,11 @@
       <p><strong>Google email:</strong> {{ cred.google_email|default:"(unknown)" }}</p>
       <p><strong>Google sub:</strong> {{ cred.google_sub|default:"(unknown)" }}</p>
       <p><strong>Root folder ID:</strong> {{ cred.root_folder_id|default:"(not set)" }}</p>
+      <p><strong>Root folder path:</strong> {{ path }}</p>
+        <p><a href="{% url 'GoogleDrive:upload' %}" >Test manual upload</a></p>
     {% else %}
+
       <p><strong>Connected:</strong> No</p>
       <p><a href="{% url 'drive_connect' %}">Connect company Google Drive</a></p>
     {% endif %}
-  </body>
-</html>
+{% endblock %}

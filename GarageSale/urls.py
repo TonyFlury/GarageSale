@@ -35,7 +35,7 @@ urlpatterns = [
     path('blind_auction', TemplateView.as_view(template_name='blind_auction.html'), name='BlindAuction'),
     path('donate', TemplateView.as_view(template_name='donate.html'), name='Donate'),
     path('location/', include('Location.urls')),
-    path('team_page/', include('team_pages.urls')),
+    path('team_page/', include('team_pages.urls'), name='TeamPages'),
     path('news/', include('News.urls')),
     path('user/', include('user_management.urls')),
 #    path('billboard/', include('Billboard.urls')),
@@ -48,7 +48,8 @@ urlpatterns = [
 
     path('mapping/', include('DjangoGoogleMap.urls')),
     path('summernote/', include('django_summernote.urls')),
-    path("GoogleDrive/", include("GoogleDrive.urls")),
+
+    path("GoogleDrive/", include('GoogleDrive.urls', namespace='GoogleDrive') ),
 
 ]
 

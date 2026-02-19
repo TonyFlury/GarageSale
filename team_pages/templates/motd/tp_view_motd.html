@@ -7,7 +7,7 @@
     <div class="form">
         <h2>Editing Message of the Day : {{form.instance.synopsis }}</h2>
         <script>
-            function edit_event() { document.location.replace( "{% url 'TeamPagesMotdEdit' motd_id %}");}
+            function edit_event() { document.location.replace( "{% url 'TeamPages:MotdEdit' motd_id %}");}
         </script>
         <div>
             <div class="motd_content">

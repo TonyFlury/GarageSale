@@ -20,6 +20,7 @@ root_folder_id = google_drive_info.GOOGLE_DRIVE_ROOT_FOLDER_ID  # GarageSale/upl
 
 SESSION_STATE_KEY = "google_drive_oauth_state"
 
+#To DO Integrate this into the Team pages - somehow - maybe some sort of basic widget idea ?
 
 @staff_member_required
 def drive_connect(request):
@@ -30,7 +31,7 @@ def drive_connect(request):
     state = new_state_value()
     request.session[SESSION_STATE_KEY] = state
 
-    redirect_uri = request.build_absolute_uri(reverse("drive_oauth_callback"))
+    redirect_uri = request.build_absolute_uri(reverse("GoogleDrive:drive_oauth_callback"))
 
     url = build_google_oauth_authorize_url(redirect_uri=redirect_uri, state=state)
     return redirect(url)
@@ -55,7 +56,7 @@ def drive_oauth_callback(request):
     if not code:
         return HttpResponseBadRequest("Missing authorization code.")
 
-    redirect_uri = request.build_absolute_uri(reverse("drive_oauth_callback"))
+    redirect_uri = request.build_absolute_uri(reverse("GoogleDrive:drive_oauth_callback"))
     print(redirect_uri)
     token_payload = exchange_code_for_tokens(code=code, redirect_uri=redirect_uri)
 
@@ -72,7 +73,7 @@ def drive_oauth_callback(request):
 
     claims = verify_id_token_and_get_claims(raw_id_token=raw_id_token)
 
-    cred = _get_or_create_company_credential()
+    cred = GoogleDrive().credentials
     cred.refresh_token = refresh_token
     cred.google_sub = claims.get("sub", "")
     cred.google_email = claims.get("email", "")
@@ -80,13 +81,15 @@ def drive_oauth_callback(request):
     cred.root_folder_id = root_folder_id
     cred.save()
 
-    return redirect("drive_status")
+    return redirect("GoogleDrive:status")
 
 
 @staff_member_required
 def drive_status(request):
-    cred = _get_or_create_company_credential()
-    return render(request, "GoogleDrive/status.html", {"cred": cred})
+    drive = GoogleDrive()
+    return render(request, "GoogleDrive/status.html",
+                  {"cred": drive.credentials,
+                   "path": drive.get_file_path(drive.credentials.root_folder_id)})
 
 
 def upload_to_drive(request):
@@ -97,7 +100,8 @@ def upload_to_drive(request):
     if not request.user.is_authenticated:
         return HttpResponseForbidden("Login required.")
 
-    cred = _get_or_create_company_credential()
+    cred = GoogleDrive().credentials
+
     if not cred.is_connected():
         return HttpResponseBadRequest("Google Drive is not connected. Ask an admin to connect it.")
 

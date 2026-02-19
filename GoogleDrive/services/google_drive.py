@@ -37,6 +37,10 @@ class GoogleDrive:
 
         self._drive_service = self._build_company_drive_service(refresh_token=self._credentials.refresh_token)
 
+    @property
+    def credentials(self):
+        return self._credentials
+
     def _build_company_drive_service(self, refresh_token: str ):
         """
         Builds and returns a Google Drive service instance authenticated using the provided
@@ -85,6 +89,18 @@ class GoogleDrive:
                 return on_drive[0]
             else:
                 return None
+
+    def get_folder_name_by_id(self, id: str):
+        return self._drive_service.files().get(fileId=id).execute()["name"]
+
+    def get_file_path(self, file_id: str):
+        path = [self.get_folder_name_by_id(file_id)]
+        parent = self._drive_service.files().get(fileId=file_id, fields='parents').execute()["parents"][0]
+        while parent != google_drive_info.GOOGLE_DRIVE_ROOT_FOLDER_ID:
+            path.insert(0, self.get_folder_name_by_id(parent))
+            parent = self._drive_service.files().get(fileId=parent, fields='parents').execute().get("parents", [google_drive_info.GOOGLE_DRIVE_ROOT_FOLDER_ID])[0]
+
+        return '\\'.join(path)
 
     def find_folder_id_by_name(self, folder_name: str, parent: str = None):
         """

@@ -29,9 +29,6 @@ logger = logging.getLogger('CraftMarket.views')
 
 # Create your views here.
 
-def craft_market_list(request):
-    return None
-
 #ToDo - prevent the need to repeat the full url for each action:
 # Remove the regex field from the toolbar and actions fields - impacts on framework.js too
 
@@ -39,7 +36,7 @@ class CraftMarketView(FrameworkView):
     login_url = '/user/login'
     permission_required  = 'CraftMarket.suggest_marketer'
     template_name = "team_pages/craft_market.html"
-    view_base = "CraftMarket:TeamPages"
+    view_base = "CraftMarket:List"
     columns = [('trading_name', 'Trading<br>Name'), ('get_state_display', 'Current<br>Status')]
     can_create = True
     model_class = Marketer
@@ -73,7 +70,7 @@ class CraftMarketView(FrameworkView):
 
     def get_success_url(self, request, context=None, **kwargs):
         event_id = context.get('event_id')
-        return reverse('CraftMarket:TeamPages', kwargs={'event_id': event_id})
+        return reverse('CraftMarket:List', kwargs={'event_id': event_id})
 
     def get_object(self, request, **kwargs) -> Marketer | None:
         """There is no relevant object for the base class"""

@@ -1,0 +1,16 @@
+{% extends "GoogleDrive/_google_drive_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block Title %}
+    Brantham Garage Sale - Google Drive Utilities
+{% endblock %}
+
+{% block SnappableSections %}
+    <div style="display: flex; flex-direction: row; justify-content: space-evenly;">
+        <span><a href='{% url "GoogleDrive:status" %}' >Google Drive Status</a> </span>
+        <span><a href='{% url "GoogleDrive:connect" %}' >Authenticate User to connect to Google Drive</a> </span>
+        <span><a href='{% url "GoogleDrive:upload" %}' >Upload file to Google Drive root folder</a></span>
+    </div>
+{% endblock %}

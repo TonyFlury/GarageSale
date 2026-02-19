@@ -30,7 +30,7 @@ logger.setLevel(logging.DEBUG)
 def PublishNews(request, news_id):
     publish_news(request, news_id)
     fragments = [key for key, item in request.GET.items() if item == '']
-    return redirect(reverse('TeamPagesNews') + (('?' + '&'.join(fragments)) if fragments else ''))
+    return redirect(reverse('TeamPages:News') + (('?' + '&'.join(fragments)) if fragments else ''))
 
 def custom_news_query_set(param_dict):
     unpublished = 'unpublished' in param_dict
@@ -240,7 +240,7 @@ class NewsRoot(CombinedView):
 
     def get_success_url(self, request, context=None, **kwargs):
         fragments = [key for key, item in self.request.GET.items() if item == '']
-        return reverse('TeamPagesNews') + ('?' + '&'.join(fragments)) if fragments else ''
+        return reverse('TeamPages:News') + ('?' + '&'.join(fragments)) if fragments else ''
 
     def get_object(self, request, **kwargs):
         return None
@@ -326,7 +326,7 @@ class MotDBase(CombinedView):
     redirect_field_name = 'redirect'
     form_class = MotdForm
     model_class = MOTD
-    success_url = reverse_lazy('TeamPagesRoot')
+    success_url = reverse_lazy('TeamPages:Root')
 
     def get_context_data(self, request, **kwargs):
         return {}
@@ -387,7 +387,7 @@ def delete_motd(request, motd_id=None):
         raise BadRequest(f'Invalid id for MOTD: {motd_id}')
 
     instance.delete()
-    return redirect(reverse('TeamPagesRoot'))
+    return redirect(reverse('TeamPages:Root'))
 
 
 class EventBase(CombinedView):

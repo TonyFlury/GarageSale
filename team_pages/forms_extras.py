@@ -113,7 +113,7 @@ class GetNewsFormMixin:
         """Return the URL to be used when the Event is created successfully """
         fragments = [key for key, item in self.request.GET.items() if item=='']
 
-        return reverse_lazy('TeamPagesNews') + ('?'+ '&'.join(fragments)) if fragments else ''
+        return reverse_lazy('TeamPages:News') + ('?'+ '&'.join(fragments)) if fragments else ''
 
 class GetMotdFormMixin:
     def get_form(self, form=None):
@@ -126,7 +126,7 @@ class GetMotdFormMixin:
 
     def get_success_url(self):
         """Return the URL to be used when the Event is created successfully """
-        return reverse_lazy('TeamPagesRoot')
+        return reverse_lazy('TeamPages:Root')
 
 
 class GetEventFormMixin:
@@ -147,6 +147,6 @@ class GetEventFormMixin:
 
     def get_success_url():
         """Return the URL to be used when the Event is created successfully """
-        return reverse_lazy('TeamPagesRoot')
+        return reverse_lazy('TeamPages:Root')
 
 

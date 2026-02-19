@@ -1,8 +1,14 @@
-<!doctype html>
-<html>
-  <body>
+{% extends "GoogleDrive/_google_drive_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block Title %}
+    Brantham Garage Sale - Google Drive Utilities
+{% endblock %}
+
+{% block SnappableSections %}
     <h1>Upload complete</h1>
     <p>Your file was uploaded to the company Google Drive.</p>
     <p><a href="{% url 'drive_upload' %}">Upload another</a></p>
-  </body>
-</html>
+{%  endblock %}

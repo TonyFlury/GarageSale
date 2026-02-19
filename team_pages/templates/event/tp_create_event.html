@@ -7,7 +7,7 @@
 {% block SnappableSections %}
     <div class="form" >
         <script>
-            function cancel_event() { document.location.replace( "{% url 'TeamPagesRoot' %}" ) }
+            function cancel_event() { document.location.replace( "{% url 'TeamPages:Root' %}" ) }
         </script>
         <h2>
             {% if action == 'edit' %}

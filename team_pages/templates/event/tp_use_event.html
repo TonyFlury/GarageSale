@@ -3,6 +3,10 @@
 {% load user_management_tags %}
 {% load team_page_tags %}
 
+{% block sidebar %}
+
+    {{ block.super }}
+{% endblock %}
 {% block SnappableSections %}
     <div class="choose-event">
         {% chooseEvent %}

@@ -7,7 +7,7 @@
     {{form.media}}
     <div class="form">
         <script>
-            function cancel_motd() { document.location.replace( "{% url 'TeamPagesRoot' %}" ) };
+            function cancel_motd() { document.location.replace( "{% url 'TeamPages:Root' %}" ) };
         </script>
         <h2>
             Edit Message of the Day {{form.instance.synopsis}}
