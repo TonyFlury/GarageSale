@@ -90,7 +90,7 @@ class Location(models.Model):
 
     def possible_duplicate(self):
         """Is this location already entered"""
-        inst = Location.objects.filter(user=self.user, house_number=self.house_number, postcode=self.postcode).exclude(pk=self.pk)
+        inst = Location.objects.filter(user=self.user, event=self.event, house_number=self.house_number, postcode=self.postcode).exclude(pk=self.pk)
         return True if inst.exists() else False
 
     def simple_hash(self, length=4):
