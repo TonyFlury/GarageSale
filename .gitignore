@@ -3,11 +3,11 @@
 
 .idea/
 
-media/
+/media/
 
 
 
-static/
+/static/
 
 debug.log
 

@@ -15,15 +15,12 @@ from django.template.defaultfilters import default
 from django.utils.translation.reloader import translation_file_changed
 
 
-class ReportType(models.TextChoices):
-    YEARLY = 'Y', 'Yearly'
-    Periodic = 'P', 'Periodic'
 
 def save_uploaded_file(instance, filename):
     return f'accounts/reports/{instance.account.natural_key()[0]}/{filename}'
 
 class PublishedReports(models.Model):
-    report_type = models.CharField(max_length=1, choices=ReportType)
+    report_type = models.CharField(max_length=20)
     period_start = models.DateField()
     period_end = models.DateField()
     report_file = models.ForeignKey('GoogleDrive.DriveFile', on_delete=models.CASCADE)
@@ -84,17 +81,26 @@ class FinancialYearManager(models.Manager):
     def current(self):
         return self.get(year_start__lte=datetime.date.today(), year_end__gte=datetime.date.today())
     def create_from_year(self, calendar_year):
-        return self.create(year=str(calendar_year), year_start=datetime.date(calendar_year-1, 10, 1), year_end=datetime.date(calendar_year+1, 9, 30))
+        return self.create(year=f'{calendar_year}-{calendar_year+1}', year_start=datetime.date(calendar_year, 10, 1), year_end=datetime.date(calendar_year+1, 9, 30))
     def get_natural_key(self,year):
         return self.get(year=year)
     def get_transaction_list(self, account):
         return Transaction.objects.filter(account=account, financial_year=self).order_by('transaction_date')
+    def overlap(self, period_start, period_end):
+        """Return all the Financial Year that contain the period as provided"""
+        return (FinancialYear.objects.
+                    filter(
+                            Q(year_start__lte=period_start, year_end__gte=period_start)| # Contains the start date
+                            Q(year_start__lte=period_end, year_end__gte=period_end)|     # Contains the end date
+                            Q(year_start__gt=period_start, year_end__lt=period_end)      # Is in the middle of the period
+                    ).distinct('year_start').values_list('year', flat=True).order_by('year_start'))
 
 class FinancialYear(models.Model):
     objects = FinancialYearManager()
     year = models.CharField(max_length=20)
     year_start = models.DateField()
     year_end = models.DateField()
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f'{self.year}  ({self.get_year_start_display()} to {self.get_year_end_display()})'

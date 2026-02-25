@@ -252,6 +252,7 @@ class GoogleDrive:
                           "parents":[folder_id if folder_id else google_drive_info.GOOGLE_DRIVE_ROOT_FOLDER_ID]}
 
         existing_file = self.find_file_by_name(file_name=dest_file_name, parent=folder_id)
+
         if make_backup and existing_file:
             root, ext = dest_file_name.rsplit(".", 1)
             self.move(source_file_id=existing_file.drive_file_id,

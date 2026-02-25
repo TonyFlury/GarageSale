@@ -1,0 +1,115 @@
+.flex-table {
+    display: flex;
+    flex-direction: column;
+    margin: 2rem 5rem;
+    width: fit-content;
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+    border-bottom: thin dashed black;
+    padding-bottom: 0.25rem;
+    padding-top: 0.25rem;
+}
+
+.header {
+    font-weight: bold;
+}
+
+.flex-cell {
+
+}
+
+.flex-row .flex-cell {
+    width: 7rem;
+    border-right: thin dashed black;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+.flex-cell:last-child { width: 5rem; }
+.flex-row.odd { background-color: lightblue;}
+
+.flex-row.active_False {color: grey;}
+
+div.fy_details {
+    display: flex;
+    flex-direction: column;
+    > div {
+        display: flex;
+        flex-direction: row;
+
+        label {
+            font-weight: bold;
+            width : 10rem;
+            justify-content: right;
+        }
+
+        span:first-child {
+            font-weight: bold;
+            text-align: right;
+            width:10rem;
+        }
+        span:last-child {
+            margin-left: 0.5rem;
+        }
+    }
+
+    ul.errorlist {
+        display: flex;
+        list-style: none;
+        background-color: lightgrey;
+        border: 1px dashed black;
+        border-radius: 5px;
+        margin: auto;
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+
+    div#message {
+        background-color: lightgrey;
+        border: 1px dashed black;
+        border-radius: 10px;
+        padding: 1rem;
+        margin: auto;
+        padding-bottom: 0rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+}
+div#message:before {
+    content: '';
+    background: url('/static/GarageSale/images/icons/alert-circle-svgrepo-com.svg') no-repeat;
+    background-size: 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    position: relative;
+    top: -0.75rem;
+}
+ul.errorlist:before {
+    content: '';
+    display: flex;
+    background: url('/static/GarageSale/images/icons/warning-svgrepo-com.svg') no-repeat;
+    background-size: 1.8rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    position: relative;
+    top: -0.4rem;
+}
+
+.buttons {
+    margin-top: 1rem;
+    width:fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    input[type='button'],
+    input[type='reset'],
+    input[type='submit'] {
+        padding:0.5rem;
+        min-width:10rem;
+        background-color: blue;
+        color: white;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+}

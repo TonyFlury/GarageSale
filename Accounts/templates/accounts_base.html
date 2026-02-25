@@ -31,32 +31,40 @@
         </div>
         <div class="sidebar entry direct tooltip" item="{% url 'TeamPages:Root' %}" xmlns="http://www.w3.org/1999/html">
             <a href="{% url 'TeamPages:Root' %}">
-                <img class="sidebar icon" alt="Home Page" id='id_home_page' src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %} >
-                <label for="id_home_page">Team Pages</label></a>
+                <img class="sidebar icon" alt="Home Page" id='id_Teampages' src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %} >
+                <label for="id_Teampages">Team Pages</label></a>
                 <span class="tooltiptext right arrow">Team Pages</span>
         </div>
     {% if perms.Accounts.upload_transaction %}
         <div class="sidebar entry direct tooltip" item="{% url 'Account:upload_transactions' %}" xmlns="http://www.w3.org/1999/html">
         <a href="{% url 'Account:upload_transactions' %}">
-            <img class="sidebar icon" alt="Upload Bank Transactions" id='id_up' src={% static "GarageSale/images/icons/menu/upload-svgrepo-com.svg" %}>
-            <label for="id_up">Upload Transactions</label>
+            <img class="sidebar icon" alt="Upload Bank Transactions" id='id_upload' src={% static "GarageSale/images/icons/menu/upload-svgrepo-com.svg" %}>
+            <label for="id_upload">Upload Transactions</label>
             <span class="tooltiptext arrow right">Upload Bank Transactions</span></a>
         </div>
         {% endif %}
     {% if perms.Accounts.view_transaction or perms.Account.edit_transaction %}
         <div class="sidebar entry direct tooltip" item="{% url 'Account:TransactionList' %}" xmlns="http://www.w3.org/1999/html">
         <a href="{% url 'Account:TransactionList' %}">
-            <img class="sidebar icon" alt="Show/Edit Transactions" id='id_up' src={% static "GarageSale/images/icons/menu/list-svgrepo-com.svg" %}>
-            <label for="id_up">Transactions</label>
+            <img class="sidebar icon" alt="Show/Edit Transactions" id='id_txlist' src={% static "GarageSale/images/icons/menu/list-svgrepo-com.svg" %}>
+            <label for="id_txlist">Transactions</label>
             <span class="tooltiptext arrow right">Show/Edit Transactions</span></a>
         </div>
         {% endif %}
     {% if perms.Accounts.report_transaction %}
                 <div class="sidebar entry direct tooltip" item="{% url 'Account:report' %}" xmlns="http://www.w3.org/1999/html">
         <a href="{% url 'Account:report' %}">
-            <img class="sidebar icon" alt="Financial Reporting" id='id_up' src={% static "GarageSale/images/icons/menu/report-svgrepo-com.svg" %}>
-            <label for="id_up">Financial Reports</label>
+            <img class="sidebar icon" alt="Financial Reporting" id='id_reports' src={% static "GarageSale/images/icons/menu/report-svgrepo-com.svg" %}>
+            <label for="id_reports">Financial Reports</label>
             <span class="tooltiptext arrow right">Financial Reports</span></a>
+        </div>
+    {% endif %}
+    {% if perms.Accounts.Accounts.view_financialyear or perms.Accounts.change_financialyear %}
+                <div class="sidebar entry direct tooltip" item="{% url 'Account:FinancialYearList' %}" xmlns="http://www.w3.org/1999/html">
+        <a href="{% url 'Account:FinancialYearList' %}">
+            <img class="sidebar icon" alt="Financial Year" id='id_fys' src={% static "GarageSale/images/icons/menu/monthly-calendar.svg" %}>
+            <label for="id_fys">Financial Years</label>
+            <span class="tooltiptext arrow right">Financial Years (View, Edit, Close)</span></a>
         </div>
     {% endif %}
 

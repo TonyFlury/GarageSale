@@ -1,49 +1,96 @@
-        #report { width:85%;
-            height: 80%; border: 1px solid black;border-radius: 1rem; padding: 1rem; overflow:auto;
-            margin:20px auto;
+div#report,
+div#id_operations {
+    width: 85%;
+    margin: 20px auto;
+    padding: 1rem;
+}
+div#report {
+    height: 80%;
+    border: 1px solid black;
+    border-radius: 1rem;
+    overflow: auto;
+}
+
+div#id_operations {
+    border: thin dashed black;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: right;
+}
+
+
+div.summary {
+    display: flex;
+
+    > div { flex: 1; }
+
+    >div:first-child { margin-right: 1rem; }
+    >div:not(:first-child) { margin-left: 1rem; }
+    > div > div:not(:last-child) { padding-bottom:0.2rem;}
+    > div > div:nth-last-child(2) { margin-bottom:0.5rem;border-bottom: thin solid black;}
+
+    div.entry {
+        display: flex;
+        .amount { flex: 1;}
+        .category {flex: 2;}
+    }
+    div.entry:last-child { margin-bottom: 0.5rem; border-bottom: thin solid black;}
+}
+
+div#id_details_outer { display: flex;
+    > div { flex-grow: 1; }}
+
+div#sponsors {
+    width: 50%;
+    .entry{ display: flex;
+        .amount { flex: 1;}
+        .entity {flex: 2;}
+    }
+}
+
+a[type="pdf"]::after,
+a[type="save"]::after {
+    background-size: 2rem 2rem;
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    content:"";
+    vertical-align: middle;
+    margin-left: 0.5rem;
+}
+a[type="pdf"]::after {
+    background-image: url("/static/GarageSale/images/icons/pdf-send-portable-digital-file-svgrepo-com.svg");
+}
+a[type="save"]::after {
+    background-image: url("/static/GarageSale/images/icons/save-svgrepo-com.svg/");
+}
+
+
+
+header {
+    text-align:center;
+    font-size:110%;
+    font-weight: bold;
+    margin-top:2rem;
+}
+
+div#report_warnings {
+        background-color:lightgrey;
+        border : black thin solid;
+        border-radius : 10px;
+        max-width: fit-content;
+        padding: 0.5rem 1rem;
+        margin-top: 0.5rem;
+        h3 {
+            text-align: center;
+            margin-top:0;
+            color:red;
         }
-        div.summary {
-            display: flex;
-
-            > div { flex: 1; }
-
-            >div:first-child { margin-right: 1rem; }
-            >div:not(:first-child) { margin-left: 1rem; }
-            > div > div:not(:last-child) { padding-bottom:0.2rem;}
-            > div > div:nth-last-child(2) { margin-bottom:0.5rem;border-bottom: thin solid black;}
-
-            div.entry {
-                display: flex;
-                .amount { flex: 1;}
-                .category {flex: 2;}
-            }
-            div.entry:last-child { margin-bottom: 0.5rem; border-bottom: thin solid black;}
+        ul {
+            list-style-type: none;
+            padding-left: 0;
         }
+    }
 
-        div#id_details_outer { display: flex;
-            > div { flex-grow: 1; }}
-
-        div#sponsors {
-            width: 50%;
-            .entry{ display: flex;
-                .amount { flex: 1;}
-                .entity {flex: 2;}
-            }
-        }
-
-        a[type="pdf"]::after {
-            background-image: url("/static/GarageSale/images/icons/pdf-send-portable-digital-file-svgrepo-com.svg");
-            background-size: 2rem 2rem;
-            display: inline-block;
-            width: 2rem;
-            height: 2rem;
-            content:"";
-            vertical-align: middle;
-        }
-
-        header {
-            text-align:center;
-            font-size:110%;
-            font-weight: bold;
-            margin-top:2rem;
-        }

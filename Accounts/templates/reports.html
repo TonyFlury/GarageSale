@@ -143,10 +143,12 @@ document.addEventListener('DOMContentLoaded', _on_load);
         <div>
         <label for="id_radio_buttons">Date Range: </label>
             <div>
-                <label for="id_from_last_report">From last Report: </label>
+            {% if last_report_date %}
+                <label for="id_from_last_report">From last Report: {{ last_report_date }}</label>
                 <input type="radio" id="id_from_last_report" name="report_type" value="from_last`" {% if report_type == 'from_last' %} checked {% endif %}/>
                 <label for="id_flexible_dates">Flexible_dates: </label>
                 <input type="radio" id="id_flexible_dates" name="report_type" value="custom" {% if report_type == 'custom' %} checked {% endif %} />
+            {% endif %}
             <div id="date_prompt" style="display:none">
                 <label for="id_start_date">Start Date: </label>
                 <input type="date" id="id_start_date" name="start_date" value='{{ default_start_date|date:"Y-m-d"}}'
@@ -162,17 +164,48 @@ document.addEventListener('DOMContentLoaded', _on_load);
     {% endif %}
 {% endif %}
 {% if report %}
+    {%  if warnings %}
+        <div id="report_warnings">
+            <h3>Warnings</h3>
+            <ul class="warnings">
+                {% for warning in warnings %}
+                    <li> {{ warning }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {%  endif %}
     <div id="report">
     {{ report | safe}}
     </div>
-    <div>
+    {% if operations %}
+    <div id="id_operations">
+        {% for operation in operations %}
+            <div class="operation">
+            {% if operation.url %}
+            <a {% if operation.type %}type="{{ operation.type }}"{% endif %}
+                    href="{{ operation.url }}" >
+                {% if operation.icon %}
+                    <img height='1rem;' src="{{ operation.icon }}" alt="{{ operation.help }}" />
+                {% endif %}
+                {{ operation.name }}
+                </a>
+            {% else %}
+                <b>{{ operation.name }}</b>
+            {% endif %}
+            </div>
+        {% endfor  %}
+
+    {% comment %}
         {% if save %}
         <a href='{% url "Account:report" account_id=account_selection %}?type={{ type_selection }}&year={{year_selection}}&save' >Save report to Google Drive</a>
         <br>
         {% endif %}
 
         <a type="pdf" href='{% url "Account:report" account_id=account_selection %}?year={{year_selection}}&download' >Download Report as pdf</a>
+        {% endfor %}
+    {% endcomment %}
     </div>
+    {% endif %}
 {% endif %}
 
 {% endblock %}

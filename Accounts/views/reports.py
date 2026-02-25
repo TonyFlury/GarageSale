@@ -2,9 +2,10 @@ from datetime import datetime, date, timedelta as td
 from decimal import Decimal
 from typing import Tuple
 
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.http import HttpRequest
 from django.template.loader import get_template
+from django.urls import reverse
 
 from Accounts.models import FinancialYear, PublishedReports, Transaction, Account
 
@@ -24,6 +25,11 @@ class Report:
         self._end_date = None
         self._prev_start_date, self._prev_end_date = None, None
         self._carried_over = True
+        self._context |= {'warnings': [], 'operations':[]}
+
+    @property
+    def url(self):
+        return ''
 
     @property
     def context(self):
@@ -108,6 +114,16 @@ class FinancialSummary(Report):
 
 class FlexibleReport(FinancialSummary):
 
+    @property
+    def url(self):
+        return (reverse("Account:report",
+                       kwargs={'account_id':self._context['account_selection']} ) +
+                f"?type=flexible"
+                f"&report_type={self._context['report_type']}"
+                f"&start={self._context['start_date']}"
+                 f"&end={self._context['end_date']}")
+
+
     def get_summary(self) -> str:
         return f'Report from {self._context["start_date"]!s} to {self._context["end_date"]!s}'
 
@@ -124,52 +140,75 @@ class FlexibleReport(FinancialSummary):
     def extract_report_parameters(self, request: HttpRequest):
         """Given a request, build a context dictionary with the parameters for the report template"""
 
-        # 'from_last_report' is a radio button which will only exist when it is ticked
+
+        last_report_record = PublishedReports.objects.order_by(
+            '-period_end').first()
+
+        start_date = last_report_record.period_end if last_report_record else FinancialYear.objects.latest(
+            'year_start').year_start
+        self._context |= {'last_report_date': start_date}
+
+        # Identify which type of report is required
         report_type = request.GET.get('report_type', None)
         self._context |= {'report_type': report_type}
 
-        if report_type == 'from_last_report':
-            # Find the last report (or the start date of the latest financial year)
+        match report_type:
+            case 'from_last_report':
+                # Find the last report (or the start date of the latest financial year)
+                start_date = self._context['last_report_date']
+                self._start_date = start_date
+                self._end_date = datetime.today()
+                self._context |= {'start_date': self._start_date, 'end_date':self._end_date}
 
-            last_report_record = PublishedReports.objects.filter(account_id=request.GET['account']).order_by('-period_end').first()
-            start_date = last_report_record.period_end if last_report_record else FinancialYear.objects.latest('year_start').year_start
-            self._start_date = start_date
-            self._end_date = datetime.today()
-            self._context |= {'start_date': self._start_date, 'end_date':self._end_date}
+            case 'custom':
+                # Get the date min and max
+                first_tx = Transaction.objects.filter(account_id=self._context['account_selection']).order_by(
+                    'transaction_date').first()
 
-            # Look at the difference between the end date of this report and the last transaction
-            # so there will be a warning if there seems to be missing data.
-            last_transaction = Transaction.objects.filter(account_id=request.GET['account']).order_by('-transaction_date').first()
-            if (datetime.today() - last_transaction.transaction_date).days > 30:
-                self._context |= {'warning':"More than 30 days since last uploaded transaction data - report may be incomplete"}
-            return
-        elif report_type == 'custom':
-            # Get the date min and max
-            first_tx = Transaction.objects.filter(account_id=self._context['account_selection']).order_by(
-                'transaction_date').first()
+                self._context |= {
+                    'min_start_date': first_tx.transaction_date if first_tx else FinancialYear.objects.earliest(
+                        'year_start').year_start,
+                    'max_start_date': (date.today() - td(days=1)) }
 
-            self._context |= {
-                'min_start_date': first_tx.transaction_date if first_tx else FinancialYear.objects.earliest(
-                    'year_start').year_start,
-                'max_start_date': (date.today() - td(days=1)) }
+                self._context |= {'min_end_date': (self._context['min_start_date']+td(days=1)),
+                                  'max_end_date': date.today(),}
 
-            if request.GET.get('start'):
-                self._context |= {'default_start_date': mk_date(request.GET['start'])}
-            else:
-                self._context |= {'default_start_date': today if (today:=date.today()-td(days=30))> first_tx.transaction_date
-                                                else first_tx.transaction_date}
+                # Have start and end dates been provided already ?
+                if request.GET.get('start'):
+                    self._context |= {'default_start_date': mk_date(request.GET['start'])}
+                else:
+                    self._context |= {'default_start_date': today if (today:=date.today()-td(days=30))> first_tx.transaction_date
+                                                    else first_tx.transaction_date}
 
-            self._context |= {'min_end_date': (self._context['min_start_date']+td(days=1)),
-                              'max_end_date': date.today(),}
+                if request.GET.get('end'):
+                    self._context |= {'default_end_date': mk_date(request.GET['end'])}
+                else:
+                    self._context |= {'default_end_date': date.today()}
 
-            if request.GET.get('end'):
-                self._context |= {'default_end_date': mk_date(request.GET['end'])}
-            else:
-                self._context |= {'default_end_date': date.today()}
+                self._start_date, self._end_date = self._context['default_start_date'], self._context['default_end_date']
+                self._context |= {'start_date': self._start_date, 'end_date':self._end_date}
+                self._context |= {'summary': self.get_summary()}
+            case _:
+                return
 
-            self._start_date, self._end_date = self._context['default_start_date'], self._context['default_end_date']
-            self._context |= {'start_date': self._start_date, 'end_date':self._end_date}
-            self._context |= {'summary': self.get_summary()}
+        # check if dates span multiple financial years
+        print(self._start_date, self._end_date)
+        years = list(FinancialYear.objects.
+                    filter(
+                            Q(year_start__lte=self._start_date, year_end__gte=self._start_date)|
+                            Q(year_start__lte=self._end_date, year_end__gte=self._end_date)|
+                            Q(year_start__gt=self._start_date, year_end__lt=self._end_date)
+                    ).distinct('year_start').values_list('year', flat=True).order_by('year_start'))
+        if len(years) >1 :
+            self._context['warnings'].append(f'Report spans multiple financial years: {', '.join(years[:-1]) + ' and ' + str(years[-1])}')
+
+        # Identify if there is "missing" data.
+        last_transaction = Transaction.objects.order_by(
+            '-transaction_date').first()
+        if (date.today() - last_transaction.transaction_date).days > 30:
+            self._context['warnings'].append(
+                "More than 30 days since last uploaded transaction data - report may be incomplete")
+        return
 
     def validate_params(self) -> bool:
         """ Validate that the report parameters are valid"""
@@ -182,10 +221,24 @@ class FlexibleReport(FinancialSummary):
         self._prev_start_date, self._prev_end_date = None, None
         self._carried_over = False
 
+        # Add Operations for this report :
+        self._context['operations'].append( {
+            'url': self.url + '&download',
+            'type': 'pdf',
+            'name' : "Download as pdf"
+            }
+        )
+
         super().get_report_data()
 
 
 class YearlyReport(FinancialSummary):
+
+    @property
+    def url(self):
+        return (reverse("Account:report",
+                       kwargs={'account_id':self._context['account_selection']} )
+                + f"?type={ self._context['type_selection']}&year={self._context['year_selection']}")
 
     def get_summary(self) -> str:
         year = self._context['year_selection']
@@ -195,9 +248,9 @@ class YearlyReport(FinancialSummary):
         else:
             return f"Partial Yearly report for {year!s} ({year_inst.year_start!s} up to {datetime.today()!s})"
 
-    def get_file_name(self) -> Tuple[str, str]:
-        year = self._context['year']
-        return year, f"YearlyReport-{year.year}.pdf"
+    def get_file_name(self) ->Tuple[str, str]:
+        year = self._context['year_selection']
+        return year, f"YearlyReport-{year}.pdf"
 
     def extract_report_parameters(self, request: HttpRequest) :
         """Given a request, build a context dictionary with the parameters for the report template"""
@@ -227,4 +280,32 @@ class YearlyReport(FinancialSummary):
             self._prev_start_date, self._prev_end_date = prev.year_start, prev.year_end
         else:
             self._prev_start_date, self._prev_end_date = None, None
+
+        # Add Operations for this report :
+        self._context['operations'].append(
+            {
+            'url': self.url + '&download',
+            'type': 'pdf',
+            'name' : "Download as pdf"
+            },
+        )
+
+        similar = PublishedReports.objects.filter(report_type=self._context['type'], period_start=self._context['start_date'], period_end=self._context['end_date'])
+        if not similar:
+            self._context['operations'].append(
+                {
+                    'url': self.url + '&save',
+                    'type': 'save',
+                    'name': "Save to Google Drive",
+                    'help': "Save to google drive",
+                    'icon': '/static/GarageSale/images/icons/save-svgrepo-com.svg/'
+                },
+            )
+        else:
+            self._context['operations'].append(
+                {
+                    'name': f"Already saved to Google Drive : {similar[0].uploaded_at.strftime('%a, %d-%b-%Y')}",
+                },
+            )
+
         super().get_report_data()

@@ -1,5 +1,6 @@
 import io
 from http import HTTPStatus
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
@@ -7,14 +8,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, 
 from django.contrib.staticfiles import finders
 from django.core.exceptions import BadRequest
 from django.db import transaction as db_transaction
-from django.db.models import F, Count, Exists
+from django.db.models import F, Count, Exists, QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import ListView
-from fontTools.misc.plistlib import end_date
 
 from GoogleDrive.services.google_drive import GoogleDrive
 from Accounts.views.restapi import _build_tx_record
@@ -247,6 +247,7 @@ class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         report_classes = {'year': YearlyReport, 'flexible': FlexibleReport}
 
+        # Populate the Accounts list
         report_context = { 'accounts': Account.objects.all()}
         if account_id is None:
             return TemplateResponse(request, 'reports.html', report_context)
@@ -255,6 +256,7 @@ class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
         except Account.DoesNotExist:
             return TemplateResponse(request, 'reports.html', report_context)
 
+        # Populate report type information
         report_context |= {'account_selection': account_id}
         report_context |= {'summary_types': [('year', 'Full Year'), ('flexible', 'Flexible date-range'), ('outgoings', 'Outgoings')]}
         report_context |= {'type': request.GET.get('type', None)}
@@ -262,20 +264,23 @@ class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
         if not request.GET.get('type'):
             return TemplateResponse(request, 'reports.html', report_context)
 
+        # Start building the report for this class
         report_class = report_classes.get(report_context['type'], None)
         if report_class:
             report_inst = report_class( report_context )
         else :
             return TemplateResponse(request, 'reports.html', report_context)
 
-
-        # Augment the context with the view parameters
+        # Augment the context with the view parameters for this report
+        # The report class will add in extra values for the context if they are needed.
         report_inst.extract_report_parameters(self.request)
 
         # validate that we have all the parameters that report needs.
+        # If we have all the parameters then generate the actual report
         if not report_inst.validate_params():
             return TemplateResponse(request, 'reports.html', report_inst.context)
         else:
+
             # We know that we have the data for this report type - so grab the data and render
             report_inst.get_report_data()
             report = report_inst.get_rendered_report()
@@ -294,40 +299,37 @@ class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
                 pdf = CommunicationTemplate.pdf_from_template_str(header_context, header + report, pdf_header)
 
                 if 'save' in request.GET:
-                    report_settings = (settings.APPS_SETTINGS.get('Accounts', {}).
-                                       get('reporting', {}).
-                                       get(report_context['type'], {}))
-                    dest_file_name = report_settings.get('filename', '').format(**report_inst.context)
-                    path = report_settings.get('path', '').format(**report_inst.context)
-                    permissions = report_settings.get('permissions', {})
-
-                    if not dest_file_name or not path:
-                        return
-
-                    drive = GoogleDrive()
-
-                    uploaded = drive.upload_file(source_file=io.BytesIO(pdf),
-                                      dest_file_name=dest_file_name,
-                                      file_path=path,
-                                      content_type='application/pdf',
-                                       make_backup=True,)
-                    if permissions:
-                        drive.set_permissions(uploaded.drive_file_id, **permissions)
-
-                    report = PublishedReports.objects.create(report_type=report_context['type'],
-                                                             period_start=report_inst.context['start_date'],
-                                                             period_end=report_inst.context['end_date'],
-                                                             report_file=uploaded,
-                                                             uploaded_by=request.user, )
-
-                    return HttpResponse(status=HTTPStatus.NO_CONTENT)
+                    self.save_to_google_drive(pdf, report_context, report_inst, request)
 
                 return HttpResponse(pdf, content_type='application/pdf',
-                                    headers={"Content-Disposition": f'attachment; filename={report_inst.get_file_name()}'})
+                                    headers={"Content-Disposition": f'attachment; filename={report_inst.get_file_name()[1]}'})
 
             report_context |= {'report': report}
 
-        similar = PublishedReports.objects.filter(report_type=report_context['type'], period_start=report_inst.context['start_date'], period_end=report_inst.context['end_date'])
 
-        return TemplateResponse(request, 'reports.html', report_inst.context | {'report': report,
-                                                                                'save':not Exists(similar)})
+        return TemplateResponse(request, 'reports.html', report_inst.context | {'report': report})
+
+    def save_to_google_drive(self, pdf: bytes | None, report_context: dict[str, QuerySet[Any, Any]], report_inst,
+                             request: HttpRequest):
+        report_settings = (settings.APPS_SETTINGS.get('Accounts', {}).
+                           get('reporting', {}).
+                           get(report_context['type'], {}))
+        dest_file_name = report_settings.get('filename', '').format(**report_inst.context)
+        path = report_settings.get('path', '').format(**report_inst.context)
+        permissions = report_settings.get('permissions', {})
+
+        drive = GoogleDrive()
+
+        uploaded = drive.upload_file(source_file=io.BytesIO(pdf),
+                                     dest_file_name=dest_file_name,
+                                     file_path=path,
+                                     content_type='application/pdf',
+                                     make_backup=True, )
+        if permissions:
+            drive.set_permissions(uploaded.drive_file_id, **permissions)
+
+        report = PublishedReports.objects.create(report_type=report_context['type'],
+                                                 period_start=report_inst.context['start_date'],
+                                                 period_end=report_inst.context['end_date'],
+                                                 report_file=uploaded,
+                                                 uploaded_by=request.user, )
