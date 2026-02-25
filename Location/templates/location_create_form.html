@@ -235,7 +235,10 @@
                 {% endif %}
                 <div id="section1" class="section section1">
                     <div class="section header">
-                        Part 1 : Street Address Information
+                        Part 1 : Your home Address
+                    </div>
+                    <div>
+                        Provide your home address - even if your Sale event wont be immediately outside your home.
                     </div>
                     <script language="javascript" type="text/javascript">
                         function NextSectionClick() {
@@ -271,7 +274,7 @@
                         </div>
                         <div class="field_outer">
                             <div class="field_wrapper">
-                                <label for='{{ form.house_number.id_for_label }}' >{{ form.house_number.label }}</label>
+                                <label for='{{ form.house_number.id_for_label }}' > {{ form.house_number.label }}</label>
                                 {{ form.house_number }}{% if form.house_number.help_text %}<span class="helptext">{{ form.house_number.help_text }}</span>{%  endif %}
                             </div>
                             <div id="HouseNumberError" class="error">
@@ -319,7 +322,10 @@
                     <div class="section header">
                         Part 2 : Find Your location on the map
                     </div>
-
+                    <div>
+                        On the map below location the actual location of your sale event (or simply click your home
+                        if you are only booking an ad-board).
+                    </div>
                    <div class="premarked-map">
                         <div class="map-details">
                             <div class="field_outer" style="flex-wrap:nowrap;">
@@ -360,9 +366,11 @@
                         </div>
                    </div>
                </div>
-               <div style="font-size:95%;font-style: italic; width: 75%; margin:auto; margin-top:1rem;">
-                   Once you find your location on the map, click so that the marker appears, make
-                   sure you then click save.
+               <div style="font-size:95%;font-style: italic; width: 95%; margin:auto; margin-top:1rem; text-align: left">
+                   Find your location on the map and click so that the marker appears. If you are running a Sale Event
+                   - make sure the marker indicates where your sale will be held which might be different from your home location.
+                   Then click the Save button below. You will receive an email from <strong>'website@BranthamGarageSale.org.uk'</strong>
+                   confirming that your location is recorded.
                 </div>
                <div class="footer">
                    <span class="ToLeft">
