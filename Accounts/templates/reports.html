@@ -200,10 +200,7 @@ document.addEventListener('DOMContentLoaded', _on_load);
         <a href='{% url "Account:report" account_id=account_selection %}?type={{ type_selection }}&year={{year_selection}}&save' >Save report to Google Drive</a>
         <br>
         {% endif %}
-
-        <a type="pdf" href='{% url "Account:report" account_id=account_selection %}?year={{year_selection}}&download' >Download Report as pdf</a>
-        {% endfor %}
-    {% endcomment %}
+        {% endcomment %}
     </div>
     {% endif %}
 {% endif %}

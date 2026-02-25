@@ -166,9 +166,9 @@ class FlexibleReport(FinancialSummary):
                     'transaction_date').first()
 
                 self._context |= {
-                    'min_start_date': first_tx.transaction_date if first_tx else FinancialYear.objects.earliest(
-                        'year_start').year_start,
-                    'max_start_date': (date.today() - td(days=1)) }
+                'min_start_date': first_tx.transaction_date if first_tx else FinancialYear.objects.earliest(
+                    'year_start').year_start,
+                'max_start_date': (date.today() - td(days=1)) }
 
                 self._context |= {'min_end_date': (self._context['min_start_date']+td(days=1)),
                                   'max_end_date': date.today(),}
@@ -179,6 +179,9 @@ class FlexibleReport(FinancialSummary):
                 else:
                     self._context |= {'default_start_date': today if (today:=date.today()-td(days=30))> first_tx.transaction_date
                                                     else first_tx.transaction_date}
+
+                self._context |= {'min_end_date': (self._context['min_start_date']+td(days=1)),
+                              'max_end_date': date.today(),}
 
                 if request.GET.get('end'):
                     self._context |= {'default_end_date': mk_date(request.GET['end'])}

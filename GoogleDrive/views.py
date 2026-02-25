@@ -20,8 +20,6 @@ root_folder_id = google_drive_info.GOOGLE_DRIVE_ROOT_FOLDER_ID  # GarageSale/upl
 
 SESSION_STATE_KEY = "google_drive_oauth_state"
 
-#To DO Integrate this into the Team pages - somehow - maybe some sort of basic widget idea ?
-
 @staff_member_required
 def drive_connect(request):
     """
@@ -57,7 +55,6 @@ def drive_oauth_callback(request):
         return HttpResponseBadRequest("Missing authorization code.")
 
     redirect_uri = request.build_absolute_uri(reverse("GoogleDrive:drive_oauth_callback"))
-    print(redirect_uri)
     token_payload = exchange_code_for_tokens(code=code, redirect_uri=redirect_uri)
 
     refresh_token = token_payload.get("refresh_token", "")

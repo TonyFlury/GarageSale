@@ -280,12 +280,10 @@ class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
         if not report_inst.validate_params():
             return TemplateResponse(request, 'reports.html', report_inst.context)
         else:
-
             # We know that we have the data for this report type - so grab the data and render
             report_inst.get_report_data()
             report = report_inst.get_rendered_report()
 
-            # If it is a download or save we need to render the report into a pdf
             if 'download' in request.GET or 'save' in request.GET:
                 header_context = {'host': request.get_host(), 'scheme': request.scheme, 'summary':report_inst.get_summary()}
 
