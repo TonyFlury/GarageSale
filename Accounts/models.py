@@ -58,10 +58,11 @@ class Account(models.Model):
         return self.bank_name, self.sort_code, self.account_number
 
 class CategoryManager(models.Manager):
-    def get_by_natural_key(self, category_name):
+    def get_by_natural_key(self, category_name, *args, **kwargs):
         return self.get(category_name=category_name)
 
 class Categories(models.Model):
+    objects = CategoryManager()
     parent = models.ForeignKey('self', related_name='children', on_delete=models.CASCADE, null=True, blank=True)
     category_name = models.CharField(max_length=100, unique=True)
     credit_debit = models.CharField(choices=[('C','Credit'),('D','Debit')], max_length=1, default='C')
@@ -71,7 +72,7 @@ class Categories(models.Model):
         indexes = [models.Index(fields=['category_name']), models.Index(fields=['credit_debit'])]
 
     def natural_key(self):
-        return self.category_name
+        return [self.category_name]
 
     def __str__(self):
         return self.category_name

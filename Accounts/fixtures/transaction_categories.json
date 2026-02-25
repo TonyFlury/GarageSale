@@ -27,14 +27,6 @@
     "model": "Accounts.categories",
     "fields": {
       "parent": null,
-      "category_name": "Advertisement",
-      "credit_debit": "D"
-    }
-  },
-  {
-    "model": "Accounts.categories",
-    "fields": {
-      "parent": null,
       "category_name": "Cash Donations",
       "credit_debit": "C"
     }
@@ -67,6 +59,14 @@
     "model": "Accounts.categories",
     "fields": {
       "parent": null,
+      "category_name": "Advertisement",
+      "credit_debit": "D"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "parent": null,
       "category_name": "Insurance",
       "credit_debit": "D"
     }
@@ -74,47 +74,9 @@
   {
     "model": "Accounts.categories",
     "fields": {
-      "parent": "Cash Donations",
-      "category_name": "Collection Tins",
-      "credit_debit": "C"
-    }
-  },
-  {
-    "model": "Accounts.categories",
-    "fields": {
-      "parent": "Cash Donations",
-      "category_name": "After Sales",
-      "credit_debit": "C"
-    }
-  },
-  {
-    "model": "Accounts.categories",
-    "fields": {
-      "parent": "Cash Donations",
-      "category_name": "Tombola",
-      "credit_debit": "C"
-    }
-  },
-  {
-    "model": "Accounts.categories",
-    "fields": {
-      "parent": "Cash Donations",
-      "category_name": "Map Sales",
-      "credit_debit": "C"
-    }
-  },
-  {
-    "model": "Accounts.categories",
-    "fields": {
-      "parent": "Cash Donations",
-      "category_name": "Draw  Tickets",
-      "credit_debit": "C"
-    }
-  },
-  {
-    "model": "Accounts.categories",
-    "fields": {
-      "parent": "Advertisement",
+      "parent": [
+        "Advertisement"
+      ],
       "category_name": "Leaflets",
       "credit_debit": "D"
     }
@@ -122,7 +84,9 @@
   {
     "model": "Accounts.categories",
     "fields": {
-      "parent": "Advertisement",
+      "parent": [
+        "Advertisement"
+      ],
       "category_name": "Banners",
       "credit_debit": "D"
     }
@@ -130,9 +94,51 @@
   {
     "model": "Accounts.categories",
     "fields": {
-      "parent": "Advertisement",
+      "parent": [
+        "Advertisement"
+      ],
       "category_name": "Posters",
       "credit_debit": "D"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "parent": [
+        "Cash Donations"
+      ],
+      "category_name": "Tombola",
+      "credit_debit": "C"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "parent": [
+        "Cash Donations"
+      ],
+      "category_name": "Collection Tins",
+      "credit_debit": "C"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "parent": [
+        "Cash Donations"
+      ],
+      "category_name": "After Sales",
+      "credit_debit": "C"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "parent": [
+        "Cash Donations"
+      ],
+      "category_name": "Map Sales",
+      "credit_debit": "C"
     }
   }
 ]
