@@ -18,6 +18,7 @@ from credentials import django_secret_key
 from credentials import email_credentials
 from credentials import hosts
 from credentials import GoogleMap_credentials
+from credentials import google_drive_info
 import os
 
 try:
@@ -117,7 +118,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_quill',
     'django_summernote',
+    'GoogleDrive'
 ]
+
 
 AUTH_USER_MODEL = "user_management.UserExtended"
 
@@ -213,11 +216,13 @@ APPS_SETTINGS = {
     'user_management': {'EMAIL_SENDER': 'website@branthamgaragesale.org.uk',
                         'SITE_NAME': 'Brantham Garage Sale',
                         },
-    'team_pages' : {'Craft Market':'CraftMarket:TeamPages',},
+    'team_pages' : {'Craft Market':'CraftMarket:TeamPages',
+                    'Google Drive':'GoogleDrive:TeamPages'},
     "CraftMarket" : {'EmailTemplateCategory': 'CraftMarket',
                      'EmailFrom': 'craftmarket@branthamgaragesale.org.uk'},
     "Location": {'EmailTemplateCategory': 'Location',
                     'EmailFrom': 'website@branthamgaragesale.org.uk'}
 }
+APPS_SETTINGS |= google_drive_info.uploads
 
 GOOGLE_MAP_SETTINGS = GoogleMap_credentials.GOOGLE_MAP_SETTINGS

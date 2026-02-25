@@ -1,0 +1,33 @@
+{% extends "accounts_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'Accounts/styles/financialyear.css' %}" xmlns="http://www.w3.org/1999/html">
+
+{% endblock %}
+{% block Title %}
+    Brantham Garage Sale - Financial Year {{ FinancialYear.year }}
+{% endblock %}
+
+{% block SnappableSections %}
+    <H2>Edit details for Financial year {{ form.year.value }}</H2>
+        <form method="POST">
+            {% csrf_token %}
+                <div class="fy_details">
+                    {{ form }}
+                    {%  if message %}
+                        <div id="message">
+                            {{ message }}
+                        </div>
+                    {% endif %}
+            </div>
+            <div class="buttons">
+                <input type="button" value="Cancel" onclick='window.location="{%  url 'Account:FinancialYearDetail' fy=form.year.value %}" ' >
+                <input type="reset" value="Reset Values">
+                <input type="submit" value="Save">
+             </div>
+        </form>
+{% endblock %}

@@ -89,8 +89,8 @@ def replace(value, arg):
     return value.replace(what, to)
 
 def breadcrumb_by_event_header(event):
-    return  ([{'Team Page': reverse('TeamPagesRoot')}] +
-             ([{event.event_date: reverse('TeamPagesRoot',
+    return  ([{'Team Page': reverse('TeamPages:Root')}] +
+             ([{event.event_date: reverse('TeamPages:EventRoot',
                                           kwargs={'event_id': event.id})}] if event else []))
 
 def motd_bread_crumb_segments(motd_id, action):
@@ -105,15 +105,15 @@ def motd_bread_crumb_segments(motd_id, action):
 
     match (motd_id, action):
         case (None, _):
-            return [{'Team Page': reverse('TeamPagesRoot')}]
+            return [{'Team Page': reverse('TeamPages:Root')}]
         case (None, 'create'):
-            return [{'Team Page': reverse('TeamPagesRoot')},
+            return [{'Team Page': reverse('TeamPages:Root')},
                     {f'Create new MotD': ''}]
         case (_, 'view'):
-            return [{'Team Page': reverse('TeamPagesRoot')},
+            return [{'Team Page': reverse('TeamPages:Root')},
                     {f'View : {motd.synopsis}': ''}]
         case (_, 'edit'):
-            return [{'Team Page': reverse('TeamPagesRoot')},
+            return [{'Team Page': reverse('TeamPages:Root')},
                     {f'Edit : {motd.synopsis}': ''}]
 
 def event_breadcrumb_segments(event_id, action):
@@ -131,21 +131,21 @@ def event_breadcrumb_segments(event_id, action):
 
     match (action, event_id):
         case (None, None):
-            return [{'Team Page': reverse('TeamPagesRoot')}]
+            return [{'Team Page': reverse('TeamPages:Root')}]
         case ('create', _, ):
-            return [{'Team Page': reverse('TeamPagesRoot')},
+            return [{'Team Page': reverse('TeamPages:Root')},
                     {'Create Event': reverse('TeamPagesEventCreate')}]
         case ('edit',_):
-            return [{'Team Page': reverse('TeamPagesRoot')},
-                    {event.event_date: reverse('TeamPagesRoot', kwargs={'event_id': event_id})},
+            return [{'Team Page': reverse('TeamPages:Root')},
+                    {event.event_date: reverse('TeamPages:EventRoot', kwargs={'event_id': event_id})},
                     {'Edit': reverse('TeamPagesEventEdit', kwargs={'event_id': event_id})}]
         case ('view',_):
-            return [{'Team Page': reverse('TeamPagesRoot')},
-                    {event.event_date: reverse('TeamPagesRoot',  kwargs={'event_id': event_id})},
+            return [{'Team Page': reverse('TeamPages:Root')},
+                    {event.event_date: reverse('TeamPages:EventRoot',  kwargs={'event_id': event_id})},
                     {'Details': reverse('TeamPagesEventView',  kwargs={'event_id': event_id}) } ]
         case ('use',_):
-            return [{'Team Page': reverse('TeamPagesRoot')},
-                    {event.event_date: reverse('TeamPagesRoot',  kwargs={'event_id': event_id}) },]
+            return [{'Team Page': reverse('TeamPages:Root')},
+                    {event.event_date: reverse('TeamPages:EventRoot',  kwargs={'event_id': event_id}) },]
 
 def news_bread_crumb_segments(news_id, action):
     """Return a list of dictionaries for each item in the bread crumb trail
@@ -159,23 +159,23 @@ def news_bread_crumb_segments(news_id, action):
 
     match (news_id, action):
         case (None, None):
-            return [{'Team Page': reverse('TeamPagesRoot')},
+            return [{'Team Page': reverse('TeamPages:Root')},
                     {'Manage News': ''}]
         case (None, 'create'):
-            return [{'Team Page': reverse('TeamPagesRoot')},
-                    {'Manage News': reverse('TeamPagesNews')},
+            return [{'Team Page': reverse('TeamPages:Root')},
+                    {'Manage News': reverse('TeamPages:News')},
                     {f'Create NewsArticle': ''}]
         case (_, 'view'):
-            return [{'Team Page': reverse('TeamPagesRoot')},
-                    {'Manage News': reverse('TeamPagesNews')},
+            return [{'Team Page': reverse('TeamPages:Root')},
+                    {'Manage News': reverse('TeamPages:News')},
                     {f'View : {news.headline}': ''}]
         case (_, 'edit'):
-            return [{'Team Page': reverse('TeamPagesRoot')},
-                    {'Manage News': reverse('TeamPagesNews')},
+            return [{'Team Page': reverse('TeamPages:Root')},
+                    {'Manage News': reverse('TeamPages:News')},
                     {f'Edit : {news.headline}': ''}]
         case (_, 'delete'):
-            return [{'Team Page': reverse('TeamPagesRoot')},
-                    {'Manage News': reverse('TeamPagesNews')},
+            return [{'Team Page': reverse('TeamPages:Root')},
+                    {'Manage News': reverse('TeamPages:News')},
                     {f'Deleting : {news.headline}': ''}]
 
 def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
@@ -297,7 +297,7 @@ categoryItem = namedtuple('CategoryItem', 'friendly, tag')
 @register.simple_tag(takes_context=True)
 def categoryList(context):
     c = [categoryItem('Sponsors', 'TeamPagesSponsor'),
-         categoryItem('Statistics', 'TeamPageEventStats'),
+         categoryItem('Statistics', 'TeamPages:EventSrats'),
          categoryItem('Ad-Board Applications', 'TeamPageEventAdBoard')
          ]
     framework = settings.APPS_SETTINGS.get('team_pages',{})

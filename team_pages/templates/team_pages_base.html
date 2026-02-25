@@ -23,12 +23,21 @@
 {% endblock %}
 
 {% block sidebar %}
-        {% if perms.GarageSale.is_team_member %}
-            <div class="sidebar entry direct tooltip" item="team" xmlns="http://www.w3.org/1999/html">
-            <a href="{% url 'TeamPagesRoot' %}">
-                <img class="sidebar icon" alt="About Us" id='id_team' src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %}>
-                <label for="id_team">Team Access</label>
-                <span class="tooltiptext arrow right">Team Access</span></a>
+
+{% if perms.Accounts.view_transaction %}
+        <div class="sidebar entry direct tooltip" item="{% url 'Account:report' %}" xmlns="http://www.w3.org/1999/html">
+            <a href="{% url 'Account:report' %}" >
+                <img class="sidebar icon" alt="Finances" id='id_finances' src={% static "GarageSale/images/icons/menu/money-bag-pound-svgrepo-com.svg" %} >
+                <label for="id_finances">Finances</label></a>
+                <span class="tooltiptext right arrow">Financial Details and Reporting</span>
+        </div>
+    {% endif %}
+            {% if perms.GarageSale.is_team_member %}
+            <div class="sidebar entry direct tooltip" item="{% url 'TeamPages:GoogleDrive' %}" xmlns="http://www.w3.org/1999/html">
+            <a href="{% url 'TeamPages:GoogleDrive' %}">
+                <img class="sidebar icon" alt="About Us" id='id_team' src={% static "GarageSale/images/icons/menu/network-drive-svgrepo-com.svg" %}>
+                <label for="id_team">Google Drive Connection</label>
+                <span class="tooltiptext arrow right">Connect to Google Drive</span></a>
             </div>
         {% endif %}
 {%  endblock %}

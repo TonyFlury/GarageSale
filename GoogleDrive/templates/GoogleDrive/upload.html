@@ -1,0 +1,18 @@
+{% extends "GoogleDrive/_google_drive_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block Title %}
+    Brantham Garage Sale - Google Drive Utilities
+{% endblock %}
+
+{% block SnappableSections %}
+    <h1>Upload to Company Google Drive</h1>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Upload</button>
+    </form>
+{% endblock %}

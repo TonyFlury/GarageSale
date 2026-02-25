@@ -34,4 +34,13 @@ if you have a new databse :
     Copy the appropriate files to the credentials folder
 
 4) On python anywhere Dashboard
+        in wsgi.py
+        define the environment variables :
+        DJANGO_GOOGLE_OAUTH_CLIENT_ID
+        and
+        DJANGO_GOOGLE_OAUTH_CLIENT_SECRET
+
+        values are from the google cloud console for the live test or deployment clients.
+        Different values for test and live and development
+
         Restart Server.

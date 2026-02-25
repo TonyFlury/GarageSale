@@ -1,0 +1,48 @@
+{% extends "accounts_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'Accounts/styles/financialyear.css' %}" xmlns="http://www.w3.org/1999/html">
+
+{% endblock %}
+
+{% block Title %}
+    Brantham Garage Sale - Financial Years
+{% endblock %}
+
+{% block SnappableSections %}
+    <h2>Financial years</h2>
+     <div class="flex-table">
+            <div class="flex-row">
+            <span class="flex-cell header">Year</span>
+            <span class="flex-cell header">Year Start</span>
+            <span class="flex-cell header">Year End</span>
+                <span class="flex-cell header"></span>
+            </div>
+            {% for year in FinancialYears %}
+                <a href="{% url "Account:FinancialYearDetail" fy=year.year%}" >
+                    <div  class="flex-row {% cycle 'odd' 'even' %} active_{{ year.active }}" >
+                     <span class="flex-cell">{{ year.year }}</span>
+                     <span class="flex-cell">
+                         {{ year.year_start }}
+                     </span>
+                     <span class="flex-cell">
+                         {{ year.year_end }}
+                     </span>
+                     <span class="flex-cell">
+                         {% if year.active %}
+                             Active
+                         {% endif %}
+                     </span>
+                 </div>
+                </a>
+            {% endfor %}
+     <div class="buttons">
+         <input type="button" onclick='window.location = "{% url "Account:FinancialYearCreate" %}" ' value="Create New Record" >
+     </div>
+
+     </div>
+{% endblock %}

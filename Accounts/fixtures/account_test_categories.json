@@ -1,1 +1,65 @@
-[{"model": "Accounts.categories", "fields": {"category_name": "Sale", "credit_debit": "C"}}, {"model": "Accounts.categories", "fields": {"category_name": "Sponsorship", "credit_debit": "C"}}, {"model": "Accounts.categories", "fields": {"category_name": "CraftMarket", "credit_debit": "C"}}, {"model": "Accounts.categories", "fields": {"category_name": "Advertisment", "credit_debit": "D"}}, {"model": "Accounts.categories", "fields": {"category_name": "Cash Donations", "credit_debit": "C"}}, {"model": "Accounts.categories", "fields": {"category_name": "Charity Donations", "credit_debit": "D"}}, {"model": "Accounts.categories", "fields": {"category_name": "VillageHall", "credit_debit": "D"}}, {"model": "Accounts.categories", "fields": {"category_name": "Bank Charges", "credit_debit": "D"}}, {"model": "Accounts.categories", "fields": {"category_name": "Advertisement", "credit_debit": "D"}}, {"model": "Accounts.categories", "fields": {"category_name": "Insurance", "credit_debit": "D"}}]
+[
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "category_name": "Sale",
+      "credit_debit": "C"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "category_name": "Sponsorship",
+      "credit_debit": "C"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "category_name": "CraftMarket",
+      "credit_debit": "C"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "category_name": "Cash Donations",
+      "credit_debit": "C"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "category_name": "Charity Donations",
+      "credit_debit": "D"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "category_name": "VillageHall",
+      "credit_debit": "D"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "category_name": "Bank Charges",
+      "credit_debit": "D"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "category_name": "Advertisement",
+      "credit_debit": "D"
+    }
+  },
+  {
+    "model": "Accounts.categories",
+    "fields": {
+      "category_name": "Insurance",
+      "credit_debit": "D"
+    }
+  }
+]

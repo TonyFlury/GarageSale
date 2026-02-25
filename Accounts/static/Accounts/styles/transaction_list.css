@@ -1,3 +1,32 @@
+#table_container {
+    height: 70em;
+}
+table {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+    width: 100%;
+}
+table thead {
+    /* head takes the height it requires,
+    and it's not scaled when table is resized */
+    flex: 0 0 auto;
+    width: calc(100% - 0.9em);
+}
+table tbody {
+    /* body takes all the remaining available space */
+    flex: 1 1 auto;
+    display: block;
+    overflow-y: scroll;
+}
+table tbody tr {
+    width: 100%;
+}
+table thead, table tbody tr {
+    display: table;
+    table-layout: fixed;
+}
+
         div#buttons {
             display: flex;
             padding: 1rem;
@@ -21,11 +50,26 @@
 
         header {background-color: #ddd; font-weight: bold;font-size: 120%; border-bottom: 1px solid black;}
 
+        body {overflow: hidden;}
+        div.y {height: fit-content}
+
         table {
             margin-left: auto;
             margin-right: auto;
             width: 95%;
+            height: 25rem;
             }
+
+        table th.expand_button,
+        table td.expand_button {width: 1rem;}
+
+        table .col.date {width: 6rem;}
+
+        table .col.name {width: 15rem;}
+        table .col.category {width: 7rem;}
+        table .col.debit,
+        table .col.credit {width: 4rem;text-align: right;}
+        table .col.balance {width: 5rem;text-align: right;}
 
         table tr.row:last-child td {border-bottom: 1px solid black;}
 
@@ -35,7 +79,7 @@
             background-size: 1.5rem 1.5rem;
         }
 
-        tr.expanded.child {display: table-row;}
+        tr.expanded.child {display: table;}
         tr.expanded.child:not(.summary) > td:nth-child(2) {
             background: url('/static/GarageSale/images/icons/corner-down-right-svgrepo-com.svg') no-repeat center;
                                                                 background-size: 1rem 1rem; }
@@ -47,7 +91,7 @@
         tr.odd {background-color: lightblue;}
         tr.even {background-color: white;}
 
-        tr:not(.child) td {border-bottom: 1px dashed black; border-right: 1px dashed black;}
+        tr:not(.child) td { border-right: 1px dashed black;}
         tr.child.even, tr.child.odd {background-color: white}
         tr.child td {border:none}
         tr.child:has(+ tr:not(.child)) td {border-bottom: 1px double black;}
@@ -59,39 +103,49 @@
         tr td.date {text-align: right;}
 
 
+        td.row_button {background-color: lightgreen;}
+
         tr:not(.child).editing {background-color: orangered;}
-        tr.child.editing td:nth-child(n+3):nth-child(-n+5){background-color:
+        tr.child.editing td:nth-child(n+4):nth-child(-n+6){background-color:
                 orangered; border-right: 1px dashed black; border-bottom: 1px dashed black;}
 
-        tr.child.summary td:nth-child(n+4) {background-color: whitesmoke; font-weight: bold;}
-        tr.child.summary td:nth-child(n+4) {border-top: 4px double black; border-bottom: 4px double black;}
+        tr.child.summary td:nth-child(n+4):nth-child(-n+6) {background-color: whitesmoke; font-weight: bold;}
+        tr.child.summary td:nth-child(n+4):nth-child(-n+6) {border-top: 4px double black; border-bottom: 4px double black;}
 
-        .row_button {display: none;
+        .row_button {
             background-repeat: no-repeat;
             background-position: center;
-            background-size: 2rem; height: 2rem;
+            background-size: 2rem;
+            width: 2rem;
             padding: 0 1rem;}
 
         .edit_button {
             background-image: url('/static/GarageSale/images/icons/edit-svgrepo-com.svg');}
+        th.edit_button {background-image: none}
+        table:not(.edit_mode) .edit_button {background-image: none; width:0; padding:0;border-right: none;}
 
         .revert_button {
             background-image: url('/static/GarageSale/images/icons/revert-svgrepo-com.svg');}
 
         .link_button {
             background-image: url('/static/GarageSale/images/icons/add-node-svgrepo-com.svg'); }
+        td.link_button.no_split,
+        th.link_button, tr.child td.link_button {background-image: none}
+        table:not(.edit_mode) .link_button {background-image: none; width:0; padding:0; border-right: none;}
 
         .delete_button {
             background-image: url('/static/GarageSale/images/icons/delete-svgrepo-com.svg'); }
+        th.delete_button {background-image: none}
 
         tr.editing .edit_button {display:table-cell;
             background-image: url('/static/GarageSale/images/icons/save-svgrepo-com.svg');}
 
         tr.editing .revert_button {display: table-cell;}
         tr.editing.child .delete_button {display: table-cell;}
+        th,
         tr:not(.editing) {
             .revert_button,
-            .delete_button {display: none;} }
+            .delete_button {background-image: none; width:0; padding:0; border-right: none;} }
 
         div.step-links {
             position:fixed;

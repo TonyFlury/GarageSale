@@ -38,7 +38,7 @@ class CategoryInline(admin.TabularInline):
 
 @admin.register(Categories)
 class CategoriesAdmin(admin.ModelAdmin):
-    list_display = ['category_name', 'credit_debit']
+    list_display = ['category_name', 'credit_debit','parent']
     radio_fields = {'credit_debit': HORIZONTAL}
     inlines = [CategoryInline]
     def get_queryset(self, request):

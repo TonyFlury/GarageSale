@@ -1,0 +1,59 @@
+{% extends "accounts_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'Accounts/styles/financialyear.css' %}" xmlns="http://www.w3.org/1999/html">
+
+{% endblock %}
+{% block Title %}
+    Brantham Garage Sale - Financial Year {{ FinancialYear.year }}
+{% endblock %}
+
+{% block SnappableSections %}
+    <script lang="javascript">
+    function cancel_close(){
+        let dialog = document.getElementById('confirm_close_dialog');
+        if (dialog.open)  dialog.close();
+    }
+
+    function confirm_close(){
+        let dialog = document.getElementById('confirm_close_dialog');
+        dialog.showModal();
+    }
+    </script>
+<dialog id="confirm_close_dialog">
+    <div>
+    Please confirm that you wish to close this financial year ?
+    </div>
+    <div class="buttons">
+    <input type="button" onclick="cancel_close()" value="No">
+    <input type="button" onclick='window.location="{%  url "Account:FinancialYearClose" fy=FinancialYear.year %}" ' value="Yes - close this year">
+    </div>
+</dialog>
+
+    <H2>Details for Financial year {{ FinancialYear.year }}</H2>
+    <div class="fy_details">
+        <div><span>Friendly Name: </span><span>{{ FinancialYear.year}}</span></div>
+        <div><span>Year start: </span><span>{{ FinancialYear.year_start}}</span></div>
+        <div><span>Year end: </span><span>{{ FinancialYear.year_end}}</span></div>
+        <div><span>Active: </span><span>{{ FinancialYear.active|yesno:"Yes,No" }}</span></div>
+    {%  if message %}
+        <div id="message">
+            {{ message }}
+        </div>
+    {% endif %}
+    </div>
+
+    <div class="buttons">
+         <input type="button" onclick='window.location="{% url "Account:FinancialYearList" %}" ' value="Return to List">
+         {%  if editable %}
+         <input type="button" onclick='window.location = "{% url "Account:FinancialYearEdit"  fy=FinancialYear.year %}" ' value="Edit" >
+         {%  endif %}
+        {%  if FinancialYear.active %}
+         <input type="button"  onclick="confirm_close()" value="Close this year">
+        {%  endif %}
+     </div>
+{% endblock %}
