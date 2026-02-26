@@ -296,9 +296,9 @@ categoryItem = namedtuple('CategoryItem', 'friendly, tag')
 
 @register.simple_tag(takes_context=True)
 def categoryList(context):
-    c = [categoryItem('Sponsors', 'TeamPagesSponsor'),
-         categoryItem('Statistics', 'TeamPages:EventSrats'),
-         categoryItem('Ad-Board Applications', 'TeamPageEventAdBoard')
+    c = [categoryItem('Sponsors', 'TeamPages:Sponsor'),
+         categoryItem('Statistics', 'TeamPages:EventStats'),
+         categoryItem('Ad-Board Applications', 'TeamPages:EventAdBoard')
          ]
     framework = settings.APPS_SETTINGS.get('team_pages',{})
 
