@@ -435,7 +435,7 @@ class EventView(EventBase):
 class EventEdit(EventView):
     permission_required = ["GarageSale.change_event"]
     template_name = 'event/tp_edit_event.html'
-    success_url = reverse_lazy( 'TeamPagesEvent')
+    success_url = reverse_lazy( 'TeamPages:Event')
 
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request, **kwargs)
@@ -446,7 +446,7 @@ class EventEdit(EventView):
 class EventCreate(EventBase):
     permission_required = ["GarageSale.can_create_event"]
     template_name = 'event/tp_create_event.html'
-    success_url = reverse_lazy( 'TeamPagesEvent')
+    success_url = reverse_lazy( 'TeamPages:Event')
     _supporting = None
 
     def get_context_data(self, request, **kwargs):
@@ -493,7 +493,7 @@ class SponsorsRoot(CombinedView):
 
     def get_success_url(self, request, context=None, **kwargs):
         event_id = context.get('event_id')
-        return reverse('TeamPagesSponsor', kwargs={'event_id':event_id})
+        return reverse('TeamPages:Sponsor', kwargs={'event_id':event_id})
 
     def get_context_data(self, request, **kwargs):
         context = super().get_context_data(request, **kwargs)

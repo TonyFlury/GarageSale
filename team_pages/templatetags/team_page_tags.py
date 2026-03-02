@@ -134,15 +134,15 @@ def event_breadcrumb_segments(event_id, action):
             return [{'Team Page': reverse('TeamPages:Root')}]
         case ('create', _, ):
             return [{'Team Page': reverse('TeamPages:Root')},
-                    {'Create Event': reverse('TeamPagesEventCreate')}]
+                    {'Create Event': reverse('TeamPages:EventCreate')}]
         case ('edit',_):
             return [{'Team Page': reverse('TeamPages:Root')},
                     {event.event_date: reverse('TeamPages:EventRoot', kwargs={'event_id': event_id})},
-                    {'Edit': reverse('TeamPagesEventEdit', kwargs={'event_id': event_id})}]
+                    {'Edit': reverse('TeamPages:EventEdit', kwargs={'event_id': event_id})}]
         case ('view',_):
             return [{'Team Page': reverse('TeamPages:Root')},
                     {event.event_date: reverse('TeamPages:EventRoot',  kwargs={'event_id': event_id})},
-                    {'Details': reverse('TeamPagesEventView',  kwargs={'event_id': event_id}) } ]
+                    {'Details': reverse('TeamPages:EventView',  kwargs={'event_id': event_id}) } ]
         case ('use',_):
             return [{'Team Page': reverse('TeamPages:Root')},
                     {event.event_date: reverse('TeamPages:EventRoot',  kwargs={'event_id': event_id}) },]
@@ -208,24 +208,24 @@ def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
             return breadcrumb_by_event_header(event) + [{'Sponsors':''}]
         case ('view', _, _):
             return breadcrumb_by_event_header(event) + [
-                {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id':event_id}) },
+                {'Sponsors': reverse('TeamPages:Sponsor', kwargs={'event_id':event_id}) },
                         {f'Viewing {sponsor.company_name}': ''}]
         case ('create', _, _):
             return breadcrumb_by_event_header(event) + [
-                {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id':event_id}) },
+                {'Sponsors': reverse('TeamPages:Sponsor', kwargs={'event_id':event_id}) },
                 {f'Creating new sponsorship lead': ''}]
         case ('edit', _, _):
             return  breadcrumb_by_event_header(event) + [
-                {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id':event_id}) },
+                {'Sponsors': reverse('TeamPages:Sponsor', kwargs={'event_id':event_id}) },
                 {f'Editing {sponsor.company_name}': ''}]
         case('confirm', _, _):
             return breadcrumb_by_event_header(event) + [
-                {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id': event_id})},
+                {'Sponsors': reverse('TeamPages:Sponsor', kwargs={'event_id': event_id})},
                 {f'Confirming {sponsor.company_name}': ''}
             ]
         case('delete', _, _):
             return breadcrumb_by_event_header(event) + [
-                {'Sponsors': reverse('TeamPagesSponsor', kwargs={'event_id': event_id})},
+                {'Sponsors': reverse('TeamPages:Sponsor', kwargs={'event_id': event_id})},
                 {f'Confirming {sponsor.company_name} deletion': ''}
             ]
         case(_,_,_,_):

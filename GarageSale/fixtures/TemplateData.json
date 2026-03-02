@@ -39,13 +39,29 @@
     }
   },
   {
-    "model": "GarageSale.templateattachment",
-    "pk": 1,
+    "model": "GarageSale.communicationtemplate",
+    "pk": 4,
     "fields": {
-      "template": 2,
-      "upload": false,
-      "template_name": "TermsAndConditions",
-      "attached_file": ""
+      "category": "Location",
+      "transition": "created",
+      "summary": "Email sent when a new Location is recorded.",
+      "subject": "Location recorded for {{event_date}}",
+      "html_content": "<h2 class=\"\">Location recorded for {{event_date}}</h2><p>{{address}}</p><p>is</p><p>{{location_description}}</p>",
+      "signature": "-- \r\nBrantham Garage Sale Website \r\nDo not reply directly to this email.",
+      "use_from": "2026-02-26"
+    }
+  },
+  {
+    "model": "GarageSale.communicationtemplate",
+    "pk": 5,
+    "fields": {
+      "category": "Location",
+      "transition": "edited",
+      "summary": "Email sent when a Location is modified",
+      "subject": "Location changed for {{event_date}}",
+      "html_content": "<p><h2 class=\"\">Location edited for {{event_date}}</h2></p><p>The location at&nbsp;<br></p><p>{{address}}</p><p>{{change description}}</p>",
+      "signature": "Brantham Garage Sale Website\r\nDo not reply directly to this email.",
+      "use_from": "2026-02-26"
     }
   }
 ]

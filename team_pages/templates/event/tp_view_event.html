@@ -7,8 +7,8 @@
     <div class="form">
         <h2>Event Scheduled for {{form.instance.event_date}}</h2>
         <script>
-            function use_event() { document.location.replace( "{% url 'TeamPagesEventUse' form.instance.id %}");}
-            function edit_event() { document.location.replace( "{% url 'TeamPagesEventEdit' form.instance.id %}");}
+            function use_event() { document.location.replace( "{% url 'TeamPages:EventUse' form.instance.id %}");}
+            function edit_event() { document.location.replace( "{% url 'TeamPages:EventEdit' form.instance.id %}");}
         </script>
         <div>
             <img src="{{MEDIA_URL}}{{form.instance.event_logo}}"></img>
