@@ -46,10 +46,10 @@ def breadcrumb(context):
 
     match action :
         case 'create':
-            content.append({'Craft Market':reverse('CraftMarket:TeamPages', kwargs={'event_id':event_id}),
+            content.append({'Craft Market':reverse('CraftMarket:Create', kwargs={'event_id':event_id}),
                              'New Craft Market Entry': ''})
         case _:
-            content.append({'Craft Market':''})
+            content.append({'Craft Market':'List'})
 
     return format_html_join(' / ',
                                 '<a href="{}">{}</a>', ((v, k) for d in content for k, v in d.items()))

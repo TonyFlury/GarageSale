@@ -329,7 +329,7 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
                                                                     use_from=timezone.now())
 
     def get_test_url(self):
-        return self.live_server_url + reverse('CraftMarket:TeamPages', kwargs={'event_id': self.event.id})
+        return self.live_server_url + reverse('CraftMarket:List', kwargs={'event_id': self.event.id})
 
     def test_201_confirm_article_list_div(self):
         """Test the view team page - that the list of items exists"""
@@ -669,7 +669,7 @@ class MarketeerRSVP(SmartHTMLTestMixins, SeleniumCommonMixin):
         self.request.META = {'HTTP_HOST': '127.0.0.1:8080'}
 
     def get_test_url(self):
-        return self.live_server_url + reverse('CraftMarket:TeamPages', kwargs={'event_id': self.event.id})
+        return self.live_server_url + reverse('CraftMarket:List', kwargs={'event_id': self.event.id})
 
     def assertStartsWith(self, a, b, msg=None):
         """Assert that a string starts with another string"""

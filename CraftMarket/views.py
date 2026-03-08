@@ -225,7 +225,7 @@ class MarketerEdit(MarketerView):
 class MarketerGenericStateChange(CraftMarketView):
     template_name = "team_pages/craft_market_invite.html"
     permission_required = 'CraftMarket.change_marketer'
-    view_base = "CraftMarket:TeamPages"
+    view_base = "CraftMarket:List"
     new_state: MarketerState
 
     def get_object(self, request, **kwargs) -> Marketer | None:
@@ -263,17 +263,17 @@ class MarketerGenericStateChange(CraftMarketView):
 
 class MarketerInvite(MarketerGenericStateChange):
     template_name = "team_pages/craft_market_invite.html"
-    view_base = "CraftMarket:TeamPages"
+    view_base = "CraftMarket:List"
     new_state =  MarketerState.Invited
 
 class MarketerConfirm(MarketerGenericStateChange):
     template_name = "team_pages/craft_market_confirm.html"
-    view_base = "CraftMarket:TeamPages"
+    view_base = "CraftMarket:List"
     new_state =  MarketerState.Confirmed
 
 class MarketerReject(MarketerGenericStateChange):
     template_name = "team_pages/craft_market_reject.html"
-    view_base = "CraftMarket:TeamPages"
+    view_base = "CraftMarket:List"
     new_state = MarketerState.Rejected
 
 class MarketerRSVP(View):
