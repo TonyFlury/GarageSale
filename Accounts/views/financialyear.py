@@ -2,17 +2,28 @@ from datetime import date, timedelta
 
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
+from django.templatetags.static import static
 from django.urls import reverse
 from django.views.generic import View, UpdateView, ListView, DetailView, CreateView
 
 from Accounts.forms import FinancialYearForm
 from Accounts.models import FinancialYear
+from TeamPageFramework.entry_point import EntryPointMixin
 
 
-class FinancialYearList(ListView):
-    template_name = 'FinancialYear.html'
+class FinancialYearList(EntryPointMixin, ListView):
+    template_name = 'FinancialYear/FinancialYear.html'
     context_object_name = 'FinancialYears'
     queryset = FinancialYear.objects.all().order_by('-year_start')
+    entry_point_url = 'Account:FinancialYearList'
+    entry_point_label = 'Financial Year'
+    entry_point_permission = 'Accounts.view_financialyear'
+    entry_point_icon = static('Accounts/images/icons/navigation/monthly-calendar.svg')
+    entry_point_nav_page = 'AccountsEntryPoint'
+    entry_point_needs_event = False
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(**kwargs) | {'data_type':'financial_year', 'action':'list'}
 
 class FinancialYearClose(View):
     template_name = 'FinancialYearClose.html'
@@ -40,7 +51,7 @@ class FinancialYearClose(View):
             return redirect(request=request, to=reverse('Account:FinancialYearList'))
 
 class FinancialYearEdit(UpdateView):
-    template_name = 'FinancialYearEdit.html'
+    template_name = 'FinancialYear/FinancialYearEdit.html'
     context_object_name = 'FinancialYear'
     form_class = FinancialYearForm
 
@@ -48,7 +59,7 @@ class FinancialYearEdit(UpdateView):
         return FinancialYear.objects.get(year=self.kwargs['fy'])
 
     def get_context_data(self, **kwargs):
-        context = super(FinancialYearEdit, self).get_context_data(**kwargs)
+        context = super(FinancialYearEdit, self).get_context_data(**kwargs) | {'data_type':'financial_year', 'action':'edit'}
         year_inst = self.object
 
         form = context['form']
@@ -59,14 +70,18 @@ class FinancialYearEdit(UpdateView):
         return context
 
 class FinancialYearDetail(DetailView):
-    template_name = "FinancialYearView.html"
+    template_name = "FinancialYear/FinancialYearView.html"
     model = FinancialYear
     context_object_name = 'FinancialYear'
+
     def get_object(self, queryset=None):
-        return FinancialYear.objects.get(year=self.kwargs['fy'])
+        try:
+            return FinancialYear.objects.get(year=self.kwargs['fy'])
+        except FinancialYear.DoesNotExist:
+            return FinancialYear.objects.filter(active=True).latest('year_start')
 
     def get_context_data(self, **kwargs):
-        context = super(FinancialYearDetail, self).get_context_data(**kwargs)
+        context = super(FinancialYearDetail, self).get_context_data(**kwargs) | {'data_type':'financial_year', 'action':'view'}
         year_inst = context['FinancialYear']
         context['editable'] = True
         if date.today() > year_inst.year_end :
@@ -75,7 +90,7 @@ class FinancialYearDetail(DetailView):
         return context
 
 class FinancialYearCreate(CreateView):
-    template_name = 'FinancialYearCreate.html'
+    template_name = 'FinancialYear/FinancialYearCreate.html'
     form_class = FinancialYearForm
     model = FinancialYear
 
@@ -86,9 +101,9 @@ class FinancialYearCreate(CreateView):
             years_overlap = FinancialYear.objects.overlap(start, end)
             if years_overlap.count() > 0:
                 form.add_error('', 'Dates overlap 1 or more existing Financial Years')
-                return TemplateResponse( request=self.request, template='FinancialYearEdit.html', context={'form':form})
+                return TemplateResponse(request=self.request, template='FinancialYear/FinancialYearEdit.html', context={'form':form})
             else:
                 obj = FinancialYear.objects.create(year=form.cleaned_data['year'], year_start=start, year_end=end, active=False)
                 return redirect(request=request, to=reverse('Account:FinancialYearList'))
         else:
-            return TemplateResponse(request=self.request, template='FinancialYearEdit.html', context={'form': form})
+            return TemplateResponse(request=self.request, template='FinancialYear/FinancialYearEdit.html', context={'form': form})

@@ -1,10 +1,12 @@
 from django.urls import path, include
 
+from GarageSale.views.template_views import TemplatesView
 from . import views
 
 app_name = "Account"
 
 urlpatterns = [
+    path('', views.EntryPoint, name='EntryPoint'),
     path('upload/', views.upload_transactions, name='upload_transactions'),
     path('uploadErrors/', views.UploadErrorList.as_view(), name='UploadErrorList'),
     path('uploadErrors/<int:account_id>/', views.UploadErrorList.as_view(), name='UploadErrorList'),
@@ -21,6 +23,9 @@ urlpatterns = [
 
     path('report/', views.FinancialReport.as_view(), name='report'),
     path('report/<int:account_id>/', views.FinancialReport.as_view(), name='report'),
+
+
+    path('categories/', views.category_list, name='CategoryList'),
 
     #ToDo - a single REST API with actions - maybe ?
     path('get_category_list/<int:transaction_id>/', views.restapi.get_categories, name='get_categories'),

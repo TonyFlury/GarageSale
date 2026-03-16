@@ -1,0 +1,19 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block sidebar %}
+
+    {{ block.super }}
+{% endblock %}
+{% block SnappableSections %}
+        <div>
+        <h4>Management</h4>
+            {% categoryList %}
+        </div>
+        <div>
+            <h4>Data and Statistics</h4>
+            {% categoryList 'TeamPagesData' %}
+        </div>
+{% endblock %}

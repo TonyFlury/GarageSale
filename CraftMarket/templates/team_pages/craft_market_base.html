@@ -19,5 +19,15 @@
 {% endblock %}
 
 {% block detail %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let event_select = document.getElementById("id_event");
+            event_select.addEventListener("change", function() {
+                const event_id = event_select.value;
+                window.location.href = "/CraftMarket/" + event_id + "/";});
+            })
+
+    </script>
+
 
 {% endblock %}

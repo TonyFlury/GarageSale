@@ -9,9 +9,9 @@
         <script>
             function cancel_motd() { document.location.replace( "{% url 'TeamPages:Root' %}" ) };
         </script>
-        <h2>
+        <h4>
             Edit Message of the Day {{form.instance.synopsis}}
-        </h2>
+        </h4>
         <form method="post">
             <table>
                 {%csrf_token%}

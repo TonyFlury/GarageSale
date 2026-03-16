@@ -9,19 +9,21 @@ Summary :
 Use Case :
     
     
-Testable Statements :
+Testable Statements:
     ...
 """
 from django.urls import path
 
-import GarageSale.views.template_views
 from . import views
 
 app_name = "CraftMarket"
 urlpatterns = [
-    path('<int:event_id>/', views.CraftMarketView.as_view(), name='List'),
+    path('', views.MarketEntryPoint.as_view(), name='EntryPoint'),
+    path('<int:event_id>/', views.MarketEntryPoint.as_view(), name='EntryPoint'),
+
+    path('<int:event_id>/', views.CraftMarketList.as_view(), name='List'),
     path('<int:event_id>/create/', views.MarketerCreate.as_view(), name='Create'),
-    path('<int:marketer>/view/', views.MarketerView.as_view(), name='View'),
+    path('<int:marketer>/view/', views.MarketerList.as_view(), name='View'),
     path('<int:marketer>/edit/', views.MarketerEdit.as_view(), name='Edit'),
     path('<int:marketer>/confirm/', views.MarketerConfirm.as_view(), name='Confirm'),
     path('<int:marketer>/invite/', views.MarketerInvite.as_view(), name='Invite'),

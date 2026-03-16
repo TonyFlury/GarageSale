@@ -1,5 +1,5 @@
 {% if motd %}
-    {{ motd.content.html | safe }}
+    {{ motd.content | safe }}
 {% else %}
     <p>Nothing to say</p>
 {% endif %}

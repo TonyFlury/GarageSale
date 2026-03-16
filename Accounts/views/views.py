@@ -12,6 +12,7 @@ from django.db.models import F, Count, Exists, QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
+from django.templatetags.static import static
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import ListView
@@ -30,18 +31,26 @@ from datetime import datetime
 import logging
 
 from Accounts.views.reports import FlexibleReport, YearlyReport
+from TeamPageFramework.entry_point import register, EntryPointMixin
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 expected_fields = ['Transaction Date','Sort Code','Account Number','Transaction Description','Debit Amount','Credit Amount','Balance','Category']
 
+entry_point = register( 'Finances', 'Account:EntryPoint',
+            static('Accounts/images/icons/navigation/money-bag-pound-svgrepo-com.svg'),
+                        'Accounts.view_account', needs_event=False)
+def EntryPoint(request):
+    return TemplateResponse(request, 'entry_point.html')
+
+register('Upload Transactions', 'Account:upload_transactions', static('Accounts/images/icons/navigation/upload-svgrepo-com.svg'), 'Accounts.upload_transaction', False, 'AccountsEntryPoint')
 @login_required( redirect_field_name='next', login_url=reverse_lazy('user_management:login') )
 @permission_required('Accounts.upload_transaction', raise_exception=True)
 def upload_transactions(request):
     if request.method == 'GET':
         form = Upload()
-        return TemplateResponse(request, 'upload_transactions.html', {'form': form})
+        return TemplateResponse(request, 'Transactions/upload_transactions.html', {'form': form, 'data_type': 'transactions', 'action': 'upload'})
     elif request.method == 'POST':
         form = Upload(request.POST, request.FILES)
         if form.is_valid():
@@ -63,7 +72,7 @@ def upload_transactions(request):
             # Check for expected fields
             if missing:
                 form.add_error('file', f'Missing columns {','.join(missing)} in {file.name}')
-                return TemplateResponse(request, 'upload_transactions.html', {'form': form})
+                return TemplateResponse(request, 'Transactions/upload_transactions.html', {'form': form})
 
             data = list(transactions)
 
@@ -75,11 +84,11 @@ def upload_transactions(request):
             existing = Transaction.objects.filter(account=account, transaction_date__range=(first_date,last_date)).exists()
             if existing:
                 form.add_error('file', f'Transactions already uploaded for {account.bank_name} between {first_date.strftime('%d/%m/%Y')} and {last_date.strftime('%d/%m/%Y')}')
-                return TemplateResponse(request, 'upload_transactions.html', {'form': form})
+                return TemplateResponse(request, 'Transactions/upload_transactions.html', {'form': form})
 
             if not data :
                 form.add_error('file', f'No new transactions found in {file.name}')
-                return TemplateResponse(request, 'upload_transactions.html', {'form': form})
+                return TemplateResponse(request, 'Transactions/upload_transactions.html', {'form': form})
 
             # Check for out-of-order insertion.
             # We know there is no overlap - so we need to identify the right number to start from
@@ -126,26 +135,31 @@ def upload_transactions(request):
                                                        error_message= f'Unknown category {category}')
 
                 if history_inst.errors.count():
-                    return redirect(reverse('Account:UploadErrorList', kwargs={'account_id':account.id, 'upload_id':history_inst.pk}))
+                    return redirect(reverse('Account:UploadErrorList', kwargs={'account_id':account.id, 'upload_id':history_inst.pk, 'data_type': 'transactions', 'action': 'uploadErrors'}))
 
-            return redirect(reverse('Account:TransactionList', kwargs={'account_id':account.id}))
+            return redirect(reverse('Account:TransactionList', kwargs={'account_id':account.id, 'data_type': 'transactions', 'action': 'list'}))
         else:
-            return TemplateResponse(request, 'upload_transactions.html', {'form': form})
+            return TemplateResponse(request, 'Transactions/upload_transactions.html', {'form': form, 'data_type': 'transactions', 'action': 'upload'})
     else:
         raise Exception('Invalid request method')
 
 
-class UploadErrorList(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class UploadErrorList(EntryPointMixin, LoginRequiredMixin, PermissionRequiredMixin, ListView):
     login_url = reverse_lazy('user_management:login')
     redirect_field_name = 'next'
     permission_required = 'Accounts.view_uploadhistory'
-    template_name = 'upload_errors.html'
-
+    template_name = 'Transactions/upload_errors.html'
+    entry_point_url = 'Account:UploadErrorList'
+    entry_point_label = 'Upload Errors'
+    entry_point_permission = 'Accounts.view_uploadhistory'
+    entry_point_icon = static('Accounts/images/icons/navigation/upload_error-svgrepo-com.svg')
+    entry_point_nav_page = 'AccountsEntryPoint'
+    entry_point_needs_event = False
     def get_queryset(self):
         return UploadError.objects.all()
 
     def get_context_data( self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+        context = super().get_context_data(*args, **kwargs) | {'data_type': 'transactions', 'action': 'uploadErrors'}
         account_selected = self.kwargs.get('account_id', None)
         upload_selected = self.kwargs.get('upload_id', None)
         context |= {'accounts' : Account.objects.all(),
@@ -171,13 +185,19 @@ class UploadErrorList(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         else:
             return UploadHistory.objects.none()
 
-class TransactionList(LoginRequiredMixin, UserPassesTestMixin, ListView):
+class TransactionList(EntryPointMixin,LoginRequiredMixin, UserPassesTestMixin, ListView):
     login_url = reverse_lazy('user_management:login')
     redirect_field_name = 'next'
     model = Transaction
-    template_name = 'transaction_list.html'
+    template_name = 'Transactions/transaction_list.html'
     paginate_by = 10
     paginate_orphans = 3
+    entry_point_url = 'Account:TransactionList'
+    entry_point_label = 'Transaction List'
+    entry_point_permission = 'Accounts.view_transaction'
+    entry_point_icon = static('Accounts/images/icons/navigation/list-svgrepo-com.svg')
+    entry_point_nav_page = 'AccountsEntryPoint'
+    entry_point_needs_event = False
 
     def test_func(self):
         user = self.request.user
@@ -220,19 +240,25 @@ class TransactionList(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return self._add_splittable_flag(qs)
 
     def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+        context = super().get_context_data(*args, **kwargs) | {'data_type': 'transactions', 'action': 'list'}
         account_id = self.kwargs.get('account_id')
         if not account_id:
             return context | {'account_selection': None, 'accounts': Account.objects.all() }
         return context | {'account_selection':account_id,  'accounts': Account.objects.all(), 'years':self.get_yearset(), 'year_selected':self.request.GET.get('year','')}
 
-class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
+class FinancialReport(EntryPointMixin, LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = reverse_lazy('user_management:login')
     redirect_field_name = 'next'
     permission_required = 'Accounts.report_transaction'
     template_name = ''
     summary = ''
     download_name = ''
+    entry_point_url = 'Account:report'
+    entry_point_label = 'Reports'
+    entry_point_permission = 'Accounts.report_transaction'
+    entry_point_icon = static('Accounts/images/icons/navigation/report-svgrepo-com.svg')
+    entry_point_nav_page = 'AccountsEntryPoint'
+    entry_point_needs_event = False
 
     def __init__(self):
         super().__init__()
@@ -248,13 +274,13 @@ class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
         report_classes = {'year': YearlyReport, 'flexible': FlexibleReport}
 
         # Populate the Accounts list
-        report_context = { 'accounts': Account.objects.all()}
+        report_context = { 'accounts': Account.objects.all(), 'data_type':'reports'}
         if account_id is None:
-            return TemplateResponse(request, 'reports.html', report_context)
+            return TemplateResponse(request, 'Reports/reports.html', report_context)
         try:
             account = Account.objects.get(pk=account_id)
         except Account.DoesNotExist:
-            return TemplateResponse(request, 'reports.html', report_context)
+            return TemplateResponse(request, 'Reports/reports.html', report_context)
 
         # Populate report type information
         report_context |= {'account_selection': account_id}
@@ -262,14 +288,14 @@ class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
         report_context |= {'type': request.GET.get('type', None)}
 
         if not request.GET.get('type'):
-            return TemplateResponse(request, 'reports.html', report_context)
+            return TemplateResponse(request, 'Reports/reports.html', report_context)
 
         # Start building the report for this class
         report_class = report_classes.get(report_context['type'], None)
         if report_class:
             report_inst = report_class( report_context )
         else :
-            return TemplateResponse(request, 'reports.html', report_context)
+            return TemplateResponse(request, 'Reports/reports.html', report_context)
 
         # Augment the context with the view parameters for this report
         # The report class will add in extra values for the context if they are needed.
@@ -278,7 +304,7 @@ class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
         # validate that we have all the parameters that report needs.
         # If we have all the parameters then generate the actual report
         if not report_inst.validate_params():
-            return TemplateResponse(request, 'reports.html', report_inst.context)
+            return TemplateResponse(request, 'Reports/reports.html', report_inst.context)
         else:
             # We know that we have the data for this report type - so grab the data and render
             report_inst.get_report_data()
@@ -305,7 +331,7 @@ class FinancialReport(LoginRequiredMixin, PermissionRequiredMixin, View):
             report_context |= {'report': report}
 
 
-        return TemplateResponse(request, 'reports.html', report_inst.context | {'report': report})
+        return TemplateResponse(request, 'Reports/reports.html', report_inst.context | {'report': report})
 
     def save_to_google_drive(self, pdf: bytes | None, report_context: dict[str, QuerySet[Any, Any]], report_inst,
                              request: HttpRequest):

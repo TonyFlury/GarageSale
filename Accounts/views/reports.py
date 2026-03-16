@@ -89,7 +89,7 @@ class Report:
 
 
 class FinancialSummary(Report):
-    template_name = "yearly_report.html"
+    template_name = "Reports/yearly_report.html"
 
     def get_report_data(self):
         """Extract the base data from the database"""

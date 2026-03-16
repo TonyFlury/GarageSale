@@ -32,7 +32,8 @@ admin.site.register(Permission)
 
 
 @admin.register(MOTD)
-class MOTDAdmin(admin.ModelAdmin):
+class MOTDAdmin(SummernoteModelAdmin):
+    summernote_fields = ('content',)
     list_display = ['synopsis', 'use_from']
     date_hierarchy = 'use_from'
 

@@ -1,3 +1,60 @@
+div.category-list {
+    display: flex;
+    flex-flow: wrap;
+    margin-top: 2rem;
+    margin-left: 2rem;
+
+    div.tile {
+        --background: rgb(173, 216, 230);
+        position: relative;
+        flex: 0 1 auto;
+        width: 80px;
+        height: 80px;
+        margin: 0;
+        border: thin solid white;
+        border-radius: 10px;
+        font-size: 80%;
+        text-align: center;
+        padding-top: 1rem;
+        backdrop-filter: blur(3px);
+        box-shadow: 2px 2px 5px var(--background);
+        transition: width, height, margin-top, margin-bottom cubic-bezier(0.25, 1, 0.5, 1) 0.2s;
+        background: lightblue;
+        background: linear-gradient(135deg, rgba(from var(--background) r g b / 0.6) 0%, rgba(255, 255, 255, 0) 100%);
+
+        &:hover {
+            width: 100px;
+            height: 100px;
+            margin-top: -10px;
+            margin-bottom: -10px;
+        }
+
+        &:hover + div.tile,
+        &:has(+ .tile:hover) {
+            width: 90px;
+            height: 90px;
+            margin-top: -5px;
+            margin-bottom: -5px;
+        }
+
+        a,
+        a:hover,
+        a.active,
+        a.focus {
+            border-bottom: none;
+            text-decoration: none;
+        }
+
+        img {
+            position: absolute;
+            max-width: 50%;
+            max-height: 50%;
+            /* margin-top: 1rem; */
+            left: 25%;
+            bottom: 5px;
+        }
+    }
+}
 div.breadcrumb {
     position: relative;
     padding-bottom: 10px;
@@ -36,13 +93,26 @@ div.motd:after, div.choose-event:after, div.manage-news:after{
 }
 
 div.form {
- margin-top:1em;
+    margin-top:0.5rem;
+    padding: 0.5rem;
+    border: thin solid lightgray;
 }
 
 .buttons input {
-    box-shadow: 2px 2px 1px black;
-    padding-left: 5px;
+    --background: lightblue;
+    border: thin solid var(--background);
+    box-shadow: 2px 2px 3px lightblue;
+    padding: 1rem;
+    font-weight: bold;
+    border-radius: 10px;
     background: white;
+    backdrop-filter: blur(3px);
+    transition: box-shadow 0.25s ease-in-out;
+    background: linear-gradient(135deg, rgba(from var(--background) r g b ) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0) 100% );
+
+    &:hover {
+        box-shadow: inset 2px 2px 3px var(--background);
+    }
 }
 
 form label
@@ -356,6 +426,57 @@ tr.data-row td.icons span.icon img {
 	background: blue;
 	font-weight: bold;
 	text-align: center;
+}
+
+div.buttons {
+    width: 75%;
+    margin: 1rem auto;
+
+}
+
+div.flex-table {
+    display: flex;
+    flex-direction: column;
+    width: fit-content;
+    margin: auto;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+
+    a {
+        font-weight: normal;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    div.header,
+    div.row {
+        display: flex;
+        flex-direction: row;
+        padding-bottom: 0.25rem;
+        padding-top: 0.25rem;
+    }
+    div.header {
+        font-size: 120%;
+        font-weight: bold;
+        border-bottom: solid black;
+        border-bottom-style: double;
+    }
+
+    div.row {
+        border-bottom: thin dashed black;
+        &.odd {
+            background: lightblue;
+        }
+        &.even {
+            background: white;
+        }
+    }
+    div.cell,
+    span.cell{
+        min-width: 7rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        border-right: thin dashed black;
+    }
 }
 
 div.table, table{

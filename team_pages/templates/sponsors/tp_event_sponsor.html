@@ -10,7 +10,6 @@
     {%  endblock %}
 
 
-
 {% block SnappableSections %}
     <div class="snappable-section">
 <script>
@@ -25,6 +24,27 @@
     );
 </script>
 <input type="hidden" value="{{event_id}}" id="tp_event_id">
+
+    <div style="margin-bottom: 2rem">
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let event_select = document.getElementById("id_event");
+            event_select.addEventListener("change", function() {
+                const event_id = event_select.value;
+                window.location.href = `/team_page/sponsor/${event_id}/`;});
+            })
+        </script>
+        <div style="margin-bottom: 2rem">
+        <label for="id_event">Event:</label>
+        <select name="event" id="id_event">
+            {% for event in event_list %}
+                <option value="{{event.id}}" {% if event.id == event_id %}selected{% endif %}>{{event.event_date}}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    </div>
+
 <div id="id_article_list" class="sublist bordered">
     <div id="id_al_toolbar" class="actions">
         <ul>

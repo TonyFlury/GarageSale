@@ -42,7 +42,7 @@ logging.getLogger('loggingTools').addHandler(logging.NullHandler())
 class MOTD(models.Model):
     """Holder for Message of the Day"""
     use_from = models.DateField()
-    content = QuillField(default='')
+    content = models.TextField(default='')
     synopsis = models.CharField(max_length=256, null=True)
 
     @staticmethod
@@ -373,5 +373,3 @@ class CommunicationTemplate(models.Model):
         except Exception as e:
             logger.error(f'Could not send email for {self} for {context} - {e}')
             return None
-
-

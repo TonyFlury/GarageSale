@@ -1,0 +1,30 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block sidebar %}
+    {{ block.super }}
+
+{% endblock %}
+
+{% block SnappableSections %}
+
+    <div class="flex-table">
+        <div class="header">
+            <span class="cell">Synopsis</span>
+            <span class="cell">Use from</span>
+        </div>
+        {% for motd in motd_list %}
+            <a href="{% url "TeamPages:MotdView" motd_id=motd.id %}" >
+            <div class="row {% cycle 'odd' 'even' %}">
+                <span class="cell">{{motd.synopsis}}</span>
+                <span class="cell">{{motd.use_from}}</span>
+            </div>
+            </a>
+        {% endfor %}
+    </div>
+    <div class="buttons">
+        <input type="button" onclick='window.location = "{% url "TeamPages:MotdCreate" %}" ' value="Create New Message" >
+    </div>
+{% endblock %}

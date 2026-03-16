@@ -1,6 +1,7 @@
 import datetime
 
 from django import forms
+from django_summernote.widgets import SummernoteWidget
 
 from GarageSale.models import EventData, MOTD
 from Sponsors.models import Sponsor
@@ -26,7 +27,8 @@ class MotdForm(forms.ModelForm):
     class Meta:
         model = MOTD
         fields = '__all__'
-
+        widgets = {
+        'html_content': SummernoteWidget(attrs={'summernote': {'width': '100%', 'height': '300px'}}), }
 
 class NewsForm(forms.ModelForm):
     class Meta:
