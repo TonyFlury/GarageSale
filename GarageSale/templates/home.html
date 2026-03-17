@@ -1,4 +1,5 @@
 {% extends "_snap_slider_base.html" %}
+{% load garage_sale_data %}
 {% load static %}
 {% load user_management_tags %}
 {% load event_data_tags %}
@@ -13,7 +14,7 @@ Brantham Garage Sale - Home Page
     <div class="sidebar entry tooltip" item="home" id='home' xmlns="http://www.w3.org/1999/html">
         <img class="sidebar icon" alt="Back Home" id='id_home_icon' src={% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}>
         <label for="id_home_icon">Back Home</label>
-        <span class="tooltiptext arrow right">Go Back Home</span>
+        <span class="tooltiptext arrow right">Go Back to the top</span>
     </div>
 
     <div class="sidebar entry tooltip" item="involved" id='map' xmlns="http://www.w3.org/1999/html">
@@ -26,6 +27,12 @@ Brantham Garage Sale - Home Page
         <img class="sidebar icon" alt="How to Donate" id='id_donate' src={% static "GarageSale/images/icons/menu/pounds-coins-stack-svgrepo-com.svg" %}>
         <label for="id_donate">How to Donate</label>
         <span class="tooltiptext arrow right">How to Donate</span>
+    </div>
+
+    <div class="sidebar entry direct tooltip" item="{% url 'PrizeDraw' %}" xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Prize Draw" id='id_prizedraw' src={% static "GarageSale/images/icons/menu/tickets-svgrepo-com.svg" %}>
+        <label for="id_prizedraw">Prize Draw</label>
+        <span class="tooltiptext arrow right">Prize Draw Information</span>
     </div>
 
     <!--
@@ -57,7 +64,7 @@ Brantham Garage Sale - Home Page
         {% if perms.GarageSale.is_team_member %}
             <div class="sidebar entry direct tooltip" item="{% url 'TeamPages:Root' %}" xmlns="http://www.w3.org/1999/html">
             <a href="{% url 'TeamPages:Root' %}">
-                <img class="sidebar icon" alt="About Us" id='id_team' src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %}>
+                <img class="sidebar icon" alt="Team Pages" id='id_team' src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %}>
                 <label for="id_team">Team Access</label>
                 <span class="tooltiptext arrow right">Team Access</span></a>
             </div>
