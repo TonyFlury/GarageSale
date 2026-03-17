@@ -1,11 +1,16 @@
-<span class="category-list">
-    <ul>
+{% load static %}
+<div class="category-list">
     {% for category in category_list %}
-        {% if category.tag %}
-            <li><a href="{%url category.tag  event_id=event_id %}">{{category.friendly}}</a></li>
+        {% if category.url_path %}
+            <div class="tile ">
+                    <a href="{%url category.url_path %}">{{category.name}}
+                {%  if category.icon_path %}
+                        <img id='id_{{ category.name|slugify}}'  src="{{ category.icon_path }}" alt="{{category.name}}" />
+                {% endif %}
+                </a>
         {% else %}
-            <li>{{category.friendly}}</li>
+            {{category.name}}
         {% endif %}
+    </div>
     {% endfor %}
-    </ul>
-</span>
+</div>

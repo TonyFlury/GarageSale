@@ -5,7 +5,7 @@ from django.core.exceptions import BadRequest
 
 from GarageSale.models import EventData
 from CraftMarket.models import Marketer, MarketerState
-from team_pages.templatetags.team_page_tags import breadcrumb_by_event_header
+from team_pages.templatetags.team_page_tags import base_breadcrumb, generate_breadcrumbs
 
 register = template.Library()
 
@@ -34,13 +34,13 @@ def breadcrumb(context):
             except EventData.DoesNotExist:
                 raise BadRequest(f'Invalid event_id {event_id}')
         else:
-            event = None
-            event_id = None
+            event = context.request.current_event
+            event_id = event.id
     else:
         event = marketeer.event
         event_id = marketeer.event.id
 
-    content = breadcrumb_by_event_header(event=event)
+    content = base_breadcrumb(context)
 
     # ToDo - need to deal with more detailed breadcrumbs
 
@@ -51,5 +51,4 @@ def breadcrumb(context):
         case _:
             content.append({'Craft Market':'List'})
 
-    return format_html_join(' / ',
-                                '<a href="{}">{}</a>', ((v, k) for d in content for k, v in d.items()))
+    return generate_breadcrumbs(content)

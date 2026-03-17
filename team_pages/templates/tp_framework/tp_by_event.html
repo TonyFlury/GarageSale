@@ -53,6 +53,15 @@ across all relevant data.
     <input type="hidden" value="{{event_id}}" id="tp_event_id">
 {% endif %}
 
+    <div style="margin-bottom: 2rem">
+        <label for="id_event">Event:</label>
+        <select name="event" id="id_event">
+            {% for event in event_list %}
+                <option value="{{event.id}}" {% if event.id == event_id %}selected{% endif %}>{{event.event_date}}</option>
+            {% endfor %}
+        </select>
+    </div>
+
 <div id="id_item_list" class="sublist bordered">
     <!--ToDo - this span should be a div -->
     <span id="filter-pop-up">

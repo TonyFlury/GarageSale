@@ -1,5 +1,4 @@
 import logging
-from django.contrib.postgres.aggregates import ArrayAgg
 
 from django.core.exceptions import BadRequest
 from django.db import models
@@ -9,13 +8,13 @@ from django.template import Template, Context
 from django.template.response import TemplateResponse
 from django.templatetags.static import static
 from django.urls import reverse
-from django.utils.encoding import force_str
 from django.contrib.postgres.fields import ArrayField
 from django.views import View
 
 from django.db.models import Q, Case, When, Value, QuerySet, Max
 
 import CraftMarket.forms
+from TeamPageFramework.entry_point import register, EntryPointMixin
 from GarageSale.models import EventData, CommunicationTemplate
 from CraftMarket.models import Marketer, MarketerState
 from CraftMarket.forms import MarketerForm
@@ -27,12 +26,13 @@ from team_pages.framework_views import FrameworkView
 
 logger = logging.getLogger('CraftMarket.views')
 
+
 # Create your views here.
 
 #ToDo - prevent the need to repeat the full url for each action:
 # Remove the regex field from the toolbar and actions fields - impacts on framework.js too
 
-class CraftMarketView(FrameworkView):
+class CraftMarketList( FrameworkView):
     login_url = '/user/login'
     permission_required  = 'CraftMarket.suggest_marketer'
     template_name = "team_pages/craft_market.html"
@@ -67,6 +67,12 @@ class CraftMarketView(FrameworkView):
     url_fields = ['<int:event_id>', '<int:marketer_id>']
     url_base = 'CraftMarket'
     #allow_multiple = True
+
+    def get(self, request, event_id=None, **kwargs):
+        """Get the list of marketer records for the event"""
+        if event_id is None:
+            event_id = request.current_event.id
+        return super().get(request, event_id=event_id, **kwargs)
 
     def get_success_url(self, request, context=None, **kwargs):
         event_id = context.get('event_id')
@@ -170,14 +176,20 @@ class CraftMarketView(FrameworkView):
         context |= {'data_type': 'Marketer',
                     'event_id': kwargs.get('event_id', None),
                     'marketer_id': kwargs.get('marketer_id', None),
-                    'sub_list_data': self.get_list_query_set(request, **kwargs)}
+                    'sub_list_data': self.get_list_query_set(request, **kwargs),
+                    'event_list': EventData.objects.all().order_by('-event_date')}
         # Remove the 'templates button' if the user does not have the required permissions
         if not (request.user.has_perm('CraftMarket.edit_marketer') and request.user.has_perm('GarageSale.edit_communicationtemplate')):
             context['toolbar'] = [i for i in self.toolbar if i['action'] != 'templates']
         return context
 
+class MarketEntryPoint(EntryPointMixin, CraftMarketList):
+    entry_point_url = 'CraftMarket:EntryPoint'
+    entry_point_label = 'Craft Market'
+    entry_point_permission = 'CraftMarket.suggest_marketer'
+    entry_point_icon = static('GarageSale/images/icons/navigation/market-stand-svgrepo-com.svg')
 
-class MarketerCreate(CraftMarketView):
+class MarketerCreate(CraftMarketList):
     permission_required  = 'CraftMarket.suggest_marketer'
     template_name = "team_pages/craft_market_create.html"
     form_class = MarketerForm
@@ -198,7 +210,7 @@ class MarketerCreate(CraftMarketView):
         inst = self.model_class.objects.create(event=event, **form.cleaned_data)
         return inst
 
-class MarketerView(CraftMarketView):
+class MarketerList(CraftMarketList):
     template_name = "team_pages/craft_market_view.html"
     permission_required = 'CraftMarket.view_marketer'
 
@@ -215,14 +227,14 @@ class MarketerView(CraftMarketView):
                 f'Cannot view a record for a Craft Marketer without a valid marketer {kwargs.get("marketer")}')
         return Marketer.objects.get(id=kwargs.get('marketer'))
 
-class MarketerEdit(MarketerView):
+class MarketerEdit(MarketerList):
     template_name = "team_pages/craft_market_edit.html"
     permission_required = 'CraftMarket.change_marketer'
 
     def get(self, request, **kwargs):
         return super().get(request, **kwargs)
 
-class MarketerGenericStateChange(CraftMarketView):
+class MarketerGenericStateChange(CraftMarketList):
     template_name = "team_pages/craft_market_invite.html"
     permission_required = 'CraftMarket.change_marketer'
     view_base = "CraftMarket:List"

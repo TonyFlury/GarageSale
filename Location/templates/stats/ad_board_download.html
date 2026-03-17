@@ -1,0 +1,36 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load breadcrumb from location_data_tags %}
+
+{% block sidebar %}
+    {{ block.super }}
+{% endblock %}
+
+{% block breadcrumb %}
+    {% breadcrumb %}
+{% endblock %}
+
+{% block SnappableSections %}
+<script type="text/javascript">
+
+function downloadCSV() {
+        const event_select = document.getElementById("id_event")
+        let event = event_select.value
+        window.location.href = `/location/event/ad_board/download/${event}/`
+    }
+</script>
+    <div>
+        <h3>Download Ad-Board list (in CSV format)</h3>
+        <label for="id_event">Event:</label>
+        <select name="event" id="id_event">
+            {% for event in event_list %}
+                <option value="{{event.id}}" {% if event == request.current_event %}selected{% endif %}>{{event.event_date}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="buttons">
+        <input type="button" value="Download" onclick="downloadCSV()">
+    </div>
+
+{% endblock %}

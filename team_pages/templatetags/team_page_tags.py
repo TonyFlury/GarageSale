@@ -1,20 +1,30 @@
+from datetime import date
+
 from django import template
 from django.template.loader import render_to_string
 from django.utils.html import format_html_join, format_html
 from django.urls import reverse
-from django.core.exceptions import ObjectDoesNotExist, BadRequest
+from django.core.exceptions import BadRequest
+
+from TeamPageFramework.entry_point import get_entry_points
 from GarageSale.models import EventData, MOTD
 from News.models import NewsArticle
 from Sponsors.models import Sponsor
 from django.forms.boundfield import BoundField
 
-from collections import namedtuple
 import re
-from django.conf import settings
 
 numeric_test = re.compile(r"^\d+$")
 
 register = template.Library()
+
+@register.filter('is_past')
+def is_past(date_arg):
+    return date_arg < date.today()
+
+@register.filter('time_frame')
+def time_frame( date_arg, arg):
+    return arg.split(':')[0] if date_arg <= date.today() else arg.split(':')[1]
 
 @register.filter('is_icon')
 def is_icon(ob:BoundField):
@@ -72,7 +82,7 @@ def getattribute(value, arg):
 @register.simple_tag(  )
 def get_form_field( form_object, social):
     default = getattr(form_object.instance, social)
-    return format_html(f'<input type="url" name="{social}" id="id_{social}" value="{default}">',
+    return format_html('<input type="url" name="{social}" id="id_{social}" value="{default}">',
                        social=social,
                        default=default)
 
@@ -89,38 +99,48 @@ def replace(value, arg):
     return value.replace(what, to)
 
 def breadcrumb_by_event_header(event):
-    return  ([{'Team Page': reverse('TeamPages:Root')}] +
+    return  ( [{'Team Page': reverse('TeamPages:Root')}] +
              ([{event.event_date: reverse('TeamPages:EventRoot',
                                           kwargs={'event_id': event.id})}] if event else []))
 
-def motd_bread_crumb_segments(motd_id, action):
+def base_breadcrumb(context):
+    return [{'Team Page': reverse('TeamPages:Root')}]
+
+def motd_bread_crumb_segments(context):
     """Return a list of dictionaries for each item in the bread crumb trail
         where k : the friendly word to appear on the trail
               v : The url that link in the trail goes to
     """
+
+    action = context.get('action', None)
     try:
-        motd = MOTD.objects.get(pk=motd_id)
+        motd = MOTD.objects.get(id=context.get('motd_id', None))
     except MOTD.DoesNotExist:
         motd = None
 
-    match (motd_id, action):
-        case (None, _):
-            return [{'Team Page': reverse('TeamPages:Root')}]
-        case (None, 'create'):
+    match action:
+        case ('list'):
+            return [{'Team Page': reverse('TeamPages:Root')},
+                                {f'Message of the Day List': ''}]
+        case ('create'):
             return [{'Team Page': reverse('TeamPages:Root')},
                     {f'Create new MotD': ''}]
-        case (_, 'view'):
+        case ('view'):
             return [{'Team Page': reverse('TeamPages:Root')},
                     {f'View : {motd.synopsis}': ''}]
-        case (_, 'edit'):
+        case ('edit'):
             return [{'Team Page': reverse('TeamPages:Root')},
                     {f'Edit : {motd.synopsis}': ''}]
+        case _:
+            return [{'Team Page': reverse('TeamPages:Root')}]
 
-def event_breadcrumb_segments(event_id, action):
+def event_breadcrumb_segments(context):
     """Return a list of dictionaries for each item in the bread crumb trail
         where k : the friendly word to appear on the trail
               v : The url that link in the trail goes to
     """
+    event_id =  context.get('event_id', None)
+    action =  context.get('action', None)
     if event_id:
         try:
             event = EventData.objects.get(id = event_id)
@@ -131,27 +151,29 @@ def event_breadcrumb_segments(event_id, action):
 
     match (action, event_id):
         case (None, None):
-            return [{'Team Page': reverse('TeamPages:Root')}]
+            return []
         case ('create', _, ):
-            return [{'Team Page': reverse('TeamPages:Root')},
-                    {'Create Event': reverse('TeamPages:EventCreate')}]
+            return [{'Create Event': reverse('TeamPages:EventCreate')}]
         case ('edit',_):
-            return [{'Team Page': reverse('TeamPages:Root')},
-                    {event.event_date: reverse('TeamPages:EventRoot', kwargs={'event_id': event_id})},
+            return [{event.event_date: reverse('TeamPages:EventRoot', kwargs={'event_id': event_id})},
                     {'Edit': reverse('TeamPages:EventEdit', kwargs={'event_id': event_id})}]
         case ('view',_):
-            return [{'Team Page': reverse('TeamPages:Root')},
-                    {event.event_date: reverse('TeamPages:EventRoot',  kwargs={'event_id': event_id})},
+            return [{event.event_date: reverse('TeamPages:EventRoot',  kwargs={'event_id': event_id})},
                     {'Details': reverse('TeamPages:EventView',  kwargs={'event_id': event_id}) } ]
         case ('use',_):
-            return [{'Team Page': reverse('TeamPages:Root')},
-                    {event.event_date: reverse('TeamPages:EventRoot',  kwargs={'event_id': event_id}) },]
+            return [{event.event_date: reverse('TeamPages:EventRoot',  kwargs={'event_id': event_id}) },]
+        case ('list', _):
+            return [{'List': ''} ]
+        case (_, _):
+            return []
 
-def news_bread_crumb_segments(news_id, action):
+def news_bread_crumb_segments(context):
     """Return a list of dictionaries for each item in the bread crumb trail
         where k : the friendly word to appear on the trail
               v : The url that link in the trail goes to
     """
+    news_id = context.get('news_id', None)
+    action = context.get('action', None)
     try:
         news = NewsArticle.objects.get(pk=news_id)
     except NewsArticle.DoesNotExist:
@@ -159,26 +181,25 @@ def news_bread_crumb_segments(news_id, action):
 
     match (news_id, action):
         case (None, None):
-            return [{'Team Page': reverse('TeamPages:Root')},
-                    {'Manage News': ''}]
+            return [{'Manage News': ''}]
         case (None, 'create'):
-            return [{'Team Page': reverse('TeamPages:Root')},
-                    {'Manage News': reverse('TeamPages:News')},
+            return [{'Manage News': reverse('TeamPages:News')},
                     {f'Create NewsArticle': ''}]
         case (_, 'view'):
-            return [{'Team Page': reverse('TeamPages:Root')},
-                    {'Manage News': reverse('TeamPages:News')},
+            return [{'Manage News': reverse('TeamPages:News')},
                     {f'View : {news.headline}': ''}]
         case (_, 'edit'):
-            return [{'Team Page': reverse('TeamPages:Root')},
-                    {'Manage News': reverse('TeamPages:News')},
+            return [{'Manage News': reverse('TeamPages:News')},
                     {f'Edit : {news.headline}': ''}]
         case (_, 'delete'):
-            return [{'Team Page': reverse('TeamPages:Root')},
-                    {'Manage News': reverse('TeamPages:News')},
+            return [{'Manage News': reverse('TeamPages:News')},
                     {f'Deleting : {news.headline}': ''}]
 
-def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
+def sponsor_breadcrumb_segments( context):
+
+    event_id = context.get('event_id', None)
+    sponsor_id = context.get('sponsor_id', None)
+    action = context.get('action', None)
 
     if sponsor_id:
         sponsor = None
@@ -204,74 +225,56 @@ def sponsor_breadcrumb_segments( event_id, sponsor_id, action):
         event_id = sponsor.event.id
 
     match (action, sponsor_id, event_id):
+        case (None, None, None):
+            return [{f'Sponsors {context.get("current_event", None)}':''}]
         case (None, None, _):
-            return breadcrumb_by_event_header(event) + [{'Sponsors':''}]
+            return  [{f'Sponsors {event.event_date}':''}]
         case ('view', _, _):
-            return breadcrumb_by_event_header(event) + [
-                {'Sponsors': reverse('TeamPages:Sponsor', kwargs={'event_id':event_id}) },
+            return [
+                {f'Sponsors {event.event_date}': reverse('TeamPages:Sponsor', kwargs={'event_id':event_id}) },
                         {f'Viewing {sponsor.company_name}': ''}]
         case ('create', _, _):
-            return breadcrumb_by_event_header(event) + [
-                {'Sponsors': reverse('TeamPages:Sponsor', kwargs={'event_id':event_id}) },
+            return [
+                {f'Sponsors {event.event_date}': reverse('TeamPages:Sponsor', kwargs={'event_id':event_id}) },
                 {f'Creating new sponsorship lead': ''}]
         case ('edit', _, _):
-            return  breadcrumb_by_event_header(event) + [
-                {'Sponsors': reverse('TeamPages:Sponsor', kwargs={'event_id':event_id}) },
+            return  [
+                {f'Sponsors {event.event_date}': reverse('TeamPages:Sponsor', kwargs={'event_id':event_id}) },
                 {f'Editing {sponsor.company_name}': ''}]
         case('confirm', _, _):
-            return breadcrumb_by_event_header(event) + [
-                {'Sponsors': reverse('TeamPages:Sponsor', kwargs={'event_id': event_id})},
+            return [
+                {f'Sponsors {event.event_date}': reverse('TeamPages:Sponsor', kwargs={'event_id': event_id})},
                 {f'Confirming {sponsor.company_name}': ''}
             ]
-        case('delete', _, _):
-            return breadcrumb_by_event_header(event) + [
-                {'Sponsors': reverse('TeamPages:Sponsor', kwargs={'event_id': event_id})},
+        case('deleting', _, _):
+            return [
+                {f'Sponsors {event.event_date}': reverse('TeamPages:Sponsor', kwargs={'event_id': event_id})},
                 {f'Confirming {sponsor.company_name} deletion': ''}
             ]
         case(_,_,_,_):
-            return breadcrumb_by_event_header(event)
+            return []
 
 
-
+def generate_breadcrumbs(segments):
+    bread_crumb_format = '<a href="{}">{}</a>'
+    return format_html_join(' / ', bread_crumb_format,
+                            ((v,k) for data in segments for k,v in  data.items() ))
 
 @register.simple_tag(takes_context=True)
 def breadcrumb(context):
+    bread_crumb_format = '<a href="{}">{}</a>'
+    jump_table = {'news': news_bread_crumb_segments,
+                  'motd': motd_bread_crumb_segments,
+                  'event': event_breadcrumb_segments,
+                  'sponsor': sponsor_breadcrumb_segments}
+    segments = base_breadcrumb(context)
+
     # Fetch and normalise the URL components
 
     data_type = context.get('data_type', None)
-    action = context.get('action', None)
-
-    match data_type:
-        case 'news':
-            news_id = context.get('news_id', None)
-            return format_html_join(' / ',
-                                '<a href="{}">{}</a>',
-                                ((v, k) for d in news_bread_crumb_segments(news_id, action) for
-                                 k, v in d.items()))
-
-        case "motd":
-            motd_id = context.get('motd_id', None)
-            return format_html_join(' / ',
-                                    '<a href="{}">{}</a>',
-                                    ((v, k) for d in motd_bread_crumb_segments(motd_id, action) for
-                                     k, v in d.items()))
-        case 'event':
-            event_id = context.get('event_id', None)
-            return format_html_join(' / ',
-                                    '<a href="{}">{}</a>',
-                                    ((v, k) for d in event_breadcrumb_segments(event_id, action) for
-                                     k, v in d.items()))
-
-        case 'sponsor':
-            event_id = context.get('event_id', None)
-            sponsor_id = context.get('sponsor_id', None)
-            action = context.get('action',None)
-            return format_html_join(' / ',
-                                    '<a href="{}">{}</a>',
-                                    ((v, k) for d in sponsor_breadcrumb_segments(event_id, sponsor_id, action) for
-                                     k, v in d.items()))
-        case _:
-            return ''
+    if data_type:
+        segments += jump_table[data_type](context)
+    return generate_breadcrumbs(segments)
 
 
 @register.simple_tag(takes_context=True)
@@ -291,20 +294,8 @@ def choose_motd(context):
     return content
 
 
-categoryItem = namedtuple('CategoryItem', 'friendly, tag')
-
-
 @register.simple_tag(takes_context=True)
-def categoryList(context):
-    c = [categoryItem('Sponsors', 'TeamPages:Sponsor'),
-         categoryItem('Statistics', 'TeamPages:EventStats'),
-         categoryItem('Ad-Board Applications', 'TeamPages:EventAdBoard')
-         ]
-    framework = settings.APPS_SETTINGS.get('team_pages',{})
-
-    for item, url in framework.items():
-        c.append(categoryItem(item, url))
-
+def categoryList(context, nav_page='TeamPage'):
     return render_to_string('__category_list.html',
-                            context={'category_list': c,
-                                     'event_id': context.get('event_id', None) } )
+                            context={'category_list': get_entry_points(user=context.request.user, nav_page=nav_page),
+                                     'event_id': context.get('event_id', context.request.current_event.id) } )

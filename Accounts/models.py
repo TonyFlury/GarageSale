@@ -53,6 +53,8 @@ class Account(models.Model):
     class Meta:
         ordering = ['bank_name']
     def __str__(self):
+        return self.bank_name
+    def __repr__(self):
         return f'{self.bank_name}\nSort Code : {self.sort_code}\nAcc #:{self.account_number}'
     def natural_key(self):
         return self.bank_name, self.sort_code, self.account_number

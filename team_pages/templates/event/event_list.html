@@ -1,0 +1,30 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block sidebar %}
+    {{ block.super }}
+
+{% endblock %}
+
+{% block SnappableSections %}
+
+    <div class="flex-table">
+        <div class="header">
+            <span class="cell">Event Date</span>
+            <span class="cell">Use from</span>
+        </div>
+        {% for event in event_list %}
+            <a href="{% url "TeamPages:EventView" event_id=event.id %}" >
+            <div class="row {% cycle 'odd' 'even' %}">
+                <span class="cell">{{event.event_date}}</span>
+                <span class="cell">{{event.use_from}}</span>
+            </div>
+            </a>
+        {% endfor %}
+    </div>
+    <div class="buttons">
+        <input type="button" onclick='window.location = "{% url "TeamPages:EventCreate" %}" ' value="Record New Event" >
+    </div>
+{% endblock %}

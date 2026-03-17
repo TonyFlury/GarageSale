@@ -1,0 +1,49 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+{% load breadcrumb from location_data_tags %}
+
+{% block sidebar %}
+    {{ block.super }}
+{% endblock %}
+
+{% block breadcrumb %}
+    {% breadcrumb %}
+{% endblock %}
+
+{% block SnappableSections %}
+
+    <script type="text/javascript">
+
+    function selected_event() {
+        const event_select = document.getElementById("id_event")
+        let event = event_select.value
+        window.location.href = `/location/stats/${event}/`
+    }
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("id_event").addEventListener("change", selected_event)
+        });
+    </script>
+    <div class="bordered" style="padding-left:1rem;padding-right:1rem;padding-bottom:1rem;">
+        <h2>Basic event statistics</h2>
+        <label for="id_event">Event:</label>
+        <select name="event" id="id_event">
+            {% for event in event_list %}
+                <option value="{{event.id}}" {% if event.id == event_id %}selected{% endif %}>{{event.event_date}}</option>
+            {% endfor %}
+        </select>
+        <div>
+            {% for entry, plot in stats.items %}
+                <h3>{{entry}}</h3>
+                {% if plot %}
+                    {% autoescape off %}
+                    {{plot|safe}}
+                    {% endautoescape %}
+                {% else %}
+                    No data for the selected event
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

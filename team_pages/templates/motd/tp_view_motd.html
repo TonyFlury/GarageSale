@@ -4,21 +4,19 @@
 {% load team_page_tags %}
 
 {% block SnappableSections %}
-    <div class="form">
-        <h2>Editing Message of the Day : {{form.instance.synopsis }}</h2>
         <script>
             function edit_event() { document.location.replace( "{% url 'TeamPages:MotdEdit' motd_id %}");}
         </script>
-        <div>
+        <div style="width: 80%; margin: 0 auto;">
+            <h4>Editing Message of the Day : {{form.instance.synopsis }}</h4>
             <div class="motd_content">
-                {{form.instance.content.html | safe }}
+                {{form.instance.content | safe }}
             </div>
             <div class="use_from_date">
                Used from {{form.instance.use_from|date:"D, jS M Y" }}
             </div>
         </div>
-        <span class="buttons">
-            <input type="button" id="id_MotdEdit" onclick="edit_event()" value="Edit">
-        </span>
-    </div>
+        <div class="buttons">
+            <input type="button" id="id_MotdEdit" onclick="document.location = '{% url 'TeamPages:MotdEdit' motd_id %}'" value="Edit">
+        </div>
 {% endblock %}

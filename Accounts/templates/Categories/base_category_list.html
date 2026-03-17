@@ -1,0 +1,143 @@
+{% extends "accounts_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load team_page_tags %}
+
+{% block Title %}
+    Brantham Garage Sale - Categories
+{% endblock %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'team_pages/styles/team_page.css' %}" xmlns="http://www.w3.org/1999/html">
+    <link rel="stylesheet" href="{% static 'Accounts/styles/transaction_list.css' %}" xmlns="http://www.w3.org/1999/html">
+    <link rel="stylesheet" href="{% static 'Accounts/styles/financialyear.css' %}" xmlns="http://www.w3.org/1999/html">
+
+    <style>
+    .flex-table {
+        margin: auto;
+    }
+
+    .flex-row.child {
+        background-color: #f0f0f0;
+    }
+    .flex-cell.expand_collapse{
+        width: 30px;
+            content:'';
+        &.collapsed {
+            background: url({% static 'Accounts/images/icons/arrowtriangle-right-fill-svgrepo-com.svg' %}) no-repeat center;
+            background-size: 18px 18px;
+        }
+        &.expanded {
+            background:  url({% static 'Accounts/images/icons/arrowtriangle-down-fill-svgrepo-com.svg' %}) no-repeat center;
+            background-size: 18px 18px;
+        }
+    }
+    .flex-row.child {
+        display: none;
+        font-style: italic;
+    }
+
+    div.notes {
+        margin: auto;
+        width: 95%;
+        margin-top: 2rem;
+        border: thin solid black;
+        border-radius: 10px;
+        padding:0.5rem;
+    }
+    </style>
+{% endblock %}
+
+{% block SnappableSections %}
+
+    <script>
+
+    function expand_collapse_element_clicked(event) {
+        const element = event.target
+        const parent = element.parentElement
+        const children = document.getElementsByClassName("child")
+        if (element.classList.contains("collapsed")) {
+            element.classList.remove("collapsed")
+            element.classList.add("expanded")
+            for (const child of children) {
+                if (child.getAttribute('parent') === parent.getAttribute('name'))
+                    child.style.display = "flex"
+            }
+        }
+            else {
+                element.classList.remove("expanded")
+                element.classList.add("collapsed")
+                for (const child of children) {
+                if (child.getAttribute('parent') === parent.getAttribute('name'))
+                        child.style.display = 'none'
+            }
+        }
+    }
+
+    function startup() {
+        const expand_collapse_elements = document.getElementsByClassName("expand_collapse")
+        for (const element of expand_collapse_elements) {
+            element.addEventListener("click", expand_collapse_element_clicked)
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", startup);
+    </script>
+
+        <h2>Transaction Categories</h2>
+     <div class="flex-table">
+            <div class="flex-row">
+            <span class="flex-cell expand_collapse header"></span>
+            <span class="flex-cell header">Category</span>
+            <span class="flex-cell header">Type</span>
+            </div>
+            {% for category in categories|dictsort:'category_name'|dictsort:'credit_debit' %}
+                {% comment %}
+<!--                <a href="{% url "Account:FinancialYearDetail" fy=year.year%}" > -->
+{% endcomment %}
+                    <div  class="flex-row {% cycle 'odd' 'even' %}" name='{{ category.category_name }}'
+                        {% ifchanged category.credit_debit %}style="border-top:2px solid black;"{% endifchanged %}>
+
+                    {% if category.children.count == 0 %}
+                        <span class="flex-cell expand_collapse"></span>
+                    {% else %}
+                        <span class="flex-cell expand_collapse collapsed"></span>
+                    {% endif %}
+                     <span class="flex-cell">{{ category.category_name }}</span>
+                     <span class="flex-cell">
+                         {% if category.credit_debit  == 'C'%}
+                            Credit
+                         {% else %}
+                            Debit
+                         {% endif %}
+                     </span>
+                 </div>
+                {% for child in category.children.all|dictsort:'category_name'%}
+                    <div  class="flex-row child" name='{{ child.category_name }}' parent='{{ category.category_name }}'>
+                        <span class="flex-cell expand_collapse"></span>
+                        <span  class="flex-cell">{{ child.category_name }}</span>
+                        <span class="flex-cell"></span>
+                    </div>
+                {% endfor %}
+<!--                </a> -->
+            {% endfor %}
+     {% comment %}
+<!--
+     <div class="buttons">
+         <input type="button" onclick='window.location = "{% url "Account:FinancialYearCreate" %}" ' value="Create New Record" >
+     </div> -->
+
+     {% endcomment %}
+     </div>
+
+     <div class="notes">
+     The above table displays the current list of categories that can be used to group transactions for reporting purposes.
+         <p>
+         The categories in normal font can be used for the transactions at the time they are uploaded.
+         <p>
+         The child categories in italics can only be used to add extra details to the transactions, for extra reporting.
+     </div>
+
+{% endblock %}

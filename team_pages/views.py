@@ -6,18 +6,21 @@ from django.forms import fields
 from django.core import exceptions
 from django.core.exceptions import BadRequest
 from django.db.models import Q
-from django.shortcuts import redirect, reverse
+from django.shortcuts import redirect, reverse, render
+from django.templatetags.static import static
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.template.response import TemplateResponse
 from django.views import View
 from django.http import HttpResponseServerError, HttpResponse
 from django.contrib.admin.widgets import AdminDateWidget
+from django.views.generic import DetailView
 
 from News.models import NewsArticle
 from News.views import publish_news
 from Sponsors.models import Sponsor
 from GarageSale.models import MOTD, EventData
+from TeamPageFramework.entry_point import EntryPointMixin, register
 from .forms import NewsForm, MotdForm, EventForm, SponsorForm
 from Sponsors.views import social_media_items
 from abc import abstractmethod
@@ -26,6 +29,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+register('Google Drive', 'TeamPages:GoogleDriveEntryPoint',
+                       static('GarageSale/images/icons/navigation/network-drive-svgrepo-com.svg'),
+         permission='GarageSale.is_team_member', needs_event=False)
+def GoogleDriveEntryPoint(request):
+    return TemplateResponse(request, template='GoogleDrive.html')
 
 def PublishNews(request, news_id):
     publish_news(request, news_id)
@@ -336,6 +346,14 @@ class MotDBase(CombinedView):
         return NotImplemented
 
 
+register('Message of the Day', 'TeamPages:MOTDList', icon_path=static('GarageSale/images/icons/navigation/motd-svgrepo-com.svg'),
+            permission='GarageSale.view_motd', needs_event=False)
+def MOTD_list(request):
+    return render( request,
+                   'motd/motd_list.html',
+                   context={'motd_list': MOTD.objects.all().order_by('-use_from'),
+                            'data_type': 'motd', 'action': 'list'})
+
 class MotDView(MotDBase):
     permission_required = ["GarageSale.view_motd"]
     template_name = 'motd/tp_view_motd.html'
@@ -390,6 +408,12 @@ def delete_motd(request, motd_id=None):
     return redirect(reverse('TeamPages:Root'))
 
 
+register('Events', 'TeamPages:EventList',
+         icon_path=static('GarageSale/images/icons/navigation/calendar-date-event-svgrepo-com.svg'),
+         needs_event=False, permission='GarageSale.view_eventdata')
+def event_list(request):
+    return render(request, 'event/event_list.html', context={'event_list': EventData.objects.all().order_by('-event_date'), 'data_type': 'event', 'action': 'list'})
+
 class EventBase(CombinedView):
     permission_required = ["GarageSale.view_event"]
     template_name = 'motd/tp_view_event.html'
@@ -420,6 +444,7 @@ class EventBase(CombinedView):
         except EventData.DoesNotExist:
             raise BadRequest('Invalid event_id {event_id} for viewing')
         return instance
+
 
 
 class EventView(EventBase):
@@ -480,7 +505,7 @@ class TeamPage(LoginRequiredMixin, View):
 
     def get(self, request, event_id=None):
         context = {'event_id': event_id}
-        return TemplateResponse(request, 'team_page.html', context=context)
+        return TemplateResponse(request, 'navigation.html', context=context)
 
 
 class SponsorsRoot(CombinedView):
@@ -511,6 +536,7 @@ class SponsorsRoot(CombinedView):
                     values("id", "company_name", "confirmed").order_by("creation_date").all(),
                     'data_type': 'sponsor',
                     'event_id': event_id,
+                    'event_list': EventData.objects.all().order_by('-event_date'),
                     'sponsor_id': sponsor_obj.id if sponsor_obj else None,
                     'action': None,
                     'socials': social_media_items(),
@@ -527,6 +553,15 @@ class SponsorsRoot(CombinedView):
     def get_object(self, request, **kwargs):
         return None
 
+class SponsorEntryPoint(EntryPointMixin, SponsorsRoot):
+    entry_point_url = 'TeamPages:SponsorEntryPoint'
+    entry_point_label = 'Sponsors'
+    entry_point_permission = 'Sponsors.view_sponsor'
+    entry_point_icon = static('GarageSale/images/icons/navigation/sponsors-svgrepo-com.svg')
+
+    def get(self, request, event_id=None):
+        event_id = event_id or request.current_event.id
+        return super().get(request, event_id=event_id)
 
 class SponsorCreate(SponsorsRoot):
     template_name = 'sponsors/tp_create_sponsor.html'
@@ -606,20 +641,3 @@ class SponsorDelete(SponsorView):
         model_instance.delete()
         return False
 
-
-def ad_board_csv(request, event_id):
-    event = EventData.objects.get(id = event_id)
-    qs = Location.objects.filter(event=event).filter(ad_board=True)
-    ts = datetime.datetime.now().isoformat()
-
-    response = HttpResponse(content_type='text/csv',
-                            headers={"Content-Disposition": f'attachment; filename="advert_boards_{ts}.csv"'},)
-
-    writer=csv.writer(response)
-    writer.writerow(['Name', 'Address', 'Postcode', 'Phone'])
-    for entry in qs:
-        writer.writerow([f'{entry.user.full_name()}',
-                         f'{entry.full_address()}',
-                         f'{entry.postcode}',
-                         f'{entry.user.phone}'])
-    return response

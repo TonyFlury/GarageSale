@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+
+<svg
+   fill="#000000"
+   width="800px"
+   height="800px"
+   viewBox="0 0 56 56"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="arrowtriangle-down-fill-svgrepo-com.svg"
+   inkscape:version="1.4.3 (fcd0343856, 2026-01-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.00375"
+     inkscape:cx="399.50187"
+     inkscape:cy="400"
+     inkscape:window-width="1864"
+     inkscape:window-height="1011"
+     inkscape:window-x="56"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <path
+     d="m 9.3672,11.7109 c 0,0.9375 0.3984,1.6875 0.8906,2.6719 L 24.8594,44.5 c 0.9844,1.9922 1.8984,2.625 3.1406,2.625 1.2422,0 2.1328,-0.6328 3.1172,-2.625 l 14.625,-30.1172 c 0.4922,-1.0078 0.8906,-1.7578 0.8906,-2.6953 0,-1.7344 -1.3125,-2.8125 -3.3515,-2.8125 L 12.7188,8.8984 c -2.0391,0 -3.3516,1.0782 -3.3516,2.8125 z"
+     id="path1" />
+</svg>

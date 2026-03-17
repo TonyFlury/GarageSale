@@ -14,14 +14,6 @@
     <link rel="stylesheet" href="{% static 'Accounts/styles/transaction_list.css' %}" xmlns="http://www.w3.org/1999/html">
 {% endblock %}
 
-{% block header %}
-<div  class="breadcrumb">
-    {% block breadcrumb %}
-        {% breadcrumb %}
-    {% endblock%}
-</div>
-{% endblock %}
-
 {% block PageScripts %}
     {{ block.super }}
     <script type="module" csrf="{{ csrf_token }}" src="{% static 'Accounts/js/transaction_list.js' %}"></script>
