@@ -32,6 +32,7 @@ urlpatterns = [
     path('about_us', TemplateView.as_view(template_name='aboutUs.html'), name='AboutUs'),
     path('contact', TemplateView.as_view(template_name='contact.html'), name='ContactUs'),
     path('privacy', TemplateView.as_view(template_name='privacy_policy.html'), name='Privacy'),
+    path('PrizeDraw/', TemplateView.as_view(template_name='PrizeDraw.html'), name='PrizeDraw'),
     path('blind_auction', TemplateView.as_view(template_name='blind_auction.html'), name='BlindAuction'),
     path('donate', TemplateView.as_view(template_name='donate.html'), name='Donate'),
     path('location/', include('Location.urls')),

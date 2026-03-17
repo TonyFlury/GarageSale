@@ -1,0 +1,84 @@
+{% extends "home.html" %}
+{% load static %}
+{% load user_management_tags %}
+{% load event_data_tags %}
+
+{% block PageStyles %}
+    <style>
+    div.info_column {
+        justify-self: left;
+        text-align: left ;
+        border: thin dashed gray;
+        border-radius: 10px;
+        margin:1rem;
+        padding:1rem;
+    h3 {
+        text-align: center;
+    }
+        .disclaimer {
+            text-align: center;
+            font-style: italic;
+            font-size: 80%;
+            background-color: lightgray;
+            padding: 0.5rem;
+            border-radius: 10px;
+        }
+    }
+</style>
+
+{% endblock %}
+
+{% block Title %}
+Brantham Garage Sale - Prize Draw
+{% endblock %}
+
+{% block sidebar %}
+    <!-- Do we need a cms ??? -->
+    <div class="sidebar entry direct tooltip" item="{% url 'home' %}" id='home' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Back Home" id='id_home_icon' src={% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}>
+        <label for="id_home_icon">Back Home</label>
+        <span class="tooltiptext arrow right">Go Back to Home Page</span>
+    </div>
+{% endblock %}
+
+{% block SnappableSections %}
+
+      <div class="card" card_name="PrizeDraw">
+    <h1>2026 Prize Draw</h1>
+      <div>
+          <div>
+          We are very pleased to announce the launch of our 2026 Prize Draw.  Tickets are available from Wednesday
+          25th March from a variety of places around the village. The tickets are only £1.00 each, and all proceeds
+          go into our 2026 fundraising campaign. The Draw will be made on Sunday 28th June - around 3pm outside Chloes
+          cafe in Brantham. Winners will be notified by 5th July.
+          </div>
+
+          <div style="display: flex; flex-direction:row;" >
+              <div class="info_column">
+                    <h3>List of Prizes</h3>
+                        <div class="disclaimer">
+                            This list of prizes is correct at the time of writing and may change as we collect more prizes.
+                        </div>
+                    <ol>
+                        <li>A Voucher for a 1 hour Photostudio session and 1 8x6 photo of your choice
+                            with Barrett & Coe in Coggeshall.</li>
+                        <li>A DeLonghi Coffee Machine with a supply of pods from Curry's in Ipswich.</li>
+                        <li>A pamper hamper from City and Country in Manningree.</li>
+                        <li>A one hour voucher for water Equipment hire courtesy of Constable Park in Brantham.</li>
+                        <li>Take-away afternoon tea for two courtesy of Chloe's Cafe.</li>
+                    </ol>
+
+              </div>
+              <div class="info_column" style="flex-basis: 30%;">
+                  <h3>Ticket Sales Locations</h3>
+                  <ul>
+                      <li>19, Merriam Close, Brantham</li>
+                      <li>5, Browning Road, Brantham</li>
+                      <li>Chloe's Cafe, Acacia Court, Brantham.</li>
+                  </ul>
+              </div>
+          </div>
+      </div>
+  </div>
+
+{% endblock %}
