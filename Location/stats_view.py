@@ -56,6 +56,8 @@ def date_range(start_date, end_date):
 
 def create_plot( event_id,  _type:str=''):
 
+    event = EventData.objects.get(id=event_id)
+
     match _type:
         case 'ad_board':
             filter_conditions = {'ad_board': True}
@@ -75,6 +77,7 @@ def create_plot( event_id,  _type:str=''):
     if len(data) == 0:
         return None
 
+    last_date = data[0][value].date()
     total = 0
     for row in data:
         total += 1
@@ -82,6 +85,12 @@ def create_plot( event_id,  _type:str=''):
             running_total[row[value].date()] = total
         else:
             running_total[row[value].date()] += 1
+        last_date = row[value].date()
+
+    # Back fill the dates up to today only for current events.
+    if last_date <= date.today() <= event.event_date:
+        for d in date_range(last_date, date.today()):
+            running_total[d] = total
 
     fig, ax = plt.subplots()
     ax.set_ylim(bottom=0, top=total*1.1)
