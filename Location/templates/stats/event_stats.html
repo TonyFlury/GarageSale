@@ -4,6 +4,14 @@
 {% load team_page_tags %}
 {% load breadcrumb from location_data_tags %}
 
+{% block PageStyles %}
+    {{ block.super }}
+    <style>
+        .mpld3-xaxis text{ transform: translate(18px, 30px) rotate(45deg); }
+    </style>
+
+{% endblock %}
+
 {% block sidebar %}
     {{ block.super }}
 {% endblock %}

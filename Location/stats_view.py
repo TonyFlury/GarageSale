@@ -22,6 +22,8 @@ import csv
 
 import matplotlib
 import matplotlib.pyplot as plt, mpld3
+from matplotlib.ticker import MaxNLocator, NullLocator, MultipleLocator
+import matplotlib.dates as mdates
 
 register('Ad Board Applications', 'Location:EventAdBoard',
          static('GarageSale/images/icons/navigation/ad-board-svgrepo-com.svg'),
@@ -67,7 +69,7 @@ def create_plot( event_id,  _type:str=''):
         case 'sale':
             filter_conditions = {'sale_event': True}
             value = 'sale_timestamp'
-            title = 'open_sales_bookings'
+            title = 'Sales bookings'
             open_field = 'open_sales_bookings'
         case _:
             return None
@@ -76,6 +78,10 @@ def create_plot( event_id,  _type:str=''):
     data = Location.objects.filter(event__id = event_id, **filter_conditions).values(value).order_by(value)
     if len(data) == 0:
         return None
+
+    # Prefill from the booking opening date to the date of the first entry
+    for d in date_range(getattr(event, open_field), data[0][value].date()):
+        running_total[d] = 0
 
     last_date = data[0][value].date()
     total = 0
@@ -93,15 +99,27 @@ def create_plot( event_id,  _type:str=''):
             running_total[d] = total
 
     fig, ax = plt.subplots()
-    ax.set_ylim(bottom=0, top=total*1.1)
     fig.set_size_inches(6,3)
     ax.plot(running_total.keys(), running_total.values())
 
     ax.set_title(title)
+    ax.set_ylim(bottom=0)
+    ax.yaxis.set_major_locator(MultipleLocator(1))
+    ax.yaxis.set_minor_locator(NullLocator())
     ax.set_ylabel('Number of applications')
     ax.set_xlabel('Date')
-    ax.grid(True)
-    fig.subplots_adjust(bottom=0.2)
+    ax.set_xlim(left=getattr(event, open_field), right=date.today())
+    ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=0, interval=7))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
+    ax.xaxis.set_minor_locator(mdates.DayLocator())
+    ax.tick_params(axis='x', which='minor', length=3)
+    ax.tick_params(axis='x', which='major', length=6)
+    ax.grid(True, which='major', axis='x', linestyle='-', alpha=0.4)
+    ax.grid(True, which='minor', axis='x', linestyle=':', alpha=0.7)
+    ax.grid(True, which='major', axis='y', linestyle='-', alpha=0.4)
+    plt.setp(ax.get_xticklabels(), rotation=30, ha='right')
+    fig.autofmt_xdate()
+    fig.savefig('/home/tony/event_stats.png')
     return mpld3.fig_to_html(fig, no_extras=True)
 
 
