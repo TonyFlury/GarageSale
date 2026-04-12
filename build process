@@ -4,7 +4,7 @@ A new piece of work :
 2) git pull
 3) git checkout -b my-new-feature
 4) do development including testing
-5) catalog create
+5) catalog -f 'credentials_*/*' create
 6) Commit branch - including catalog.cat file
 
 7) CD to Clone
