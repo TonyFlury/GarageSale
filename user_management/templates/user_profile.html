@@ -1,0 +1,87 @@
+{% extends "_snap_slider_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block PageStyles %}
+<style>
+.member_image {
+    max-width: 200px;
+}
+div#user_profile {
+    width: 80%;
+}
+div#user_profile,
+div#user_profile > div {
+    margin: 1rem auto;
+}
+header { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;}
+
+div.buttons {
+    margin: 1rem auto;
+    width: fit-content;
+}
+.buttons input[type=button] {
+        --background: rgb(173, 216, 230);
+        --hover: rgb(121, 173, 194);
+        position: relative;
+        flex: 0 1 auto;
+        width: fit-content;
+        height: fit-content;
+        border: thin solid white;
+        border-radius: 10px;
+/*        font-size: 80%; */
+        font-weight: bold;
+        text-align: center;
+        padding: 1rem;
+        backdrop-filter: blur(3px);
+        box-shadow: 2px 2px 5px var(--background);
+        transition: background, box-shadow cubic-bezier(0.25, 1, 0.5, 1) 0.2s;
+        background: lightblue;
+        background: linear-gradient(135deg, rgba(from var(--background) r g b / 0.6) 0%, rgba(255, 255, 255, 0) 100%);
+
+        &:hover {
+            background: linear-gradient(135deg, rgba(from var(--hover) r g b / 0.8) 0%, rgba(255, 255, 255, 0) 100%);
+            box-shadow: inset 4px 4px 8px rgba( from var(--hover) r g b )
+        }
+}
+
+</style>
+
+{% endblock %}
+{% block Title %}
+Brantham Garage Sale - User Profile
+{% endblock %}
+
+{% block sidebar %}
+
+    <!-- Do we need a cms ??? -->
+    <div class="sidebar entry tooltip" item="home" id='home' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Back Home" id='id_home_icon' src={% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}>
+        <label for="id_home_icon">Back Home</label>
+        <span class="tooltiptext arrow right">Go Back Home</span>
+    </div>
+{%  endblock %}
+
+{% block SnappableSections %}
+    <div id="user_profile">
+    <header>
+        Profile for: {{ member_data.user.first_name }} {{ member_data.user.last_name }} - {{ member_data.role }}
+    </header>
+        {% if member_data.picture %}
+            <img src="{{ MEDIA_URL}}{{ member_data.picture }}" class="member_image" alt="Image of {{ member_data.user.first_name }}">
+        {% endif %}
+    <div id="bio">
+        {{ member_data.bio }}
+    </div>
+   <div class="contact">
+    Email : <a href="mailto:{{ member_data.user.email }}">{{ member_data.user.email }}</a>
+   </div>
+    <br>
+    Last updated: {{ member_data.updated_at }}
+    </div>
+    {%  if request.user.email == member_data.user.email %}
+        <div class="buttons">
+        <input type="button" onclick='window.location="{% url "user_management:profile_edit" member_data.team_member_id %}" ' value="Edit Profile">
+        </div>
+    {% endif %}
+{% endblock %}

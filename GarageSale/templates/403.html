@@ -1,14 +1,21 @@
-{% extends "_base_with_toolbar.html" %}
+{% extends "_snap_slider_base.html" %}
 {% load static %}
 {% load user_management_tags %}
 
 {% block head-extra %}
-    {% if redirect %}
         <meta http-equiv="refresh" content="10;url='/'" />
-    {% endif %}
 {% endblock%}
+{% block sidebar %}
 
-{% block body %}
+    <!-- Do we need a cms ??? -->
+    <div class="sidebar entry tooltip" item="home" id='home' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Back Home" id='id_home_icon' src={% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}>
+        <label for="id_home_icon">Back Home</label>
+        <span class="tooltiptext arrow right">Go Back to the top</span>
+    </div>
+{% endblock %}
+
+{% block SnappableSections %}
     <div class="msg">
     <h2>Permission denied</h2>
 

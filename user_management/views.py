@@ -7,7 +7,7 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.contrib.auth import login as login_user
-from django.http import HttpResponseServerError, HttpRequest
+from django.http import HttpResponseServerError, HttpRequest, Http404
 from django.core.mail import send_mail
 from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import redirect, reverse
@@ -15,14 +15,14 @@ from django.template.response import TemplateResponse
 from django.utils.html import escape
 from django.db import transaction
 from django.shortcuts import resolve_url
-from django.views.generic import View
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.views.generic import View, UpdateView
+from django.core.exceptions import ObjectDoesNotExist, ValidationError, PermissionDenied
 from django.contrib.auth import authenticate
 
 from . import forms
 from . import models
 from .models import RegistrationVerifier, GuestVerifier, PasswordResetApplication, UserVerification, UserExtended, \
-    AdditionalData
+    AdditionalData, TeamMember
 
 from .apps import appsettings, settings
 from django.contrib.auth import get_user_model, login, logout, update_session_auth_hash
@@ -732,3 +732,38 @@ class PasswordResetEnterNew(View):
         return TemplateResponse(request, 'generic_response.html',
                                 context={'msg': 'Your password has now been changed.',
                                          'next': next_url})
+
+class UserProfile(View):
+    def get(self, request, team_member_id=None):
+        if team_member_id:
+            try:
+                member_data = TeamMember.objects.get(team_member_id=team_member_id)
+            except TeamMember.DoesNotExist:
+                return HttpResponseServerError('Team member does not exist')
+        else:
+            if request.user.has_perm('GarageSale.is_team_member'):
+                member_data = TeamMember.objects.get_or_create(user=request.user,
+                                                           defaults={'user' : request.user})[0]
+            else:
+                raise PermissionDenied('You do not have permission to view this page')
+
+        print(member_data.bio)
+        return TemplateResponse(request, 'user_profile.html',
+                                context={'member_data': member_data})
+
+class UserProfileEdit(UpdateView):
+    model = TeamMember
+    template_name ='user_profile_edit.html'
+    context_object_name = 'member_data'
+    fields = ['role', 'picture', 'bio']
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object( *args, **kwargs)
+        return super().get(request, *args, **kwargs)
+
+    def get_object(self, *args, **kwargs):
+        member_id = self.kwargs.get('team_member_id', None)
+        try:
+            self.object = self.model.objects.get(team_member_id=member_id)
+        except self.model.DoesNotExist:
+            raise Http404(f"User does not exist, {member_id}")
+        return self.object

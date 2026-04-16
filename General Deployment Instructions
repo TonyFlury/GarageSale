@@ -43,4 +43,13 @@ if you have a new databse :
         values are from the google cloud console for the live test or deployment clients.
         Different values for test and live and development
 
+If you added a new dependency :
+    pip install <dependency name>
+
+    or if you changed a python version
+        deactivate
+        rm -rf /home/BranthamGarageSale/.virtualenvs/GarageSale2.0.5
+        mkvirtualenv -p /usr/bin/python3.12 -r requirements_deployment.txt --system-site-packages GarageSale2.0.5
+        activate GarageSale2.0.5
+
         Restart Server.

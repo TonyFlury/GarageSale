@@ -47,8 +47,9 @@ def register_form_link(redirect):
                                'redirect': redirect}
                        )
 
-
+# TODO - add data for team member profile links.
 @register.inclusion_tag("user_menu.html", name="User_menu", takes_context=True)
 def _user_menu(context, **links) -> dict:
-    return {'request': context.get('request')} | links
+    return {'request': context.get('request'),
+            'perms':context.get('perms')} | links
 
