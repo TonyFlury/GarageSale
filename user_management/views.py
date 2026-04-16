@@ -138,6 +138,7 @@ def resend_short_code(incoming_request, short_code_id=None):
     new_inst.reason_code='resend'
     new_inst.save()
 
+    logger.info(f'Resending code for {email!r} - with {new_inst.short_code!r} - email sent')
     send_guest_verification_email(incoming_request, email=email, short_code=new_inst, template=email_template)
 
     return redirect(reverse('user_management:input_short_code',
@@ -215,7 +216,7 @@ class GuestApplication(View):
                                       email=form.cleaned_data['email'],
                                       short_code=code,
                                       template=self.email_template)
-
+        logger.info(f'Guest Application - for {email!r} - with {code.short_code!r} instance {code.pk=} - email sent')
         return redirect(resolve_url('user_management:input_short_code', short_code_id=code.pk) + f'?next={next}')
 
 
@@ -230,12 +231,15 @@ class InputShortCode(View):
 
     def get(self, incoming_request, short_code_id):
         next = incoming_request.GET.get('next', '/')
+        logger.info(f'InputShortCode (GET method)- {short_code_id=}')
         try:
             code_inst = GuestVerifier.objects.get(pk=short_code_id)
         except GuestVerifier.DoesNotExist:
+            logger.error(f'Unknown {short_code_id=}')
             raise ObjectDoesNotExist(f'Received Invalid ShortCode pk {short_code_id} ')
 
         if code_inst.reason_code == 'resend':
+            logger.info(f'Resent code for {code_inst.email}')
             pre_form = 'A new code has been sent by email'
             code_inst.reason_code = ''
             code_inst.save()
@@ -243,7 +247,7 @@ class InputShortCode(View):
             pre_form = ""
 
         form = forms.InputShortCodeForm(data={'email': code_inst.email})
-
+        logger.info(f'InputShortCode - Prompting for short code for {code_inst.email=!r} instance {code_inst.pk=}')
         return TemplateResponse(request=incoming_request,
                                 template='ShortCodeInput.html',
                                 context={'form': form,
@@ -258,6 +262,7 @@ class InputShortCode(View):
     def post(self, incoming_request: HttpRequest, short_code_id):
         next = incoming_request.GET.get('next', '/')
 
+        logger.info(f'InputShortCode - Looking for the Guest verifier {short_code_id=}')
         try:
             code_inst = GuestVerifier.objects.get(pk=short_code_id)
         except GuestVerifier.DoesNotExist:
@@ -265,6 +270,7 @@ class InputShortCode(View):
 
         form = forms.InputShortCodeForm(data=incoming_request.POST)
         if not form.is_valid():
+            logger.info(f'InputShortCode - invalid form input {form.cleaned_data['short_code']=}')
             return TemplateResponse(request=incoming_request,
                                     template='ShortCodeInput.html',
                                     context={'form': form,
@@ -273,15 +279,18 @@ class InputShortCode(View):
                                              'obfuscated_email': self._obfuscate_email(code_inst)})
 
         if form.cleaned_data['email'] != code_inst.email:
+            logger.error(f'InputShortCode - email address in form doesn\'t match expected email from db {form.cleaned_data["email"]=!r} {code_inst.email=!r}')
             raise ValidationError(f'email address for guest request don\'t match')
 
         # The data matched - ie the forms is valid - check for expiry
         if code_inst.is_time_expired():
             code_inst.reason_code = 'expired'
             code_inst.save()
+            logger.error(f'InputShortCode - Guest verifier for {code_inst.email} has expired - {code_inst.expiry_timestamp=}')
             return redirect(resolve_url('user_management:guest_error', short_code_id=code_inst.pk) + f'?next={next}')
 
         if form.cleaned_data['short_code'] != code_inst.short_code:
+            logger.error(f'InputShortCode - Incorrect input - {form.cleaned_data['short_code']=!r} != {code_inst.short_code=!r}')
             code_inst.retry_count -= 1
             code_inst.save()
 
@@ -301,10 +310,13 @@ class InputShortCode(View):
                                                  'retry_count': code_inst.retry_count,
                                                  'max_retry': code_inst.max_retry}, )
             else:
+                logger.error(f'InputShortCode - Too many Incorrect inputs : expecting {code_inst.short_code=!r}')
                 code_inst.reason_code = 'entry_error'
                 code_inst.save()
                 return redirect(resolve_url('user_management:guest_error', short_code_id=code_inst.pk)
                                 + f'?next={next}')
+
+        logger.info(f'InputShortCode - Correct input - received {code_inst.short_code=!r} for {code_inst.pk=}')
 
         user_model:Type[UserExtended|AbstractBaseUser] = get_user_model()
         # The code is correct and no expired - redirect to the 'next' url
@@ -316,12 +328,14 @@ class InputShortCode(View):
 
         # Create a guest user account if necessary - allow a two hour time out on guest users
         if user_inst:
+            logger.info(f'InputShortCode - Existing user - marking them as verified so they can login - {code_inst.email=!r}')
             user_inst.is_verified=True
             try:
                 user_inst.save()
             except Exception as e:
                 raise e from None
 
+            logger.info(f'InputShortCode - Make the user logged in for 2 hours - {code_inst.email=!r}')
             login(request=incoming_request, user=user_inst)
             try:
                 incoming_request.session.set_expiry(timezone.now() + datetime.timedelta(hours=2))
@@ -331,6 +345,7 @@ class InputShortCode(View):
             GuestVerifier.add_guest_verifier(email=code_inst.email).delete()
 
         else:
+            logger.info(f'InputShortCode - Creating a guest user entry for - {code_inst.email=!r} and log them in for 2 hours')
             user = user_model.objects.create_guest_user(email=code_inst.email, is_verified=True)
             login(request=incoming_request, user=user)
             try:
