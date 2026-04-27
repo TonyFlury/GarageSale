@@ -172,7 +172,8 @@ class Marketer(models.Model):
         permissions = (("suggest_marketer", "Can suggest a marketeer"),
                        ("view_marketer", "Can view a marketeer"),
                        ("change_marketer", "Can edit a marketeer"),
-                       ("delete_marketer", "Can delete a marketeer"),)
+                       ("delete_marketer", "Can delete a marketeer"),
+                       )
 
     objects = MarketerManager()
     event: EventData = models.ForeignKey(EventData, related_name="CraftMarketeers", on_delete=models.CASCADE)

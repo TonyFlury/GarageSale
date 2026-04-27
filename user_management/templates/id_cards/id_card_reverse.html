@@ -1,0 +1,15 @@
+{% load qr_from_view qr_from_object from qr_tags %}
+
+     <div class="card reverse">
+         <div class="content">
+             <div id="blurb">
+                 The holder of this card is a volunteer for the <strong>Brantham&nbsp;Garage&nbsp;Sale</strong>.
+                 To confirm the Identification of the holder, you can scan the QR code to the right
+                 and confirm their details on the official website.
+             </div>
+             <div id="member_qr-code">
+                {% qr_from_object member_data %}
+                 <div class="inverse triangle up">Identify Me</div>
+             </div>
+         </div>
+     </div>

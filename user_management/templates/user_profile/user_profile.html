@@ -82,6 +82,7 @@ Brantham Garage Sale - User Profile
     {%  if request.user.email == member_data.user.email %}
         <div class="buttons">
         <input type="button" onclick='window.location="{% url "user_management:profile_edit" member_data.team_member_id %}" ' value="Edit Profile">
+        <input type="button" onclick='window.location="{% url "user_management:display_id_card" member_data.team_member_id %}" ' value="View ID Card">
         </div>
     {% endif %}
 {% endblock %}

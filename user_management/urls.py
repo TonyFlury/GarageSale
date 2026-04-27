@@ -33,4 +33,9 @@ urlpatterns = [
                 path('edit/', views.UserProfileEdit.as_view(), name='profile_edit')
             ])),
     ])),
+    path('id_cards/', views.TeamMemberIDCard.as_view(), name='team_member_id_cards'),
+
+    path('display/', include([
+        path('', views.display_id_card, name='display_id_card'),
+        path('<str:team_member_id>/', views.display_id_card, name='display_id_card') ]))
 ]

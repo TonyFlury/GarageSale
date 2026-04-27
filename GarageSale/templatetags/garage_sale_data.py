@@ -13,6 +13,8 @@ Testable Statements :
     ...
 """
 import datetime
+import itertools
+
 import logging
 
 from django.conf import settings
@@ -190,3 +192,14 @@ def render_widget(context, feature):
         'destination': destinations[feature],
         'text': text[feature],
     }
+
+@register.filter(name='chunk')
+def chunk_date(value, chunk_size):
+    clen = int(chunk_size)
+    i = iter(value)
+    while True:
+        chunk = list(itertools.islice(i, clen))
+        if chunk:
+            yield chunk
+        else:
+            break

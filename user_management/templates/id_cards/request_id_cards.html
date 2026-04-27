@@ -1,0 +1,151 @@
+{% extends "_snap_slider_base.html" %}
+{% load static %}
+{% load user_management_tags %}
+
+{% block PageScripts %}
+    {{ block.super }}
+    <script src='/admin/jsi18n/'></script>
+    <script type="text/javascript" src="{% static 'user_management/js/Selections.js' %}"></script>
+
+{% endblock %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'admin/css/widgets.css' %}" />
+        <link rel="stylesheet" href="{% static 'admin/css/base.css' %}" />
+
+    <style xmlns="http://www.w3.org/1999/html">
+
+        header {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        div.buttons {
+            margin: 1rem auto;
+            width: fit-content;
+        }
+
+        a:hover {border:none;}
+
+        .buttons input[type=submit] {
+            --background: rgb(173, 216, 230);
+            --hover: rgb(121, 173, 194);
+            position: relative;
+            flex: 0 1 auto;
+            width: fit-content;
+            height: fit-content;
+            border: thin solid white;
+            border-radius: 10px;
+            /*        font-size: 80%; */
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            padding: 1rem;
+            backdrop-filter: blur(3px);
+            box-shadow: 2px 2px 5px var(--background);
+            transition: background, box-shadow cubic-bezier(0.25, 1, 0.5, 1) 0.2s;
+            background: lightblue;
+            background: linear-gradient(135deg, rgba(from var(--background) r g b / 0.6) 0%, rgba(255, 255, 255, 0) 100%);
+
+            &:hover {
+                background: linear-gradient(135deg, rgba(from var(--hover) r g b / 0.8) 0%, rgba(255, 255, 255, 0) 100%);
+                box-shadow: inset 4px 4px 8px rgba(from var(--hover) r g b)
+            }
+        }
+
+ h2 {
+	margin: 0;
+	padding: 8px;
+	font-weight: 400;
+	font-size: 0.8125rem;
+	text-align: left;
+	background: var(--header-bg);
+	color: var(--header-link-color);
+}
+
+ .selector input[type=text], .selector select { box-shadow: none; }
+
+ .selector-available h2, .selector-chosen h2 {
+	border: 1px solid var(--border-color);
+	border-radius: 4px 4px 0 0;
+}
+ p#id_members_filter {
+     display: none;
+ }
+    </style>
+{% endblock %}
+
+{% block Title %}
+    Brantham Garage Sale - User Profile
+{% endblock %}
+
+{% block sidebar %}
+
+    <!-- Do we need a cms ??? -->
+    <div class="sidebar entry tooltip" item="home" id='home' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Back Home" id='id_home_icon'
+             src={% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}>
+        <label for="id_home_icon">Back Home</label>
+        <span class="tooltiptext arrow right">Go Back Home</span>
+    </div>
+{% endblock %}
+
+{% block SnappableSections %}
+    <header>
+        Generate ID cards
+    </header>
+    <form method="post">
+
+        {% csrf_token %}
+
+        <div class="related-widget-wrapper" data-model-ref="group">
+            <div class="selector">
+                <div class="selector-available">
+                    <h2>Available team members <span class="help help-tooltip help-icon"
+                                                                                 title="This is the list of all team members with profiles. You may choose some by selecting them in the box below and then clicking the &quot;Choose&quot; arrow between the two boxes."></span>
+                </h2>
+                    <p id="id_members_filter" class="selector-filter">
+                        <label for="id_members_input"><span class="help-tooltip search-label-icon"
+                                                           title="Type into this box to filter down the list of available groups."></span></label>
+                        <input type="text" placeholder="Filter" id="id_members_input"></p>
+                        <select name="members_available" aria-describedby="id_groups_helptext" id="id_members_from" multiple=""
+                            class="selectfilter" data-field-name="full_name" data-is-stacked="0">
+                        {{ team_members }}
+                            {% for member in team_members %}
+                                <option value="{{ member.id }}">{{ member.user.full_name }}</option>
+                            {% endfor %}
+
+                    </select>
+                    <a title="Click to choose all groups at once." href="#" id="id_members_add_all_link"
+                       class="selector-chooseall active">Choose all</a>
+                </div>
+                <ul class="selector-chooser">
+                    <li><a title="Choose" href="#" id="id_members_add_link" class="selector-add">Choose</a></li>
+                    <li><a title="Remove" href="#" id="id_members_remove_link" class="selector-remove">Remove</a></li>
+                </ul>
+                <div id="id_members_selector_chosen" class="selector-chosen">
+                    <h2>Chosen Team members <span
+                        class="help help-tooltip help-icon"
+                        title="This is the list of selected Team Members. You may remove some by selecting them in the box below and then clicking the &quot;Remove&quot; arrow between the two boxes.">
+                    </span>
+                </h2>
+                    <p id="id_member_filter_selected" class="selector-filter"><label
+                            for="id_member_selected_input"><span class="help-tooltip search-label-icon"
+                                                                 title="Type into this box to filter down the list of selected groups."></span></label>
+                        <input type="text" placeholder="Filter" id="id_member_selected_input"></p>
+                    <select id="id_members_to" multiple="" size="0" name="members_chosen" class="filtered">
+
+                    </select>
+                    <div class="list-footer-display"><span id="id_groups_list-footer-display-text">0 selected options not visible</span><span
+                            class="list-footer-display__clear"> (click to clear)</span></div>
+                    <a title="Click to remove all selected member sat once." href="#" id="id_members_remove_all_link"
+                       class="selector-clearall active">Remove all</a></div>
+            </div>
+        </div>
+        <div class="buttons">
+            <input type="submit" value="Generate ID cards">
+        </div>
+    </form>
+{% endblock %}

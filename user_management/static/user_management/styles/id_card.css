@@ -1,0 +1,133 @@
+@page {
+    size: A4;
+    margin: 6rem 0.5cm;}
+
+body { margin: 0; padding: 0;}
+
+div.card {
+            width: 85mm;
+            height: 53mm;
+            min-height: 53mm;
+            min-width: 85mm;
+            border: 1px solid black;
+            border-radius: 10px;
+            margin: 5mm;
+            position: relative;
+        }
+        .card.front {
+            background: linear-gradient(30deg, skyblue 0%, white 35%, white 100%);
+        }
+        div.inner {
+            /* margin-top: -6mm; */
+            /* width: fit-content; */
+            /* margin-left: 21mm; */
+        }
+
+        .personal_info {
+    /* display: inline-block; */
+    /* width: 40mm; */
+}
+        div.logo {
+            position: absolute;
+            display:inline-block;
+            top: 1mm;
+            left: 1mm;
+            
+            
+
+            img {
+                width: 20mm;
+                vertical-align: middle;
+            }
+             span {
+                 text-align: center;
+                 font-size: 125%;
+                 font-weight: bold;
+                 top:-2mm;
+                 position: relative;
+             }
+        }
+
+                div.picture {
+                        margin: 0 auto;
+                        padding: 0;
+                        width: fit-content();
+                        position: absolute;
+                        left: 22mm;
+                        top: 13mm;
+
+                        img {
+                            border-radius: 10px;
+                            max-height: 30mm;
+                    }
+                }
+
+                div.name {
+                    font-size: larger;
+                    font-weight: bold;
+                    margin: 5px auto;
+                    text-align: right;
+                    width: 50mm;
+                    left: 2mm;
+                    bottom: 0mm;
+                    text-align: center;
+                    position: absolute;
+                }
+
+            div.donate {
+                /* flex: 1; */
+                /* display: flex; */
+                /* height: 30mm; */
+                /* flex-direction: column; */
+                /* justify-content: center; */
+                position: absolute;
+                bottom: 3mm;
+                right: 2mm;
+                /* width: fit-content; */
+                display: inline-block;
+                float: right;
+            }
+
+div.inverse {
+         background-color: black;
+         color: white;
+         padding: 1mm;
+         width: 90%;
+         border-radius: 5px;
+         position: relative;
+         margin-top: 2mm;
+         text-align: center;
+     }
+.triangle.up::before {
+     content: "";
+     position: absolute;
+     top: -6px;
+     left: 50%;
+     transform: translateX(-50%);
+     width: 0;
+     height: 0;
+     border-left: 10px solid transparent;
+     border-right: 10px solid transparent;
+     border-bottom: 10px solid black;
+ }
+.card.reverse .content {
+    display:flex;
+    flex-direction: row;
+    margin-top: 5mm;
+    margin-bottom: 5mm;
+
+    #blurb {
+        flex: 3;
+        margin-right: 5mm;
+        margin-left: 2mm;
+        font-style: italic;
+        font-size: 80%;
+        text-align: right;
+    }
+    #member_qr-code { flex: 2 ;}
+}
+
+.card_row { display: flex;
+            }
+ .front .card_row {flex-direction: row;}
+ .reverse .card_row {flex-direction: row-reverse;}

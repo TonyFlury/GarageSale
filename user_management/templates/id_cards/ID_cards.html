@@ -1,0 +1,44 @@
+{% load garage_sale_data %}
+{% load static %}
+{% load id_card_front id_card_reverse from id_cards %}
+{% load chunk from garage_sale_data %}
+ <html lang="en">
+ <head>
+     <title>Garage Sale ID Card</title>
+     <link rel="stylesheet" href="{{request.scheme}}://{{request.get_host}}{% static 'user_management/styles/id_card.css' %}">
+ </head>
+ <!--
+ #TODO - need to find a way to limit cards to 8 per page - so we need to do 8 fronts and 8 reverses
+
+ -->
+ <body>
+ {% for data_chunk in member_data|chunk:"8" %}
+ <section class="front">
+    <div>
+        <div class="card_row">
+        {% for i in data_chunk %}
+            {% id_card_front i %}
+            {% if forloop.counter|divisibleby:"2" %}
+                </div>
+                 <div class="card_row">
+            {% endif %}
+        {% endfor %}
+        </div>
+    </div>
+</section>
+<section class="reverse">
+    <div>
+         <div class="card_row">
+         {% for i in data_chunk %}
+             {% id_card_reverse i %}
+             {% if forloop.counter|divisibleby:"2" %}
+                 </div>
+                 <div class="card_row">
+             {% endif %}
+         {% endfor %}
+        </div>
+    </div>
+ </section>
+ {% endfor %}
+ </body>
+ </html>

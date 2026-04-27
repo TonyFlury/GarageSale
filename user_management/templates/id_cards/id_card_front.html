@@ -1,0 +1,25 @@
+{% load static %}
+{% load qr_from_view qr_from_object from qr_tags %}
+
+    <div class="card front">
+        <div class="logo" >
+                <img src='{{request.scheme}}://{{request.get_host}}{% static "/GarageSale/images/horse-Logo-01.svg" %}' alt="Garage Sale Logo" />
+                <span>Brantham Garage Sale</span>
+            </div>
+                <div class="inner">
+                    <div class="personal_info">
+                        <div class="picture">
+                        <img src="{{ MEDIA_URL }}{{member_data.picture}}" alt="Profile Picture" />
+                    </div>
+                        <div class="name">
+                        {{member_data.user.first_name}} {{member_data.user.last_name}}
+                    </div>
+                    </div>
+                <div class="donate">
+                    {% qr_from_view 'Donate'  %}
+                    <div class="inverse triangle up">
+                        Donate
+                    </div>
+                </div>
+        </div>
+    </div>
