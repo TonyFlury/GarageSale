@@ -67,3 +67,5 @@ webencodings==0.5.1
 websocket-client==1.8.0
 wsproto==1.2.0
 zopfli==0.2.3.post1
+matplotlib==3.10.8
+mpld3==0.5.12

@@ -1,0 +1,8 @@
+@page {
+    size: A4;
+    margin: 5mm 5mm;
+    padding: 0;  }
+
+
+section { page-break-before: always; }
+section > div { page-break-after: always;}

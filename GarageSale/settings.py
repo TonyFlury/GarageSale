@@ -118,7 +118,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_quill',
     'django_summernote',
-    'GoogleDrive'
+    'GoogleDrive',
 ]
 
 

@@ -1,13 +1,20 @@
 import datetime
+from datetime import datetime as dt
 import logging
 from typing import Type
 from uuid import uuid1
+import io
 
+import weasyprint
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.utils import timezone
+from django.contrib.staticfiles import finders
+from django.template import Template, Context
+from django.template.loader import get_template
+from django.templatetags.static import static
+from django.utils import timezone, encoding
 from django.contrib.auth.models import User
 from django.contrib.auth import login as login_user
-from django.http import HttpResponseServerError, HttpRequest
+from django.http import HttpResponseServerError, HttpRequest, Http404, HttpResponse
 from django.core.mail import send_mail
 from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import redirect, reverse
@@ -15,14 +22,15 @@ from django.template.response import TemplateResponse
 from django.utils.html import escape
 from django.db import transaction
 from django.shortcuts import resolve_url
-from django.views.generic import View
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.views.generic import View, UpdateView
+from django.core.exceptions import ObjectDoesNotExist, ValidationError, PermissionDenied
 from django.contrib.auth import authenticate
 
+from TeamPageFramework.entry_point import EntryPointMixin
 from . import forms
 from . import models
 from .models import RegistrationVerifier, GuestVerifier, PasswordResetApplication, UserVerification, UserExtended, \
-    AdditionalData
+    AdditionalData, TeamMember
 
 from .apps import appsettings, settings
 from django.contrib.auth import get_user_model, login, logout, update_session_auth_hash
@@ -110,7 +118,7 @@ def guest_error(incoming_request, short_code_id=None):
     form = forms.GuestApplicationError()
 
     return TemplateResponse(incoming_request,
-                            'generic_with_form.html',
+                            'generic_forms/generic_with_form.html',
                             context=form.form_context(
                                 action_path=resolve_url('user_management:resend', short_code_id=short_code_id),
                                 pre_form=pre_form,
@@ -176,7 +184,7 @@ def resend_registration_link(incoming_request, uuid):
 
     send_register_verification_email(email=verifier_inst.email, incoming_request=incoming_request, url=url)
 
-    return TemplateResponse(incoming_request, 'generic_response.html',
+    return TemplateResponse(incoming_request, 'generic_forms/generic_response.html',
                             context={'msg': 'A new registration link has been sent.<br>'
                                             f'Please check your email {UserRegistration.obfuscate_email(verifier_inst)} for a verification link which will '
                                             'complete the registration process.<br>'
@@ -193,7 +201,7 @@ class GuestApplication(View):
 
         form = forms.GuestRequestForm()
         return TemplateResponse(incoming_request,
-                                template='generic_with_form.html',
+                                template='generic_forms/generic_with_form.html',
                                 context=form.form_context(next=redirect_url))
 
     def post(self, incoming_request: HttpRequest):
@@ -202,7 +210,7 @@ class GuestApplication(View):
         form = forms.GuestRequestForm(incoming_request.POST)
         if not form.is_valid():
             return TemplateResponse(incoming_request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(next=next)
                                     )
 
@@ -249,7 +257,7 @@ class InputShortCode(View):
         form = forms.InputShortCodeForm(data={'email': code_inst.email})
         logger.info(f'InputShortCode - Prompting for short code for {code_inst.email=!r} instance {code_inst.pk=}')
         return TemplateResponse(request=incoming_request,
-                                template='ShortCodeInput.html',
+                                template='identify/ShortCodeInput.html',
                                 context={'form': form,
                                          'pre_form': pre_form,
                                          'email': code_inst.email,
@@ -272,7 +280,7 @@ class InputShortCode(View):
         if not form.is_valid():
             logger.info(f'InputShortCode - invalid form input {form.cleaned_data['short_code']=}')
             return TemplateResponse(request=incoming_request,
-                                    template='ShortCodeInput.html',
+                                    template='identify/ShortCodeInput.html',
                                     context={'form': form,
                                              'action': resolve_url('user_management:input_short_code',
                                                                    short_code_id=short_code_id) + f'?next={next}',
@@ -302,7 +310,7 @@ class InputShortCode(View):
                 form.add_error(None, 'Short code Incorrect - please try again')
 
                 return TemplateResponse(request=incoming_request,
-                                        template='ShortCodeInput.html',
+                                        template='identify/ShortCodeInput.html',
                                         context={'form': form,
                                                  'action': resolve_url('user_management:input_short_code',
                                                                        short_code_id=short_code_id) + f'?next={next}',
@@ -361,7 +369,7 @@ class InputShortCode(View):
 def identify(incoming_request: HttpRequest):
     """Render a simple login, login as Guest button sets"""
     next_url = incoming_request.GET.get('next', '/')
-    return TemplateResponse(incoming_request, template='identify.html',
+    return TemplateResponse(incoming_request, template='identify/identify.html',
                             context={
                                 'next': next_url})
 
@@ -394,7 +402,7 @@ class UserRegistration(View):
 
         form = forms.RegistrationForm()
         return TemplateResponse(incoming_request,
-                                'generic_with_form.html',
+                                'generic_forms/generic_with_form.html',
                                 context=form.form_context(next_url=next_url))
 
     def post(self, incoming_request):
@@ -406,13 +414,13 @@ class UserRegistration(View):
 
         if not form.is_valid():
             return TemplateResponse(incoming_request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(next_url=next_url))
 
         if form.cleaned_data['password'] != form.cleaned_data['password_repeat']:
             form.add_error('password', 'Passwords do not match')
             return TemplateResponse(incoming_request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(next_url=next_url))
 
         # Begin safe with a transaction
@@ -429,7 +437,7 @@ class UserRegistration(View):
             if user and not user.is_guest:
                 form.add_error(None, 'This user already exists - did you mean to login in')
                 return TemplateResponse(incoming_request,
-                                        'generic_with_form.html',
+                                        'generic_forms/generic_with_form.html',
                                         context=form.form_context(next_url=next_url))
 
             if user:
@@ -455,7 +463,7 @@ class UserRegistration(View):
 
             send_register_verification_email(incoming_request, new_user.email, url)
 
-            return TemplateResponse(incoming_request, 'generic_response.html',
+            return TemplateResponse(incoming_request, 'generic_forms/generic_response.html',
                                     context={'msg': 'Thank you for registering. '
                                                     f'Please check your email {self.obfuscate_email(verify)} for a verification link which will '
                                                     'complete the registration process'})
@@ -470,13 +478,13 @@ def user_verify(request, uuid=None):
     try:
         verify = RegistrationVerifier.objects.get(uuid=uuid)
     except RegistrationVerifier.DoesNotExist:
-        return TemplateResponse(request, template='generic_response.html',
+        return TemplateResponse(request, template='generic_forms/generic_response.html',
                                 context={'redirect': next_url,
                                          'msg': """
                                          This verification link has already been used, and the user account is ready to be used"""})
 
     if verify.expiry_timestamp < timezone.now():
-        return TemplateResponse(request, template='generic_response.html',
+        return TemplateResponse(request, template='generic_forms/generic_response.html',
                                 context={'redirect': reverse('user_management:resend_verify',
                                                              kwargs={'uuid': verify.uuid}) + f"?next={next_url}",
                                          'msg': "This verification link has expired - pleased wait for a few seconds to get a new code"})
@@ -507,7 +515,7 @@ class Login(View):
         form = forms.LoginForm()
 
         return TemplateResponse(request,
-                                'generic_with_form.html',
+                                'generic_forms/generic_with_form.html',
                                 context=form.form_context(
                                     reset_path='user_management:reset_password_application',
                                     next=next))
@@ -519,7 +527,7 @@ class Login(View):
         form_inst = forms.LoginForm(request.POST)
         if not form_inst.is_valid():
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form_inst.form_context(
                                     reset_path='user_management:reset_password_application',
                                     next=next_url))
@@ -530,7 +538,7 @@ class Login(View):
         except get_user_model().DoesNotExist:
             form_inst.add_error(None, "Invalid User/password combination")
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form_inst.form_context(
                                         reset_path='user_management:reset_password_application',
                                         next=next_url))
@@ -538,7 +546,7 @@ class Login(View):
         if user_inst.is_guest:
             form_inst.add_error(None, "This is only a Guest account currently - please fully register this account to be able to use the login")
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form_inst.form_context(
                                         reset_path='user_management:reset_password_application',
                                         next=next_url))
@@ -546,7 +554,7 @@ class Login(View):
         if not user_inst.is_verified:
             form_inst.add_error(None, "User account not verified - please check your email for the verification link")
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form_inst.form_context(
                                         reset_path='user_management:reset_password_application',
                                         next=next_url))
@@ -558,7 +566,7 @@ class Login(View):
         if user is None:
             form_inst.add_error(None, 'Invalid User/password combination')
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form_inst.form_context(next=next_url))
         else:
             login_user(request, user)
@@ -575,7 +583,7 @@ class ChangePassword(View):
 
         form = forms.PasswordChangeForm()
         return TemplateResponse(request,
-                                'generic_with_form.html',
+                                'generic_forms/generic_with_form.html',
                                 context=form.form_context(next=next_url))
 
     @staticmethod
@@ -589,7 +597,7 @@ class ChangePassword(View):
 
         if not form.is_valid():
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(next=next_url))
 
         old_pwd = form.cleaned_data['old_password']
@@ -597,13 +605,13 @@ class ChangePassword(View):
         if not request.user.check_password(old_pwd):
             form.add_error('old_password', 'Provide the correct current password')
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(next=next_url))
 
         if form.cleaned_data['new_password1'] != form.cleaned_data['new_password2']:
             form.add_error('new_password2', 'New password entries must be the same')
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(next=next_url))
 
         request.user.set_password(form.cleaned_data['new_password1'])
@@ -612,7 +620,7 @@ class ChangePassword(View):
         update_session_auth_hash(request, request.user)
 
         return TemplateResponse(request,
-                                'generic_response.html',
+                                'generic_forms/generic_response.html',
                                 context={'next': next_url,
                                          'msg': 'Your password has now been changed successfully'})
 
@@ -623,7 +631,7 @@ class ResetPasswordApply(View):
         next_url = request.GET.get('next', '/')
         form = forms.ResetPasswordApplyForm()
         return TemplateResponse(request,
-                                'generic_with_form.html',
+                                'generic_forms/generic_with_form.html',
                                 context=form.form_context(next=next_url))
 
     @staticmethod
@@ -635,7 +643,7 @@ class ResetPasswordApply(View):
         form = forms.ResetPasswordApplyForm(request.POST)
         if not form.is_valid():
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(next=next_url))
 
         model: Type[UserExtended | AbstractBaseUser] = get_user_model()
@@ -645,7 +653,7 @@ class ResetPasswordApply(View):
         except model.DoesNotExist:
             form.add_error('email', 'This user does not exist')
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(next=next_url))
 
         if user.is_guest or not user.is_verified:
@@ -653,7 +661,7 @@ class ResetPasswordApply(View):
                 else 'This user has not completed verification so cannot be reset'
             form.add_error('email', error_msg)
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(next=next_url))
 
         pwd_reset = PasswordResetApplication.add_password_reset(user=user)
@@ -684,7 +692,7 @@ class ResetPasswordApply(View):
         msg.attach_alternative(html_content, 'text/html')
         msg.send()
 
-        return TemplateResponse(request, 'generic_response.html',
+        return TemplateResponse(request, 'generic_forms/generic_response.html',
                                 context={'msg': 'A Password reset email has been sent to you. '
                                                 'Please check your email and click the button/link.'})
 
@@ -700,7 +708,7 @@ class PasswordResetEnterNew(View):
 
         form = forms.PasswordResetForm()
         return TemplateResponse(request,
-                                'generic_with_form.html',
+                                'generic_forms/generic_with_form.html',
                                 context=form.form_context(uuid, next=next_url))
 
     @staticmethod
@@ -710,7 +718,7 @@ class PasswordResetEnterNew(View):
         form = forms.PasswordResetForm(request.POST)
         if not form.is_valid():
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(uuid, next=next_url))
 
         try:
@@ -728,13 +736,13 @@ class PasswordResetEnterNew(View):
         if form.cleaned_data['new_password1'] != form.cleaned_data['new_password2']:
             form.add_error('new_password2', 'The passwords provided must be the same as each other')
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(uuid, next=next_url))
 
         if user.check_password(form.cleaned_data['new_password1']):
             form.add_error(None, 'Your new password must be different from your current password')
             return TemplateResponse(request,
-                                    'generic_with_form.html',
+                                    'generic_forms/generic_with_form.html',
                                     context=form.form_context(uuid, next=next_url))
 
         user.set_password(form.cleaned_data['new_password1'])
@@ -744,6 +752,97 @@ class PasswordResetEnterNew(View):
 
         application.delete()
 
-        return TemplateResponse(request, 'generic_response.html',
+        return TemplateResponse(request, 'generic_forms/generic_response.html',
                                 context={'msg': 'Your password has now been changed.',
                                          'next': next_url})
+
+class UserProfile(View):
+    def get(self, request, team_member_id=None):
+        if team_member_id:
+            try:
+                member_data = TeamMember.objects.get(team_member_id=team_member_id)
+            except TeamMember.DoesNotExist:
+                return HttpResponseServerError('Team member does not exist')
+        else:
+            if request.user.has_perm('GarageSale.is_team_member'):
+                member_data = TeamMember.objects.get_or_create(user=request.user,
+                                                           defaults={'user' : request.user})[0]
+            else:
+                raise PermissionDenied('You do not have permission to view this page')
+
+        print(member_data.bio)
+        return TemplateResponse(request, 'user_profile/user_profile.html',
+                                context={'member_data': member_data})
+
+class UserProfileEdit(UpdateView):
+    model = TeamMember
+    template_name = 'user_profile/user_profile_edit.html'
+    context_object_name = 'member_data'
+    fields = ['role', 'picture', 'bio']
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object( *args, **kwargs)
+        return super().get(request, *args, **kwargs)
+
+    def get_object(self, *args, **kwargs):
+        member_id = self.kwargs.get('team_member_id', None)
+        try:
+            self.object = self.model.objects.get(team_member_id=member_id)
+        except self.model.DoesNotExist:
+            raise Http404(f"User does not exist, {member_id}")
+        return self.object
+
+def id_card_pdf_header(context:dict):
+    result = finders.find('user_management/styles/id_card_pdf_header.css')
+    print(result)
+    if not result:
+        return ''
+    with open(result) as f:
+        template = Template(f.read())
+    return template.render(context=Context(context))
+
+def make_pdf( template_file:str, context:dict, header:str, request):
+    template_content = get_template(template_file)
+    content = template_content.render(context | {'request': request})
+    pdf = weasyprint.HTML(io.StringIO(content), base_url=request.build_absolute_uri()).write_pdf(stylesheets=[weasyprint.CSS(string=header)])
+    return pdf, content
+
+
+class TeamMemberIDCard(EntryPointMixin, View):
+    entry_point_url = 'user_management:team_member_id_cards'
+    entry_point_label = 'Id Cards'
+    entry_point_icon = static('user_management/images/icons/id-cards-with-profile-images-variant-svgrepo-com.svg')
+    entry_point_permission ='GarageSale.is_manager'
+    template_name = 'id_cards/request_id_cards.html'
+
+    def get(self, request):
+
+        return TemplateResponse(request, self.template_name, context={'team_members': TeamMember.objects.all()})
+
+    def post(self, request):
+        members = request.POST.getlist('members_chosen')
+        print(members)
+        instances = TeamMember.objects.filter(id__in=members)
+
+        header = id_card_pdf_header(context={})
+        print(header)
+
+        pdf, html = make_pdf(template_file='id_cards/ID_cards.html', context={'member_data': instances,
+                                                                     'MEDIA_URL': settings.MEDIA_URL}, header=header, request=request)
+        file_name = f'id_cards-{dt.now().strftime("%Y-%m-%d-%H-%M-%S")}.pdf'
+       # with open(file_name.replace('pdf','html'), 'w') as f:
+       #    f.write(html)
+       # return HttpResponse(html, content_type='text/html')
+
+        return HttpResponse(pdf, content_type='application/pdf',
+                            headers={"Content-Disposition": f'attachment; filename={file_name}'})
+
+def display_id_card( request, team_member_id=None):
+    if team_member_id:
+        try:
+            member_data = TeamMember.objects.filter(team_member_id=team_member_id)
+        except TeamMember.DoesNotExist:
+            return HttpResponseServerError('Team member does not exist')
+    else:
+        member_data = TeamMember.objects.filter()
+
+    return TemplateResponse(request, 'id_cards/ID_cards.html', context={'member_data': member_data})

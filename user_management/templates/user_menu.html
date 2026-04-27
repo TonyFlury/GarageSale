@@ -4,6 +4,9 @@
     <li>{% register_form_link request.path %}</li>
 {% elif request.user.is_active %}
     <li><a href="{% url 'user_management:change_password' %}?redirect={{request.path}}">Change Password</a></li>
+    {% if perms.GarageSale.is_team_member or perms.GarageSale.is_exec_member or perms.GarageSale.is_trustee %}
+        <li><a href="{% url 'user_management:profile' %}">User Profile</a></li>
+        {% endif %}
     <li><a href="{% url 'user_management:logoff' %}?redirect={{request.path}}">Logoff</a></li>
 {% else %}
     <li>Waiting for email confirmation</li>

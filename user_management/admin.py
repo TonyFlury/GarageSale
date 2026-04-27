@@ -4,16 +4,19 @@ from django.contrib import admin
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import UserVerification, UserExtended, GuestVerifier, RegistrationVerifier
+from .models import UserVerification, UserExtended, GuestVerifier, RegistrationVerifier, TeamMember
 
 from user_management.models import AdditionalData
 
+@admin.register(TeamMember)
+class TeamMemberAdmin(admin.ModelAdmin):
+    list_display = ['user', 'role','updated_at']
+    search_fields = ['user__username']
 
 @admin.register(GuestVerifier)
 class GuestVerifierAdmin(admin.ModelAdmin):
     list_display = ('email', 'expiry_timestamp')
     ordering = ('email', 'expiry_timestamp')
-
 
 class UserExtendedAdmin(UserAdmin):
     model = UserExtended
@@ -35,7 +38,6 @@ class UserExtendedAdmin(UserAdmin):
     )
     search_fields = ("email",)
     ordering = ("email",)
-
 
 admin.site.register(UserExtended, UserExtendedAdmin)
 

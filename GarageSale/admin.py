@@ -16,6 +16,7 @@ from django.contrib import admin
 from django import forms
 
 from Sponsors.models import Sponsor
+from user_management.models import TeamMember
 from .models import MOTD, EventData, Supporting, CommunicationTemplate, TemplateAttachment
 from Location.models import Location
 
@@ -29,6 +30,7 @@ from django.contrib import admin
 from django_summernote.admin import SummernoteModelAdmin
 
 admin.site.register(Permission)
+
 
 
 @admin.register(MOTD)

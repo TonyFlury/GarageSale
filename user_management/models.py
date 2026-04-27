@@ -1,6 +1,7 @@
 import datetime
 
 from django.db import models
+from django.db.models import ForeignKey, Index
 from django.utils import timezone
 from django.contrib.auth.models import User
 from .managers import ExtendUserManager
@@ -33,6 +34,31 @@ class UserExtended(AbstractUser):
     def full_name(self):
         return self.first_name + " " + self.last_name
 
+def user_image_save_to(instance, filename):
+    return f'user_images/{instance.user.id}/{filename}'
+
+class TeamMember(models.Model):
+    user = ForeignKey(UserExtended, on_delete=models.CASCADE)
+    role = models.CharField(choices=[(i,i) for i in {'Chairperson', 'Treasurer', 'Secretary', 'Committee Member', 'Volunteer'}])
+    bio = models.TextField(blank=True)
+    picture = models.ImageField(upload_to=user_image_save_to, blank=True)
+    team_member_id = models.SlugField(primary_key=False, unique=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [Index(fields=['team_member_id'], name='ByMemberId')]
+        permissions = [("generate_id_card", "Can generate ID cards")]
+
+    def get_absolute_url(self):
+        return reverse('user_management:profile', kwargs={'team_member_id': self.team_member_id})
+
+    def slugify(self):
+        return str(hash(self.user.email))[1:]
+
+    def save(self, *args, **kwargs):
+        if not self.team_member_id:
+            self.team_member_id = self.slugify()
+        super().save(*args, **kwargs)
 
 class UserVerification(models.Model):
     """Base model for all verification purposes"""

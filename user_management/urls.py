@@ -26,4 +26,16 @@ urlpatterns = [
     path('resend/<int:short_code_id>/', views.resend_short_code, name='resend'),
     path('error/<int:short_code_id>/', views.guest_error, name='guest_error'),
 
+    path('profile/', include([
+            path('', views.UserProfile.as_view(), name='profile'),
+            path('<str:team_member_id>/', include([
+                path('', views.UserProfile.as_view(), name='profile'),
+                path('edit/', views.UserProfileEdit.as_view(), name='profile_edit')
+            ])),
+    ])),
+    path('id_cards/', views.TeamMemberIDCard.as_view(), name='team_member_id_cards'),
+
+    path('display/', include([
+        path('', views.display_id_card, name='display_id_card'),
+        path('<str:team_member_id>/', views.display_id_card, name='display_id_card') ]))
 ]
