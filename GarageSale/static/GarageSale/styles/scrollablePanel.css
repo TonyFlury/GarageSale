@@ -4,14 +4,16 @@ body {
         background-repeat: no-repeat;
         background-position: center;
         margin: 0;
+        height: 100%;
 }
 
  div.body {
     container: body / size;
     margin: 0;
     padding: 0;
-    height: 600px;
     background-color: var(--BackGroundColor);
+    max-height: 75vh;
+     height: 75vh;
 }
 
  div.page-header {
@@ -20,7 +22,7 @@ body {
 
 div#Container
 {
-    height: auto;
+    height: 100%;
     overflow: hidden;
     margin: 0;
     padding: 0;

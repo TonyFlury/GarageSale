@@ -111,7 +111,6 @@ class CraftMarketList( FrameworkView):
                         actions_per_row[state] += ['confirm','reject']
                     case '_' | 'Confirmed' | 'Rejected' :
                         pass
-        print(f'actions_per_row = {[q for q in actions_per_row.values()]}')
         when = [When(state=key, then=Value(action_list)) for key, action_list in actions_per_row.items()]
         the_case = Case(*when,
                         default=Value([]),

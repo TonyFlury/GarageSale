@@ -1,0 +1,46 @@
+{% extends  "team_pages_base.html" %}
+{% load static %}
+
+{% block Title %}
+Add location on behalf of a user
+{% endblock %}
+
+{% block PageScripts %}
+    <script type="text/javascript" src="{% static 'team_pages/js/filtered_list.js' %}" ></script>
+{% endblock %}
+
+{%  block PageStyles %}
+    <link rel="stylesheet" href="{% static 'team_pages/styles/filtered_list.css' %}">
+    <link rel="stylesheet" href="{% static 'Location/styles/locations.css' %}">
+            <link rel="stylesheet" href="{% static 'Location/styles/location_create.css' %}">
+
+    <style>
+        dialog {
+            max-width: 60vw;
+        }
+    </style>
+
+{% endblock %}
+
+{% block SnappableSections %}
+    <script>
+        function create_location_dialog() {
+            document.querySelector('dialog[name="create_location"]').showModal();
+        }
+    </script>
+    <h2>Record a location on behalf of another user</h2>
+
+    <fieldset>
+    <label for="user_list">Select who to add a location for</label>
+    <select class='select-filter new-entry' id="user_list" submit_dialog='create_location' field_name='on_behalf' name="user_list" multiple size="10" max_select="1" field-type="email">
+        {% for user in user_list %}
+        <option value="{{user.id}}">{{user.email}}</option>
+        {% endfor %}
+    </select>
+    </fieldset>
+
+
+    <dialog id="create_location">
+        {% include "widgets/create_location.html" %}
+    </dialog>
+{% endblock %}

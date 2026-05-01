@@ -28,30 +28,24 @@ def time_frame( date_arg, arg):
 
 @register.filter('is_icon')
 def is_icon(ob:BoundField):
-    # print(f'is_icon {ob.name}: {ob.widget_type} {ob.field.__class__.__name__}')
     return ob.field.__class__.__name__ == 'ImageField'
 
 @register.filter(name='lookup')
 def lookup(value, arg):
     if not isinstance(value, dict):
-        print(f'lookup: {value} is not a dict - so can\'t find {arg}')
         return None
     return value.get(arg, None)
 
 @register.filter(name='get_action_icon')
 def get_action_icon(value, arg):
     if not isinstance(value, dict):
-        print(f'get_action_icon: {value} is not a dict - so can\'t find {arg}')
         return None
-#    print(f'get_action_icon {arg}\n{value.get(arg, {})}\n{value.get(arg, {}).get("icon", None)}\n\n')
     return value.get(arg, {}).get('icon', None)
 
 @register.filter(name='get_action_label')
 def get_action_label(value, arg):
     if not isinstance(value, dict):
-        print(f'get_action_label: {value} is not a dict - so can\'t find {arg}')
         return None
-#    print(f'get_action_label {arg}\n{value.get(arg, {})}\n{value.get(arg, {}).get("label", None)}\n\n')
     return value.get(arg, {}).get('label', None)
 
 
@@ -296,6 +290,8 @@ def choose_motd(context):
 
 @register.simple_tag(takes_context=True)
 def categoryList(context, nav_page='TeamPage'):
+    p = get_entry_points( user=context.request.user, nav_page=nav_page)
+
     return render_to_string('__category_list.html',
                             context={'category_list': get_entry_points(user=context.request.user, nav_page=nav_page),
                                      'event_id': context.get('event_id', context.request.current_event.id) } )

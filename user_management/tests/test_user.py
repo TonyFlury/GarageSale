@@ -232,7 +232,6 @@ class TestRegistration(SeleniumCommonMixin, StaticLiveServerTestCase):
             verifier_qs = GuestVerifier.objects.filter(email=email)
         except RegistrationVerifier.DoesNotExist:
             self.fail('Cannot find registration verifier object.')
-        print(verifier_qs)
 
         self.assertEqual(len(verifier_qs), 1, 'Unexpected number of verifiers.')
         verifier_inst = verifier_qs[0]

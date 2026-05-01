@@ -1,11 +1,17 @@
-
+from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import Http404
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
+from django.template import context
 from django.template.response import TemplateResponse
+from django.templatetags.static import static
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views import View
+from fontTools.feaLib import location
 
 from GarageSale.models import CommunicationTemplate
+from TeamPageFramework.entry_point import EntryPoint, EntryPointMixin
 from user_management.decorators.guest import UserRecognisedMixin
 from django.urls import reverse_lazy, reverse
 
@@ -22,21 +28,16 @@ def view_event_map(request):
                                                         sale_event=True).order_by('creation_timestamp')}
     return TemplateResponse(request, "map_view.html", context  )
 
-
-class LocationCreateView(UserRecognisedMixin, CreateView):
-    """Creation Form for Location"""
+class LocationBase(CreateView) :
     model = LocationModel
-    template_name = "location_create_form.html"
     form_class = LocationForm
-    login_url = reverse_lazy("user_management:identify")
-    transaction_type = "locations"
-
     DEFAULT_TEMPLATE_CATEGORY = "Location"
     DEFAULT_EMAIL_FROM = "website@BranthamGarageSale.org.uk"
     CREATED_TRANSITION = "created"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context |= {'on_behalf': self.request.GET.get('on_behalf', None)}
         context |= {'GOOGLE_MAP_API': settings.GOOGLE_MAP_SETTINGS.get('API_KEY')}
         context |= {"Activity": "Recording new "}
         return context
@@ -68,15 +69,32 @@ class LocationCreateView(UserRecognisedMixin, CreateView):
         }
         template.send_email(self.request, context=email_context)
 
-    def form_valid(self, form):
+    def form_is_valid(self, form):
         """Add user and event details to the location."""
+
+        on_behalf = self.request.GET.get('on_behalf', [])
+        if on_behalf:
+            user = get_user_model().objects.get(email=on_behalf)
+        else:
+            user = self.request.user
+
         location: LocationModel = form.save(commit=False)
-        location.user = self.request.user
+        location.user = user
         location.event = self.request.current_event
         location.save()
 
         self._send_created_email(location=location)
+        return location
 
+class LocationCreateView(LocationBase, UserRecognisedMixin, CreateView):
+    """Creation Form for Location"""
+    model = LocationModel
+    template_name = "location_create_form.html"
+    login_url = reverse_lazy("user_management:identify")
+    transaction_type = "locations"
+
+    def form_valid(self, form):
+        location = self.form_is_valid(form)
         return redirect(reverse("Location:confirm", kwargs={"pk": location.id}))
 
 class LocationConfirmView(UserRecognisedMixin, TemplateView):
@@ -237,3 +255,27 @@ class LocationDelete(UserRecognisedMixin, DeleteView):
                     'event_date': location.event.get_event_date_display() }
         template.send_email(self.request, context=context)
 
+class AddLocation(EntryPointMixin, LocationBase, PermissionRequiredMixin, View):
+    permission_required = "Location.add_location"
+    login_url = reverse_lazy("user_management:identify")
+    entry_point_permission = "Location.add_location"
+    entry_point_url = "Location:AddLocation"
+    entry_point_label = "Add Location for user"
+    entry_point_icon = static("GarageSale/images/icons/menu/map-marker-svgrepo-com.svg")
+    entry_point_nav_page = 'TeamPage'
+    entry_point_needs_event = False
+
+    template_name = "teampages/on_behalf.html"
+
+    def get_queryset(self):
+        user_model = get_user_model()
+        return user_model.objects.filter(is_verified=True, is_staff=False, is_superuser=False)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context |= {'user_list': self.get_queryset() }
+        return context
+
+    def form_valid(self, form):
+        self.form_is_valid(form)
+        return redirect(reverse("TeamPages:Root"))

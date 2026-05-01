@@ -30,7 +30,9 @@
             clearInterval(myfunc);
         }
 
-        document.getElementById( '{{ html_id }}' ).innerHTML = message ;
+        let element = document.getElementById( '{{ html_id }}' )
+        if (element && element.checkVisibility())
+            element.innerHTML = message ;
     }
 
     myfunc = setInterval(set_msg, 1000);

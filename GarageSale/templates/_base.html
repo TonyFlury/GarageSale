@@ -58,12 +58,14 @@
 </head>
 <body>
     {% block body-extra %}{% endblock %}
+    {% block TopBar %}
         <div class="TopBar">
             <div class="ToolBar" id="ToolBar">
                     <H1>{% block PageHeading %}Page Title{% endblock %}</h1>
             {% block ToolBar %}Tool Bar goes here{% endblock %}
             </div>
         </div>
+    {% endblock %}
     <div class="body">
         {% block body %}Body Content{% endblock%}
     </div>

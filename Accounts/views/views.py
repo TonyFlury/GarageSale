@@ -210,7 +210,6 @@ class TransactionList(EntryPointMixin,LoginRequiredMixin, UserPassesTestMixin, L
 
     def _add_splittable_flag(self, qs):
         splittable = set(Categories.objects.filter(children__isnull = False).values_list('category_name', flat=True))
-        print(splittable)
         data = []
         for record in qs:
             if record.category not in splittable:

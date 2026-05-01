@@ -24,17 +24,14 @@ Brantham Garage Sale - Home Page
 {% endblock %}
 
 
-
-{% block PageHeading %}Brantham Garage Sale - <span class="event_date">{{  request.current_event }}<span>{% endblock %}
-
-
-{%block body-extra %}
+    {% block PageHeading %}Brantham Garage Sale - <span class="event_date">{{  request.current_event }}<span>{% endblock %}
+    {%block body-extra %}
 
 
     {% CountdownClock 'clock'  %}
 {% endblock %}
 
-{% block ToolBar %}
+    {% block ToolBar %}
 <div>
     <span class="icon"><img src="{{ MEDIA_URL }}{{ request.current_event.event_logo }}" class='logo' ></span>
     <div id="clock"></div>
@@ -81,6 +78,7 @@ Brantham Garage Sale - Home Page
     </div>
     {% endif %}
 {% endblock %}
+
 {% block body %}
     <div class="page-header">
     {% block header %}

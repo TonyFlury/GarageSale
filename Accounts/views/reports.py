@@ -195,7 +195,6 @@ class FlexibleReport(FinancialSummary):
                 return
 
         # check if dates span multiple financial years
-        print(self._start_date, self._end_date)
         years = list(FinancialYear.objects.
                     filter(
                             Q(year_start__lte=self._start_date, year_end__gte=self._start_date)|

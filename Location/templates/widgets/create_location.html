@@ -1,0 +1,226 @@
+{% load static %}
+    <script lang="javascript">
+
+        function help_popup() {
+            const popup = document.getElementById("MapInstructions")
+            popup.left = (window.innerWidth - popup.clientWidth) / 2;
+            popup.top = (window.innerHeight - popup.clientHeight) / 2;
+            popup.showModal();
+            const help_button = document.getElementById("HelpIcon");
+            help_button.style.display = "none";
+        }
+
+        function dialog_close() {
+            const popup = document.getElementById("MapInstructions")
+            if (popup.open) popup.close();
+            const help_button = document.getElementById("HelpIcon");
+            help_button.style.display = "inline-block";
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+
+            const popup = document.getElementById("MapInstructions")
+            popup.addEventListener('close', dialog_close)
+
+            let section1_fields = ["AdBoard", "HouseNumber", "StreetName", "Postocde", "Town" ];
+
+            for (let i = 0; i < section1_fields.length; i++) {
+                let section = section1_fields[i] + "Error"
+                let item = document.getElementById(section)
+                console.log(item, section)
+                if (item.innerHTML.trim() !== '')
+                    return;
+            }
+
+            let error = document.getElementById('MapError').innerHTML.trim()
+            if (error == '')
+                return;
+
+            let section1 = document.getElementById("section1");
+            let section2 = document.getElementById("section2");
+            section1.style.display = "none";
+            section2.style.display = "block";
+
+        });
+
+    </script>
+<div class="card location">
+    <h3 style="margin-bottom: 0;">
+        {{ Activity }} Garage Sale Location
+    </h3>
+    <div class="form">
+    <form method=POST action='{{action}}' name='CreateLocation' id="CreateLocation">
+            {% csrf_token %}
+            <input type="hidden" id="on_behalf" name="on_behalf" value="{{ on_behalf }}">
+            {% if on_behalf != None %}
+                <h3>Creating a location for {{ on_behalf }}</h3>
+            {% endif %}
+            <div class="address-and-map">
+                {%  if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                    <div class="error">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                <div id="section1" class="section section1">
+                    <div class="section header">
+                        Part 1 : Your home Address
+                    </div>
+                    <div>
+                        Provide your home address - even if your Sale event wont be immediately outside your home.
+                    </div>
+                    <script language="javascript" type="text/javascript">
+                        function NextSectionClick() {
+                            let element1 = document.getElementById("section1");
+                            element1.style.display = "none";
+                            let element2 = document.getElementById("section2");
+                            element2.style.display = "block";
+                        }
+                        function PrevSectionClick() {
+                            let element1 = document.getElementById("section1");
+                            element1.style.display = "block";
+                            let element2 = document.getElementById("section2");
+                            element2.style.display = "none";
+                        }
+                    </script>
+                    <div class="address">
+                        {{ form.sale_event.errors }}
+                        <div class="field_outer">
+                            <div>
+                                {% if request.current_event.allow_ad_board_bookings %}
+                                <div class="field_wrapper"><label for='{{ form.ad_board.id_for_label }}' >{{ form.ad_board.label }}</label>{{ form.ad_board }}<span class="helptext">{{ form.ad_board.help_text }}</span></div>
+                                {% else %}
+                                    <div class="field_wrapper"><strong>It is not now possible to book or remove an ad-board for this event.</strong></div>
+                                {% endif %}
+                                {% if request.current_event.allow_sale_bookings %}
+                                <div class="field_wrapper"><label for='{{ form.sale_event.id_for_label }}' >{{ form.sale_event.label }}</label>{{ form.sale_event }}<span class="helptext">{{ form.sale_event.help_text }}</span></div>
+                                {% else %}
+                                    <div class="field_wrapper"><strong>It is not now possible to book a Sale Event on the map for this event
+                                        - you can still set up your sale on the day though.</strong></div>
+                                {% endif %}
+                            </div>
+                                <div id='AdBoardError' class="error">{{ form.ad_board.errors }}</div>
+                        </div>
+                        <div class="field_outer">
+                            <div class="field_wrapper">
+                                <label for='{{ form.house_number.id_for_label }}' > {{ form.house_number.label }}</label>
+                                {{ form.house_number }}{% if form.house_number.help_text %}<span class="helptext">{{ form.house_number.help_text }}</span>{%  endif %}
+                            </div>
+                            <div id="HouseNumberError" class="error">
+                                    {{ form.house_number.errors }}
+                            </div>
+                        </div>
+                        <div class="field_outer">
+                            <div class="field_wrapper">
+                                <span class="label"><label for='{{ form.street_name.id_for_label }}' >{{ form.street_name.label }}</label></span>
+                                {{ form.street_name }}{% if form.street_name.help_text %}<span class="helptext">{{ form.street_name.help_text }}</span>{%  endif %}
+                            </div>
+                            <div id="StreetNameError" class="error">
+                                {{ form.street_name.errors }}
+                            </div>
+                        </div>
+
+                        <div class="field_outer">
+                            <div class="field_wrapper">
+                                <span class="label"><label for='{{ form.postcode.id_for_label }}' >{{ form.postcode.label }}</label></span>
+                                {{ form.postcode }}{% if form.postcode.help_text %}<span class="helptext">{{ form.postcode.help_text }}{% endif %}</span></div>
+                            <div id="PostocdeError" class="error">
+                                {{ form.postcode.errors }}
+                            </div>
+                        </div>
+                        <div class="field_outer">
+                            <div class="field_wrapper">
+                                <span class="label"><label for='{{ form.town.id_for_label }}' >{{ form.town.label }}</label></span>
+                                {{ form.town }}{% if form.town.help_text %}<span class="helptext">{{ form.town.help_text }}{%  endif %}</span></div>
+                            <div id="TownError" class="error">
+                                {{ form.town.errors }}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size:95%;font-style: italic; width: 75%; margin:auto; margin-top:1rem;">
+                        Please ensure that you also complete the next section of the form by pressing the 'Next Section' button and
+                        find your location on the map, and then click save.
+                    </div>
+                    <div class="footer">
+                        <span class="ToRight">
+                            <button type=button onclick="NextSectionClick()">Next section >>></button>
+                        </span>
+                    </div>
+                </div>
+                <div id="section2" class="section section2">
+                    <div class="section header">
+                        Part 2 : Find Your location on the map
+                    </div>
+                    <div>
+                        On the map below location the actual location of your sale event (or simply click your home
+                        if you are only booking an ad-board).
+                    </div>
+                   <div class="premarked-map">
+                        <div class="map-details">
+                            <div class="field_outer" style="flex-wrap:nowrap;">
+                                <div class="field_wrapper">
+                                    <label for='{{ form.lng_lat.id_for_label }}' >{{ form.lng_lat.label }}</label>
+                                    {{ form.lng_lat }}
+                                    {% if form.lng_lat.help_text %}
+                                        <span class="helptext">{{ form.lng_lat.help_text | safe}}</span>
+                                    {%  endif %}
+                                </div>
+                            <div id="RightSideBar">
+                                <div class="map-notes">
+                                    <div id="HelpIcon" class="tooltip" onclick="help_popup()">
+                                        <img alt='Help' src="{% static 'GarageSale/images/icons/help-circle-svgrepo-com.svg' %}" />
+                                        <span class="tooltiptext bottom arrow">Help using<br>the map</span>
+                                    </div>
+                                    <div id="MapError" class="errors">
+                                        {{ form.lng_lat.errors }}
+                                    </div>
+                                    <dialog id="MapInstructions">
+                                        <div id="CloseIcon"  onclick="dialog_close()">
+                                        <img alt='Help' src="{% static 'GarageSale/images/icons/close-circle-1-svgrepo-com.svg' %}" />
+                                    </div>
+                                        <h2>How to use the map</h2>
+                                    <ul>
+                                    <li>Use the mouse wheel (or the +/- buttons) to zoom in and out: doing a two finger pinch
+                                    works on touch screens (such as phones/tablets).<br>
+                                    <li>Click and drag your mouse (or use a drag gesture on a touch screen) to move the map.<br>
+                                    <li>Click and hold to place a marker on the map - you can move the marker by click/hold somewhere else on the map.<br>
+                                    <li>Sometimes not all the buildings appear on the map view and
+                                    house numbers can be wrong or missing, so you can use the satellite view to identify your location.<br>
+                                    </ul
+                                    ><i>Unfortunately We have no control over the accuracy of the map -
+                                        please report issues to Google.</i>
+                                    </dialog>
+                                </div>
+                            </div>
+                        </div>
+                   </div>
+               </div>
+               <div style="font-size:95%;font-style: italic; width: 95%; margin:auto; margin-top:1rem; text-align: left">
+                   Find your location on the map and click so that the marker appears. If you are running a Sale Event
+                   - make sure the marker indicates where your sale will be held which might be different from your home location.
+                   Then click the Save button below. You will receive an email from <strong>'website@BranthamGarageSale.org.uk'</strong>
+                   confirming that your location is recorded.
+                </div>
+               <div class="footer">
+                   <span class="ToLeft">
+                        <button type=button onclick="PrevSectionClick()"><<< Prev section</button>
+                   </span>
+                   <span class="ToRight">
+                       <input type="button" name='action' onclick="cancel_LocationSave()" value="Cancel" id="id_CancelButton">
+                       <input type="submit" name='action' value="Save" id="id_SaveButton">
+                    </span>
+               </div>
+            </div>
+        </div>
+
+    </form>
+    <script type="text/javascript">
+        /* Implement cancel button as a simple return to the GetInvolved page */
+        function cancel_LocationSave()
+        {
+            window.location.replace( '{% url "Location:view" %}' );
+         }
+
+
+    </script>
+</div>
+</div>
