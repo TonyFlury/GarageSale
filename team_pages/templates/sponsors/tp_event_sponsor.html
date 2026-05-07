@@ -9,6 +9,51 @@
 <script type="text/javascript" src="{% static 'team_pages/js/news_page.js' %}"></script>
     {%  endblock %}
 
+{% block PageStyles %}
+    {{ block.super }}
+    <style>
+    div#id_article_list {
+        max-width: 80%;
+    }
+
+    table.data_list {
+        max-height: 50vh;
+    }
+    tr.heading {
+        font-weight: bold;
+        font-size: 120%;
+
+        th {
+            padding: 0.5rem;
+        }
+    }
+    tr.heading,
+    tr.data-row {
+    }
+
+    th.heading.name,
+    td.name {
+        width: 60%;
+        padding: 0.2em 1em;
+        text-wrap-mode: nowrap;
+    }
+    th.heading.confirmed,
+    td.confirmed {
+        width: 20%;
+    }
+    th.heading.action,
+    td.icons {
+        width: 20%;
+    }
+
+    tbody {
+        overflow-y: auto;
+        max-height: 45vh;
+    }
+
+</style>
+
+{% endblock %}
 
 {% block SnappableSections %}
     <div class="snappable-section">
@@ -48,12 +93,13 @@
 <div id="id_article_list" class="sublist bordered">
     <div id="id_al_toolbar" class="actions">
         <ul>
-            {% if perms.Sponsors.can_create_sponsor %}
+            {% if perms.Sponsors.suggest_sponsor %}
         <li><span id="tp-create" action="create">&#127381;</span></li>  <!-- New Icon -->
             {% endif %}
         </ul>
     </div>
     <table class="data_list" id="id_entry_list">
+        <thead>
         <tr class="heading">
             <th class="heading name">
                 Company Name
@@ -63,13 +109,14 @@
             </th>
             <th class="heading action"> </th>
         </tr>
+        </thead>
         <tbody id="tp_tbody_item_list">
         {% for item in sub_list_data %}
             <tr class="data-row {% cycle 'odd' 'even' %}">
                 <td class="name">
                     {{ item.company_name }}
                 </td>
-                <td>
+                <td class="confirmed">
                         {% if item.confirmed %} &#x2705;{%else%}&#x274E{% endif %}
                 </td>
                 <td class="icons">
