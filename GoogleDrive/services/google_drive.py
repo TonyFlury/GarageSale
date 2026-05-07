@@ -146,7 +146,6 @@ class GoogleDrive:
         str
             The ID of the newly created folder.
         """
-        print('create_sub_folder', parent,repr(folder_name))
         folder_id = self._drive_service.files().create(body={"name": folder_name, "mimeType": "application/vnd.google-apps.folder",
                                                    'parents':[parent if parent else google_drive_info.GOOGLE_DRIVE_ROOT_FOLDER_ID]}).execute()["id"]
         return folder_id
@@ -208,7 +207,6 @@ class GoogleDrive:
                 if not create_parents and index < len(segments) - 1:
                     raise FileNotFoundError(f"Cannot create '{path}' as folder '{'/'.join(segments[:index])}' does not exist")
                 folder_id = self.create_sub_folder(parent=parent, folder_name=segment)
-            print('get_or_create_path', parent,segment,folder_id)
             parent = folder_id
         return folder_id
 
@@ -241,7 +239,6 @@ class GoogleDrive:
                 A dictionary containing information about the created file, including
                 its ID, name, MIME type, size, and web view link.
         """
-        print('uploading file', dest_file_name, folder_id)
         media = MediaIoBaseUpload(
             source_data,
             mimetype=content_type,

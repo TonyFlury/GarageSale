@@ -1,0 +1,22 @@
+{% extends  "team_pages_base.html" %}
+{% load static %}
+
+{% block Title %}
+Add location on behalf of a user
+{% endblock %}
+
+{% block PageStyles %}
+   <style>
+       iframe {
+            height: 100%;
+            border:none;
+           box-shadow: none;
+        }
+   </style>
+{% endblock %}
+
+{% block SnappableSections %}
+    <iframe src="{% url 'Location:create' %}?on_behalf={{ on_behalf }}" ></iframe>
+
+
+{% endblock %}

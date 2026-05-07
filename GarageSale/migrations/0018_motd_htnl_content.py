@@ -5,7 +5,11 @@ from django.db import migrations, models
 def _move_from_quill(apps, schema_editor):
     motds = apps.get_model("GarageSale", "MOTD")
     for entry in motds.objects.all():
-        entry.html_content = entry.content.html
+        # Try to decode the JSON content from Quill - if it fails simply use the plain text
+        try:
+            entry.html_content = entry.content.html
+        except django_quill.quill.QuillParseError:
+            entry.html_content = entry.content
         entry.save()
 
 def _move_to_quill(apps, schema_editor):

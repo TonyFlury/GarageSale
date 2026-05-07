@@ -13,6 +13,8 @@ urlpatterns = [
     path('delete/<str:ext_id>/', views.LocationDelete.as_view(), name='delete'),
     path( 'event_map', views.view_event_map, name='event_map'),
 
+    path('add_location/', views.AddLocation.as_view(), name='AddLocation'),
+
     path('stats/', stats_view.event_stats, name='EventStats'),
     path('stats/<int:event_id>/', stats_view.event_stats, name='EventStats'),
 

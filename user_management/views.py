@@ -770,7 +770,6 @@ class UserProfile(View):
             else:
                 raise PermissionDenied('You do not have permission to view this page')
 
-        print(member_data.bio)
         return TemplateResponse(request, 'user_profile/user_profile.html',
                                 context={'member_data': member_data})
 
@@ -793,7 +792,6 @@ class UserProfileEdit(UpdateView):
 
 def id_card_pdf_header(context:dict):
     result = finders.find('user_management/styles/id_card_pdf_header.css')
-    print(result)
     if not result:
         return ''
     with open(result) as f:
@@ -820,11 +818,9 @@ class TeamMemberIDCard(EntryPointMixin, View):
 
     def post(self, request):
         members = request.POST.getlist('members_chosen')
-        print(members)
         instances = TeamMember.objects.filter(id__in=members)
 
         header = id_card_pdf_header(context={})
-        print(header)
 
         pdf, html = make_pdf(template_file='id_cards/ID_cards.html', context={'member_data': instances,
                                                                      'MEDIA_URL': settings.MEDIA_URL}, header=header, request=request)

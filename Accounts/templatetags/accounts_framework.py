@@ -15,7 +15,6 @@ def breadcrumb(context):
                   'categories' : categories_breadcrumb, 'reports': lambda x: base_breadcrumb(x) + [{'Reports':''}],}
     data_type = context.get('data_type', None)
     action = context.get('action', None)
-    print(f"Data type: {data_type}, Action: {action}")
     return format_html_join(' / ', link_str, ((v, k) for d in jump_table.get(data_type, base_breadcrumb)(context) for k, v in d.items() ))
 
 def categories_breadcrumb(context):

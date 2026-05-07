@@ -1,0 +1,104 @@
+form {
+}
+
+fieldset {
+    border: none;
+}
+
+div.FilteredSelectBox {
+    display: flex;
+    flex-direction: column;
+    border: thin solid black;
+    border-radius: 5px 5px;
+    width: fit-content;
+    margin: 2rem;
+    backdrop-filter: blur(3px);
+}
+
+label[for=user_list] {
+    background: lightblue;
+    border: thin solid black;
+    font-size: 80%;
+    margin:0;
+    padding: 0.2rem 0;
+    border-radius: 5px 5px 0 0;
+    text-align: center;
+}
+
+    form input[type=text],
+    form input[type=email]{
+        border: thin solid darkgray;
+        border-radius: 5px;
+        padding: 0.2rem;
+        box-shadow: none;
+        margin-right: 2px;
+    }
+
+div.select-filter {
+    padding: 0.2rem 0;
+}
+
+.select-filter .tool-tip.icon {
+    content: url("/static/GarageSale/images/icons/execute-inspect-svgrepo-com.svg");
+    width: 20px;
+    height: 20px;
+    padding: 5px;
+    vertical-align: middle;
+}
+
+.new-user-div .tool-tip.icon {
+    content: url("/static/GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg");
+    width: 20px;
+    height: 20px;
+    padding: 5px;
+    vertical-align: middle;
+}
+
+.tool-tip {
+    cursor:help;
+}
+
+select {
+    width: 100%;
+    box-shadow: none;
+    border: thin solid darkgray;
+    border-radius: 0 0 5px 5px;
+    scrollbar-width: thin;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+fieldset input[type=submit],
+fieldset input[type=button]{
+    width: fit-content;
+    margin: 0.5rem auto;
+    padding:0.5rem;
+    background: linear-gradient(45deg, lightblue 0%, white 75%, white 100%);
+    border: thin solid lightblue;
+    border-radius: 5px;
+    box-shadow: 2px 2px 3px lightblue;
+}
+
+form > span {
+    vertical-align: middle;
+}
+
+.new-entry-div {
+    border: thin solid darkgrey;
+    border-radius: 0 0 0 0 ;
+    padding: 0.2rem;
+}
+
+.submit-button-div {
+    align-self: center;
+}
+
+.warning { visibility: hidden; }
+
+.warning.warning-active { background: indianred;
+    margin: 0.2rem;
+    padding: 0.5rem;
+    border-radius: 5px;
+    visibility: visible;
+    cursor : pointer;
+}

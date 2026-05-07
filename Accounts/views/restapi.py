@@ -49,7 +49,6 @@ def get_child_categories(request, transaction_id):
     parent_category = transaction.category
     cat_list = list(i for i in Categories.objects.filter(parent__category_name=parent_category).
                                            values_list('category_name', flat=True))
-    print(cat_list)
     return JsonResponse({'categories':cat_list, 'success':HTTPStatus.OK})
 
 @require_http_methods(['GET'])

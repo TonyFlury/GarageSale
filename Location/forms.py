@@ -3,7 +3,7 @@
 import re
 import string
 
-from django.forms import forms, CheckboxInput, TextInput, ModelForm
+from django.forms import forms, CheckboxInput, TextInput, ModelForm, HiddenInput
 from django.core.exceptions import ValidationError
 from django.forms import fields as form_fields
 from django.forms.fields import CharField
@@ -26,10 +26,12 @@ def validate_postcode( value):
 
 class LocationForm(ModelForm):
     template_name = "forms/table.html"
+    on_behalf = HiddenInput()
 
     class Meta:
         model = Location
-        fields = ["ad_board", "sale_event", "house_number", "street_name", "postcode", "town", "lng_lat"]
+        fields = '__all__'
+        exclude = ['event', 'user']
         labels = {"lng_let" : 'Sale/AdBoard location'}
         postcode = CharField(validators=[validate_postcode])
         widgets = {'house_number': TextInput(attrs={"size":30, 'required': False}),

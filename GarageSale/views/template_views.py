@@ -334,16 +334,10 @@ class TemplatesEdit(TemplatesView):
 
     def post_save(self, request, instance, form, **kwargs):
         """Implemented so that any attachments are saved within"""
-        print( f'post_save called {request.POST.get('attachments-TOTAL_FORMS', '0')}' )
-        for i in range(int(request.POST.get('attachments-TOTAL_FORMS', '0'))):
-            print(f'i = {i}, {request.POST.get(f"attachments-{i}-template_name")}, {request.POST.get(f"attachments-{i}-DELETE")}')
-
         formset = self.get_attachments_form(request, instance, **kwargs)
 
         if formset.is_valid():
             formset.save()
-        else:
-            print(formset.errors)
 
 def duplicate_template(inst_id):
 
