@@ -26,7 +26,7 @@ from django.views.generic.base import RedirectView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", general_views.home, name="home"),
-    path("newhome", TemplateView.as_view(template_name='home.html'), name="NewHome"),
+    path("home", general_views.home, name="home"),
     path("getInvolved", RedirectView.as_view(url=reverse_lazy('Location:view'))),
 #    path("getInvolved", include('Location.urls'), name="getInvolved"),
     path('about_us', TemplateView.as_view(template_name='aboutUs.html'), name='AboutUs'),

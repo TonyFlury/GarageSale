@@ -4,6 +4,16 @@
 {% load user_management_tags %}
 {% load event_data_tags %}
 
+{% block PageStyles %}
+{{ block.super }}
+    <style>
+    .panel #online {
+    float: left;
+    padding: 1rem;
+    border-left: dotted thin;
+}
+    </style>
+{% endblock %}
 {% block Title %}
 Brantham Garage Sale - Home Page
 {% endblock %}
@@ -110,7 +120,7 @@ Brantham Garage Sale - Home Page
       </p>
   </div>
 
-  <div class="card donate" card_name="donate">
+  <div id='DonateToUs' class="card donate" card_name="donate">
     <h1>Donating to the Charity</h1>
         <div class="panel">
             <div id="bacs">
@@ -122,6 +132,13 @@ Brantham Garage Sale - Home Page
                     <li><b>Sort Code </b>: 30 99 50
                 </ul>
             </div>
+            <div id="online">
+                You can pay online through our Zeffy Account :
+                <a href="https://www.zeffy.com/en-GB/donation-form/donate-to-help-the-hospice-and-first-responders" >Brantham Garage Sale on Zeffy</a>
+                <p><i>Zeffy is free for us to use, and asks donors for an optional tip to keep Zeffy in business.</i>
+            </div>
+
+
             <div id="cash-fees">
                 If you want to pay your £8.00 pitch fee in cash, please place it in a sealed
                 envelope with your name, and address on it and deliver it to :
@@ -149,8 +166,7 @@ Brantham Garage Sale - Home Page
         {%  endfor %}
     </div>
     -->
-
-    <div class="card" card_name="sponsors">
+  <div id="Sponsors" class="card" card_name="sponsors">
     <h1>Our Generous Sponsors</h1>
     A number of very generous local companies have sponsored the Garage Sale this year, either with a cash donation or
     with donations of vouchers or prizes to our prize Tombola. Not only do these sponsors allow us to cover the costs of
@@ -198,7 +214,7 @@ Brantham Garage Sale - Home Page
     </div>
 
 
-  <div class="card" card_name="AboutUs" >
+  <div id="AboutUs" class="card" card_name="AboutUs" >
     <h1>About the Garage Sale and the Foundation</h1>
       The Garage Sale has been running in Brantham since 2003 - initially to raise money for
       St Elizabeth's Hospice in Ipswich, specifically for the "Carla Dawson Memorial fund".
@@ -214,14 +230,14 @@ Brantham Garage Sale - Home Page
       plans to expand the 2025 sale even more.
   </div>
 
-  <div class="card" card_name="contact">
+  <div id="ContactUs" class="card" card_name="contact">
     <h1>Contact Us</h1>
       As of 1st January 2026, our contact details have changed :
       <ul>
             <li>Trustees : <a href="mailto:Trustees@BranthamGarageSale.org.uk">Trustees@BranthamGarageSale.org.uk</a></li>
-            <li>Sponsorship : <a href="mailto:Sponsorship@BranthamGarageSale.org.uk">Trustees@BranthamGarageSale.org.uk</a></li>
-            <li>CraftMarket : <a href="mailto:CraftMarket@BranthamGarageSale.org.uk">Trustees@BranthamGarageSale.org.uk</a></li>
-            <li>Website : <a href="mailto:Website@BranthamGarageSale.org.uk">Trustees@BranthamGarageSale.org.uk</a></li>
+            <li>Sponsorship : <a href="mailto:Sponsorship@BranthamGarageSale.org.uk">Sponsorship@BranthamGarageSale.org.uk</a></li>
+            <li>CraftMarket : <a href="mailto:CraftMarket@BranthamGarageSale.org.uk">CraftMarket@BranthamGarageSale.org.uk</a></li>
+            <li>Website : <a href="mailto:Website@BranthamGarageSale.org.uk">Website@BranthamGarageSale.org.uk</a></li>
       </ul>
 
       You can also contact us via Facebook :

@@ -677,32 +677,22 @@ div.blaze-slider button {
     margin-right: 1rem;
     text-align: left;
     flex-wrap: wrap;
-
+    flex-direction: row;
 
     @media screen and (min-width: 1000px) {
-        #bacs,
-        #cash-fees,
-        #cash-donations{
+         > div {
             width:28%;
         }
+    }
+     > div {
+        padding: 1rem;
+        margin: 0.5rem;
+        border : thin dotted darkgrey;
+        border-radius: 10px;
+         box-shadow: 2px 2px 2px 2px darkgrey;
+    }
 
-    }
-    #bacs{
-        float: left;
-        padding: 1rem;
-        margin: 0;
-    }
-    #cash-fees {
-        float: left;
-        padding: 1rem;
-        border-left: dotted thin;
-    }
-    #cash-donations {
-        float: left;
-        padding: 1rem;
-        border-left: dotted thin;
-    }
-    ul {
+     >div ul {
         list-style-type: none;
         font-size: 85%;
         margin: 1rem;
