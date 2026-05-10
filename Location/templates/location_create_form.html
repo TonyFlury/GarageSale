@@ -3,9 +3,11 @@
 {% load user_management_tags %}
 {% load location_tags %}
 
-{% block head-extra %}
+{% block PageScripts %}
+    {{ block.super }}
     <script src="{% static 'DjangoGoogleMap/api/display_location.js' %}"></script>
     <script type="text/javascript" src="{% static 'GarageSale/js/tooltip.js' %}"></script>
+    <script type="text/javascript" src="{% static 'Location/js/create_location.js' %}"></script>
 {% endblock %}
 
 

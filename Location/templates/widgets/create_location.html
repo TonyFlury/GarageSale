@@ -1,49 +1,4 @@
 {% load static %}
-    <script lang="javascript">
-
-        function help_popup() {
-            const popup = document.getElementById("MapInstructions")
-            popup.left = (window.innerWidth - popup.clientWidth) / 2;
-            popup.top = (window.innerHeight - popup.clientHeight) / 2;
-            popup.showModal();
-            const help_button = document.getElementById("HelpIcon");
-            help_button.style.display = "none";
-        }
-
-        function dialog_close() {
-            const popup = document.getElementById("MapInstructions")
-            if (popup.open) popup.close();
-            const help_button = document.getElementById("HelpIcon");
-            help_button.style.display = "inline-block";
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-
-            const popup = document.getElementById("MapInstructions")
-            popup.addEventListener('close', dialog_close)
-
-            let section1_fields = ["AdBoard", "HouseNumber", "StreetName", "Postocde", "Town" ];
-
-            for (let i = 0; i < section1_fields.length; i++) {
-                let section = section1_fields[i] + "Error"
-                let item = document.getElementById(section)
-                console.log(item, section)
-                if (item.innerHTML.trim() !== '')
-                    return;
-            }
-
-            let error = document.getElementById('MapError').innerHTML.trim()
-            if (error == '')
-                return;
-
-            let section1 = document.getElementById("section1");
-            let section2 = document.getElementById("section2");
-            section1.style.display = "none";
-            section2.style.display = "block";
-
-        });
-
-    </script>
 <div class="card location">
     <h3 style="margin-bottom: 0;">
         {{ Activity }} Garage Sale Location
@@ -85,6 +40,7 @@
                     <div class="address">
                         {{ form.sale_event.errors }}
                         <div class="field_outer">
+                            <div id='AdBoardError' class="error">{{ form.ad_board.errors }}</div>
                             <div>
                                 {% if request.current_event.allow_ad_board_bookings %}
                                 <div class="field_wrapper"><label for='{{ form.ad_board.id_for_label }}' >{{ form.ad_board.label }}</label>{{ form.ad_board }}<span class="helptext">{{ form.ad_board.help_text }}</span></div>
@@ -98,41 +54,43 @@
                                         - you can still set up your sale on the day though.</strong></div>
                                 {% endif %}
                             </div>
-                                <div id='AdBoardError' class="error">{{ form.ad_board.errors }}</div>
                         </div>
                         <div class="field_outer">
+                            <div id="HouseNumberError" class="error">
+                                    {{ form.house_number.errors }}
+                            </div>
                             <div class="field_wrapper">
                                 <label for='{{ form.house_number.id_for_label }}' > {{ form.house_number.label }}</label>
                                 {{ form.house_number }}{% if form.house_number.help_text %}<span class="helptext">{{ form.house_number.help_text }}</span>{%  endif %}
                             </div>
-                            <div id="HouseNumberError" class="error">
-                                    {{ form.house_number.errors }}
-                            </div>
+
                         </div>
                         <div class="field_outer">
+                            <div id="StreetNameError" class="error">
+                                {{ form.street_name.errors }}
+                            </div>
                             <div class="field_wrapper">
                                 <span class="label"><label for='{{ form.street_name.id_for_label }}' >{{ form.street_name.label }}</label></span>
                                 {{ form.street_name }}{% if form.street_name.help_text %}<span class="helptext">{{ form.street_name.help_text }}</span>{%  endif %}
                             </div>
-                            <div id="StreetNameError" class="error">
-                                {{ form.street_name.errors }}
-                            </div>
                         </div>
 
                         <div class="field_outer">
-                            <div class="field_wrapper">
-                                <span class="label"><label for='{{ form.postcode.id_for_label }}' >{{ form.postcode.label }}</label></span>
-                                {{ form.postcode }}{% if form.postcode.help_text %}<span class="helptext">{{ form.postcode.help_text }}{% endif %}</span></div>
                             <div id="PostocdeError" class="error">
                                 {{ form.postcode.errors }}
                             </div>
+                            <div class="field_wrapper">
+                                <span class="label"><label for='{{ form.postcode.id_for_label }}' >{{ form.postcode.label }}</label></span>
+                                {{ form.postcode }}{% if form.postcode.help_text %}<span class="helptext">{{ form.postcode.help_text }}{% endif %}</span>
+                            </div>
                         </div>
                         <div class="field_outer">
-                            <div class="field_wrapper">
-                                <span class="label"><label for='{{ form.town.id_for_label }}' >{{ form.town.label }}</label></span>
-                                {{ form.town }}{% if form.town.help_text %}<span class="helptext">{{ form.town.help_text }}{%  endif %}</span></div>
                             <div id="TownError" class="error">
                                 {{ form.town.errors }}
+                            </div>
+                            <div class="field_wrapper">
+                                <span class="label"><label for='{{ form.town.id_for_label }}' >{{ form.town.label }}</label></span>
+                                {{ form.town }}{% if form.town.help_text %}<span class="helptext">{{ form.town.help_text }}{%  endif %}</span>
                             </div>
                         </div>
                     </div>
