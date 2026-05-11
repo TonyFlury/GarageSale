@@ -181,19 +181,18 @@ class GuestVerifier(UserVerification):
     retry_count = models.IntegerField(null=False, blank=False)
     reason_code = models.CharField(choices=RejectionReason, null=True, max_length=11)
 
-    def save(self, *args, **kwargs):
+    def _gen_new_key(self):
         alphabet = '3456789ABCDEGHJKLMNPQRSTUVWXY'  # Exclude 0,1,2 and OIZ
         code = get_random_string(length=7, allowed_chars=alphabet)
         # Repeat until the code is unique - unlikely that we will have a collision but better safe
         while self.__class__.objects.filter(short_code=code).exclude(pk=self.pk).exists():
             code = get_random_string(length=7, allowed_chars=alphabet)
-        self.short_code = code
-        super().save(*args, **kwargs)
+        return code
 
     @classmethod
     def confirm_guest_identification(cls, user, short_code):
         """Return True if this short code matches this user"""
-        return cls.objects.filter(user=user, short_code=short_code).exists()
+        return cls.objects.filter(user=user, short_code=short_code.upper()).exists()
 
     @classmethod
     def add_guest_verifier(cls, email, *args, **kwargs):
@@ -206,7 +205,8 @@ class GuestVerifier(UserVerification):
                    expiry_timestamp=expiry,
                    retry_count=retry_count,
                    reason_code=None)
-        inst.save( *args, **kwargs)
+        inst.short_code = inst._gen_new_key()
+        inst.save()
         return inst
 
 

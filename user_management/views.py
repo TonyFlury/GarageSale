@@ -297,7 +297,7 @@ class InputShortCode(View):
             logger.error(f'InputShortCode - Guest verifier for {code_inst.email} has expired - {code_inst.expiry_timestamp=}')
             return redirect(resolve_url('user_management:guest_error', short_code_id=code_inst.pk) + f'?next={next}')
 
-        if form.cleaned_data['short_code'] != code_inst.short_code:
+        if form.cleaned_data['short_code'].upper() != code_inst.short_code:
             logger.error(f'InputShortCode - Incorrect input - {form.cleaned_data['short_code']=!r} != {code_inst.short_code=!r}')
             code_inst.retry_count -= 1
             code_inst.save()
