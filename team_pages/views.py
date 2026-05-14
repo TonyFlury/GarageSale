@@ -410,7 +410,7 @@ def delete_motd(request, motd_id=None):
 
 register('Events', 'TeamPages:EventList',
          icon_path=static('GarageSale/images/icons/navigation/calendar-date-event-svgrepo-com.svg'),
-         needs_event=False, permission='GarageSale.view_eventdata')
+         needs_event=False, permission='GarageSale.view_eventList')
 def event_list(request):
     return render(request, 'event/event_list.html', context={'event_list': EventData.objects.all().order_by('-event_date'), 'data_type': 'event', 'action': 'list'})
 
@@ -458,7 +458,7 @@ class EventView(EventBase):
 
 
 class EventEdit(EventView):
-    permission_required = ["GarageSale.change_event"]
+    permission_required = ["GarageSale.change_eventdata"]
     template_name = 'event/tp_edit_event.html'
     success_url = reverse_lazy( 'TeamPages:Event')
 

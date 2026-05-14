@@ -149,13 +149,13 @@ def event_breadcrumb_segments(context):
         case ('create', _, ):
             return [{'Create Event': reverse('TeamPages:EventCreate')}]
         case ('edit',_):
-            return [{event.event_date: reverse('TeamPages:EventRoot', kwargs={'event_id': event_id})},
+            return [{event.event_date: reverse('TeamPages:EventList'), },
                     {'Edit': reverse('TeamPages:EventEdit', kwargs={'event_id': event_id})}]
         case ('view',_):
-            return [{event.event_date: reverse('TeamPages:EventRoot',  kwargs={'event_id': event_id})},
+            return [{event.event_date: reverse('TeamPages:EventList'), },
                     {'Details': reverse('TeamPages:EventView',  kwargs={'event_id': event_id}) } ]
         case ('use',_):
-            return [{event.event_date: reverse('TeamPages:EventRoot',  kwargs={'event_id': event_id}) },]
+            return [{event.event_date: reverse('TeamPages:EventList'), },]
         case ('list', _):
             return [{'List': ''} ]
         case (_, _):

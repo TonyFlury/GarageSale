@@ -6,7 +6,7 @@
 {% block SnappableSections %}
     <div class="form">
         <script>
-            function cancel_event() { document.location.replace( "{% url 'TeamPages:Root' %}" ) };
+            function cancel_event() { document.location.replace( "{% url 'TeamPages:EventDisplay' form.instance.id %}" ) };
 
             function preview_image(event) {
                 var reader = new FileReader();
@@ -62,7 +62,7 @@
                 </tr>
             </table>
             <div class="buttons">
-                    <input type='button' onclick="cancel_event()"  value="Cancel Edits">
+                    <input type='button' onclick="cancel_event( )"  value="Cancel Edits">
                     <input type='reset'   value="Reset Form">
                     <input type='submit'   value="Save Changes">
 

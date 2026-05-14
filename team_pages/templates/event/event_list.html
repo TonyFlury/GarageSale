@@ -16,7 +16,7 @@
             <span class="cell">Use from</span>
         </div>
         {% for event in event_list %}
-            <a href="{% url "TeamPages:EventView" event_id=event.id %}" >
+            <a href="{% url "TeamPages:EventDisplay" event_id=event.id %}" >
             <div class="row {% cycle 'odd' 'even' %}">
                 <span class="cell">{{event.event_date}}</span>
                 <span class="cell">{{event.use_from}}</span>

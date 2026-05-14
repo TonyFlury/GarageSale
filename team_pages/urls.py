@@ -5,8 +5,6 @@ from Location import stats_view
 app_name = 'TeamPages'
 urlpatterns = [
     path('', views.TeamPage.as_view(), name='Root'),
-    path('<int:event_id>/', views.TeamPage.as_view(), name='EventRoot'),
-
 
     path('motd/', views.MOTD_list, name='MOTDList'),
     path('motd/create/', views.MotDCreate.as_view(), {'action': '_create'}, name='MotdCreate', ),
@@ -22,8 +20,7 @@ urlpatterns = [
     path('news/<int:news_id>/delete/', views.NewsDelete.as_view(), name='DeleteNews'),
 
     path('event/', views.event_list, name='EventList'),
-    path('event/', views.TeamPage.as_view(), name='Event'),
-    path('event/<int:event_id>/', views.TeamPage.as_view(), name='EventDisplay'),
+    path('event/<int:event_id>/', views.EventView.as_view(), name='EventDisplay'),
 
     path('event/create/', views.EventCreate.as_view(), name='EventCreate'),
     path('event/<int:event_id>/edit/', views.EventEdit.as_view(), name='EventEdit'),
