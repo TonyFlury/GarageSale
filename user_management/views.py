@@ -1,8 +1,6 @@
 import datetime
 from datetime import datetime as dt
-import logging
 from typing import Type
-from uuid import uuid1
 import io
 
 import weasyprint
@@ -11,11 +9,9 @@ from django.contrib.staticfiles import finders
 from django.template import Template, Context
 from django.template.loader import get_template
 from django.templatetags.static import static
-from django.utils import timezone, encoding
-from django.contrib.auth.models import User
+from django.utils import timezone
 from django.contrib.auth import login as login_user
 from django.http import HttpResponseServerError, HttpRequest, Http404, HttpResponse
-from django.core.mail import send_mail
 from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import redirect, reverse
 from django.template.response import TemplateResponse
@@ -28,8 +24,7 @@ from django.contrib.auth import authenticate
 
 from TeamPageFramework.entry_point import EntryPointMixin
 from . import forms
-from . import models
-from .models import RegistrationVerifier, GuestVerifier, PasswordResetApplication, UserVerification, UserExtended, \
+from .models import GuestVerifier, PasswordResetApplication, UserExtended, \
     AdditionalData, TeamMember
 
 from .apps import appsettings, settings
@@ -167,7 +162,6 @@ def resend_registration_link(incoming_request, uuid):
     except user_model.DoesNotExist:
         raise ObjectDoesNotExist('User does not exist')
 
-    email = verifier_inst.email
     if user.is_guest:
         try:
             additional = verifier_inst.AdditionalData.objects.values().get()
@@ -238,13 +232,27 @@ class InputShortCode(View):
         return name[0:4].rjust(len(name), '*') + '@' + domain[0:4].rjust(len(domain), '*') + '.' + tld
 
     def get(self, incoming_request, short_code_id):
+        """The user has clicked on a link in an email, after requesting a Guest login.for a short.
+        So prompt for a short code"""
+
+        # Changes on 7th June 2026 : prevent errors when the Guest Verifier doesn't exist
+        # This is almost certainly a double-click of the email.
+
+        # First - check if the user is already logged in as a guest.
+        if incoming_request.user.is_authenticated:
+            logger.info('User is already logged in - redirecting to the next url')
+            return redirect(incoming_request.GET.get('next', '/'))
+
         next = incoming_request.GET.get('next', '/')
         logger.info(f'InputShortCode (GET method)- {short_code_id=}')
         try:
             code_inst = GuestVerifier.objects.get(pk=short_code_id)
         except GuestVerifier.DoesNotExist:
-            logger.error(f'Unknown {short_code_id=}')
-            raise ObjectDoesNotExist(f'Received Invalid ShortCode pk {short_code_id} ')
+            # Log and redirect - don't fail for the user.
+            logger.error(f'Unknown Guest Verifier with pk {short_code_id=} (it has probably been deleted).\n"'
+                         f"This is likely a double click of the link in the email\n"
+                         f"Redirecting to {next}")
+            return redirect(next)
 
         if code_inst.reason_code == 'resend':
             logger.info(f'Resent code for {code_inst.email}')
@@ -533,8 +541,8 @@ class Login(View):
                                     next=next_url))
 
         try:
-            user_model:Type[UserExtended|AbstractBaseUser] = get_user_model()
-            user_inst:UserExtended = user_model.objects.get(email=form_inst.cleaned_data['email'])
+            user_model = get_user_model()
+            user_inst = user_model.objects.get(email=form_inst.cleaned_data['email'])
         except get_user_model().DoesNotExist:
             form_inst.add_error(None, "Invalid User/password combination")
             return TemplateResponse(request,
@@ -717,6 +725,7 @@ class PasswordResetEnterNew(View):
 
         form = forms.PasswordResetForm(request.POST)
         if not form.is_valid():
+            logger.info(f'Password reset form for {uuid} is invalid - {form.errors=}')
             return TemplateResponse(request,
                                     'generic_forms/generic_with_form.html',
                                     context=form.form_context(uuid, next=next_url))
@@ -724,14 +733,24 @@ class PasswordResetEnterNew(View):
         try:
             application = PasswordResetApplication.objects.get(uuid=uuid)
         except PasswordResetApplication.DoesNotExist:
-            return HttpResponseServerError(f'Received a password reset with an unknown uuid {uuid}')
-
+            logger.error(f'Reset application {uuid} does not exist - {form.errors=}: '
+                         f'only thing we can do is ask for the user name again')
+            # Note - there is no way currently to provide an error message to the user
+            form.add_error( '', 'Something went badly wrong - please Cancel and try again later')
+            return TemplateResponse(request,
+                                    'generic_forms/generic_with_form.html',
+                                    context=form.form_context(uuid, next=next_url))
         email = application.email
         try:
-            user_model:[UserExtended | AbstractBaseUser] = get_user_model()
+            user_model = get_user_model()
             user = user_model.objects.get(email=email)
         except UserExtended.DoesNotExist:
-            return HttpResponseServerError('Received a password reset with an unknown email')
+            logging.error(f'User {email} does not exist - {form.errors=}, but we have a password reset '
+                          f'application - {application.pk=}')
+            form.add_error( '', 'Something went badly wrong - please Cancel and try again later')
+            return TemplateResponse(request,
+                                    'generic_forms/generic_with_form.html',
+                                    context=form.form_context(uuid, next=next_url))
 
         if form.cleaned_data['new_password1'] != form.cleaned_data['new_password2']:
             form.add_error('new_password2', 'The passwords provided must be the same as each other')

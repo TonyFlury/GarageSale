@@ -45,7 +45,8 @@ class History(models.Model):
     marketeer = models.ForeignKey('Marketer', on_delete=models.CASCADE, related_name="history")
     state = models.CharField(max_length=20, choices=MarketerState.choices, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
-
+    def __str__(self) -> str:
+        return f'{self.marketeer} - {self.state} @ {self.timestamp}'
 
 def save_logo_to(instance, file_name: str) -> str:
     return f'marketeer_{instance.event.event_date.year}/{slugify(instance.trading_name)}_{file_name}'
@@ -54,6 +55,7 @@ def save_logo_to(instance, file_name: str) -> str:
 class MarketerManager(models.Manager):
     def create(self, **obj_data):
         event = obj_data.get('event')
+        logger.info(f'Creating new CraftMarketInstance {obj_data['trading_name']}')
         try:
             instance = super().create(**obj_data)
             instance.state = MarketerState.New

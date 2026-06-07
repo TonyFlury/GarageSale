@@ -145,7 +145,8 @@ class LocationEditView(UserRecognisedMixin, UpdateView):
         if ad_board_changed:
             messages.append(f"is {'now' if ad_board_added else 'no longer'} hosting an ad-board")
         desc = " and ".join(messages)
-        return desc[0].capitalize() + desc[1:]
+        # June 7th - Prevent empty descriptions
+        return desc[0].capitalize() + desc[1:] if desc else ""
 
     def _send_edited_email(self, old, location: "LocationModel") -> None:
 
@@ -160,10 +161,14 @@ class LocationEditView(UserRecognisedMixin, UpdateView):
         context = { 'from': location_settings.get('EmailFrom', self.DEFAULT_EMAIL_FROM),
                      'email': [self.request.user.email],
                     'address': location.full_address(),
+                    'supporting_list': ','.join(location.event.supporting_organisations.values_list('name', flat=True)),
                     'event_date': location.event.get_event_date_display(),
                     'change_description': self._get_change_description((sale, add),
                                                                   (location.sale_event, location.ad_board))}
-        template.send_email(self.request, context=context)
+
+        # Don't send an email if there are no changes
+        if context['change_description']:
+                template.send_email(self.request, context=context)
 
     def post(self, request, *args, **kwargs):
 
