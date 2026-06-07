@@ -156,13 +156,17 @@ class FilteredSelectBox {
                 if (validate_select(owner_obj) ) {
                     owner_obj.submit_element.disabled = true;
                     owner_obj.submit_element.value = 'Creating...';
-                    let field_name = element.getAttribute('field_name');
-                    let field = document.getElementById(field_name);
-                    let selected_users = owner_obj.get_selected_users()[0];
-                    field.value = JSON.stringify(selected_users);
 
                     let dialog_name = owner_obj.select_box.element.getAttribute('submit_dialog');
                     let dialog = document.getElementById(dialog_name)
+
+                    let field_name = element.getAttribute('field_name');
+                    console.log(field_name)
+                    let field = document.getElementById(field_name);
+                    let selected_users = owner_obj.get_selected_users()[0];
+                    console.log(selected_users)
+                    field.value = selected_users;
+
                     dialog.showModal();
                 }
             } )
@@ -186,7 +190,7 @@ class FilteredSelectBox {
                 selected_users.push(select_box.element.options[i].text);
             }
         }
-        if (this.select_box.element.hasAttribute('new-entry')) {
+        if (this.select_box.element.classList.contains('new-entry')) {
             selected_users.push(this.new_entry.value)
         }
         return selected_users;

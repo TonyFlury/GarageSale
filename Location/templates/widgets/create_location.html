@@ -8,7 +8,7 @@
             {% csrf_token %}
             <input type="hidden" id="on_behalf" name="on_behalf" value="{{ on_behalf }}">
             {% if on_behalf != None %}
-                <h3>Creating a location for {{ on_behalf }}</h3>
+                <h3>Creating a location</h3>
             {% endif %}
             <div class="address-and-map">
                 {%  if form.non_field_errors %}

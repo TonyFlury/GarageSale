@@ -20,6 +20,9 @@ from django.views.generic import ListView, TemplateView
 from .models import Location as LocationModel
 from .forms import LocationForm
 from django.conf import settings
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 def view_event_map(request):
     locations = LocationModel.objects.all()
@@ -72,9 +75,10 @@ class LocationBase(CreateView) :
     def form_is_valid(self, form):
         """Add user and event details to the location."""
 
-        on_behalf = self.request.GET.get('on_behalf', [])
+        on_behalf = self.request.POST.get('on_behalf', [])
         if on_behalf:
-            user = get_user_model().objects.get(email=on_behalf)
+            user = get_user_model().objects.get_or_create(email=on_behalf)
+            user = user[0]
         else:
             user = self.request.user
 
