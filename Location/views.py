@@ -40,7 +40,8 @@ class LocationBase(CreateView) :
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context |= {'on_behalf': self.request.GET.get('on_behalf', None)}
+        # Make sure we resend the 'on-behalf' field back to the form
+        context |= {'on_behalf': self.request.POST.get('on_behalf', None)}
         context |= {'GOOGLE_MAP_API': settings.GOOGLE_MAP_SETTINGS.get('API_KEY')}
         context |= {"Activity": "Recording new "}
         return context
@@ -76,6 +77,7 @@ class LocationBase(CreateView) :
         """Add user and event details to the location."""
 
         on_behalf = self.request.POST.get('on_behalf', [])
+        logger.debug(f'on_behalf = {on_behalf}')
         if on_behalf:
             user = get_user_model().objects.get_or_create(email=on_behalf)
             user = user[0]
