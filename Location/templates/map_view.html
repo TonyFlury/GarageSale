@@ -44,7 +44,12 @@
 {%  block SnappableSections %}
 
     <h1>The Sales locations for this event</h1>
-    <div style="text-align: center; font-style: italic; width: 60%; margin :auto;">This is not a downloadable map - go back to the <a href='{%  url "home" %}#TheMap' >Homepage</a> for the downloadable file</div>
+    <div style="text-align: center; width: 60%; margin :auto;">This is a live map, based on the data so far collected.
+    {% if map_url %}<p>
+        You can now download a digital version of the completed map, by clicking the map below.<br>
+        This digital map can be used with the Google Map phone app installed.
+    </p>{% endif %}
+    </div>
     <div class="premarked-map">
         <div id="map" class="map">
                 <div class="map_wrapper" style="width: 100%; height:100%;"></div>
@@ -68,11 +73,16 @@
                 this_map.Options = options;
 
                 this_map.display( bounds = {% settings_value "GOOGLE_MAP_SETTINGS.PLACES.Brantham.bounds" %});
-
                 {% for location in locations %}
-                    this_map.addMarker( {{ location.lng_lat | safe }}, "{{ location.house_number}}, {{location.street_name}}");
+                this_map.addMarker( {{ location.lng_lat | safe }}, "{{ location.house_number}}, {{location.street_name}}");
                 {% endfor %}
 
+                // Add a click listener to the map
+                this_map.map.addListener('click', (event) => {
+                    {%  if map_url %}
+                        window.location.href = "{{ map_url }}";
+                    {% endif %}
+                    });
             }
         </script>
 {%  endblock %}

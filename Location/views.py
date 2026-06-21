@@ -28,7 +28,8 @@ def view_event_map(request):
     locations = LocationModel.objects.all()
     context = {'GOOGLE_MAP_API': settings.GOOGLE_MAP_SETTINGS.get('API_KEY'),
                'locations' :  LocationModel.objects.filter(event=request.current_event,
-                                                        sale_event=True).order_by('creation_timestamp')}
+                                                        sale_event=True).order_by('creation_timestamp'),
+               'map_url' : request.current_event.myGoogleMapURL if request.current_event.myGoogleMapURL else ''}
     return TemplateResponse(request, "map_view.html", context  )
 
 class LocationBase(CreateView) :

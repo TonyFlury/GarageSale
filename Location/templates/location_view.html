@@ -103,12 +103,14 @@
                 const maps = document.getElementsByClassName('map')
                 for (let i = 0; i < maps.length; i++) {
                     const element = maps[i];
-                        this_map = new GoogleMap(element,
+                        let this_map = new GoogleMap(element,
                             markers = [{location:element.getAttribute("__lng_lat"), address:element.getAttribute("__address")}],
                             read_only = true,
                             google_map_id =  '{% settings_value "GOOGLE_MAP_SETTINGS.MAP_ID" %}' );
-                        this_map.display()
+                        this_map.display();
+
                 }
             }
+
         </script>
     {% endblock %}
