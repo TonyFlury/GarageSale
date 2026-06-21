@@ -494,11 +494,6 @@ class EventCreate(EventBase):
         self._supporting = None
         return instance
 
-def event_use(request, event_id):
-    """Simple invocation of a template - option to add more complexity if needed"""
-    return TemplateResponse(request, 'event/tp_use_event.html', context={'action':'use', 'event_id': event_id, 'data_type': 'event'})
-
-
 class TeamPage(LoginRequiredMixin, View):
     login_url = "/user/login"
     redirect_field_name = "/team_page"
