@@ -23,8 +23,6 @@ urlpatterns = [
 
     path('event/', views.event_list, name='EventList'),
     path('event/', views.TeamPage.as_view(), name='Event'),
-    path('event/<int:event_id>/use', views.event_use, name='EventUse'),
-
     path('event/create/', views.EventCreate.as_view(), name='EventCreate'),
     path('event/<int:event_id>/edit/', views.EventEdit.as_view(), name='EventEdit'),
     path('event/<int:event_id>/view/', views.EventView.as_view(), name='EventView'),
