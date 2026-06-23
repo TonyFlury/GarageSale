@@ -119,11 +119,11 @@ class MigrationHelper :
                 self.contributor_event_model.objects.create( contributor=contributor, event = entry.event,
                                                         timestamp=entry.creation_date, status='Confirmed',
                                                         )
-                if getattr(entry, 'gifts') is not None:
+                if getattr(entry, 'gift') is not None:
                     self.contributions_model.objects.create(
                         contributor=contributor,
                         event=entry.event,
-                        gift=getattr(entry, 'gifts'),
+                        gift=getattr(entry, 'gift'),
                     )
 
     def get_mapped_field(self, obj: object, field_name:str, default:_T=None):

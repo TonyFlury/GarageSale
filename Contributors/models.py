@@ -7,6 +7,8 @@ from django.db import models
 from GarageSale.models import EventData
 from django.utils.text import slugify
 
+# TODO Validation - make either or Phone/email mandatory
+
 def save_logo_to(instance, file_name: str) -> str:
     return f'contributors/{slugify(instance.contributor_name)}_{file_name}'
 
