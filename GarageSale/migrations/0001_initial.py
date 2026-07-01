@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
             ],
             options={
-                'permissions': [('is_trustee', 'Is a member of the Charity Trustee Team'), ('is_administrator', 'Is a administrator for the website'), ('is_manager', 'Is a manager of the website')],
+                'permissions': [('is_trustee', 'Is a member of the Charity Trustee Team'), ('is_team_member', 'Is a member of the team'), ('is_administrator', 'Is a website administrator'), ('is_manager', 'Is a manager of the website')],
                 'managed': False,
                 'default_permissions': (),
             },
