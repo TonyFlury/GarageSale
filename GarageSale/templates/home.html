@@ -5,42 +5,66 @@
 {% load event_data_tags %}
 
 {% block PageStyles %}
-{{ block.super }}
+    {{ block.super }}
     <style>
-    .panel #online {
-    float: left;
-    padding: 1rem;
-    border-left: dotted thin;
-}
+        .panel #online {
+            float: left;
+            padding: 1rem;
+            border-left: dotted thin;
+        }
+
+        .panel .buttons {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            width: 85%;
+            margin: 1rem auto 0;
+            input[type=button] {
+                font-size: 110%;
+                border-radius: 15px;
+                padding: 1rem;
+                background: linear-gradient(10deg, lightblue 0%, white 50%, white 100%);
+                box-shadow: 2px 2px 5px gray, inset 0 0 0 gray;
+                            transition: all 0.2s ease-in-out;
+
+                &:hover {
+                    box-shadow: 0 0 0 grey, inset 4px 4px 5px gray;
+                }
+            }
+        }
     </style>
 {% endblock %}
 {% block Title %}
-Brantham Garage Sale - Home Page
+    Brantham Garage Sale - Home Page
 {% endblock %}
 
 {% block sidebar %}
 
     <!-- Do we need a cms ??? -->
     <div class="sidebar entry tooltip" item="home" id='home' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="Back Home" id='id_home_icon' src={% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}>
+        <img class="sidebar icon" alt="Back Home" id='id_home_icon'
+             src={% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}>
         <label for="id_home_icon">Back Home</label>
         <span class="tooltiptext arrow right">Go Back to the top</span>
     </div>
 
     <div class="sidebar entry tooltip" item="involved" id='map' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="Are you on the map" id='id_get_on_map_icon' src={% static "GarageSale/images/icons/menu/gps-location-map-marker-navigation-svgrepo-com.svg" %}>
+        <img class="sidebar icon" alt="Are you on the map" id='id_get_on_map_icon'
+             src={% static "GarageSale/images/icons/menu/gps-location-map-marker-navigation-svgrepo-com.svg" %}>
         <label for="id_get_on_map_icon">Are you on the Map</label>
         <span class="tooltiptext arrow right">Are you on the Map</span>
     </div>
 
     <div class="sidebar entry tooltip" item="donate" id='donate' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="How to Donate" id='id_donate' src={% static "GarageSale/images/icons/menu/pounds-coins-stack-svgrepo-com.svg" %}>
+        <img class="sidebar icon" alt="How to Donate" id='id_donate'
+             src={% static "GarageSale/images/icons/menu/pounds-coins-stack-svgrepo-com.svg" %}>
         <label for="id_donate">How to Donate</label>
         <span class="tooltiptext arrow right">How to Donate</span>
     </div>
 
     <div class="sidebar entry direct tooltip" item="{% url 'PrizeDraw' %}" xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="Prize Draw" id='id_prizedraw' src={% static "GarageSale/images/icons/menu/tickets-svgrepo-com.svg" %}>
+        <img class="sidebar icon" alt="Prize Draw" id='id_prizedraw'
+             src={% static "GarageSale/images/icons/menu/tickets-svgrepo-com.svg" %}>
         <label for="id_prizedraw">Prize Draw</label>
         <span class="tooltiptext arrow right">Prize Draw Information</span>
     </div>
@@ -53,73 +77,84 @@ Brantham Garage Sale - Home Page
     </div>
     -->
 
-      <div class="sidebar entry tooltip" item="sponsors" id='sponsors' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="Our Sponsors" id='id_sponsors' src={% static "Accounts/images/icons/navigation/money-bag-pound-svgrepo-com.svg" %}>
+    <div class="sidebar entry tooltip" item="sponsors" id='sponsors' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Our Sponsors" id='id_sponsors'
+             src={% static "Accounts/images/icons/navigation/money-bag-pound-svgrepo-com.svg" %}>
         <label for="id_sponsors">Our Sponsors</label>
         <span class="tooltiptext arrow right">Our Sponsors</span>
     </div>
 
     <div class="sidebar entry tooltip" item="AboutUs" id="AboutUs'" xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="About Us" id='id_AboutUs' src={% static "GarageSale/images/icons/menu/about-svgrepo-com.svg" %}>
+        <img class="sidebar icon" alt="About Us" id='id_AboutUs'
+             src={% static "GarageSale/images/icons/menu/about-svgrepo-com.svg" %}>
         <label for="id_AboutUs">About Us</label>
         <span class="tooltiptext arrow right">About Us</span>
     </div>
 
     <div class="sidebar entry tooltip" item="contact" id='Contact Us' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="Contact Us" id='id_contact' src={% static "GarageSale/images/icons/menu/contact-us-svgrepo-com.svg" %}>
+        <img class="sidebar icon" alt="Contact Us" id='id_contact'
+             src={% static "GarageSale/images/icons/menu/contact-us-svgrepo-com.svg" %}>
         <label for="id_contact">Contact Us</label>
         <span class="tooltiptext arrow right">Contact Us</span>
     </div>
 
-        {% if perms.GarageSale.is_team_member %}
-            <div class="sidebar entry direct tooltip" item="{% url 'TeamPages:Root' %}" xmlns="http://www.w3.org/1999/html">
+    {% if perms.GarageSale.is_team_member %}
+        <div class="sidebar entry direct tooltip" item="{% url 'TeamPages:Root' %}" xmlns="http://www.w3.org/1999/html">
             <a href="{% url 'TeamPages:Root' %}">
-                <img class="sidebar icon" alt="Team Pages" id='id_team' src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %}>
+                <img class="sidebar icon" alt="Team Pages" id='id_team'
+                     src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %}>
                 <label for="id_team">Team Access</label>
                 <span class="tooltiptext arrow right">Team Access</span></a>
-            </div>
-        {% endif %}
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block SnappableSections %}
-  <div class="card" card_name="home">
-    <h1>Welcome</h1>
-      <div class="MOTD">
-        {% MOTD %}
+    <div class="card" card_name="home">
+        <h1>Welcome</h1>
+        <div class="MOTD">
+            {% MOTD %}
+        </div>
     </div>
-  </div>
 
-  <div class="card" id="OnTheMap" card_name="involved">
-  <a id="TheMap"></a>
+    <div class="card" id="OnTheMap" card_name="involved">
+        <a id="TheMap"></a>
 
-    <h1>Are you on the Map?</h1>
-      <p>
-    To be involved in the Garage sale, you need to get yourself on the map, Whether you want to have an
-    advertisement board, or hold a Garage Sale or both.<br>
-    So - what are you waiting for -<br>
+        <h1>Are you on the Map?</h1>
+        <p>
+            To be involved in the Garage sale, you need to get yourself on the map, Whether you want to have an
+            advertisement board, or hold a Garage Sale or both.<br>
+            So - what are you waiting for -<br>
 
-    <button name="The Map so far ..." alt="The map so far"
-            onclick="document.location.replace('{% url "Location:event_map" %}')">The map so far</button>
+            <button name="The Map so far ..." alt="The map so far"
+                    onclick="document.location.replace('{% url "Location:event_map" %}')">The map so far
+            </button>
 
-    <button name="Are you on the Map" alt="Get yourself on the Map"
-            onclick="document.location.replace('{% url "Location:view" %}')">Are you on the map ?</button>
+            <button name="Are you on the Map" alt="Get yourself on the Map"
+                    onclick="document.location.replace('{% url "Location:view" %}')">Are you on the map ?
+            </button>
 
-          {% if request.current_event.myGoogleMapURL %}
-            <div style="text-align: left;">
-                <h2>Downloads :</h2>
-                <ul>
-                    <li><a href="{{ request.current_event.myGoogleMapURL }}"  style="font-size:110%">The Map</a> is now available to <a href="{{ request.current_event.myGoogleMapURL }}"  style="font-size:110%">download</a>.
-                        <div style="margin-left:3rem;font-size:95%">if you have the Google Maps app on your device,
-                             your phone will show you a live map track where you are and where the nearest Sales are.</div></li>
-                    <li><a href="{{ MEDIA_URL }}sellers-2026.pdf">List of Sellers Addresses</a> is also available</li>
-                </ul>
-            </div>
-      {% endif %}
-      </p>
-  </div>
+            {% if request.current_event.myGoogleMapURL %}
+                <div style="text-align: left;">
+                    <h2>Downloads :</h2>
+                    <ul>
+                        <li><a href="{{ request.current_event.myGoogleMapURL }}" style="font-size:110%">The Map</a> is
+                            now available to <a href="{{ request.current_event.myGoogleMapURL }}"
+                                                style="font-size:110%">download</a>.
+                            <div style="margin-left:3rem;font-size:95%">if you have the Google Maps app on your device,
+                                your phone will show you a live map track where you are and where the nearest Sales are.
+                            </div>
+                        </li>
+                        <li><a href="{{ MEDIA_URL }}sellers-2026.pdf">List of Sellers Addresses</a> is also available
+                        </li>
+                    </ul>
+                </div>
+            {% endif %}
+        </p>
+    </div>
 
-  <div id='DonateToUs' class="card donate" card_name="donate">
-    <h1>Donating to the Charity</h1>
+    <div id='DonateToUs' class="card donate" card_name="donate">
+        <h1>Donating to the Charity</h1>
         <div class="panel">
             <div id="bacs">
                 You can donate to the charity using BACS
@@ -132,7 +167,8 @@ Brantham Garage Sale - Home Page
             </div>
             <div id="online">
                 You can pay online through our Zeffy Account :
-                <a href="https://www.zeffy.com/en-GB/donation-form/donate-to-help-the-hospice-and-first-responders" >Brantham Garage Sale on Zeffy</a>
+                <a href="https://www.zeffy.com/en-GB/donation-form/donate-to-help-the-hospice-and-first-responders">Brantham
+                    Garage Sale on Zeffy</a>
                 <p><i>Zeffy is free for us to use, and asks donors for an optional tip to keep Zeffy in business.</i>
             </div>
 
@@ -154,9 +190,9 @@ Brantham Garage Sale - Home Page
                 who has paid and who hasn't.
             </div>
         </div>
-  </div>
+    </div>
 
-  <!--
+    <!--
     <div class="card" card_name="news">
     <h1>All of the latest News for the Garage Sale</h1>
         {%  for item in  articles %}
@@ -164,84 +200,114 @@ Brantham Garage Sale - Home Page
         {%  endfor %}
     </div>
     -->
-  <div id="Sponsors" class="card" card_name="sponsors">
-    <h1>Our Generous Sponsors</h1>
-    A number of very generous local companies have sponsored the Garage Sale this year, either with a cash donation or
-    with donations of vouchers or prizes to our prize Tombola. Not only do these sponsors allow us to cover the costs of
-    advertising the event and much else besides, they allow us to ensure that every single penny raised by the Sales
-    events can be donated to the Hospice and local good causes.<br>
-    <script type="text/javascript" src='https://unpkg.com/blaze-slider@latest/dist/blaze-slider.min.js'></script>
+    <div id="Sponsors" class="card" card_name="sponsors">
+        <h1>Our Generous Sponsors</h1>
+        A number of very generous local companies have sponsored the Garage Sale this year, either with a cash donation
+        or
+        with donations of vouchers or prizes to our prize Tombola. Not only do these sponsors allow us to cover the
+        costs of
+        advertising the event and much else besides, they allow us to ensure that every single penny raised by the Sales
+        events can be donated to the Hospice and local good causes.<br>
+        <script type="text/javascript" src='https://unpkg.com/blaze-slider@latest/dist/blaze-slider.min.js'></script>
 
-<div class="blaze-slider">
-  <div class="blaze-container">
-    <div class="blaze-track-container">
-      <div class="blaze-track">
-        {% for sponsor in request.current_event.sponsors.all %}
-            <div>
-                <img class="sponsor-logo" alt="{{ sponsor.company_name }}" src="{{ MEDIA_URL }}{{ sponsor.logo }}">
+        <div class="blaze-slider">
+            <div class="blaze-container">
+                <div class="blaze-track-container">
+                    <div class="blaze-track">
+                        {% for sponsor in request.current_event.sponsors.all %}
+                            <div>
+                                <img class="sponsor-logo" alt="{{ sponsor.company_name }}"
+                                     src="{{ MEDIA_URL }}{{ sponsor.logo }}">
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-    <button name="Full Sponsors List" alt="View full list of sponsors"
-            onclick="document.location.replace({% url 'sponsors:sponsor_list' %})">Full Sponsor List</button>
-</div>
-     <script type="text/javascript">
+            <button name="Full Sponsors List" alt="View full list of sponsors"
+                    onclick="document.location.replace({% url 'sponsors:sponsor_list' %})">Full Sponsor List
+            </button>
+        </div>
+        <script type="text/javascript">
 
-             const el = document.querySelector('.blaze-slider');
-             new BlazeSlider(el, {
-                     all: {
-                         enableAutoplay: true,
-                         autoplayInterval: 2500,
-                         transitionDuration: 250,
-                         width: '128px',
-                         slidesToShow: 5,
-                     },
+            const el = document.querySelector('.blaze-slider');
+            new BlazeSlider(el, {
+                    all: {
+                        enableAutoplay: true,
+                        autoplayInterval: 2500,
+                        transitionDuration: 250,
+                        width: '128px',
+                        slidesToShow: 5,
+                    },
                     '(max-width: 900px)': {
-                         width:'64px;',
-                         slidesToShow: 3,
+                        width: '64px;',
+                        slidesToShow: 3,
                     },
                     '(max-width: 400px)': {
                         slidesToShow: 2,
                     }
 
-                 }
-             );
-  </script>
+                }
+            );
+        </script>
     </div>
 
 
-  <div id="AboutUs" class="card" card_name="AboutUs" >
-    <h1>About the Garage Sale and the Foundation</h1>
-      The Garage Sale has been running in Brantham since 2003 - initially to raise money for
-      St Elizabeth's Hospice in Ipswich, specifically for the "Carla Dawson Memorial fund".
-      In the following years the Garage Sale became a feature of village life, raising money for both the hospice
-      and local good causes.
-      In 2023 the organiser wanted to step aside, and it was clear that the work to organise the Sale event was beyond the
-      scope of one person.
-      <p>
-      The foundation itself was created in October 2023, in order to ensure that the Garage Sale Event continued and
-      that the fund-raising potential increased.
-      <p>
-      For the 2024 Sale the trustees added a very popular Craft Market, and prize Tombola to the event, and we have
-      plans to expand the 2025 sale even more.
-  </div>
+    <div id="AboutUs" class="card" card_name="AboutUs">
+        <h1>About the Garage Sale and the Foundation</h1>
+        The Garage Sale has been running in Brantham since 2003 - initially to raise money for
+        St Elizabeth's Hospice in Ipswich, specifically for the "Carla Dawson Memorial fund".
+        In the following years the Garage Sale became a feature of village life, raising money for both the hospice
+        and local good causes.
+        In 2023 the organiser wanted to step aside, and it was clear that the work to organise the Sale event was beyond
+        the
+        scope of one person.
+        <p>
+            The foundation itself was created in October 2023, in order to ensure that the Garage Sale Event continued
+            and
+            that the fund-raising potential increased.
+        <p>
+            For the 2024 Sale the trustees added a very popular Craft Market, and prize Tombola to the event, and we
+            have
+            plans to expand the 2025 sale even more.
+    </div>
 
-  <div id="ContactUs" class="card" card_name="contact">
-    <h1>Contact Us</h1>
-      As of 1st January 2026, our contact details have changed :
-      <ul>
-            <li>Trustees : <a href="mailto:Trustees@BranthamGarageSale.org.uk">Trustees@BranthamGarageSale.org.uk</a></li>
-            <li>Sponsorship : <a href="mailto:Sponsorship@BranthamGarageSale.org.uk">Sponsorship@BranthamGarageSale.org.uk</a></li>
-            <li>CraftMarket : <a href="mailto:CraftMarket@BranthamGarageSale.org.uk">CraftMarket@BranthamGarageSale.org.uk</a></li>
-            <li>Website : <a href="mailto:Website@BranthamGarageSale.org.uk">Website@BranthamGarageSale.org.uk</a></li>
-      </ul>
+    <div id="ContactUs" class="card" card_name="contact">
+        <h1>Contact Us</h1>
 
-      You can also contact us via Facebook :
+        <div class="panel">
+            <div id="Nominate a good cause">
+                <h3>Nominate a good cause</h3>
+                Every year approximately In September we pick a good cause to fund-raise for next year.
+                To be eligible the good cause must have some benefit to the community or residents of Brantham.
+                <p>
+                    That good cause will get 50% of all of the funs we raise during that years campaign, while
+                    the other 50% will go to St Elizabeth's Hospice in Ipswich.
+                </p>
+                <div class="buttons">
+                <input type="button" onclick="document.location.replace('{% url 'NominationCreate' %}')" value="Nominate a good cause">
+                </div>
+            </div>
+            <div id="email">
+                <h3>Emails </h3>
+                You can contact us by email :
 
-      Please take note of the new addresses above - and use them for
-
-  </div>
+                    <p>For general communications about the event: <a href="mailto:Trustees@BranthamGarageSale.org.uk">Trustees@BranthamGarageSale.org.uk</a>
+                    </p>
+                    <p>For questions about and offers of sponsorship: <a href="mailto:Sponsorship@BranthamGarageSale.org.uk">Sponsorship@BranthamGarageSale.org.uk</a>
+                    </p>
+                    <p>For bookings and queries about the Craft-Market: <a href="mailto:CraftMarket@BranthamGarageSale.org.uk">CraftMarket@BranthamGarageSale.org.uk</a>
+                <p>
+                Please do not email us on the website email address - that inbox is not monitored.
+            </div>
+            <div id="socials">
+                <h3>Social Media</h3>
+                    <p>Our facebook group: <a class='fa-facebook' href="https://www.facebook.com/groups/branthamgaragesale">Brantham
+                        Garage Sale
+                        group </a></p>
+                    <p>Our Instagram account : <a class='fa-instagram' href="https://www.instagram.com/branthamgaragesale/">Brantham Garage
+                        Sale on Instagram</a></p>
+            </div>
+        </div>
+    </div>
 
 {% endblock %}

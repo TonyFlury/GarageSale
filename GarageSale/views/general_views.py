@@ -63,7 +63,7 @@ class NominationsList(EntryPointMixin, LoginRequiredMixin, PermissionRequiredMix
     permission_required = 'GarageSale.is_trustee'
     entry_point_url = 'NominationsList'
     entry_point_label = 'Funding Nominations'
-    entry_point_icon = static('GarageSale/images/icons/navigation/pounds-coins-stack-svgrepo-com.svg')
+    entry_point_icon = static('GarageSale/images/icons/navigation/loving-charity-svgrepo-com.svg')
     entry_point_permission = 'GarageSale.is_trustee'
     entry_point_nav_page = 'TeamPage'
     entry_point_needs_event = False
