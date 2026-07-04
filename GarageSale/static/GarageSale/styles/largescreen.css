@@ -34,12 +34,7 @@ div#Buttons {
 	bottom: 20px;
 }
 
-div#Buttons img.Button {
-    height:32px;
-    width:32px;
-    padding: 4px;
-    border: none;
-}
+
 
 div#Buttons img.Button.Animate:hover {
   /* Start the shake animation and make the animation last for 0.5 seconds */
