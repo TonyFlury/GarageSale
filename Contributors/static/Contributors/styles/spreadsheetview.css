@@ -1,0 +1,233 @@
+       .spreadsheet-page {
+            max-width: 1400px;
+            margin: 2rem auto;
+            font-family: Arial, sans-serif;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filters label {
+            display: flex;
+            flex-direction: column;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .filters input {
+            margin-top: 0.35rem;
+            padding: 0.4rem;
+        }
+
+        table.contributor-sheet {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .contributor-sheet th,
+        .contributor-sheet td {
+            border: 1px solid #ccc;
+            padding: 0.35rem;
+            vertical-align: top;
+        }
+
+        .contributor-sheet th {
+            background: #f4f4f4;
+            text-align: left;
+        }
+
+        .contributor-sheet input,
+        .contributor-sheet textarea {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid lightgray;
+            background: transparent;
+            padding: 0.25rem;
+            font: inherit;
+        }
+
+        .contributor-sheet textarea {
+            min-height: 3rem;
+            resize: vertical;
+        }
+
+        .contributor-sheet tr.locked input,
+        .contributor-sheet tr.locked textarea {
+            color: #555;
+            cursor: not-allowed;
+            border: 1px solid transparent;
+        }
+
+        .contributor-sheet tr.unlocked {
+            background: #fffdf2;
+        }
+
+        .contributor-sheet tr.dirty {
+            background: #fff3cd;
+        }
+
+        .contributor-sheet tr.invalid {
+            background: #f8d7da;
+        }
+
+        .field-error {
+            display: block;
+            color: #842029;
+            font-size: 0.78rem;
+            margin-top: 0.2rem;
+        }
+
+
+        td.row-status {
+            display: flex;
+            align-items: center;
+            flex-direction: row;
+            span { display: inline-block;
+                width: 2rem;
+                height: 2rem;
+                flex:1;
+            }
+        }
+
+        tr.locked td.row-status {
+            span.status {
+                content:'';
+                background: url("/static/GarageSale/images/icons/padlock-svgrepo-com.svg") no-repeat center center;
+                background-size: 2rem 2rem;
+            }
+        }
+        tr.unlocked:not(.dirty) {
+            span.status {
+                content:'';
+                background: url("/static/GarageSale/images/icons/padlock-unlocked-svgrepo-com.svg") no-repeat center center;
+                            background-size: 2rem 2rem;
+                }
+        }
+
+         tr.unlocked.dirty {
+             span.status {
+                content:'';
+                 background: url('/static/GarageSale/images/icons/save-svgrepo-com.svg') no-repeat center center;
+                            background-size: 2rem 2rem;
+             }
+            span.undo {
+                content:'';
+                 background: url('/static/GarageSale/images/icons/undo-svgrepo-com.svg') no-repeat center center;
+                background-size: 2rem 2rem;
+            }
+         }
+
+
+        .row-status.dirty {
+            color: #b58100;
+        }
+
+        .row-status.saved {
+            color: #198754;
+        }
+
+
+        .description-cell {
+            display: grid;
+            grid-template-columns: minmax(10rem, 1fr) auto;
+            gap: 0.35rem;
+            align-items: start;
+        }
+
+        tr.unlocked {
+            .description-cell input {
+                box-shadow: 1px 1px 2px grey, inset 0 0 0 grey;
+                transition: all 0.2s ease-in-out;
+                border-radius: 5px;
+            }
+
+            .description-cell input:hover {
+                box-shadow: 0 0 0 grey, inset 1px 1px 2px grey;
+            }
+        }
+
+        .description-cell button { display: none; }
+
+        .description-preview {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        td:has(>div.actions) { display: none;}
+
+        .edit-description {
+            padding: 0.25rem 0.45rem;
+            cursor: pointer;
+        }
+
+        tr.locked .edit-description {
+            cursor: not-allowed;
+        }
+
+        .description-editor-dialog {
+            border: 1px solid #999;
+            border-radius: 0.4rem;
+            padding: 1rem;
+            max-width: 90vw;
+        }
+
+        .description-editor-dialog::backdrop {
+            background: rgb(0 0 0 / 0.35);
+        }
+
+        .description-editor-dialog form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        #description-editor-textarea {
+            width: auto;
+            min-width: 50ch;
+            max-width: 80vw;
+            height: auto;
+            min-height: 5lh;
+            overflow: auto;
+            resize: both;
+            font: inherit;
+            padding: 0.4rem;
+            box-sizing: border-box;
+        }
+
+        .description-editor-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .description-editor-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+
+        .actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .actions button {
+            cursor: pointer;
+            padding: 0.35rem 0.55rem;
+        }
+
+        .save-row {
+            display: none;
+        }
+
+        tr.dirty .save-row,
+        tr.invalid .save-row,
+        tr.new-row .save-row {
+            display: inline-block;
+        }

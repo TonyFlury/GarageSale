@@ -43,6 +43,7 @@
         const dialog = getDescriptionDialog();
         const editor = getDescriptionEditor();
 
+        console.log(dialog, editor);
         if (!dialog || !editor) {
             return;
         }
@@ -82,9 +83,11 @@
         const dialog = getDescriptionDialog();
 
         if (dialog) {
+            /** Need to prevent a bounce when the dialog is closed */
             dialog.close();
         }
 
+        console.log("cancel dialog closed");
         activeDescriptionRow = null;
         activeDescriptionInput = null;
     }
@@ -138,7 +141,7 @@
         });
 
         row.classList.add("invalid");
-        setStatus(row, "Invalid", "invalid");
+     /*   setStatus(row, "Invalid", "invalid"); */
     }
 
     function validateRow(row) {
@@ -183,8 +186,15 @@
         return true;
     }
 
-    function unlockRow(row) {
-        if (row.dataset.isNew === "true") {
+    function toggleRowLock(row) {
+
+        if (row.classList.contains("unlocked") && !row.classList.contains('dirty')) {
+            lockRow(row);
+            return;
+        }
+
+        if (row.classList.contains("unlocked") && row.classList.contains('dirty')) {
+            saveRow(row).then(() => {});
             return;
         }
 
@@ -206,11 +216,9 @@
         if (editDescriptionButton) {
             editDescriptionButton.disabled = false;
         }
-
-        setStatus(row, "Unlocked", "unlocked");
     }
 
-    function lockRow(row) {
+    function lockRow(row, options={}) {
         row.classList.remove("unlocked", "dirty", "invalid", "new-row");
         row.classList.add("locked");
 
@@ -232,7 +240,7 @@
         unlockButton.textContent = "Unlock";
 
         clearErrors(row);
-        setStatus(row, "Saved", "saved");
+       /* setStatus(row, "Saved", "saved"); */
     }
 
     function markDirty(row) {
@@ -242,14 +250,14 @@
 
         row.classList.add("dirty");
 
-        if (row.dataset.isNew === "true") {
-            setStatus(row, "New - save required", "dirty");
+/*        if (row.dataset.isNew === "true") {
+             setStatus(row, "New - save required", "dirty");
             return;
         }
 
         if (!row.classList.contains("invalid")) {
             setStatus(row, "Changed - save required", "dirty");
-        }
+        } */
     }
 
     function getPayload(row) {
@@ -269,16 +277,22 @@
         row.dataset.filterDescription = row.querySelector('[name="description"]').value.toLowerCase();
     }
 
+    function undoRowEdits(row) {
+        editableFields.forEach((field) => {
+            const input = row.querySelector(`[name="${field}"]`);
+            input.value = input.dataset.originalValue;
+        });
+        row.classList.remove('dirty')
+    }
+
     function bindRow(row) {
+
         getRowInputs(row).forEach((input) => {
             input.dataset.originalValue = input.value;
 
             if (input.name === "description") {
                 input.addEventListener("click", () => {
-                    openDescriptionEditor(row, input);
-                });
-
-                input.addEventListener("focus", () => {
+                    console.log("click");
                     openDescriptionEditor(row, input);
                 });
 
@@ -287,7 +301,9 @@
 
             input.addEventListener("input", () => {
                 markDirty(row);
-                validateRow(row);
+
+                /* Validate on save */
+                /* validateRow(row); */
             });
         });
 
@@ -303,21 +319,21 @@
             });
         }
 
-        const unlockButton = row.querySelector(".unlock-row");
-
+        const unlockButton = row.querySelector("td.row-status span.status");
         unlockButton.addEventListener("click", () => {
-            unlockRow(row);
+            toggleRowLock(row);
         });
 
-        row.querySelector(".save-row").addEventListener("click", () => {
-            saveRow(row);
+        const undoButton = row.querySelector("td.row-status span.undo");
+            undoButton.addEventListener("click", () => {
+            undoRowEdits(row);
         });
     }
 
     function createEmptyNewRow() {
         const row = document.createElement("tr");
 
-        row.className = "unlocked new-row dirty";
+        row.className = "unlocked new-row";
         row.dataset.isNew = "true";
         row.dataset.filterContributor_name = "";
         row.dataset.filterContact_name = "";
@@ -325,8 +341,10 @@
         row.dataset.filterDescription = "";
 
         row.innerHTML = `
-            <td>
-                <span class="row-status dirty">New - save required</span>
+            <td class="row-status">
+                    <span class="status" > </span>
+                    <span class="undo" > </span>
+                </td>
             </td>
 
             <td>
@@ -364,20 +382,13 @@
                         readonly
                         title=""
                     >
-                    <button
-                        type="button"
-                        class="edit-description"
-                    >
-                        Edit
-                    </button>
                 </div>
                 <span class="field-error" data-error-for="description"></span>
             </td>
 
             <td>
                 <div class="actions">
-                    <button type="button" class="unlock-row" disabled>Unlocked</button>
-                    <button type="button" class="save-row">Save</button>
+                        <span class="edit-details">Details</span>
                 </div>
             </td>
         `;
@@ -534,7 +545,7 @@
 
     window.ContributorSpreadsheet = {
         validateRow,
-        unlockRow,
+        unlockRow: toggleRowLock,
         lockRow,
         markDirty,
         applyFilters,

@@ -1,214 +1,30 @@
+{% extends "team_pages_base.html" %}
 {% load static %}
 
-<!-- TODO extract Styles to dedicated css file Add light borders to fields
+<!-- TODO extract Styles to dedicated css file
 TODO Reduce padding around fields
+TODO Hide or remove 'Type' field
+TODO Add in 'Details' dialog to allow for editing of logo and other info
 TODO convert table to flex stuff
 TODO Line up filter boxes
 TODO Convert to official theme and layout
-TODO make lock/save as icons - and not words
 -->
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>Contributor Spreadsheet Editor</title>
-    <script src="{% static 'Contributors/js/contributor_spreadsheet.js' %}" defer></script>
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}">
+{% endblock %}
 
-    <style>
-        .spreadsheet-page {
-            max-width: 1400px;
-            margin: 2rem auto;
-            font-family: Arial, sans-serif;
-        }
+{% block Title %}
+       Contributor Spreadsheet Editor
+{% endblock %}
 
-        .filters {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
+{% block PageScripts %}
+    {{ block.super }}
+    <script type='/text/javascript' src="{% static 'Contributors/js/contributor_spreadsheet.js' %}" defer></script>
 
-        .filters label {
-            display: flex;
-            flex-direction: column;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
+{% endblock %}
 
-        .filters input {
-            margin-top: 0.35rem;
-            padding: 0.4rem;
-        }
-
-        table.contributor-sheet {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .contributor-sheet th,
-        .contributor-sheet td {
-            border: 1px solid #ccc;
-            padding: 0.35rem;
-            vertical-align: top;
-        }
-
-        .contributor-sheet th {
-            background: #f4f4f4;
-            text-align: left;
-        }
-
-        .contributor-sheet input,
-        .contributor-sheet textarea {
-            width: 100%;
-            box-sizing: border-box;
-            border: 1px solid transparent;
-            background: transparent;
-            padding: 0.25rem;
-            font: inherit;
-        }
-
-        .contributor-sheet textarea {
-            min-height: 3rem;
-            resize: vertical;
-        }
-
-        .contributor-sheet tr.locked input,
-        .contributor-sheet tr.locked textarea {
-            color: #555;
-            cursor: not-allowed;
-        }
-
-        .contributor-sheet tr.unlocked {
-            background: #fffdf2;
-        }
-
-        .contributor-sheet tr.dirty {
-            background: #fff3cd;
-        }
-
-        .contributor-sheet tr.invalid {
-            background: #f8d7da;
-        }
-
-        .field-error {
-            display: block;
-            color: #842029;
-            font-size: 0.78rem;
-            margin-top: 0.2rem;
-        }
-
-        .row-status {
-            font-weight: bold;
-            white-space: nowrap;
-        }
-
-        .row-status.locked {
-            color: #555;
-        }
-
-        .row-status.unlocked {
-            color: #0d6efd;
-        }
-
-        .row-status.dirty {
-            color: #b58100;
-        }
-
-        .row-status.saved {
-            color: #198754;
-        }
-
-        .row-status.invalid {
-            color: #842029;
-        }
-
-        .description-cell {
-            display: grid;
-            grid-template-columns: minmax(10rem, 1fr) auto;
-            gap: 0.35rem;
-            align-items: start;
-        }
-
-        .description-preview {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .edit-description {
-            padding: 0.25rem 0.45rem;
-            cursor: pointer;
-        }
-
-        tr.locked .edit-description {
-            cursor: not-allowed;
-        }
-
-        .description-editor-dialog {
-            border: 1px solid #999;
-            border-radius: 0.4rem;
-            padding: 1rem;
-            max-width: 90vw;
-        }
-
-        .description-editor-dialog::backdrop {
-            background: rgb(0 0 0 / 0.35);
-        }
-
-        .description-editor-dialog form {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-        }
-
-        #description-editor-textarea {
-            width: auto;
-            min-width: 50ch;
-            max-width: 80vw;
-            height: auto;
-            min-height: 5lh;
-            overflow: auto;
-            resize: both;
-            font: inherit;
-            padding: 0.4rem;
-            box-sizing: border-box;
-        }
-
-        .description-editor-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .description-editor-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-
-        .actions {
-            display: flex;
-            gap: 0.4rem;
-        }
-
-        .actions button {
-            cursor: pointer;
-            padding: 0.35rem 0.55rem;
-        }
-
-        .save-row {
-            display: none;
-        }
-
-        tr.dirty .save-row,
-        tr.invalid .save-row,
-        tr.new-row .save-row {
-            display: inline-block;
-        }
-    </style>
-</head>
-<body>
+{% block SnappableSections %}
 <main class="spreadsheet-page">
     <h1>Contributor Spreadsheet Editor</h1>
 
@@ -261,8 +77,9 @@ TODO make lock/save as icons - and not words
                 data-filter-email="{{ contributor.email|default_if_none:''|lower }}"
                 data-filter-description="{{ contributor.description|default_if_none:''|lower }}"
             >
-                <td>
-                    <span class="row-status locked">Locked</span>
+                <td class="row-status">
+                    <span class="status" > </span>
+                    <span class="undo" > </span>
                 </td>
 
                 <td>
@@ -329,21 +146,13 @@ TODO make lock/save as icons - and not words
                             disabled
                             title="{{ contributor.description }}"
                         >
-                        <button
-                            type="button"
-                            class="edit-description"
-                            disabled
-                        >
-                            Edit
-                        </button>
                     </div>
                     <span class="field-error" data-error-for="description"></span>
                 </td>
 
                 <td>
                     <div class="actions">
-                        <button type="button" class="unlock-row">Unlock</button>
-                        <button type="button" class="save-row">Save</button>
+                        <span class="edit-details">Details</span>
                     </div>
                 </td>
             </tr>
@@ -354,15 +163,16 @@ TODO make lock/save as icons - and not words
         {% endfor %}
         </tbody>
       <tr
-                class="unlocked new-row dirty"
+                class="unlocked new-row"
                 data-is-new="true"
                 data-filter-contributor_name=""
                 data-filter-contact_name=""
                 data-filter-email=""
                 data-filter-description=""
             >
-                <td>
-                    <span class="row-status dirty">New - save required</span>
+                <td class="row-status unlocked">
+                    <span class="status"></span>
+                    <span class="undo"></span>
                 </td>
 
                 <td>
@@ -423,24 +233,18 @@ TODO make lock/save as icons - and not words
                             readonly
                             title=""
                         >
-                        <button
-                            type="button"
-                            class="edit-description"
-                        >
-                            Edit
-                        </button>
                     </div>
                     <span class="field-error" data-error-for="description"></span>
                 </td>
 
                 <td>
                     <div class="actions">
-                        <button type="button" class="unlock-row" disabled>Unlocked</button>
-                        <button type="button" class="save-row">Save</button>
+                        <span class="edit-details">Details</span>
                     </div>
                 </td>
             </tr>
     </table>
+</main>
     <dialog id="description-editor-dialog" class="description-editor-dialog">
         <form method="dialog">
             <h2>Edit description</h2>
@@ -471,6 +275,4 @@ TODO make lock/save as icons - and not words
             </div>
         </form>
     </dialog>
-</main>
-</body>
-</html>
+{% endblock %}
