@@ -32,13 +32,6 @@ div#ToolBar {
     width : 95%;
     }
 
-div#Buttons img.Button {
-    height:32px;
-    width:32px;
-    padding: 4px;
-    border: none;
-}
-
 span#Ticker {
 	margin: auto;
 	padding-left: 1em;
@@ -67,17 +60,13 @@ float: left;
   position: absolute;
   display: inline;
   left: 0;
-  height: 145px;
+  height: 175px;
   top: 5px;
 }
 
 div#Buttons {
     position: absolute ;
     right: 30px;
-    span#UserButtons { right: 5px;
-        span#user_name { top : -0.75rem; position: relative; }
-    }
-
 }
 
 

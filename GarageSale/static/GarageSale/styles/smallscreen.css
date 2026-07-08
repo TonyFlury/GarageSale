@@ -2,72 +2,16 @@
     --fontSize:12pt;
 }
 
-@media only screen and (width <= 800px)
+@media only screen and (max-width: 800px)
 {
     :root {
         --fontSize: 10pt;
     }
 }
 
-div#Buttons {
-    position: absolute;
-    right: 0;
-}
-
-div#SidebarContainer.visible{
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    background: white;
-    height: fit-content;
-    justify-items: center;
-    border: solid thin darkgrey;
-    border-radius: 10px;
-    box-shadow: 2px 2px 3px lightgrey;
-    /* padding-top: 0.25rem; */
-    left: 0px;
-    padding: 0.5rem;
-    width: 20%;
-    opacity: 1;
-    transition : all 0.5s ease-in-out;
-}
-
-div#SidebarContainer:not(.visible) {
-    width: 0;
-    height: 0;
-    opacity: 0;
-    margin: 0;
-        transition : all 0.5s ease-in-out;
-
-}
-
-
-.donate .panel > div:last-child {
-    margin-bottom: 10rem;
-}
 
 .browser {
-     display : none ; }
-
-div#Buttons {
-    width:100%;
-    > span {
-        display: inline-block;
-        position: absolute;
-        bottom: 0;
-    }
-    span#UserButtons {
-    right: 0;
-    }
-    span#Burger {
-        left: 0;
-        bottom: -4px;
-    }
-
-    .dropdown {
-
-    }
-}
+    display : none ; }
 
 
 .body {
@@ -102,11 +46,10 @@ div.TopBar h1 {
     }
 }
 
-div.TopBar span.icon img.logo {
-    width: 70px;
-    height: auto;
-    top: 15px;
-}
+ div.TopBar span.icon img.logo{
+    width:90px;
+    height:auto;
+ }
 
 div.TopBar span.icon {
     margin-left: 0px;
@@ -119,14 +62,14 @@ div.TopBar{
 
 div#Buttons {
     bottom: 0;
-    position: absolute;
     display: flex;
     span#user_name {
-        align-self: center;
-        top: -0.5rem;
-        position: relative;
+        display:flex;
+        align-self:center;
+        margin-right: 0.5rem;
     }
     span#mobile.BurgerDropDown {
+        display:flex;
         align-self:center;
     }
 }
@@ -257,8 +200,7 @@ img#Burger{
 
 @media only screen and (max-width: 470px) {
     div#Content {
-        width: 100%;
-        margin: 0.1rem 0.2rem;
+        max-width: 340px;
     }
     h1 {
         font-size:120%;
