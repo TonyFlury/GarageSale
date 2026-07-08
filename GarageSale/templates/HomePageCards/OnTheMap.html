@@ -1,0 +1,35 @@
+    <div class="card" id="OnTheMap" card_name="involved">
+        <a id="TheMap"></a>
+
+        <h1>Are you on the Map?</h1>
+        <p>
+            To be involved in the Garage sale, you need to get yourself on the map, Whether you want to have an
+            advertisement board, or hold a Garage Sale or both.<br>
+            So - what are you waiting for -<br>
+
+            <button name="The Map so far ..." alt="The map so far"
+                    onclick="document.location.replace('{% url "Location:event_map" %}')">The map so far
+            </button>
+
+            <button name="Are you on the Map" alt="Get yourself on the Map"
+                    onclick="document.location.replace('{% url "Location:view" %}')">Are you on the map ?
+            </button>
+
+            {% if request.current_event.myGoogleMapURL %}
+                <div style="text-align: left;">
+                    <h2>Downloads :</h2>
+                    <ul>
+                        <li><a href="{{ request.current_event.myGoogleMapURL }}" style="font-size:110%">The Map</a> is
+                            now available to <a href="{{ request.current_event.myGoogleMapURL }}"
+                                                style="font-size:110%">download</a>.
+                            <div style="margin-left:3rem;font-size:95%">if you have the Google Maps app on your device,
+                                your phone will show you a live map track where you are and where the nearest Sales are.
+                            </div>
+                        </li>
+                        <li><a href="{{ MEDIA_URL }}sellers-2026.pdf">List of Sellers Addresses</a> is also available
+                        </li>
+                    </ul>
+                </div>
+            {% endif %}
+        </p>
+    </div>
