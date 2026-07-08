@@ -1,0 +1,16 @@
+    <div id='nomination-status-{{ type }}' class="table">
+        <div class="row header">
+            <div class="cell">Nominee</div>
+            <div class="cell">Email</div>
+            <div class="cell">Phone</div>
+        </div>
+        {% for nomination in nominations %}
+            <a href="{% url "NominationView" pk=nomination.id %}" >
+                <div class="row">
+                    <div class="cell">{{ nomination.nominee }}</div>
+                    <div class="cell">{{ nomination.contact_email }}</div>
+                    <div class="cell">{{ nomination.contact_phone }}</div>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
