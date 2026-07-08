@@ -294,4 +294,4 @@ def categoryList(context, nav_page='TeamPage'):
 
     return render_to_string('__category_list.html',
                             context={'category_list': get_entry_points(user=context.request.user, nav_page=nav_page),
-                                     'event_id': context.get('event_id', context.request.current_event.id) } )
+                                     'event_id': context.get('event_id', context.request.current_event.id if context.request.current_event else None) } )

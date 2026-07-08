@@ -1,0 +1,180 @@
+{% extends "home.html" %}
+{% load garage_sale_data %}
+{% load static %}
+{% load user_management_tags %}
+{% load event_data_tags %}
+
+{% block Title %}
+Brantham Garage Sale - Nominate organisation
+{% endblock %}
+
+{% block PageStyles %}
+<style>
+    div.note {
+        text-align: left;
+        font-style: italic;
+        background: salmon;
+        border-radius: 10px;
+        width: fit-content;
+        padding: 1rem;
+        font-weight: bold;
+    }
+    div#form {
+        display: flex;
+        flex-direction: column;
+    }
+    div.row {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    div.field_wrapper {
+        display: flex;
+        flex-direction: column;
+
+        label {
+            margin: 0.5rem auto 0.1%;
+            font-size: 125%;
+            text-align: center;
+        }
+        textarea {
+            width: 100%;
+            max-width: 100%;
+        }
+    }
+    div.section {
+        width: 95%;
+        border: thin dashed gray;
+        border-radius: 10px;
+        margin: 1rem auto;
+        padding: 0;
+
+        h3 {
+    text-align: center;
+    margin: 0 0 0.1rem;
+    background: darkgrey;
+    color: white;
+    font-weight: bold;
+    padding: 0.25rem;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        div.inner {
+            margin: 0.25rem 1rem 0.5rem;
+            padding: 0.5rem 1rem 0;
+        }
+    }
+    input#id_nominee { width:80%}
+
+    div.buttons {
+        width: 75% ;
+        margin: auto ;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        input {
+            font-size:175%;
+            padding: 1rem;
+            background: linear-gradient(45deg, deepskyblue 0%, white 50%, white 100%);
+        }
+    }
+</style>
+
+{% endblock %}
+
+{% block SnappableSections %}
+    <h2>Nominate a local organisation for future Garage Sale Funding</h2>
+    <p>Every year, the Garage Sale disperses 50% of its funds to a local good cause.
+    The committee chooses which organisation benefits based on nominations from our local residents.
+    </p>
+    <p>
+    To nominate a local good cause - please fill out the form below.
+    </p>
+    <div class="note">
+        The nominated organisation does not need to be a registered charity to be considered.
+    </div>
+    <div id="form" class="form">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="about-them section">
+                <h3>About the organisation you are nominating</h3>
+                <div class="inner">
+                     <div class='field_wrapper'>
+                        <label for='{{ form.nominee.auto_id }}'>{{ form.nominee.label }}</label>
+                        {{ form.nominee }}
+                     </div>
+                    <div class="row">
+                        {% if form.contact_email.errors %}
+                            {{ form.contact_email.errors }}
+                        {%  endif %}
+                        <div class='field_wrapper'>
+                            <label for='{{ form.contact_email.auto_id }}'>{{ form.contact_email.label }}</label>
+                            {{ form.contact_email }}
+                        </div>
+                        <div class='field_wrapper'>
+                            <label for='{{ form.contact_phone.auto_id }}'>{{ form.contact_phone.label }}</label>
+                            {{ form.contact_phone }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="about-you section">
+                <h3>About you</h3>
+                <div class="inner">
+                    <div class="row">
+                        {% if form.nominator.errors %}
+                            {{ form.nominator.errors }}
+                        {%  endif  %}
+                        <div class='field_wrapper'>
+                            <label for='{{ form.nominator.auto_id }}'>{{ form.nominator.label }}</label>
+                            {% if request.user.is_authenticated and request.user.full_name %}
+                                {{ request.user.full_name}}
+                                {{ form.nominator.as_hidden }}
+                            {% else %}
+                                {{ form.nominator }}
+                            {% endif %}
+                        </div>
+                        <div class='field_wrapper'>
+                            <label for='{{ form.nominator_email.auto_id }}'>{{ form.nominator_email.label }}</label>
+                            {% if request.user.is_authenticated %}
+                                {{ request.user.email }}
+                                {{ form.nominator_email.as_hidden }}
+                            {% else %}
+                                {{ form.nominator_email }}
+                            {% endif %}
+                        </div>
+                        <div class='field_wrapper'>
+                            <label for='{{ form.anonymous.auto_id }}'>{{ form.anonymous.label }}</label>
+                            {{ form.anonymous }}
+                            <span class="helptext arrow bottom">{{ form.anonymous.help_text }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="about-activities section">
+                <h3>More about the local organisation</h3>
+                <div class="inner">
+                        <div class="field_wrapper">
+                            <label for='{{ form.community_activities.auto_id }}'>{{ form.community_activities.label }}</label>
+                                {{ form.community_activities }}
+                        </div>
+                        <div class="field_wrapper">
+                            <label for='{{ form.spending_plans.auto_id }}'>{{ form.spending_plans.label }}</label>
+                                {{ form.spending_plans }}
+                        </div>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <input type="button" onclick="window.location.replace('/')" value="Cancel">
+                <input type="submit" value="Nominate">
+            </div>
+        </form>
+    </div>
+
+
+{% endblock %}
