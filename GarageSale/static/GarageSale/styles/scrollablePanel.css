@@ -209,6 +209,13 @@ div.sidebar.entry label {
     div.page-header {
          margin-left : 2rem;
     }
+
+    div#SidebarContainer {
+        margin-right: 0.1rem;
+        width : 100px;
+    }
+
+
 }
 
 @container body (min-width: 1250px){

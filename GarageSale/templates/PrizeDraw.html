@@ -33,74 +33,12 @@ Brantham Garage Sale - Prize Draw
 {% endblock %}
 
 {% block sidebar %}
-
     <!-- Do we need a cms ??? -->
-    <div class="sidebar entry tooltip direct" item="{% url "home" %}" id='home' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="Back Home" id='id_home_icon'
-             src={% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}>
+    <div class="sidebar entry direct tooltip" item="{% url 'home' %}" id='home' xmlns="http://www.w3.org/1999/html">
+        <img class="sidebar icon" alt="Back Home" id='id_home_icon' src={% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}>
         <label for="id_home_icon">Back Home</label>
-        <span class="tooltiptext arrow right">Go Back to the top</span>
+        <span class="tooltiptext arrow right">Go Back to Home Page</span>
     </div>
-
-    <div class="sidebar entry tooltip direct" item="{% url "home" %}#OnTheMap" id='map' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="Are you on the map" id='id_get_on_map_icon'
-             src={% static "GarageSale/images/icons/menu/gps-location-map-marker-navigation-svgrepo-com.svg" %}>
-        <label for="id_get_on_map_icon">Are you on the Map</label>
-        <span class="tooltiptext arrow right">Are you on the Map</span>
-    </div>
-
-    <div class="sidebar entry tooltip direct" item="{% url "home" %}#DonateToUs" id='donate' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="How to Donate" id='id_donate'
-             src={% static "GarageSale/images/icons/menu/pounds-coins-stack-svgrepo-com.svg" %}>
-        <label for="id_donate">How to Donate</label>
-        <span class="tooltiptext arrow right">How to Donate</span>
-    </div>
-
-    <div class="sidebar entry direct tooltip selected"  item="{% url 'PrizeDraw' %}" xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="Prize Draw" id='id_prizedraw'
-             src={% static "GarageSale/images/icons/menu/tickets-svgrepo-com.svg" %}>
-        <label for="id_prizedraw">Prize Draw</label>
-        <span class="tooltiptext arrow right">Prize Draw Information</span>
-    </div>
-
-    <!--
-    <div class="sidebar entry" item="news" id='news' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="News" id='id_news' src={% static "GarageSale/images/icons/menu/news-svgrepo-com.svg" %}>
-        <label for="id_news">Garage Sale News</label>
-        <span class="helptext">Garage Sale News</span>
-    </div>
-    -->
-
-    <div class="sidebar entry tooltip direct" item="{% url "home" %}#Sponsors" id='sponsors' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="Our Sponsors" id='id_sponsors'
-             src={% static "Accounts/images/icons/navigation/money-bag-pound-svgrepo-com.svg" %}>
-        <label for="id_sponsors">Our Sponsors</label>
-        <span class="tooltiptext arrow right">Our Sponsors</span>
-    </div>
-
-    <div class="sidebar entry tooltip direct" item="{% url "home" %}#AboutUs" id="AboutUs'" xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="About Us" id='id_AboutUs'
-             src={% static "GarageSale/images/icons/menu/about-svgrepo-com.svg" %}>
-        <label for="id_AboutUs">About Us</label>
-        <span class="tooltiptext arrow right">About Us</span>
-    </div>
-
-    <div class="sidebar entry tooltip direct" item="{% url "home" %}#ContactUs" id='Contact Us' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="Contact Us" id='id_contact'
-             src={% static "GarageSale/images/icons/menu/contact-us-svgrepo-com.svg" %}>
-        <label for="id_contact">Contact Us</label>
-        <span class="tooltiptext arrow right">Contact Us</span>
-    </div>
-
-    {% if perms.GarageSale.is_team_member %}
-        <div class="sidebar entry direct tooltip" item="{% url 'TeamPages:Root' %}" xmlns="http://www.w3.org/1999/html">
-            <a href="{% url 'TeamPages:Root' %}">
-                <img class="sidebar icon" alt="Team Pages" id='id_team'
-                     src={% static "GarageSale/images/icons/menu/team-3-svgrepo-com.svg" %}>
-                <label for="id_team">Team Access</label>
-                <span class="tooltiptext arrow right">Team Access</span></a>
-        </div>
-    {% endif %}
 {% endblock %}
 
 {% block SnappableSections %}
