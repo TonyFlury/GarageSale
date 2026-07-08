@@ -35,12 +35,6 @@ urlpatterns = [
     path('PrizeDraw/', TemplateView.as_view(template_name='PrizeDraw.html'), name='PrizeDraw'),
     path('blind_auction', TemplateView.as_view(template_name='blind_auction.html'), name='BlindAuction'),
     path('donate', TemplateView.as_view(template_name='donate.html'), name='Donate'),
-    path('nominate/', include([
-        path('', general_views.NominationCreateView.as_view(), name='NominationCreate'),
-        path('success/', TemplateView.as_view(template_name='team_pages/nominations/nomination_success.html'), name='NominationSuccess'),
-        path('list/', general_views.NominationsList.as_view(), name='NominationsList'),
-        path('view/<int:pk>/', general_views.NominationView.as_view(), name='NominationView'),
-    ])),
     path('location/', include('Location.urls')),
     path('team_page/', include('team_pages.urls', 'TeamPages')),
     path('news/', include('News.urls')),

@@ -12,26 +12,6 @@
             padding: 1rem;
             border-left: dotted thin;
         }
-
-        .panel .buttons {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            width: 85%;
-            margin: 1rem auto 0;
-            input[type=button] {
-                font-size: 110%;
-                border-radius: 15px;
-                padding: 1rem;
-                background: linear-gradient(10deg, lightblue 0%, white 50%, white 100%);
-                box-shadow: 2px 2px 5px gray, inset 0 0 0 gray;
-                            transition: all 0.2s ease-in-out;
-
-                &:hover {
-                    box-shadow: 0 0 0 grey, inset 4px 4px 5px gray;
-                }
-            }
-        }
     </style>
 {% endblock %}
 {% block Title %}
@@ -298,41 +278,21 @@
 
     <div id="ContactUs" class="card" card_name="contact">
         <h1>Contact Us</h1>
+        As of 1st January 2026, our contact details have changed :
+        <ul>
+            <li>Trustees : <a href="mailto:Trustees@BranthamGarageSale.org.uk">Trustees@BranthamGarageSale.org.uk</a>
+            </li>
+            <li>Sponsorship : <a href="mailto:Sponsorship@BranthamGarageSale.org.uk">Sponsorship@BranthamGarageSale.org.uk</a>
+            </li>
+            <li>CraftMarket : <a href="mailto:CraftMarket@BranthamGarageSale.org.uk">CraftMarket@BranthamGarageSale.org.uk</a>
+            </li>
+            <li>Website : <a href="mailto:Website@BranthamGarageSale.org.uk">Website@BranthamGarageSale.org.uk</a></li>
+        </ul>
 
-        <div class="panel">
-            <div id="Nominate a good cause">
-                <h3>Nominate a good cause</h3>
-                Every year approximately In September we pick a good cause to fund-raise for next year.
-                To be eligible the good cause must have some benefit to the community or residents of Brantham.
-                <p>
-                    That good cause will get 50% of all of the funs we raise during that years campaign, while
-                    the other 50% will go to St Elizabeth's Hospice in Ipswich.
-                </p>
-                <div class="buttons">
-                <input type="button" onclick="document.location.replace('{% url 'NominationCreate' %}')" value="Nominate a good cause">
-                </div>
-            </div>
-            <div id="email">
-                <h3>Emails </h3>
-                You can contact us by email :
+        You can also contact us via Facebook :
 
-                    <p>For general communications about the event: <a href="mailto:Trustees@BranthamGarageSale.org.uk">Trustees@BranthamGarageSale.org.uk</a>
-                    </p>
-                    <p>For questions about and offers of sponsorship: <a href="mailto:Sponsorship@BranthamGarageSale.org.uk">Sponsorship@BranthamGarageSale.org.uk</a>
-                    </p>
-                    <p>For bookings and queries about the Craft-Market: <a href="mailto:CraftMarket@BranthamGarageSale.org.uk">CraftMarket@BranthamGarageSale.org.uk</a>
-                <p>
-                Please do not email us on the website email address - that inbox is not monitored.
-            </div>
-            <div id="socials">
-                <h3>Social Media</h3>
-                    <p>Our facebook group: <a class='fa-facebook' href="https://www.facebook.com/groups/branthamgaragesale">Brantham
-                        Garage Sale
-                        group </a></p>
-                    <p>Our Instagram account : <a class='fa-instagram' href="https://www.instagram.com/branthamgaragesale/">Brantham Garage
-                        Sale on Instagram</a></p>
-            </div>
-        </div>
+        Please take note of the new addresses above - and use them for
+
     </div>
 
 {% endblock %}

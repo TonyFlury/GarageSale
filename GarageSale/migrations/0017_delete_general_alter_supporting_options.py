@@ -10,7 +10,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-
+        migrations.DeleteModel(
+            name='General',
+        ),
         migrations.AlterModelOptions(
             name='supporting',
             options={'permissions': [('can_create_supporting', 'Can create a record for a supporting organisation')]},

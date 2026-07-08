@@ -15,6 +15,10 @@ class Migration(migrations.Migration):
             options={},
         ),
         migrations.AlterModelOptions(
+            name='general',
+            options={'default_permissions': ('is_team_member',), 'managed': False, 'permissions': (('is_team_member', 'Can access admin pages'),)},
+        ),
+        migrations.AlterModelOptions(
             name='motd',
             options={},
         ),

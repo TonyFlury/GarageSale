@@ -17,7 +17,7 @@ from django import forms
 
 from Sponsors.models import Sponsor
 from user_management.models import TeamMember
-from .models import MOTD, EventData, Supporting, CommunicationTemplate, TemplateAttachment, Nomination
+from .models import MOTD, EventData, Supporting, CommunicationTemplate, TemplateAttachment
 from Location.models import Location
 
 from Sponsors import models as sponsor_models
@@ -88,10 +88,3 @@ class TemplatesAdminForm(SummernoteModelAdmin):
     inlines = [TemplateAttachmentInline]
     def get_queryset(self, request):
         return super().get_queryset(request).order_by('category', 'transition', '-use_from')
-
-
-@admin.register(Nomination)
-class NominationAdmin(admin.ModelAdmin):
-    list_display = ['nominee', 'status', 'nomination_date']
-    list_filter = ['status', 'anonymous']
-    date_hierarchy = 'nomination_date'
