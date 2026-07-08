@@ -685,7 +685,7 @@ div.blaze-slider button {
 
 div.panel  {
     display: flex;
-    margin-left: 0rem;
+    margin-left: 0;
     margin-right: 1rem;
     text-align: left;
     flex-wrap: wrap;
