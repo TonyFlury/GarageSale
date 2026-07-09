@@ -35,7 +35,7 @@ def breadcrumb(context):
                 raise BadRequest(f'Invalid event_id {event_id}')
         else:
             event = context.request.current_event
-            event_id = event.id
+            event_id = event.id if event else None
     else:
         event = marketeer.event
         event_id = marketeer.event.id

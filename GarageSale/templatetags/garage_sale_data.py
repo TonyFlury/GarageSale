@@ -93,7 +93,7 @@ def signed_up(context, feature):
         return False
 
     return (models[feature].objects.
-            filter(location__user=context.request.user, event__id=context.request.current_event.id).exists())
+            filter(location__user=context.request.user, event__id=context.request.current_event.id if context.request.current_event else None).exists())
 
 
 @register.simple_tag(takes_context=True)
@@ -101,7 +101,7 @@ def bacs_reference(context):
     try:
         inst: SaleLocations = (SaleLocations.objects.
                                filter(location__user=context.request.user,
-                                      event__id=context.request.current_event.id).get())
+                                      event__id=context.request.current_event.id if context.request.current_event else None).get())
 
         return inst.get_bacs_reference()
 
@@ -114,6 +114,7 @@ def countdown_clock(context, html_id):
     """Build the JS fragment required for the countdown clock"""
     try:
         event_date = context.request.current_event.event_date
+    # Catch errors when there is no current_event set
     except (exceptions.ObjectDoesNotExist, IndexError, AttributeError):
         event_date = datetime.date(2024, 6, 23)
 
@@ -157,7 +158,7 @@ def render_widget(context, feature):
             location = None
 
         if location:
-            signed_up = models[feature].objects.filter(event__id=context.request.current_event.id,
+            signed_up = models[feature].objects.filter(event__id=context.request.current_event.id if context.request.current_event else None,
                                                        location=location).exists()
     else:
         signed_up = False

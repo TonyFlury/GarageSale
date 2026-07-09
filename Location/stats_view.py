@@ -37,7 +37,8 @@ def event_ad_board(request):
 def download_ad_board_csv(request, event_id=None):
     ts = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     if event_id is None:
-        event_id = request.current_event.id
+        event_id = request.current_event.id if request.current_event else None
+    # We might need an error thingy here
     event = EventData.objects.get(id=event_id)
     qs = Location.objects.filter(event__id=event_id, ad_board=True)
     response = HttpResponse(content_type='text/csv',
@@ -129,7 +130,7 @@ register('Statistics','Location:EventStats',
 def event_stats(request, event_id=None):
     """"Provide stats for this given event - so far it is counts of Billboard and sales locations """
 
-    event_id = event_id or request.current_event.id
+    event_id = event_id or (request.current_event.id if request.current_event else None)
 
     def nice(inc):
         return ('+' if inc >= 0 else '') + str(inc)
@@ -137,7 +138,7 @@ def event_stats(request, event_id=None):
     the_event = EventData.objects.get(id=event_id)
 
     if event_id is None:
-        event_id = request.current_event.id
+        event_id = request.current_event.id if request.current_event else None
 
     ad_board_plot = create_plot(event_id, 'ad_board')
     sale_plot = create_plot(event_id, 'sale')

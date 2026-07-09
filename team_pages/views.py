@@ -555,7 +555,7 @@ class SponsorEntryPoint(EntryPointMixin, SponsorsRoot):
     entry_point_icon = static('GarageSale/images/icons/navigation/sponsors-svgrepo-com.svg')
 
     def get(self, request, event_id=None):
-        event_id = event_id or request.current_event.id
+        event_id = event_id or (request.current_event.id if request.current_event else None)
         return super().get(request, event_id=event_id)
 
 class SponsorCreate(SponsorsRoot):

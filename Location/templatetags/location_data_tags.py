@@ -15,7 +15,7 @@ def breadcrumb( context):
         case 'Ad board list':
             content.append({f'Ad board list':''})
         case 'Event stats':
-            event = EventData.objects.get(id = context.get('event_id', context.request.current_event.id))
+            event = EventData.objects.get(id = context.get('event_id', context.request.current_event.id if context.request.current_event else None))
             content.append({f'Event Stats {event.get_event_date_display()}':''})
         case _:
             pass

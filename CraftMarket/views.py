@@ -71,7 +71,7 @@ class CraftMarketList( FrameworkView):
     def get(self, request, event_id=None, **kwargs):
         """Get the list of marketer records for the event"""
         if event_id is None:
-            event_id = request.current_event.id
+            event_id = request.current_event.id if request.current_event else None
         return super().get(request, event_id=event_id, **kwargs)
 
     def get_success_url(self, request, context=None, **kwargs):

@@ -61,7 +61,7 @@ class ApplicationBase(View):
             form_action = reverse(self.path) + '?redirect=' + request.GET.get('redirect', '/getInvolved')
 
         # Grab the details of the current Event
-        event_id = request.current_event.id
+        event_id = request.current_event.id if request.current_event else None
         self.event = EventData.objects.get(id=event_id)
 
         self._find_location_and_sales()
@@ -213,7 +213,7 @@ class ApplicationBase(View):
         else:
             form_action = reverse(self.path) + '?redirect=' + request.GET.get('redirect', '/getInvolved')
 
-        event_id = request.current_event.id
+        event_id = request.current_event.id if request.current_event else None
         self.event = EventData.objects.get(id=event_id)
 
         # Set self.location_inst and self.sale_inst
@@ -239,7 +239,7 @@ class ApplicationBase(View):
                                    anonymous=request.user.is_anonymous,
                                    initial=(email_and_name if not editable_user_fields else {}), )
 
-        event_id = request.current_event.id
+        event_id = request.current_event.id if request.current_event else None
         self.event = EventData.objects.get(id=event_id)
 
         # Are there any errors ?

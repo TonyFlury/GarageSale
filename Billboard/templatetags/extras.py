@@ -26,7 +26,7 @@ register = Library()
 @register.inclusion_tag('__billboard_apply_button.html', name='billboard_application', takes_context=True)
 def request_button(context):
 
-    inst = BillboardLocations.has_applied(current_event_id=context.request.current_event.id, current_user=context.request.user)
+    inst = BillboardLocations.has_applied(current_event_id=context.request.current_event.id if context.request.current_event else None, current_user=context.request.user)
 
     if inst is not None:
         context = {'context': context,
