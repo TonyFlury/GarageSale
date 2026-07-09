@@ -52,6 +52,8 @@ function setupSideBar() {
         entry.addEventListener('click', function (event)
             {
                 let target = event.target;
+                let small_screen = window.matchMedia("(width <= 1140px)").matches;
+                console.log(small_screen);
 
                 /* Although the event handler is added to the sidebar.entry div, the event might be fired on
                   a child item, such as an icon or a label, so need to find the parent div
@@ -64,10 +66,28 @@ function setupSideBar() {
 
                 /* For non-direct buttons - find and jump to the right card */
                 if (target.matches(':not(.direct)')){
-                    let card = cardContainer.querySelector('[card_name="'+item+'"]');
-                    if (card != null)
-                        card.scrollIntoView({behavior:"smooth"});
-                    MirrorSelected(item);
+                    if (!small_screen) {
+                        let card = cardContainer.querySelector(`[card_name=${item}]`);
+                        if (card != null) {
+                            card.scrollIntoView({behavior: "smooth"});
+                            MirrorSelected(item);
+                        }
+                    }
+                    else {
+                        const cards = Array.from(cardContainer.querySelectorAll('.card'));
+                        cards.forEach(function(card) {
+                                if (card.getAttribute('card_name') === item) {
+                                    card.style.display = 'block';
+                                    card.scrollIntoView({behavior: "smooth"});
+                                    MirrorSelected(item);
+                                }
+                                else {
+                                    card.style.display = 'none';
+                                }
+                            }
+                        )
+                        sidebar.classList.toggle('visible');
+                    }
                 }
                 else {
                     /* For direct buttons - if the item attribute is set, then load that as a url */
