@@ -19,6 +19,7 @@ import bs4
 from django.contrib.staticfiles import finders
 
 from django.core.mail import EmailMultiAlternatives
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Subquery
 from django.http import HttpRequest
@@ -37,6 +38,54 @@ logger.setLevel(logging.WARNING)
 
 logging.getLogger('ttFont').addHandler(logging.NullHandler())
 logging.getLogger('loggingTools').addHandler(logging.NullHandler())
+
+
+class General(models.Model):
+    class Meta:
+        managed = False
+        permissions =[('is_trustee', 'Is a member of the Charity Trustee Team'),
+                      ('is_team_member', 'Is a member of the team'),
+                      ('is_administrator', 'Is a website administrator'),
+                      ('is_manager', 'Is a manager of the website')]
+
+
+class Nomination(models.Model):
+    """A nomination for support from a future Garage Sale"""
+
+    class Status(models.TextChoices):
+        NEW = 'New', 'New'
+        ACCEPTED = 'Accepted', 'Accepted'
+        REJECTED = 'Rejected', 'Rejected'
+        COMPLETED = 'Completed', 'Completed'
+
+    nominee = models.CharField(max_length=100, verbose_name='Organisation name')
+    contact_email = models.EmailField(blank=True, null=True, verbose_name='a contact email address')
+    contact_phone = models.CharField(max_length=20, blank=True, verbose_name='a contact phone number')
+    nominator = models.CharField(max_length=100, blank=True, verbose_name='your name')
+    nominator_email = models.EmailField(blank=True, null=True, verbose_name='your email address')
+    anonymous = models.BooleanField(
+        default=False,
+        help_text='Do you want to hide your name [from the organisation that you are nominating',
+    )
+    community_activities = models.TextField(default='', verbose_name='how does the organisation benefit Brantham ?')
+    spending_plans = models.TextField(default='', verbose_name='how might the organisation might spend any funds')
+    nomination_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=100, default=Status.NEW, choices=Status.choices)
+    reason = models.TextField(default='', verbose_name='rejection reason', blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.nominator} nominated {self.nominee} {self.nomination_date}'
+
+    def clean(self):
+        super().clean()
+        if not (self.contact_email or self.contact_phone):
+            raise ValidationError({'contact_email': 'Either a contact email or phone number is required'})
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+
+        return reverse('NominationView', kwargs={'pk': self.pk})
+
 
 # ToDo - convert QuillField to Summernote
 class MOTD(models.Model):

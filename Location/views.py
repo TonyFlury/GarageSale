@@ -26,10 +26,17 @@ logger.setLevel(logging.DEBUG)
 
 def view_event_map(request):
     locations = LocationModel.objects.all()
+    if request.current_event:
+        locations =  LocationModel.objects.filter(event=request.current_event,
+                                                  sale_event=True).order_by('creation_timestamp'),
+        map_url = request.current_event.myGoogleMapURL if request.current_event.myGoogleMapURL else ''
+    else:
+        locations = [{}]
+        map_url = ''
+
     context = {'GOOGLE_MAP_API': settings.GOOGLE_MAP_SETTINGS.get('API_KEY'),
-               'locations' :  LocationModel.objects.filter(event=request.current_event,
-                                                        sale_event=True).order_by('creation_timestamp'),
-               'map_url' : request.current_event.myGoogleMapURL if request.current_event.myGoogleMapURL else ''}
+               'locations' :  locations,
+               'map_url' : map_url}
     return TemplateResponse(request, "map_view.html", context  )
 
 class LocationBase(CreateView) :

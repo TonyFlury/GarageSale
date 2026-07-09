@@ -11,7 +11,7 @@ def social_media_items():
 
 
 def sponsor_list(request):
-    sponsors = Sponsor.objects.filter(event__id = request.current_event.id)
+    sponsors = Sponsor.objects.filter(event__id = request.current_event.id if request.current_even else None)
     return TemplateResponse(request,'view_sponsors.html',
                             context={'sponsors': sponsors,
                                      'socials':social_media_items() } )

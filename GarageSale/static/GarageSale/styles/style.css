@@ -7,11 +7,23 @@
   --fontSize: 12pt;
 }
 
+ @media screen and (width <= 600px) {
+        :root {
+            --fontSize: 11pt;
+        }
+    }
+    @media screen and (width <= 400px) {
+       :root  {
+            font-size: 10pt;
+        }
+    }
+
 body {
     color : var(--fontColor);
     font-size: var(--fontSize);
     font-family: sans-serif;
 }
+
 
 
 div#ToolBar {
@@ -682,31 +694,28 @@ div.blaze-slider button {
 }
 
 
-.donate .panel  {
+div.panel  {
     display: flex;
-    margin-left: 0rem;
+    margin-left: 0;
     margin-right: 1rem;
     text-align: left;
     flex-wrap: wrap;
     flex-direction: row;
-
-    @media screen and (min-width: 1000px) {
-         > div {
-            width:28%;
-        }
-    }
+    overflow-x: auto;
      > div {
-        padding: 1rem;
-        margin: 0.5rem;
-        border : thin dotted darkgrey;
-        border-radius: 10px;
+         padding: 1rem;
+         margin: 0.5rem;
+         border: thin dotted darkgrey;
+         border-radius: 10px;
          box-shadow: 2px 2px 2px 2px darkgrey;
-    }
+         width: fit-content;
+         word-wrap: normal;
+     }
 
      >div ul {
         list-style-type: none;
         font-size: 85%;
-        margin: 1rem;
+        margin: 0.5rem;
     }
 }
 
