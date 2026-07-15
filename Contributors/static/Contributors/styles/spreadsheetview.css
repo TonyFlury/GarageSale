@@ -4,11 +4,57 @@
             font-family: Arial, sans-serif;
         }
 
+       section#section-filter span.filter-icon {
+           display: inline-block;
+           width: 1.5rem;
+           height: 1.5rem;
+           background: url("/static/GarageSale/images/icons/input-search-svgrepo-com.svg") no-repeat center center;
+           background-size: 1.5rem 1.5rem;
+           vertical-align: middle;
+           margin-right: 0.25rem;
+           border: thin solid lightgray;
+           padding: 5px;
+           border-radius : 10px;
+           box-shadow: 1px 1px 2px grey, inset 0 0 0 grey;
+           transition: all 0.2s ease-in-out;
+
+           &.active {
+             box-shadow: 0 0 0 transparent, inset 1px 1px 2px grey;
+           }
+       }
+
+       section#toolbar span[disabled] {
+           color: darkgrey;
+       }
+
+       section#section-filter div#search-bar[active] {
+            display: flex;
+            flex-direction: row;
+            width: fit-content;
+            border: thin solid darkslategray;
+            border-radius: 5px;
+            transition: all 0.3s ease-in-out;
+            margin-left: 1rem;
+            padding: 1rem;
+            backdrop-filter: blur(2px);
+            background: rgb(from lightgray r g b / 0.4);
+           height: fit-content;
+            opacity: 1;
+       }
+
+       section#section-filter div#search-bar:not([active]) {
+           height: 0;
+           opacity: 0;
+        }
+
         .filters {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(180px, 1fr));
-            gap: 1rem;
+            /* display: grid; */
+            /* grid-template-columns: repeat(4, minmax(180px, 1fr)); */
+            display: flex;
+            flex-direction: row;
+            flex-basis: fit-content;
             margin-bottom: 1rem;
+            width: 100%;
         }
 
         .filters label {
@@ -16,6 +62,12 @@
             flex-direction: column;
             font-weight: bold;
             font-size: 0.9rem;
+            margin-right: 3rem;
+            text-align: left;
+        }
+
+        .filters label:last-child {
+            margin-right: 0;
         }
 
         .filters input {
@@ -26,208 +78,267 @@
         table.contributor-sheet {
             width: 100%;
             border-collapse: collapse;
+            font-size: 90%;
         }
 
         .contributor-sheet th,
         .contributor-sheet td {
             border: 1px solid #ccc;
-            padding: 0.35rem;
-            vertical-align: top;
+            padding: 0.1rem 0.2rem;
         }
 
         .contributor-sheet th {
-            background: #f4f4f4;
-            text-align: left;
+            border: 1px solid black
         }
 
-        .contributor-sheet input,
-        .contributor-sheet textarea {
-            width: 100%;
-            box-sizing: border-box;
-            border: 1px solid lightgray;
-            background: transparent;
-            padding: 0.25rem;
-            font: inherit;
-        }
-
-        .contributor-sheet textarea {
-            min-height: 3rem;
-            resize: vertical;
-        }
-
-        .contributor-sheet tr.locked input,
-        .contributor-sheet tr.locked textarea {
-            color: #555;
-            cursor: not-allowed;
-            border: 1px solid transparent;
-        }
-
-        .contributor-sheet tr.unlocked {
-            background: #fffdf2;
-        }
-
-        .contributor-sheet tr.dirty {
-            background: #fff3cd;
-        }
-
-        .contributor-sheet tr.invalid {
-            background: #f8d7da;
-        }
-
-        .field-error {
-            display: block;
-            color: #842029;
-            font-size: 0.78rem;
-            margin-top: 0.2rem;
-        }
-
-
-        td.row-status {
-            display: flex;
-            align-items: center;
-            flex-direction: row;
-            span { display: inline-block;
-                width: 2rem;
-                height: 2rem;
-                flex:1;
+        .contributor-sheet th:nth-child(-n+2),
+        .contributor-sheet td:nth-child(-n+2){
+                border-left: transparent;
             }
-        }
-
-        tr.locked td.row-status {
-            span.status {
-                content:'';
-                background: url("/static/GarageSale/images/icons/padlock-svgrepo-com.svg") no-repeat center center;
-                background-size: 2rem 2rem;
+       .contributor-sheet th:first-child,
+       .contributor-sheet td:first-child {
+                border-right: transparent;
             }
-        }
-        tr.unlocked:not(.dirty) {
-            span.status {
-                content:'';
-                background: url("/static/GarageSale/images/icons/padlock-unlocked-svgrepo-com.svg") no-repeat center center;
-                            background-size: 2rem 2rem;
-                }
-        }
 
-         tr.unlocked.dirty {
-             span.status {
-                content:'';
-                 background: url('/static/GarageSale/images/icons/save-svgrepo-com.svg') no-repeat center center;
-                            background-size: 2rem 2rem;
-             }
-            span.undo {
-                content:'';
-                 background: url('/static/GarageSale/images/icons/undo-svgrepo-com.svg') no-repeat center center;
-                background-size: 2rem 2rem;
+
+
+            .contributor-sheet th {
+                background: lightgray;
+                text-align: left;
             }
-         }
 
-
-        .row-status.dirty {
-            color: #b58100;
-        }
-
-        .row-status.saved {
-            color: #198754;
-        }
-
-
-        .description-cell {
-            display: grid;
-            grid-template-columns: minmax(10rem, 1fr) auto;
-            gap: 0.35rem;
-            align-items: start;
-        }
-
-        tr.unlocked {
-            .description-cell input {
-                box-shadow: 1px 1px 2px grey, inset 0 0 0 grey;
-                transition: all 0.2s ease-in-out;
+            .contributor-sheet input,
+            .contributor-sheet textarea {
+                width: 100%;
+                box-sizing: border-box;
+                border: 1px solid lightgray;
                 border-radius: 5px;
+                box-shadow: inset 0 1px 3px darkslategray;
+                background: transparent;
+                padding: 0.25rem;
+                font: inherit;
+                font-weight: normal;
+                transition: all 0.2s ease-in-out;
             }
 
-            .description-cell input:hover {
-                box-shadow: 0 0 0 grey, inset 1px 1px 2px grey;
+            .contributor-sheet textarea {
+                min-height: 3rem;
+                resize: vertical;
             }
-        }
 
-        .description-cell button { display: none; }
+            .contributor-sheet tr.locked input,
+            .contributor-sheet tr.locked textarea {
+                color: #555;
+                cursor: not-allowed;
+                border: 1px solid transparent;
+                box-shadow: none;
+                transition: all 0.2s ease-in-out;
+            }
 
-        .description-preview {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+            .contributor-sheet td.select,
+            .contributor-sheet th.select  {
+                width: 1rem;
+                padding: 10px;
+                input {
+                    border: none;
+                    box-shadow: none;
+                    cursor: pointer;
+                    margin: 0;}
+            }
 
-        td:has(>div.actions) { display: none;}
+            .contributor-sheet tr.unlocked {
+                background: #fffdf2;
+            }
 
-        .edit-description {
-            padding: 0.25rem 0.45rem;
-            cursor: pointer;
-        }
+            .contributor-sheet tr.dirty {
+                background: #fff3cd;
+            }
 
-        tr.locked .edit-description {
-            cursor: not-allowed;
-        }
+            .contributor-sheet tr.invalid {
+                background: #f8d7da;
+            }
 
-        .description-editor-dialog {
-            border: 1px solid #999;
-            border-radius: 0.4rem;
-            padding: 1rem;
-            max-width: 90vw;
-        }
+            .field-error {
+                display: block;
+                color: #842029;
+                font-size: 0.78rem;
+                margin-top: 0.2rem;
+            }
 
-        .description-editor-dialog::backdrop {
-            background: rgb(0 0 0 / 0.35);
-        }
+            table {
+                display: flex;
+                flex-flow: column;
+                height: 100%;
+                width: 100%;
+            }
+            table thead {
+                /* head takes the height it requires,
+                and it's not scaled when table is resized */
+                flex: 0 0 auto;
+                width: calc(100% - 0.9em);
+            }
+            table tbody {
+                /* body takes all the remaining available space */
+                flex: 1 1 auto;
+                display: block;
+                overflow-y: scroll;
+            }
+            table tbody tr {
+                width: 100%;
+            }
+            table thead, table tbody tr {
+                display: table;
+                table-layout: fixed;
+            }
 
-        .description-editor-dialog form {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-        }
+            table tbody tr[hidden] {
+                display: none;
+            }
 
-        #description-editor-textarea {
-            width: auto;
-            min-width: 50ch;
-            max-width: 80vw;
-            height: auto;
-            min-height: 5lh;
-            overflow: auto;
-            resize: both;
-            font: inherit;
-            padding: 0.4rem;
-            box-sizing: border-box;
-        }
+            .row-status {
+                width : 4rem;
+            }
+            td.row-status {
+                span { display: inline-block;
+                    width: 1.75rem;
+                    height: 1.75rem;
+                }
+            }
 
-        .description-editor-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-        }
+            tr.locked td.row-status {
+                span.status {
+                    content:'';
+                    background: url("/static/GarageSale/images/icons/padlock-svgrepo-com.svg") no-repeat center center;
+                    background-size: 2rem 2rem;
+                }
+            }
+            tr.unlocked:not(.dirty) {
+                span.status {
+                    content:'';
+                    background: url("/static/GarageSale/images/icons/padlock-unlocked-svgrepo-com.svg") no-repeat center center;
+                    background-size: 2rem 2rem;
+                }
+            }
 
-        .description-editor-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
+            tr.unlocked.dirty {
+                span.status {
+                    content:'';
+                    background: url('/static/GarageSale/images/icons/save-svgrepo-com.svg') no-repeat center center;
+                    background-size: 2rem 2rem;
+                }
+                span.undo {
+                    content:'';
+                    background: url('/static/GarageSale/images/icons/undo-svgrepo-com.svg') no-repeat center center;
+                    background-size: 2rem 2rem;
+                }
+            }
 
 
-        .actions {
-            display: flex;
-            gap: 0.4rem;
-        }
+            .row-status.dirty {
+                color: #b58100;
+            }
 
-        .actions button {
-            cursor: pointer;
-            padding: 0.35rem 0.55rem;
-        }
+            .row-status.saved {
+                color: #198754;
+            }
 
-        .save-row {
-            display: none;
-        }
 
-        tr.dirty .save-row,
-        tr.invalid .save-row,
-        tr.new-row .save-row {
-            display: inline-block;
-        }
+            .description-cell {
+                display: grid;
+                /*          grid-template-columns: minmax(10rem, 1fr) auto; */
+                gap: 0.35rem;
+                align-items: start;
+            }
+
+            tr.unlocked {
+                .description-cell input {
+                    box-shadow: 1px 1px 2px grey, inset 0 0 0 grey;
+                    transition: all 0.2s ease-in-out;
+                    border-radius: 5px;
+                    cursor: default;
+                }
+
+                .description-cell input:hover {
+                    box-shadow: 0 0 0 grey, inset 1px 1px 2px grey;
+                }
+            }
+
+            .description-cell button { display: none; }
+
+            .description-preview {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .edit-description {
+                padding: 0.25rem 0.45rem;
+                cursor: pointer;
+            }
+
+            tr.locked .edit-description {
+                cursor: not-allowed;
+            }
+
+            .description-editor-dialog {
+                border: 1px solid #999;
+                border-radius: 0.4rem;
+                padding: 1rem;
+                max-width: 90vw;
+            }
+
+            .description-editor-dialog::backdrop {
+                background: rgb(0 0 0 / 0.35);
+            }
+
+            .description-editor-dialog form {
+                display: flex;
+                flex-direction: column;
+                gap: 0.6rem;
+            }
+
+            #description-editor-textarea {
+                width: auto;
+                min-width: 50ch;
+                max-width: 80vw;
+                height: auto;
+                min-height: 5lh;
+                overflow: auto;
+                resize: both;
+                font: inherit;
+                padding: 0.4rem;
+                box-sizing: border-box;
+            }
+
+            .description-editor-footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .description-editor-actions {
+                display: flex;
+                gap: 0.5rem;
+            }
+
+
+            .actions {
+                display: flex;
+                gap: 0.4rem;
+            }
+
+            .actions button {
+                cursor: pointer;
+                padding: 0.35rem 0.55rem;
+            }
+
+            .save-row {
+                display: none;
+            }
+
+            tr.dirty .save-row,
+            tr.invalid .save-row,
+            tr.new-row .save-row {
+                display: inline-block;
+            }

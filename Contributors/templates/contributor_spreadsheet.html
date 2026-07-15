@@ -1,8 +1,9 @@
 {% extends "team_pages_base.html" %}
 {% load static %}
 
-<!-- TODO extract Styles to dedicated css file
-TODO Reduce padding around fields
+<!--
+TODO - Add in 'Type' field to all inputs
+TODO - Allow multiselect
 TODO Hide or remove 'Type' field
 TODO Add in 'Details' dialog to allow for editing of logo and other info
 TODO convert table to flex stuff
@@ -20,15 +21,20 @@ TODO Convert to official theme and layout
 
 {% block PageScripts %}
     {{ block.super }}
-    <script type='/text/javascript' src="{% static 'Contributors/js/contributor_spreadsheet.js' %}" defer></script>
+    <script type='text/javascript' src="{% static 'Contributors/js/contributor_spreadsheet.js' %}" ></script>
 
 {% endblock %}
 
 {% block SnappableSections %}
 <main class="spreadsheet-page">
-    <h1>Contributor Spreadsheet Editor</h1>
+    <h1>{{ title }}</h1>
 
-    <section class="filters" aria-label="Contributor filters">
+    <section id="toolbar">
+        <span disabled>invite</span><span disabled>suspend</span>
+    </section>
+    <section id='section-filter' class="filters" aria-label="Contributor filters">
+        <span class="filter-icon"></span>
+        <div id="search-bar">
         <label>
             Company name
             <input type="search" data-filter-field="contributor_name" placeholder="Filter company name">
@@ -48,6 +54,7 @@ TODO Convert to official theme and layout
             Description
             <input type="search" data-filter-field="description" placeholder="Filter description">
         </label>
+        </div>
     </section>
 
     <table class="contributor-sheet"
@@ -55,8 +62,8 @@ TODO Convert to official theme and layout
             data-create-url="{% url 'contributors:spreadsheet_create' %}">
         <thead>
         <tr>
-            <th>Status</th>
-            <th>Type</th>
+            <th class="select"><input id='select-all' type="checkbox" name="selected_contributor" value="all" /></th>
+            <th class="row-status"></th>
             <th>Company name</th>
             <th>Contact name</th>
             <th>Phone</th>
@@ -77,6 +84,8 @@ TODO Convert to official theme and layout
                 data-filter-email="{{ contributor.email|default_if_none:''|lower }}"
                 data-filter-description="{{ contributor.description|default_if_none:''|lower }}"
             >
+
+                <td class="select"><input type="checkbox" name="selected_contributor" value="{{ contributor.pk }}" /></td>
                 <td class="row-status">
                     <span class="status" > </span>
                     <span class="undo" > </span>
@@ -84,17 +93,7 @@ TODO Convert to official theme and layout
 
                 <td>
                     <input
-                        name="contributor_type"
-                        value="{{ contributor.contributor_type }}"
-                        maxlength="30"
-                        required
-                        disabled
-                    >
-                    <span class="field-error" data-error-for="contributor_type"></span>
-                </td>
-
-                <td>
-                    <input
+                        type="text"
                         name="contributor_name"
                         value="{{ contributor.contributor_name }}"
                         maxlength="120"
@@ -106,6 +105,7 @@ TODO Convert to official theme and layout
 
                 <td>
                     <input
+                        type="text"
                         name="contact_name"
                         value="{{ contributor.contact_name }}"
                         maxlength="120"
@@ -116,6 +116,7 @@ TODO Convert to official theme and layout
 
                 <td>
                     <input
+                        type="text"
                         name="phone"
                         value="{{ contributor.phone }}"
                         maxlength="12"
@@ -156,12 +157,7 @@ TODO Convert to official theme and layout
                     </div>
                 </td>
             </tr>
-        {% empty %}
-            <tr>
-                <td colspan="8">No contributors found.</td>
-            </tr>
         {% endfor %}
-        </tbody>
       <tr
                 class="unlocked new-row"
                 data-is-new="true"
@@ -170,6 +166,8 @@ TODO Convert to official theme and layout
                 data-filter-email=""
                 data-filter-description=""
             >
+                <td class="select"></td>
+
                 <td class="row-status unlocked">
                     <span class="status"></span>
                     <span class="undo"></span>
@@ -177,16 +175,7 @@ TODO Convert to official theme and layout
 
                 <td>
                     <input
-                        name="contributor_type"
-                        value=""
-                        maxlength="30"
-                        required
-                    >
-                    <span class="field-error" data-error-for="contributor_type"></span>
-                </td>
-
-                <td>
-                    <input
+                        type="text"
                         name="contributor_name"
                         value=""
                         maxlength="120"
@@ -197,6 +186,7 @@ TODO Convert to official theme and layout
 
                 <td>
                     <input
+                        type="text"
                         name="contact_name"
                         value=""
                         maxlength="120"
@@ -206,6 +196,7 @@ TODO Convert to official theme and layout
 
                 <td>
                     <input
+                        type="text"
                         name="phone"
                         value=""
                         maxlength="12"
@@ -243,6 +234,7 @@ TODO Convert to official theme and layout
                     </div>
                 </td>
             </tr>
+            </tbody>
     </table>
 </main>
     <dialog id="description-editor-dialog" class="description-editor-dialog">

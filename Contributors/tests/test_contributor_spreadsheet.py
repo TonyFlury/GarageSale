@@ -4,10 +4,11 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from Contributors.models import Contributor
+from Contributors.models import Contributor, ContributorHistory
 
 
 class ContributorSpreadsheetViewTests(TestCase):
+    """Test the various REST APIS used by the Contributor Spreadsheet"""
     def setUp(self):
         User = get_user_model()
 
@@ -32,6 +33,7 @@ class ContributorSpreadsheetViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_create_contributor(self):
+        """Test that the create endpoint creates a new contributor"""
         self.client.force_login(self.user)
 
         response = self.client.post(
@@ -64,6 +66,14 @@ class ContributorSpreadsheetViewTests(TestCase):
                 email="new@example.com",
             ).exists()
         )
+        contributor = Contributor.objects.filter(contributor_name="New Company Ltd").first()
+
+        # Need to show that the ContributorHistory is also created
+        history = ContributorHistory.objects.filter(contributor=contributor)
+        self.assertEqual(history.count(), 1)
+
+
+
 
     def test_create_rejects_invalid_data(self):
         self.client.force_login(self.user)

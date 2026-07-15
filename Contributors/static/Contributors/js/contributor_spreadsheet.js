@@ -5,7 +5,7 @@
 
 (function () {
     const editableFields = [
-        "contributor_type",
+        "selected_contributor",
         "contributor_name",
         "contact_name",
         "phone",
@@ -235,9 +235,9 @@
             editDescriptionButton.disabled = true;
         }
 
-        const unlockButton = row.querySelector(".unlock-row");
+  /*      const unlockButton = row.querySelector(".unlock-row");
         unlockButton.disabled = false;
-        unlockButton.textContent = "Unlock";
+        unlockButton.textContent = "Unlock"; */
 
         clearErrors(row);
        /* setStatus(row, "Saved", "saved"); */
@@ -288,7 +288,11 @@
     function bindRow(row) {
 
         getRowInputs(row).forEach((input) => {
-            input.dataset.originalValue = input.value;
+            if (input === null)
+                return;
+
+            if (input.name !== 'contributor_selected')
+                input.dataset.originalValue = input.value;
 
             if (input.name === "description") {
                 input.addEventListener("click", () => {
@@ -297,6 +301,13 @@
                 });
 
                 return;
+            }
+
+            if (input.name === "selected_contributor") {
+                input.addEventListener("change", () => {
+                    document.getElementById('select-all').checked = allSelected();
+                    toggle_toolbar();
+                });
             }
 
             input.addEventListener("input", () => {
@@ -467,6 +478,7 @@
 
     function applyFilters() {
         const filters = {};
+        console.log("apply filters");
 
         document.querySelectorAll("[data-filter-field]").forEach((input) => {
             filters[input.dataset.filterField] = input.value.trim().toLowerCase();
@@ -493,17 +505,69 @@
 
             row.hidden = !visible;
         });
+        document.getElementById("select-all").checked = allSelected()
+    }
+
+    function anySelected() {
+        /* True if any non-hidden rows are selected */
+        const checks = document.querySelectorAll("#contributor-sheet tbody tr:not([hidden]) input[type='checkbox'][name='selected_contributor']")
+        console.log(checks);
+        for (let i = 0; i < checks.length; i++)
+            if( checks[i].checked)
+                return true;
+        return false;
+    }
+
+    function allSelected() {
+        /* True if all non-hidden rows are selected */
+        const checks = document.querySelectorAll("tbody tr:not([hidden]) input[type='checkbox'][name='selected_contributor']")
+        for (let i = 0; i < checks.length; i++)
+            if( ! checks[i].checked)
+                return false;
+        return true;
+    }
+
+    function select_all(event) {
+        /** Toggle selection on rows */
+        const selection = event.target.checked;
+        document.querySelectorAll("#contributor-sheet tbody tr").forEach((row) => {
+            if (! row.hidden && !row.dataset.isNew) {
+                row.querySelector('input[type="checkbox"][name="selected_contributor"]').checked = selection;
+            }
+        });
+        toggle_toolbar();
+    }
+
+    function toggle_toolbar() {
+        const enable_button = anySelected();
+        const toolbar_elements = document.querySelectorAll("section#toolbar span");
+        toolbar_elements.forEach( (element) => {
+                if (enable_button)
+                    element.removeAttribute("disabled");
+                else
+                    element.toggleAttribute("disabled", true);
+            })
     }
 
     function initialiseRows() {
         document.querySelectorAll("#contributor-sheet tbody tr").forEach((row) => {
-            if (row.querySelector('[name="contributor_type"]')) {
+            if (row.hasAttribute('data-filter-contributor_name')) {
                 bindRow(row);
             }
         });
+        document.getElementById('select-all').addEventListener('change', (event) => {
+            select_all( event);
+        })
     }
 
     function initialiseFilters() {
+        document.querySelector(
+            'section#section-filter span.filter-icon').addEventListener('click', (event)=>{
+                event.target.classList.toggle('active');
+                const filter_section = document.getElementById('search-bar');
+                filter_section.toggleAttribute('active');
+        });
+
         document.querySelectorAll("[data-filter-field]").forEach((input) => {
             input.addEventListener("input", applyFilters);
         });
