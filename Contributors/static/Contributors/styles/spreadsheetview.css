@@ -12,14 +12,41 @@
            background-size: 1.5rem 1.5rem;
            vertical-align: middle;
            margin-right: 0.25rem;
-           border: thin solid lightgray;
+           border: thin solid transparent;
            padding: 5px;
            border-radius : 10px;
-           box-shadow: 1px 1px 2px grey, inset 0 0 0 grey;
+           box-shadow: 1px 1px 2px transparent, inset 0 0 0 grey;
            transition: all 0.2s ease-in-out;
 
+           &:hover {
+               border: thin solid lightgrey;
+             box-shadow: 0 0 0 transparent, inset 1px 1px 2px lightgrey;
+           }
+           &:active,
            &.active {
-             box-shadow: 0 0 0 transparent, inset 1px 1px 2px grey;
+               border: thin solid darkgray;
+             box-shadow: 0 0 0 transparent, inset 1px 1px 2px darkgray;
+           }
+       }
+
+
+       tr:not(.new-row) div.actions span.edit-details {
+           display: inline-block;
+           width: 1.27rem;
+           height: 1.27rem;
+           background: url("/static/GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg") no-repeat center center;
+           background-size: 1.25rem 1.25rem;
+           vertical-align: middle;
+           margin-right: 0.25rem;
+           padding: 5px;
+           border: thin solid transparent;
+           border-radius: 5px;
+           box-shadow: 0 0 0 transparent, inset 0 0 0 grey;
+           transition: all 0.2s ease-in-out;
+
+           &:hover {
+                border: thin solid grey;
+                box-shadow: 0 0 0 transparent, inset 1px 1px 1px darkgray;
            }
        }
 

@@ -44,11 +44,12 @@ class ContributorHistory(models.Model):
     event_category = models.CharField(max_length=10, null=True, blank=True)
     event_type = models.CharField(max_length=10, null=True, blank=True)
     related_event = models.ForeignKey(EventData, on_delete=models.CASCADE, null=True, blank=True)
+    details = models.TextField(max_length=1000, null=True, blank=True)
     timestamp = models.DateTimeField(default=django.utils.timezone.now)
     user = models.ForeignKey('user_management.UserExtended', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
-        return f'{self.contributor} - [{self.event_category}]-{self.event} @ {self.timestamp}'
+        return f'{self.contributor} - [{self.event_category}]-{self.event_type} @ {self.timestamp}'
 
 class Contributions(models.Model):
     contributor = models.ForeignKey(Contributor, on_delete=models.CASCADE)

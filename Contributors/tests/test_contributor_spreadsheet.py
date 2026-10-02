@@ -71,8 +71,8 @@ class ContributorSpreadsheetViewTests(TestCase):
         # Need to show that the ContributorHistory is also created
         history = ContributorHistory.objects.filter(contributor=contributor)
         self.assertEqual(history.count(), 1)
-
-
+        self.assertEqual(history[0].event_category, "Data")
+        self.assertEqual(history[0].event_type, "New")
 
 
     def test_create_rejects_invalid_data(self):
@@ -122,6 +122,7 @@ class ContributorSpreadsheetViewTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
 
+    # This needs to ensure that a history is recorded.
     def test_save_updates_contributor(self):
         self.client.force_login(self.user)
 
@@ -154,6 +155,11 @@ class ContributorSpreadsheetViewTests(TestCase):
         self.assertEqual(self.contributor.phone, "07123456789")
         self.assertEqual(self.contributor.email, "jordan@example.com")
         self.assertEqual(self.contributor.description, "Updated description")
+
+        history = ContributorHistory.objects.filter(contributor=self.contributor)
+        print(history[0].details)
+
+
 
     def test_save_rejects_invalid_email(self):
         self.client.force_login(self.user)

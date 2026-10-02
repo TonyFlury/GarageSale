@@ -65,12 +65,14 @@ class Migration(migrations.Migration):
             name='ContributorHistory',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('contributor',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Contributors.contributor')),
                 ('event_category', models.CharField(blank=True, max_length=10, null=True)),
                 ('event_type', models.CharField(blank=True, max_length=10, null=True)),
                 ('timestamp', models.DateTimeField(default=django.utils.timezone.now)),
                 ('related_event', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='Sponsors.sponsor')),
+                ('details', models.TextField(max_length=1000, null=True, blank=True)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='user_management.userExtended', null=True, blank=True)),
-                ('contributor', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Contributors.contributor')),
             ],
         ),
         migrations.CreateModel(

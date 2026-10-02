@@ -1,38 +1,36 @@
 import json
 
+from PIL.ImageChops import offset
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from .models import Contributor
+from Contributors.models import Contributor, ContributorHistory
+
 
 # TODO Add support for 'details view' - ie socials, company icons etc
 
 # Make this class based with support for flexible actions
 # Specific permissions etc
-@login_required
-def contributor_spreadsheet(request):
-    contributors = Contributor.objects.all().order_by("contributor_name")
 
-    return render(
-        request,
-        "contributor_spreadsheet.html",
-        {
-            "contributors": contributors,
-        },
+def _record_history(contributor, event_category:str, event_type:str, details:str|None = None, user=None):
+    ContributorHistory.objects.create(
+        contributor=contributor,
+        event_category=event_category,
+        event_type=event_type,
+        details = details,
+        user=user,
     )
-
 
 def _read_json_payload(request):
     try:
         return json.loads(request.body.decode("utf-8"))
     except json.JSONDecodeError:
         return None
-
 
 def _apply_contributor_payload(contributor, payload):
     allowed_fields = {
@@ -123,6 +121,10 @@ def contributor_spreadsheet_create(request):
     contributor.full_clean()
     contributor.save()
 
+    print(contributor.id)
+
+    _record_history(contributor, "Data", "New", None, request.user)
+
     return JsonResponse(
         {
             "ok": True,
@@ -138,6 +140,11 @@ def contributor_spreadsheet_create(request):
 def contributor_spreadsheet_save(request, pk):
     contributor = get_object_or_404(Contributor, pk=pk)
     payload = _read_json_payload(request)
+
+    # Need to identify the fields which have changed
+    changed_fields = { key: (value, getattr(contributor,key)) for key, value in
+                                                payload.items() if value != getattr(contributor, key)
+                       }
 
     if payload is None:
         return JsonResponse(
@@ -174,6 +181,10 @@ def contributor_spreadsheet_save(request, pk):
         ]
     )
 
+    _record_history(contributor, "Data", "Changed",
+                    details='\n'.join([f"changed {field} to `{old}` from `{new}`"
+                            for field, (old, new) in changed_fields.items()]),
+                    user = request.user)
     return JsonResponse(
         {
             "ok": True,
@@ -181,3 +192,5 @@ def contributor_spreadsheet_save(request, pk):
             "contributor": _contributor_response(contributor),
         }
     )
+
+# TODO - need a suspend endpoint
