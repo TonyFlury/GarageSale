@@ -1,0 +1,53 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% block Title %}Prize Draw Winners{% endblock %}
+{% block PageStyles %}{{ block.super }}<link rel="stylesheet" href="{% static 'GarageSale/styles/prize_draw_winners.css' %}">{% endblock %}
+{% block PageScripts %}{{ block.super }}<script defer src="{% static 'GarageSale/js/prize_draw_winners.js' %}"></script>{% endblock %}
+{% block breadcrumb %}<a href="{% url 'TeamPages:Root' %}">Team Page</a> / Prize Draw Winners{% endblock %}
+{% block SnappableSections %}
+<main class="prize-winners-page">
+    <h1>Prize Draw Winners</h1>
+    {% if events|length > 1 %}
+    <form method="get" action="{% url 'TeamPages:PrizeDrawWinners' %}" class="winner-event-form">
+        <label for="winner-event">Event</label>
+        <select name="event" id="winner-event">{% for event in events %}<option value="{{ event.pk }}"{% if event.pk == draw_event.pk %} selected{% endif %}>{{ event }}</option>{% endfor %}</select>
+        <div class="buttons"><button type="submit" class="communication-template-button">Show event</button></div>
+    </form>
+    {% endif %}
+    {% if draw_event %}<h2>{{ draw_event }}</h2>{% endif %}
+    <p>Record each winning ticket number first, then enter the winner's name and optional contact details.</p>
+    <form id="winner-csrf" hidden>{% csrf_token %}</form>
+    <div id="prize-winners"{% if draw_event %} data-save-url="{% url 'TeamPages:PrizeDrawWinners' draw_event.pk %}"{% endif %}>
+    {% for row in rows %}
+        <section class="prize-winner" aria-labelledby="prize-heading-{{ row.prize.pk }}"
+                 data-contribution-id="{{ row.prize.pk }}" data-revision="{{ row.revision }}"
+                 data-ticket="{{ row.winner.ticket_number|default:'' }}" data-can-edit="{{ row.can_edit|yesno:'true,false' }}"
+                 data-has-details="{{ row.has_details|yesno:'true,false' }}">
+            <div class="prize-winner-heading"><span class="winner-prize-number">{{ row.number }}</span><div><h3 id="prize-heading-{{ row.prize.pk }}">{{ row.prize.gift|default:'Prize description not recorded' }}</h3><p>{{ row.prize.contributor.contributor_name }}</p></div></div>
+            <div class="prize-winner-forms">
+                <form class="winning-ticket-form" method="post">
+                    <fieldset{% if not row.can_edit %} disabled{% endif %}>
+                        <legend>1. Winning ticket</legend>
+                        <label for="{{ row.ticket_form.ticket_number.id_for_label }}">Winning ticket number</label>
+                        {{ row.ticket_form.ticket_number }}
+                        {% if row.can_edit %}<div class="buttons"><button type="submit" class="communication-template-button record-ticket">{% if row.ticket_recorded %}Update ticket{% else %}Record ticket{% endif %}</button></div>{% endif %}
+                    </fieldset>
+                </form>
+                <form class="winner-details-form" method="post">
+                    <fieldset class="winner-details-fields"{% if not row.ticket_recorded or not row.can_edit %} disabled{% endif %}>
+                        <legend>2. Winner details</legend>
+                        {% for field in row.details_form %}<div class="winner-field"><label for="{{ field.id_for_label }}">{{ field.label }}{% if not field.field.required %} <span>(optional)</span>{% endif %}</label>{{ field }}</div>{% endfor %}
+                        {% if row.can_edit %}<div class="buttons"><button type="submit" class="communication-template-button">Save winner details</button></div>{% endif %}
+                    </fieldset>
+                    <p class="winner-unlock-hint"{% if row.ticket_recorded or not row.can_edit %} hidden{% endif %}>Record the winning ticket to unlock these fields.</p>
+                </form>
+            </div>
+            {% if not row.can_edit %}<p class="winner-readonly">View only — you do not have permission to edit this record.</p>{% endif %}
+            <p class="winner-status" role="status" aria-live="polite">{% if row.winner.name %}Winner details recorded.{% elif row.ticket_recorded %}Ticket recorded. Winner details pending.{% else %}Awaiting winning ticket.{% endif %}</p>
+            <p class="winner-error" role="alert"></p>
+        </section>
+    {% empty %}<p>No Prize Draw items are allocated for this event. Use <a href="{% url 'TeamPages:ContributionBoard' %}">Prize Allocation</a> to add prizes.</p>{% endfor %}
+    </div>
+    <noscript><p>Enable JavaScript to record winning tickets and winner details.</p></noscript>
+</main>
+{% endblock %}

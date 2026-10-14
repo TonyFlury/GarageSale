@@ -1,0 +1,25 @@
+<h2>Choose a PDF template</h2>
+{% if selection_error %}<p role="alert">{{ selection_error }}</p>{% endif %}
+{% if pdf_templates %}
+    <form method="post" action="{{ request.path }}">
+        {% csrf_token %}
+        <input type="hidden" name="toolbar_action" value="generate_pdf">
+        <input type="hidden" name="pdf_template_choice" value="1">
+        {% for sponsor_id in selected_sponsor_ids %}
+            <input type="hidden" name="selected_contributor" value="{{ sponsor_id }}">
+        {% endfor %}
+        {% for filter in selected_filters %}
+            <input type="hidden" name="selected_filters" value="{{ filter }}">
+        {% endfor %}
+        <label for="sponsor-pdf-template">Available Sponsor templates</label>
+        <select id="sponsor-pdf-template" name="pdf_template_id" size="10" required>
+            <option value="" disabled selected>Choose a template</option>
+            {% for template in pdf_templates %}
+                <option value="{{ template.pk }}">{{ template.summary|default:template.subject }}</option>
+            {% endfor %}
+        </select>
+        <div class="buttons"><button type="submit">generate PDF from template</button></div>
+    </form>
+{% else %}
+    <p role="alert">No PDF templates are currently available for Sponsors.</p>
+{% endif %}

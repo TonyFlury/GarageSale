@@ -1,0 +1,60 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+
+{% block Title %}{% if object %}Edit{% else %}Create{% endif %} Communication Template{% endblock %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    {{ form.media.css }}
+    <link rel="stylesheet" href="{% static 'GarageSale/styles/communication_templates.css' %}?v=attachments-2">
+{% endblock %}
+
+{% block PageScripts %}
+    {{ block.super }}
+    {{ form.media.js }}
+    <script defer src="{% static 'GarageSale/js/communication_template_attachments.js' %}"></script>
+{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'TeamPages:Root' %}">Team Page</a> /
+    <a href="{{ cancel_url }}">Communication Templates</a> /
+    {% if object %}Edit{% else %}Create{% endif %}
+{% endblock %}
+
+{% block SnappableSections %}
+    <section>
+        <h1>{% if object %}Edit{% else %}Create{% endif %} Communication Template</h1>
+        <div class="form">
+            <form id="communication-template-form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <h2>Attachments</h2>
+                {{ attachments.management_form }}
+                {{ attachments.non_form_errors }}
+                <div id="communication-template-attachments">
+                    {% for attachment in attachments %}
+                        {% include "team_pages/communication_template_attachment.html" %}
+                    {% endfor %}
+                </div>
+                <template id="communication-template-attachment-empty">
+                    {% include "team_pages/communication_template_attachment.html" with attachment=attachments.empty_form %}
+                </template>
+                <button class="communication-template-button" type="button" id="communication-template-attachment-add">Add attachment</button>
+            </form>
+        </div>
+        {% if object and perms.GarageSale.add_communicationtemplate and perms.GarageSale.change_communicationtemplate %}
+            <form id="communication-template-duplicate" method="post" action="{% url 'TeamPages:CommunicationTemplateDuplicate' object.pk %}">
+                {% csrf_token %}
+            </form>
+        {% endif %}
+        <div class="communication-template-actions">
+            <a class="communication-template-button communication-template-cancel" href="{{ cancel_url }}">Cancel</a>
+            <div class="communication-template-primary-actions">
+                <button class="communication-template-button" type="submit" form="communication-template-form">Save template</button>
+                {% if object and perms.GarageSale.add_communicationtemplate and perms.GarageSale.change_communicationtemplate %}
+                    <button class="communication-template-button" type="submit" form="communication-template-duplicate">Duplicate and edit</button>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+{% endblock %}

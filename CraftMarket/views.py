@@ -14,6 +14,7 @@ from django.views import View
 from django.db.models import Q, Case, When, Value, QuerySet, Max
 
 import CraftMarket.forms
+from CraftMarket.spreadsheet import MarketerSpreadsheetView
 from TeamPageFramework.entry_point import register, EntryPointMixin
 from GarageSale.models import EventData, CommunicationTemplate
 from CraftMarket.models import Marketer, MarketerState
@@ -182,7 +183,7 @@ class CraftMarketList( FrameworkView):
             context['toolbar'] = [i for i in self.toolbar if i['action'] != 'templates']
         return context
 
-class MarketEntryPoint(EntryPointMixin, CraftMarketList):
+class MarketEntryPoint(EntryPointMixin, MarketerSpreadsheetView):
     entry_point_url = 'CraftMarket:EntryPoint'
     entry_point_label = 'Craft Market'
     entry_point_permission = 'CraftMarket.suggest_marketer'
@@ -312,7 +313,7 @@ class MarketerRSVP(View):
                                                  'error': 'Invalid Request to Market Portal - please check your emails and try again'})
 
         try:
-            tos_template = CommunicationTemplate.current_active.filter(category='CraftMarket', transition='TermsAndConditions').latest('use_from')
+            tos_template = CommunicationTemplate.current_active.filter(category='CraftMarket', sub_category='TermsAndConditions').latest('use_from')
             tos_html = tos_template.html_content
         except CommunicationTemplate.DoesNotExist:
             logging.error(f'Could not find a valid Terms and Conditions template for {marketer}')
@@ -396,15 +397,15 @@ class MarketTemplates(TemplateManagement):
 class MarketTemplateCreate(TemplatesCreate):
     category = 'CraftMarket'
     permission_required =  ['CraftMarket.change_marketer', 'GarageSale.change_communicationtemplate']
-    transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    sub_category_list = [('Invite','Invite'), ('Confirm','Confirm')]
     url_base = 'CraftMarket/templates'
     template_help = """
         <p>The Template system allows consistent messages to be sent to all Craft Marketers.
         Including the ability to personalise emails, and provide key information about the event without needing
         to change the template for every Event, by using Information tags, and attach files to outgoing emails.
                 
-        <h3>Transition/Type Field</h3>
-        The Transition/Type field identifies when or how this template is used.
+        <h3>Sub-category Field</h3>
+        The Sub-category field identifies when or how this template is used.
         <ul>
         <li> Invite - Is used when a Craft Marketer is invited to participate in the event
         <li> Confirm - Is used when a Craft Marketer has confirmed they will participate in the event
@@ -445,14 +446,14 @@ class MarketTemplateCreate(TemplatesCreate):
 class MarketTemplateView(TemplatesView):
     category = 'CraftMarket'
     permission_required =  ['CraftMarket.change_marketer', 'GarageSale.view_communicationtemplate']
-    transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    sub_category_list = [('Invite','Invite'), ('Confirm','Confirm')]
     url_base = 'CraftMarket/templates'
     template_help = ""
 
 class MarketTemplateEdit(TemplatesEdit):
     category = 'CraftMarket'
     permission_required =  ['CraftMarket.change_marketer', 'GarageSale.edit_communicationtemplate']
-    transition_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    sub_category_list = [('Invite','Invite'), ('Confirm','Confirm')]
     url_base = 'CraftMarket/templates'
     template_help = MarketTemplateCreate.template_help
 

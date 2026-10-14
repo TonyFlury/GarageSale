@@ -1,26 +1,177 @@
 import datetime
 from copy import copy
+from urllib.parse import urlencode
 from typing import Any
 import logging
 
 from django.contrib.admin.widgets import AdminDateWidget
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import BadRequest
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Case, When, OuterRef, Exists, QuerySet, Q, Subquery, Value, F
 from django.forms import formset_factory, inlineformset_factory
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.templatetags.static import static
 from django.urls import reverse
+from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
+from django.utils import timezone
+from django.views import View
 
-from GarageSale.forms import TemplateForm, AttachmentForm
+from GarageSale.forms import TemplateForm, AttachmentForm, CommunicationTemplateWebsiteForm, CommunicationTemplateAttachmentForm
 from GarageSale.models import CommunicationTemplate, TemplateAttachment
 from team_pages.framework_views import FrameworkView
+from TeamPageFramework.entry_point import EntryPointMixin
+
+
+class CommunicationTemplateCategories(EntryPointMixin, LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+    """List communication template summaries for a selected category."""
+
+    template_name = "team_pages/communication_template_categories.html"
+    permission_required = "GarageSale.view_communicationtemplate"
+    entry_point_url = "TeamPages:CommunicationTemplates"
+    entry_point_label = "Communication Templates"
+    entry_point_icon = static("GarageSale/images/icons/folder-templates-svgrepo-com.svg")
+    entry_point_permission = permission_required
+    entry_point_needs_event = False
+    entry_point_nav_page = "TeamPagesData"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # List every template by summary, including old and future versions.
+        rows = CommunicationTemplate.objects.order_by("category", "summary", "-use_from", "pk").values_list(
+            "category", "summary", "use_from", "pk", "sub_category",
+        )
+        categories = {}
+        for category, summary, use_from, pk, sub_category in rows:
+            categories.setdefault(category, []).append({"pk": pk, "summary": summary or "", "use_from": use_from, "sub_category": sub_category or ""})
+        context["template_categories"] = [
+            {"name": category} for category in sorted(categories)
+        ]
+        # Show summaries only for a category chosen from the available list.
+        selected_category = self.request.GET.get("category")
+        context["selected_category"] = selected_category if selected_category in categories else None
+        context["templates"] = categories.get(selected_category, [])
+        # Check only the displayed category and attach warning text to its rows.
+        warnings = CommunicationTemplate.attachment_warnings_for([
+            CommunicationTemplate(pk=row["pk"], category=selected_category,
+                                  sub_category=row["sub_category"], use_from=row["use_from"])
+            for row in context["templates"]
+        ])
+        for row in context["templates"]:
+            row["attachment_warning"] = warnings.get(row["pk"], "")
+        return context
+
+
+class CommunicationTemplateFormView(LoginRequiredMixin, PermissionRequiredMixin):
+    model = CommunicationTemplate
+    form_class = CommunicationTemplateWebsiteForm
+    template_name = "team_pages/communication_template_form.html"
+
+    def get_attachment_formset(self, instance=None):
+        factory = inlineformset_factory(
+            CommunicationTemplate, TemplateAttachment, form=CommunicationTemplateAttachmentForm,
+            fields=("upload", "template_name", "attached_file"), extra=0, can_delete=True,
+        )
+        kwargs = {"instance": instance or self.object, "prefix": "attachments"}
+        # Bind files and attachment values on submission so validation can be shown in place.
+        if self.request.method == "POST":
+            kwargs.update(data=self.request.POST, files=self.request.FILES)
+        attachments = factory(**kwargs)
+        # Every explicitly added row needs a name or file, unless marked for deletion.
+        if self.request.method == "POST":
+            for attachment_form in attachments.forms:
+                attachment_form.empty_permitted = False
+        return attachments
+
+    def form_valid(self, form):
+        attachments = self.get_attachment_formset(instance=form.instance)
+        # Keep the form open without saving anything if an attachment is invalid.
+        if not attachments.is_valid():
+            return self.render_to_response(self.get_context_data(form=form, attachments=attachments))
+        # Save the template and its attachment entries as one database transaction.
+        with transaction.atomic():
+            self.object = form.save()
+            attachments.instance = self.object
+            attachments.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        # Return to the category containing the saved template.
+        return reverse("TeamPages:CommunicationTemplates") + "?" + urlencode({"category": self.object.category})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Preserve the submitted formset and its errors when rerendering the form.
+        if "attachments" not in context:
+            context["attachments"] = self.get_attachment_formset()
+        category = self.object.category if self.object else self.request.GET.get("category", "")
+        context["cancel_url"] = reverse("TeamPages:CommunicationTemplates")
+        if category:
+            context["cancel_url"] += "?" + urlencode({"category": category})
+        return context
+
+
+class CommunicationTemplateCreate(CommunicationTemplateFormView, CreateView):
+    permission_required = "GarageSale.add_communicationtemplate"
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial.update(category=self.request.GET.get("category", ""), use_from=timezone.localdate())
+        return initial
+
+
+class CommunicationTemplateEdit(CommunicationTemplateFormView, UpdateView):
+    permission_required = "GarageSale.change_communicationtemplate"
+
+
+class CommunicationTemplateDuplicate(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = ("GarageSale.add_communicationtemplate", "GarageSale.change_communicationtemplate")
+    http_method_names = ["post", "options"]
+
+    def post(self, request, pk):
+        # Copy the saved template and attachment entries together before opening the new version.
+        with transaction.atomic():
+            source = get_object_or_404(CommunicationTemplate.objects.select_for_update(), pk=pk)
+            duplicate = duplicate_template(source.pk, preserve_summary=True)
+        return HttpResponseRedirect(reverse("TeamPages:CommunicationTemplateEdit", args=[duplicate.pk]))
+
+
+class CommunicationTemplateDelete(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    model = CommunicationTemplate
+    permission_required = "GarageSale.delete_communicationtemplate"
+    template_name = "team_pages/communication_template_delete.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Explain blocked deletion on the confirmation page.
+        if "deletion_errors" not in context:
+            context["deletion_errors"] = self.object.deletion_errors()
+        context["cancel_url"] = reverse("TeamPages:CommunicationTemplates") + "?" + urlencode({"category": self.object.category})
+        return context
+
+    def post(self, request, *args, **kwargs):
+        template = self.get_object()
+        # Lock the category's versions so concurrent deletions cannot remove each other's replacements.
+        with transaction.atomic():
+            category_templates = CommunicationTemplate.objects.select_for_update().filter(
+                category=template.category,
+            ).order_by("pk")
+            list(category_templates)
+            self.object = get_object_or_404(category_templates, pk=template.pk)
+            errors = self.object.deletion_errors()
+            # Recheck the rules at submission time; never delete from a GET request.
+            if errors:
+                return self.render_to_response(self.get_context_data(deletion_errors=errors), status=409)
+            redirect_url = self.get_context_data(deletion_errors=[])['cancel_url']
+            self.object.delete()
+        return HttpResponseRedirect(redirect_url)
 
 
 #ToDo Ensure that Template deletion depends on :
-# 1. Whether the template is in use - one of the fixed transition types for this category or is mentioned in
+# 1. Whether the template is in use - one of the fixed sub_category types for this category or is mentioned in
 #               Attachments for a fixed type.
 # 2. if the template is in use, then it can't be the current one - you can delete old templates and
 #    future ones so long as one of the named templates still exists.
@@ -29,7 +180,7 @@ class TemplateManagement(FrameworkView):
     template_name = "team_pages/templates.html"
     login_url = '/user/login'
     permission_required = 'CraftMarket.can_manage'
-    columns = [('warning_as_html_fragment',''),('transition', 'Transition/Type'),('summary','Summary'), ('use_from', 'Use From')]
+    columns = [('warning_as_html_fragment',''),('sub_category', 'Sub-category'),('summary','Summary'), ('use_from', 'Use From')]
     model_class = CommunicationTemplate
     form_class = TemplateForm
     category = 'General'
@@ -77,7 +228,7 @@ class TemplateManagement(FrameworkView):
             return f'<span><image id="warning" href="{{% static \"GarageSale/images/icons/warning-svgrepo-com.svg\" %}}" /><label for="warning">{text}</label></span>'
 
         existing_names = (CommunicationTemplate.objects.filter(category=self.category).values('use_from').
-                                                                                        annotate(name=F('transition')))
+                                                                                        annotate(name=F('sub_category')))
 
         named_missing = Exists(TemplateAttachment.objects.
                               filter(template=OuterRef('pk'), upload=False).
@@ -105,10 +256,10 @@ class TemplateManagement(FrameworkView):
 
     def _get_actions(self, qs: QuerySet, request: HttpRequest) :
         """Add in the relevant actions column based on the template dates"""
-        older = CommunicationTemplate.objects.filter(category = self.category, transition=OuterRef('transition'), use_from__lt = OuterRef('use_from'))
+        older = CommunicationTemplate.objects.filter(category = self.category, sub_category=OuterRef('sub_category'), use_from__lt = OuterRef('use_from'))
 
         for row in qs:
-            older = CommunicationTemplate.objects.filter(category = self.category, transition=row.transition, use_from__lt = row.use_from)
+            older = CommunicationTemplate.objects.filter(category = self.category, sub_category=row.sub_category, use_from__lt = row.use_from)
             if older.exists():
                 row.allowed_actions = 'view,edit,duplicate,delete'.split(',')
             else:
@@ -117,7 +268,7 @@ class TemplateManagement(FrameworkView):
 
     def _add_filters(self, qs: QuerySet, request: HttpRequest) -> QuerySet:
         """Add filters to the base queryset based on the requested filters"""
-        newer = CommunicationTemplate.objects.filter(category = self.category, use_from__lte=datetime.date.today(), transition=OuterRef('transition'), use_from__gt = OuterRef('use_from'))
+        newer = CommunicationTemplate.objects.filter(category = self.category, use_from__lte=datetime.date.today(), sub_category=OuterRef('sub_category'), use_from__gt = OuterRef('use_from'))
 
         qi = Q()
         if 'XActive' in request.GET:
@@ -136,7 +287,7 @@ class TemplateManagement(FrameworkView):
         qs =  CommunicationTemplate.objects.filter(category=self.category)
         qs = self._add_filters(qs, request)
         qs = self._get_template_warning(qs, request)
-        qs = qs.order_by('transition', '-use_from')
+        qs = qs.order_by('sub_category', '-use_from')
         yield from self._get_actions(qs, request)
 
     def get_context_data(self, request, **kwargs):
@@ -152,7 +303,7 @@ class TemplateManagement(FrameworkView):
 class TemplatesCreate(TemplateManagement):
     template_name = "team_pages/templates_create.html"
     form_class = TemplateForm
-    transition_list = []
+    sub_category_list = []
 
     def post(self, request, **kwargs):
         if request.POST.get('Add', None) == 'Add +':
@@ -214,13 +365,13 @@ class TemplatesCreate(TemplateManagement):
         # Set the category field and limit the transitions to those for the current category
 
         if form_instance is None:
-            form_instance = self.form_class(initial={'category':self.category, 'transition':[self.transition_list[0][0],'']})
+            form_instance = self.form_class(initial={'category':self.category, 'sub_category':[self.sub_category_list[0][0],'']})
 
         form_instance.fields['category'].initial = self.category
         form_instance.fields['category'].widget.attrs['readonly'] = True
-        # form_instance.fields['transition'].choices = self.transition_list + [('Other','Other')]
-        form_instance.fields['transition'].widget.widgets[0].choices=self.transition_list + [('Other','Other')]
-        form_instance.fields['transition'].widget.widgets[0].initial=self.transition_list[0][0]
+        # form_instance.fields['sub_category'].choices = self.sub_category_list + [('Other','Other')]
+        form_instance.fields['sub_category'].widget.widgets[0].choices=self.sub_category_list + [('Other','Other')]
+        form_instance.fields['sub_category'].widget.widgets[0].initial=self.sub_category_list[0][0]
 
         form_instance.fields['use_from'].widget = AdminDateWidget(attrs={'type': 'date'})
         form_instance.fields['use_from'].initial = datetime.date.today()
@@ -232,7 +383,7 @@ class TemplatesCreate(TemplateManagement):
 class TemplatesView(TemplateManagement):
     template_name = "team_pages/templates_view.html"
     form_class = TemplateForm
-    transition_list = []
+    sub_category_list = []
     template_help = ''
 
     def get_object(self, request, **kwargs) ->  Any | None :
@@ -259,19 +410,19 @@ class TemplatesView(TemplateManagement):
         # Set the category field and limit the transitions to those for the current category
 
         if form_instance is None:
-            form_instance = self.form_class(initial={'category':self.category, 'transition':[self.transition_list[0][0],'']})
+            form_instance = self.form_class(initial={'category':self.category, 'sub_category':[self.sub_category_list[0][0],'']})
 
         form_instance.fields['category'].initial = self.category
         form_instance.fields['category'].widget.attrs['readonly'] = True
-        form_instance.fields['transition'].widget.widgets[0].choices=self.transition_list + [('Other','Other')]
-        form_instance.fields['transition'].widget.widgets[0].initial=self.transition_list[0][0]
+        form_instance.fields['sub_category'].widget.widgets[0].choices=self.sub_category_list + [('Other','Other')]
+        form_instance.fields['sub_category'].widget.widgets[0].initial=self.sub_category_list[0][0]
 
         return form_instance
 
 class TemplatesEdit(TemplatesView):
     template_name = "team_pages/templates_edit.html"
     form_class = TemplateForm
-    transition_list = []
+    sub_category_list = []
     template_help = ''
 
     def get_context_data(self, request, **kwargs):
@@ -339,7 +490,7 @@ class TemplatesEdit(TemplatesView):
         if formset.is_valid():
             formset.save()
 
-def duplicate_template(inst_id):
+def duplicate_template(inst_id, *, preserve_summary=False):
 
     try:
         instance = CommunicationTemplate.objects.get(id=inst_id)
@@ -349,8 +500,10 @@ def duplicate_template(inst_id):
 
     new_inst = copy(instance)
     new_inst.id = new_inst.pk = None
-    new_inst.use_from = datetime.date.today()
-    new_inst.summary = f'{new_inst.summary} (Duplicate)'
+    new_inst.use_from = timezone.localdate()
+    # Website duplication creates another version with the same summary.
+    if not preserve_summary:
+        new_inst.summary = f'{new_inst.summary} (Duplicate)'
     new_inst.save()
 
     for attachment in instance.attachments.all():

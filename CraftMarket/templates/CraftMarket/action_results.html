@@ -1,0 +1,7 @@
+<h2>Craft Market{% if results %} email results{% else %} status{% endif %}</h2>
+<div class="form craft-market-popup">
+{% if error_message %}<p role="alert">{{ error_message }}</p>{% endif %}
+{% if status %}<p role="status">Status recorded: {{ status }}.</p>{% endif %}
+{% if selected_template %}<p>Selected template: <strong>{{ selected_template.summary|default:selected_template.subject }}</strong></p>{% endif %}
+{% if results %}<ul>{% for result in results %}<li><strong>{{ result.marketer.contributor_name }}</strong>: {{ result.message }}</li>{% endfor %}</ul>{% endif %}
+</div>

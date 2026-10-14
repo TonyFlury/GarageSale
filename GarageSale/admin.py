@@ -17,7 +17,7 @@ from django import forms
 
 from Sponsors.models import Sponsor
 from user_management.models import TeamMember
-from .models import MOTD, EventData, Supporting, CommunicationTemplate, TemplateAttachment
+from .models import MOTD, EventData, Supporting, CommunicationTemplate, TemplateAttachment, PrizeDrawWinner
 from Location.models import Location
 
 from Sponsors import models as sponsor_models
@@ -29,7 +29,28 @@ from django.contrib import admin
 
 from django_summernote.admin import SummernoteModelAdmin
 
-admin.site.register(Permission)
+@admin.register(Permission)
+class PermissionAdmin(admin.ModelAdmin):
+    list_display = ("name", "codename", "content_type")
+    list_filter = ("content_type__app_label", "content_type__model")
+    search_fields = ("name", "codename", "content_type__app_label", "content_type__model")
+    list_select_related = ("content_type",)
+
+
+@admin.register(PrizeDrawWinner)
+class PrizeDrawWinnerAdmin(admin.ModelAdmin):
+    list_display = ("ticket_number", "name", "prize", "event", "phone")
+    list_filter = ("contribution__event",)
+    search_fields = ("name", "ticket_number", "phone", "contribution__gift", "contribution__contributor__contributor_name")
+    list_select_related = ("contribution__event", "contribution__contributor")
+
+    @admin.display(description="Prize")
+    def prize(self, obj):
+        return obj.contribution.gift
+
+    @admin.display(description="Event", ordering="contribution__event__event_date")
+    def event(self, obj):
+        return obj.contribution.event
 
 
 
@@ -84,7 +105,7 @@ class TemplateAttachmentInline(admin.TabularInline):
 @admin.register(CommunicationTemplate)
 class TemplatesAdminForm(SummernoteModelAdmin):
     summernote_fields = ('html_content',)
-    list_display = ['category','transition','use_from']
+    list_display = ['category','sub_category', 'summary', 'use_from']
     inlines = [TemplateAttachmentInline]
     def get_queryset(self, request):
-        return super().get_queryset(request).order_by('category', 'transition', '-use_from')
+        return super().get_queryset(request).order_by('category', 'sub_category', '-use_from')

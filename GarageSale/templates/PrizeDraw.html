@@ -44,39 +44,40 @@ Brantham Garage Sale - Prize Draw
 {% block SnappableSections %}
 
       <div class="card" card_name="PrizeDraw">
-    <h1>2026 Prize Draw</h1>
+    <h1>{% if request.current_event %}{{ request.current_event.event_date|date:'Y' }} {% endif %}Prize Draw</h1>
       <div>
           <div>
-          We are very pleased to announce the launch of our 2026 Prize Draw.  Tickets are available from Wednesday
-          25th March from a variety of places around the village. The tickets are only £1.00 each, and all proceeds
-          go into our 2026 fundraising campaign. The Draw will be made on Sunday 28th June - around 3pm outside Chloes
-          cafe in Brantham. Winners will be notified by 5th July.
+          {% if request.current_event %}
+          We are very pleased to announce the launch of our {{ request.current_event.event_date|date:'Y' }} Prize Draw.
+          Tickets are available{% if request.current_event.open_sales_bookings %} from {{ request.current_event.open_sales_bookings|date:'l jS F Y' }}{% endif %}
+          from a variety of places around the village. The tickets are only £1.00 each, and all proceeds
+          go into our {{ request.current_event.event_date|date:'Y' }} fundraising campaign.
+          The Draw will be made on {{ request.current_event.event_date|date:'l jS F Y' }} - around 3pm outside Chloes
+          cafe in Brantham. Winners will be notified by {{ winner_notification_date|date:'jS F Y' }}.
+          {% else %}
+          Prize Draw dates will be announced when the next event is confirmed.
+          {% endif %}
           </div>
 
           <div style="display: flex; flex-direction:row;" >
               <div class="info_column">
-                    <h3>List of Prizes</h3>
+                    <h3>{% if draw_complete %}Prizes and Winners{% else %}List of Prizes{% endif %}</h3>
                         <div class="disclaimer">
                             This list of prizes is correct at the time of writing and may change as we collect more prizes.
                         </div>
                     <ol>
-                        <li>A Voucher for a 1 hour Photostudio session and 1 8x6 photo of your choice
-                            with Barrett & Coe in Coggeshall.</li>
-                        <li>A DeLonghi Coffee Machine with a supply of pods from Curry's in Ipswich.</li>
-                        <li>A one hour voucher for water Equipment hire courtesy of Constable Park in Brantham.</li>
-                        <li>Hamper from the Manning Whole Food store</li>
-                        <li>MOT Voucher from MDS Cars Ardleigh</li>
-                        <li>£50 voucher and paints from Wellhams of Manningtree</l>
-                        <li>MOT Voucher from MDS Cars Thorrington/li>
-                        <li>Wine rack and 4 bottles of wine (2 white, 1 red and 1 presecco)</li>
-                        <li>Impact Imagery Voucher #1</li>
-                        <li>Impact Imagery Voucher #2</li>
-                        <li>Pamper Hamper from City and Country</li>
-                        <li>Take-away afternoon tea for two courtesy of Chloe's Cafe.</li>
-                        <li>A pamper hamper from City and Country in Manningree.</li>
+                        {% for prize in prizes %}
+                            <li>{{ prize.gift|default:'Prize details to follow.' }} {{ prize.sponsor_conjunction }} {{ prize.contributor.contributor_name }}
+                                {% if draw_complete %}
+                                    <p class="prize-result">Winning ticket: <strong>{{ prize.winning_ticket_number }}</strong> — Winner: <strong>{{ prize.winner_name|default:'Winner name pending' }}</strong></p>
+                                {% endif %}
+                            </li>
+                        {% empty %}
+                            <li>Prizes will be announced here as they are allocated.</li>
+                        {% endfor %}
                     </ol>
 
-               We do still have prizes coming in - so watch this space for more updates.
+               {% if not draw_complete %}We do still have prizes coming in - so watch this space for more updates.{% endif %}
 
               </div>
               <div class="info_column" style="flex-basis: 30%;">

@@ -1,0 +1,20 @@
+<fieldset class="communication-template-attachment" data-template-attachment
+          data-has-file="{{ attachment.attached_file.value|yesno:'true,false' }}">
+    <legend>Attachment</legend>
+    <button class="communication-template-attachment-remove" type="button" data-remove-attachment
+            aria-label="Remove attachment" title="Remove attachment">×</button>
+    {% for field in attachment.hidden_fields %}{{ field }}{% endfor %}
+    {{ attachment.non_field_errors }}
+    <div class="communication-template-attachment-fields">
+        <div class="communication-template-attachment-upload">
+            {{ attachment.upload }} {{ attachment.upload.label_tag }} {{ attachment.upload.errors }}
+        </div>
+        <div class="communication-template-attachment-value" data-name-field>
+            {{ attachment.template_name.label_tag }} {{ attachment.template_name }} {{ attachment.template_name.errors }}
+        </div>
+        <div class="communication-template-attachment-value" data-file-field>
+            {{ attachment.attached_file.label_tag }} {{ attachment.attached_file }} {{ attachment.attached_file.errors }}
+        </div>
+    </div>
+    <span hidden>{{ attachment.DELETE }}</span>
+</fieldset>

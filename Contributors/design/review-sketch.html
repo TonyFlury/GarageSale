@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contributor import · Review sketch</title>
+  <link rel="stylesheet" href="../../team_pages/static/team_pages/styles/team_page.css">
+  <link rel="stylesheet" href="../static/Contributors/styles/column_matching.css">
+</head>
+<body>
+<main class="contributor-import">
+  <div class="eyebrow">Contributors / CSV import</div>
+  <h1>Review changes</h1>
+  <p class="muted">Check the new contributors and proposed updates before saving. No contributors will be deleted.</p>
+  <p class="muted">Existing contributors are matched by name. Non-blank CSV values replace existing values; blanks leave them unchanged.</p>
+  <p class="muted">Additional details are merged into existing socials data. Other keys are preserved.</p>
+  <ol class="steps" aria-label="Import progress">
+    <li>✓ 1. Select file</li><li>✓ 2. Match columns</li><li aria-current="step"><strong>3. Review changes</strong></li>
+  </ol>
+  <section class="card file" aria-label="Imported file">
+    <div class="file-info"><strong>contributors.csv</strong></div>
+    <div class="badge">Contributor type: Sponsor</div>
+  </section>
+
+  <section class="card" aria-labelledby="new-contributors">
+    <div class="heading">
+      <h2 id="new-contributors">New contributors <span class="badge">2</span></h2>
+      <p class="muted">Values after import.</p>
+    </div>
+    <div class="preview-scroll" role="region" aria-labelledby="new-contributors" tabindex="0">
+      <table class="preview-table">
+        <caption>New contributors</caption>
+        <thead><tr><th scope="col">Contributor name</th><th scope="col">Contact name</th><th scope="col">Phone</th><th scope="col">Email</th><th scope="col">Description</th><th scope="col">Additional details</th></tr></thead>
+        <tbody>
+          <tr><td>River Studio</td><td>Alex Green</td><td></td><td>alex@example.com</td><td>Local design studio</td><td><pre>{"Instagram": "@riverstudio", "Area": "South London"}</pre></td></tr>
+          <tr><td>Meadow Crafts</td><td></td><td></td><td></td><td>Handmade gifts</td><td><pre>{"Instagram": "@meadowcrafts", "Area": "East London"}</pre></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="modified-contributors">
+    <div class="heading">
+      <h2 id="modified-contributors">Modified contributors <span class="badge">1</span></h2>
+      <p class="muted">Values after import.</p>
+    </div>
+    <div class="preview-scroll" role="region" aria-labelledby="modified-contributors" tabindex="0">
+      <table class="preview-table">
+        <caption>Modified contributors</caption>
+        <thead><tr><th scope="col">Contributor name</th><th scope="col">Contact name</th><th scope="col">Phone</th><th scope="col">Email</th><th scope="col">Description</th><th scope="col">Additional details</th></tr></thead>
+        <tbody>
+          <tr><td>Oak &amp; Co.</td><td>Sam Taylor</td><td>07700900123</td><td>sam@example.com</td><td>Independent homeware shop</td><td><pre>{"Instagram": "@oakandco", "Website": "https://example.com", "Area": "North London"}</pre></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div id="message" role="status" aria-live="polite"></div>
+  <footer>
+    <span class="muted">2 new · 1 modified</span>
+    <div class="buttons">
+      <a href="column-matching-sketch.html">Back to matching sketch</a>
+      <input id="confirm-import" type="button" value="Confirm import">
+    </div>
+  </footer>
+  <p class="note muted">Design sketch using example data. The tables show proposed values after import.</p>
+</main>
+<script>
+  document.getElementById('confirm-import').addEventListener('click', () => {
+    document.getElementById('message').textContent = 'Sketch only: 2 contributors would be created and 1 updated. No data has been saved.';
+  });
+</script>
+</body>
+</html>

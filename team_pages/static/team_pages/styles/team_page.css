@@ -98,7 +98,8 @@ div.form {
     border: thin solid lightgray;
 }
 
-.buttons input {
+.buttons input,
+.communication-template-button {
     --background: lightblue;
     border: thin solid var(--background);
     box-shadow: 2px 2px 3px lightblue;
@@ -113,6 +114,18 @@ div.form {
     &:hover {
         box-shadow: inset 2px 2px 3px var(--background);
     }
+}
+
+.buttons input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.buttons input:focus-visible,
+.communication-template-button:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
 }
 
 form label

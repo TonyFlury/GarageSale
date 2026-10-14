@@ -1,0 +1,14 @@
+{% csrf_token %}
+<div class="details-primary-panel" role="group" aria-label="Contact details">
+{% for field in form %}
+    {% if field.name != 'icon' and field.name != 'socials' %}
+        {% include 'widgets/contributor_detail_field.html' %}
+    {% endif %}
+{% endfor %}
+</div>
+{% for field in form %}
+    {% if field.name == 'icon' or field.name == 'socials' %}
+        {% include 'widgets/contributor_detail_field.html' %}
+    {% endif %}
+{% endfor %}
+<div id="details-contributions">{% include 'contributor_contributions.html' %}</div>

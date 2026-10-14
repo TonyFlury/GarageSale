@@ -1,0 +1,25 @@
+<ol class="contributor-history-list">
+{% for group in event_groups %}
+    <li>
+        <h4>{% if group.event %}{{ group.event }}{% else %}No event assigned{% endif %}</h4>
+        <h5>Confirmation history</h5>
+        {% for confirmation in group.confirmations %}
+            <div class="history-heading">
+                <time datetime="{{ confirmation.timestamp|date:'c' }}">{{ confirmation.timestamp|date:'d/m/Y H:i' }}</time>
+                <span>{{ confirmation.status|default:'No status recorded' }}</span>
+            </div>
+            {% if confirmation.user %}<p class="history-meta">Recorded by {{ confirmation.user }}</p>{% endif %}
+        {% empty %}
+            <p>No confirmation recorded.</p>
+        {% endfor %}
+        {% if group.contributions %}
+        <h5>Contributions</h5>
+        {% for contribution in group.contributions %}
+            <p class="history-note event-contribution"><strong>{% if contribution.cash %}Cash{% else %}Gift{% endif %}:</strong> {{ contribution.gift|default_if_none:'' }}</p>
+        {% endfor %}
+        {% endif %}
+    </li>
+{% empty %}
+    <li>No confirmation or contribution history yet.</li>
+{% endfor %}
+</ol>

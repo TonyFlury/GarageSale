@@ -19,6 +19,7 @@ from django.urls import path, include, reverse_lazy
 from django.conf import settings
 from django.conf.urls.static import static
 from .views import general_views
+from .views.prize_draw_views import prize_draw
 
 from django.views.generic import TemplateView
 from django.views.generic.base import RedirectView
@@ -32,7 +33,7 @@ urlpatterns = [
     path('about_us', TemplateView.as_view(template_name='aboutUs.html'), name='AboutUs'),
     path('contact', TemplateView.as_view(template_name='contact.html'), name='ContactUs'),
     path('privacy', TemplateView.as_view(template_name='privacy_policy.html'), name='Privacy'),
-    path('PrizeDraw/', TemplateView.as_view(template_name='PrizeDraw.html'), name='PrizeDraw'),
+    path('PrizeDraw/', prize_draw, name='PrizeDraw'),
     path('blind_auction', TemplateView.as_view(template_name='blind_auction.html'), name='BlindAuction'),
     path('donate', TemplateView.as_view(template_name='donate.html'), name='Donate'),
     path('location/', include('Location.urls')),
@@ -59,6 +60,7 @@ urlpatterns = [
 if settings.DEBUG:
     from debug_toolbar.toolbar import debug_toolbar_urls
     urlpatterns.extend([path("lumen/", include("django_lumen.urls"))])
+    urlpatterns.extend([path("data-browser/", include("data_browser.urls"))])
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT, show_indexes=True)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += debug_toolbar_urls()

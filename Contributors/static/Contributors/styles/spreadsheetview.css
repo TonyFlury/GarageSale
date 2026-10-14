@@ -1,11 +1,49 @@
        .spreadsheet-page {
             max-width: 1400px;
-            margin: 2rem auto;
+            width: 100%;
+            height: calc(100% - 2rem);
+            min-width: 0;
+            min-height: 0;
+            margin: 1rem auto;
+            display: flex;
+            flex-direction: column;
+            flex: 0 0 auto;
+            box-sizing: border-box;
             font-family: Arial, sans-serif;
         }
 
-       section#section-filter span.filter-icon {
+       .spreadsheet-page > h1,
+       .spreadsheet-page > section {
+           flex: 0 0 auto;
+       }
+
+       .spreadsheet-grid-scroll {
+           flex: 1 1 auto;
+           min-height: 0;
+           min-width: 0;
+           overflow: auto;
+           scrollbar-gutter: stable;
+       }
+
+       .spreadsheet-grid-scroll:focus-visible {
+           outline: 2px solid darkslategray;
+           outline-offset: -2px;
+       }
+
+       section#toolbar {
+           display: flex;
+           flex-wrap: wrap;
+           align-items: center;
+           gap: 0.25rem;
+           border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+           padding-bottom: 0.5rem;
+           margin-bottom: 0.5rem;
+       }
+
+       section#toolbar button.search-icon {
            display: inline-block;
+           box-sizing: content-box;
+           cursor: pointer;
            width: 1.5rem;
            height: 1.5rem;
            background: url("/static/GarageSale/images/icons/input-search-svgrepo-com.svg") no-repeat center center;
@@ -30,31 +68,151 @@
        }
 
 
-       tr:not(.new-row) div.actions span.edit-details {
+       section#toolbar span[disabled] {
+           color: darkgrey;
+       }
+
+       section#toolbar .extra-toolbar-actions {
+           display: inline-flex;
+           flex-wrap: wrap;
+           min-width: 0;
+           max-width: 100%;
+           align-items: center;
+           gap: 0.25rem;
+           vertical-align: middle;
+       }
+
+       section#toolbar .toolbar-separator {
            display: inline-block;
-           width: 1.27rem;
-           height: 1.27rem;
-           background: url("/static/GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg") no-repeat center center;
-           background-size: 1.25rem 1.25rem;
+           vertical-align: middle;
+           height: 1.5rem;
+           border-left: 1px solid grey;
+           margin: 0 0.5rem;
+       }
+
+       #spreadsheet-filter-dialog {
+           width: 22rem;
+           max-width: calc(100vw - 2rem);
+           max-height: 85vh;
+           overflow-y: auto;
+           box-sizing: border-box;
+           padding: 0.75rem;
+           font-size: 0.9rem;
+           text-align: left;
+           border: 1px solid grey;
+           border-radius: 6px;
+       }
+
+       #spreadsheet-filter-dialog h2 {
+           margin: 0 0 0.5rem;
+           font-size: 1.05rem;
+           text-align: left;
+       }
+
+       #spreadsheet-filter-dialog .spreadsheet-filter-options {
+           display: flex;
+           flex-direction: column;
+           gap: 0.25rem;
+           margin-bottom: 0.5rem;
+       }
+
+       #spreadsheet-filter-dialog .spreadsheet-filter-options label {
+           display: flex;
+           align-items: center;
+           justify-content: flex-start;
+           gap: 0.4rem;
+           text-align: left;
+           margin-right: 0;
+           overflow-wrap: anywhere;
+       }
+
+       #spreadsheet-filter-dialog .spreadsheet-filter-options input[type="checkbox"] {
+           flex: 0 0 auto;
+           width: auto;
+           margin: 0;
+       }
+
+       #spreadsheet-filter-dialog .buttons {
+           display: flex;
+           flex-wrap: wrap;
+           justify-content: flex-start;
+           gap: 0.5rem;
+           width: auto;
+           margin: 0.75rem 0 0;
+       }
+
+       #spreadsheet-filter-dialog .buttons input {
+           padding: 0.5rem 0.75rem;
+       }
+
+       #spreadsheet-filter-dialog .spreadsheet-filter-options hr {
+           width: 100%;
+           margin: 0.25rem 0;
+           border: 0;
+           border-top: 1px solid grey;
+       }
+
+       section#toolbar a.csv-icon,
+       section#toolbar button.toolbar-action {
+           display: inline-flex;
+           align-items: center;
+           justify-content: center;
            vertical-align: middle;
            margin-right: 0.25rem;
            padding: 5px;
            border: thin solid transparent;
            border-radius: 5px;
            box-shadow: 0 0 0 transparent, inset 0 0 0 grey;
+           text-decoration: none;
            transition: all 0.2s ease-in-out;
-
-           &:hover {
-                border: thin solid grey;
-                box-shadow: 0 0 0 transparent, inset 1px 1px 1px darkgray;
-           }
        }
 
-       section#toolbar span[disabled] {
-           color: darkgrey;
+       section#toolbar button.toolbar-action {
+           background: transparent;
+           color: inherit;
+           font: inherit;
+           min-height: 36px;
+           cursor: pointer;
        }
 
-       section#section-filter div#search-bar[active] {
+       section#toolbar button.toolbar-action:disabled {
+           position: relative;
+           color: #999;
+           opacity: 0.5;
+           cursor: not-allowed;
+           border-color: transparent;
+           box-shadow: none;
+       }
+
+       section#toolbar button.toolbar-action:disabled::after {
+           content: "";
+           position: absolute;
+           inset: 0;
+           background: rgb(211 211 211 / 0.35);
+           border-radius: inherit;
+       }
+
+       section#toolbar a.csv-icon img,
+       section#toolbar button.toolbar-action img {
+           width: 1.5rem;
+           height: 1.5rem;
+       }
+
+       section#toolbar a.csv-icon:hover,
+       section#toolbar a.csv-icon:focus-visible,
+       section#toolbar button.toolbar-action:hover,
+       section#toolbar button.toolbar-action:focus-visible {
+           border-color: grey;
+           box-shadow: 0 0 0 transparent, inset 1px 1px 1px darkgray;
+       }
+
+       section#toolbar a.csv-icon:active,
+       section#toolbar button.toolbar-action:active {
+           border-color: darkgray;
+           box-shadow: 0 0 0 transparent, inset 1px 1px 2px darkgray;
+       }
+
+       section#section-search div#search-bar[active] {
             display: flex;
             flex-direction: row;
             width: fit-content;
@@ -69,12 +227,14 @@
             opacity: 1;
        }
 
-       section#section-filter div#search-bar:not([active]) {
+       section#section-search div#search-bar:not([active]) {
+           display: none;
            height: 0;
            opacity: 0;
+           pointer-events: none;
         }
 
-        .filters {
+        .search {
             /* display: grid; */
             /* grid-template-columns: repeat(4, minmax(180px, 1fr)); */
             display: flex;
@@ -84,7 +244,7 @@
             width: 100%;
         }
 
-        .filters label {
+        .search label {
             display: flex;
             flex-direction: column;
             font-weight: bold;
@@ -93,18 +253,21 @@
             text-align: left;
         }
 
-        .filters label:last-child {
+        .search label:last-child {
             margin-right: 0;
         }
 
-        .filters input {
+        .search input {
             margin-top: 0.35rem;
             padding: 0.4rem;
         }
 
         table.contributor-sheet {
             width: 100%;
-            border-collapse: collapse;
+            min-width: 1050px;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
             font-size: 90%;
         }
 
@@ -132,6 +295,9 @@
             .contributor-sheet th {
                 background: lightgray;
                 text-align: left;
+                position: sticky;
+                top: 0;
+                z-index: 2;
             }
 
             .contributor-sheet input,
@@ -153,13 +319,68 @@
                 resize: vertical;
             }
 
-            .contributor-sheet tr.locked input,
+            .contributor-sheet tr.locked input:not([type="checkbox"]),
             .contributor-sheet tr.locked textarea {
                 color: #555;
                 cursor: not-allowed;
                 border: 1px solid transparent;
                 box-shadow: none;
                 transition: all 0.2s ease-in-out;
+            }
+
+            .contributor-sheet input.last-contact-date {
+                border-color: transparent;
+                box-shadow: none;
+                cursor: default;
+                color: #555;
+            }
+
+            .contribution-gift {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+            }
+
+            :is(#details-contributions, [data-sponsor-contributions]) .contribution-gift {
+                position: relative;
+                min-height: 1.75rem;
+                padding-right: 2.25rem;
+            }
+
+            :is(#details-contributions, [data-sponsor-contributions]) .contribution-gift + .contribution-gift,
+            .contributor-history-list .event-contribution + .event-contribution {
+                border-top: thin solid lightgray;
+                padding-top: 0.75rem;
+            }
+
+            :is(#details-contributions, [data-sponsor-contributions]) .delete-contribution {
+                position: absolute;
+                top: 0;
+                right: 0.5rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 1.75rem;
+                height: 1.75rem;
+                padding: 0;
+                border: none;
+                background: transparent;
+                color: inherit;
+                font-size: 1.5rem;
+                cursor: pointer;
+            }
+
+            :is(#details-contributions, [data-sponsor-contributions]) .delete-contribution:hover {
+                color: darkred;
+            }
+
+            :is(#details-contributions, [data-sponsor-contributions]) .contribution-gift + .contribution-gift .delete-contribution {
+                top: 0.75rem;
+            }
+
+            :is(#details-contributions, [data-sponsor-contributions]) .delete-contribution:focus-visible {
+                color: darkred;
+                outline: 2px solid currentColor;
+                outline-offset: 2px;
             }
 
             .contributor-sheet td.select,
@@ -171,6 +392,12 @@
                     box-shadow: none;
                     cursor: pointer;
                     margin: 0;}
+            }
+
+            .contributor-sheet .select input[type="checkbox"] {
+                width: auto;
+                cursor: pointer;
+                pointer-events: auto;
             }
 
             .contributor-sheet tr.unlocked {
@@ -192,33 +419,7 @@
                 margin-top: 0.2rem;
             }
 
-            table {
-                display: flex;
-                flex-flow: column;
-                height: 100%;
-                width: 100%;
-            }
-            table thead {
-                /* head takes the height it requires,
-                and it's not scaled when table is resized */
-                flex: 0 0 auto;
-                width: calc(100% - 0.9em);
-            }
-            table tbody {
-                /* body takes all the remaining available space */
-                flex: 1 1 auto;
-                display: block;
-                overflow-y: scroll;
-            }
-            table tbody tr {
-                width: 100%;
-            }
-            table thead, table tbody tr {
-                display: table;
-                table-layout: fixed;
-            }
-
-            table tbody tr[hidden] {
+            .contributor-sheet tbody tr[hidden] {
                 display: none;
             }
 
@@ -270,85 +471,6 @@
             }
 
 
-            .description-cell {
-                display: grid;
-                /*          grid-template-columns: minmax(10rem, 1fr) auto; */
-                gap: 0.35rem;
-                align-items: start;
-            }
-
-            tr.unlocked {
-                .description-cell input {
-                    box-shadow: 1px 1px 2px grey, inset 0 0 0 grey;
-                    transition: all 0.2s ease-in-out;
-                    border-radius: 5px;
-                    cursor: default;
-                }
-
-                .description-cell input:hover {
-                    box-shadow: 0 0 0 grey, inset 1px 1px 2px grey;
-                }
-            }
-
-            .description-cell button { display: none; }
-
-            .description-preview {
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-
-            .edit-description {
-                padding: 0.25rem 0.45rem;
-                cursor: pointer;
-            }
-
-            tr.locked .edit-description {
-                cursor: not-allowed;
-            }
-
-            .description-editor-dialog {
-                border: 1px solid #999;
-                border-radius: 0.4rem;
-                padding: 1rem;
-                max-width: 90vw;
-            }
-
-            .description-editor-dialog::backdrop {
-                background: rgb(0 0 0 / 0.35);
-            }
-
-            .description-editor-dialog form {
-                display: flex;
-                flex-direction: column;
-                gap: 0.6rem;
-            }
-
-            #description-editor-textarea {
-                width: auto;
-                min-width: 50ch;
-                max-width: 80vw;
-                height: auto;
-                min-height: 5lh;
-                overflow: auto;
-                resize: both;
-                font: inherit;
-                padding: 0.4rem;
-                box-sizing: border-box;
-            }
-
-            .description-editor-footer {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 1rem;
-            }
-
-            .description-editor-actions {
-                display: flex;
-                gap: 0.5rem;
-            }
-
 
             .actions {
                 display: flex;
@@ -358,6 +480,324 @@
             .actions button {
                 cursor: pointer;
                 padding: 0.35rem 0.55rem;
+            }
+
+            .actions button.add-contact-history,
+            .actions button.contributor-details-button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 5px;
+                background: transparent;
+                border: thin solid transparent;
+                border-radius: 5px;
+                box-shadow: 0 0 0 transparent, inset 0 0 0 grey;
+                transition: all 0.2s ease-in-out;
+            }
+
+            .actions button.add-contact-history img,
+            .actions button.contributor-details-button img {
+                width: 1.5rem;
+                height: 1.5rem;
+            }
+
+            .actions button.add-contact-history:hover,
+            .actions button.add-contact-history:focus-visible,
+            .actions button.contributor-details-button:hover,
+            .actions button.contributor-details-button:focus-visible {
+                border-color: grey;
+                box-shadow: 0 0 0 transparent, inset 1px 1px 1px darkgray;
+            }
+
+            #contact-history-dialog,
+            #contribution-dialog {
+                width: min(28rem, 90vw);
+                box-sizing: border-box;
+                padding: 1.25rem;
+                border: thin solid grey;
+                border-radius: 10px;
+                box-shadow: 2px 2px 5px grey;
+            }
+
+            #contact-history-dialog::backdrop,
+            #contribution-dialog::backdrop {
+                background: rgb(0 0 0 / 0.35);
+                backdrop-filter: blur(2px);
+            }
+
+            #contact-history-form,
+            #contribution-contributor {
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin: 0 0 1rem;
+            }
+
+            #contribution-form {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            #contact-history-form label,
+            #contribution-form label {
+                text-align: left;
+            }
+
+            #contact-history-form textarea,
+            #contribution-form textarea {
+                width: 100%;
+                box-sizing: border-box;
+                resize: vertical;
+                font: inherit;
+                padding: 0.5rem;
+                border: thin solid lightgray;
+                border-radius: 5px;
+                box-shadow: inset 0 1px 3px darkslategray;
+            }
+
+            #contact-history-form .buttons,
+            #contribution-form .buttons {
+                display: flex;
+                justify-content: flex-end;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+
+            #spreadsheet-modal-dialog {
+                width: min(42rem, 90vw);
+                max-height: 85vh;
+                overflow-y: auto;
+                box-sizing: border-box;
+                padding: 1.25rem;
+                border: thin solid grey;
+                border-radius: 10px;
+                box-shadow: 2px 2px 5px grey;
+            }
+
+            #sponsor-email-template,
+            #market-email-template {
+                display: block;
+                width: 100%;
+                min-width: 0;
+                margin: 0.5rem 0 1rem;
+                padding: 0.25rem;
+                font: inherit;
+            }
+
+            .craft-market-popup .buttons {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                width: auto;
+                margin: 1rem 0 0;
+            }
+
+            .craft-market-popup .communication-template-button {
+                font: inherit;
+                font-weight: bold;
+                cursor: pointer;
+            }
+
+            #spreadsheet-modal-dialog::backdrop {
+                background: rgb(0 0 0 / 0.35);
+                backdrop-filter: blur(2px);
+            }
+
+            #spreadsheet-modal-dialog .spreadsheet-modal-close {
+                display: block;
+                margin-left: auto;
+                font: inherit;
+                cursor: pointer;
+            }
+
+            #contributor-details-dialog {
+                font-size: 0.9rem;
+                width: min(42rem, 90vw);
+                max-height: 85vh;
+                overflow-y: auto;
+                box-sizing: border-box;
+                padding: 1.25rem;
+                border: thin solid grey;
+                border-radius: 10px;
+                box-shadow: 2px 2px 5px grey;
+            }
+
+            #contributor-details-dialog::backdrop {
+                background: rgb(0 0 0 / 0.35);
+                backdrop-filter: blur(2px);
+            }
+
+            #contributor-details-fields .detail-field {
+                display: grid;
+                grid-template-columns: minmax(7rem, 1fr) minmax(0, 3fr);
+                gap: 0.75rem;
+                align-items: start;
+                padding: 0.5rem 0;
+                border-bottom: thin solid lightgray;
+            }
+
+            #contributor-details-fields .details-primary-panel {
+                border: 1px solid lightgray;
+                border-radius: 6px;
+                padding: 0.5rem 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+
+            #contributor-details-fields .details-no-icon {
+                margin: 0.4rem 0;
+                color: #666;
+            }
+
+            #contributor-details-fields input:not([type="checkbox"]),
+            #contributor-details-fields textarea {
+                width: 100%;
+                box-sizing: border-box;
+                padding: 0.4rem;
+                font: inherit;
+            }
+
+            #contributor-details-fields :disabled {
+                color: #333;
+                opacity: 1;
+                border-color: transparent;
+                background: transparent;
+            }
+
+            #contributor-details-form[data-editing="false"] #contributor-details-fields input:not([type="hidden"]):not([type="button"]),
+            #contributor-details-form[data-editing="false"] #contributor-details-fields textarea,
+            #contributor-details-form[data-editing="false"] #contributor-details-fields select {
+                border: none;
+                border-radius: 0;
+                box-shadow: none;
+                outline: none;
+                background: transparent;
+                cursor: default;
+                resize: none;
+            }
+
+            .socials-grid {
+                max-height: 12rem;
+                overflow: auto;
+            }
+
+            #contributor-details-form[data-editing="false"] .detail-field {
+                border-bottom: none;
+            }
+
+            #contributor-details-form[data-editing="false"] #contributor-details-fields input[type="file"],
+            #contributor-details-form[data-editing="false"] #contributor-details-fields input[type="checkbox"],
+            #contributor-details-form[data-editing="false"] #contributor-details-fields input[type="checkbox"] + label {
+                display: none;
+            }
+
+            .socials-heading,
+            .social-pair {
+                display: grid;
+                grid-template-columns: minmax(5rem, 1fr) minmax(8rem, 2fr) 1.5rem;
+                gap: 0.5rem;
+                align-items: center;
+                margin-bottom: 0.4rem;
+            }
+
+            .socials-heading {
+                font-weight: bold;
+                position: sticky;
+                top: 0;
+                background: white;
+            }
+
+            .social-remove {
+                padding: 0;
+                cursor: pointer;
+            }
+
+            #contributor-details-fields textarea {
+                resize: vertical;
+            }
+
+            .contributor-icon-preview {
+                display: block;
+                max-width: 8rem;
+                max-height: 8rem;
+                margin-top: 0.5rem;
+            }
+
+            #contributor-details-form .buttons {
+                display: flex;
+                justify-content: flex-end;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                margin-top: 1rem;
+            }
+
+            #contributor-details-form [hidden] {
+                display: none;
+            }
+
+            .history-toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1rem;
+            }
+
+            .history-toolbar button.add-contact-history {
+                display: inline-flex;
+                align-items: center;
+                padding: 5px;
+                background: transparent;
+                border: thin solid transparent;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: all 0.2s ease-in-out;
+            }
+
+            .history-toolbar button.add-contact-history:hover,
+            .history-toolbar button.add-contact-history:focus-visible {
+                border-color: grey;
+                box-shadow: inset 1px 1px 1px darkgray;
+            }
+
+            .history-toolbar button img {
+                width: 1.5rem;
+                height: 1.5rem;
+            }
+
+            .history-scroll {
+                max-height: 15rem;
+                overflow-y: auto;
+                border: thin solid lightgray;
+                border-radius: 5px;
+                padding: 0.75rem;
+            }
+
+            .contributor-history-list {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            .contributor-history-list li + li {
+                border-top: thin solid lightgray;
+                margin-top: 0.75rem;
+                padding-top: 0.75rem;
+            }
+
+            .history-heading {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                gap: 0.5rem;
+            }
+
+            .history-note {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+            }
+
+            .history-meta {
+                font-size: 85%;
+                color: #555;
             }
 
             .save-row {

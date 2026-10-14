@@ -105,20 +105,20 @@ class TestEmailTemplating(TestCase):
                                              use_from=timezone.now())
         cls.inst = Marketer.objects.create(event=cls.event, trading_name="Marketeer1", email="marketeer1@market.com")
 
-        cls.simple_template = CommunicationTemplate.objects.create(category="CraftMarket", transition='',
+        cls.simple_template = CommunicationTemplate.objects.create(category="CraftMarket", sub_category='',
                                                                    subject="Test Subject",
                                                                    html_content="Test Body",
                                                                    signature='Brantham Garage Sale',
                                                                    use_from=timezone.now())
 
-        cls.complex_template = CommunicationTemplate.objects.create(category="CraftMarket", transition='',
+        cls.complex_template = CommunicationTemplate.objects.create(category="CraftMarket", sub_category='',
                                                                     subject="Test Subject {{trading_name}}",
                                                                     html_content="Dear {{trading_name}},\nWe hope this email finds you well.",
                                                                     signature='Brantham Garage Sale',
                                                                     use_from=timezone.now())
 
         cls.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
-                                                                    transition=MarketerState.Invited.label,
+                                                                    sub_category=MarketerState.Invited.label,
                                                                     subject="Craft Market invite for {{trading_name}}",
                                                                     html_content="Dear {{trading_name}},\nWe hope this email finds you well.",
                                                                     signature='Brantham Garage Sale',
@@ -185,7 +185,7 @@ class TestEmailsOnTransitions(TestCase):
                                            contact_name='Fred Fredrickson',email="marketeer1@market.com")
 
         cls.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
-                                                                    transition=MarketerState.Invited.label,
+                                                                    sub_category=MarketerState.Invited.label,
                                                                     subject="Craft Market invite for {{trading_name}}",
                                                                     html_content="Dear {{contact_name}},\nWe would like to invite {{trading_name}} to the Craft Market event on {{event_date}}\n Please click {{url}}.\n",
                                                                     signature='Brantham Garage Sale',
@@ -225,7 +225,7 @@ class TestEmailsOnTransitions(TestCase):
 
     def test_120_old_templates(self):
         """Test transition emails when old templates are stored"""
-        CommunicationTemplate.objects.create(category="CraftMarket", transition=MarketerState.Invited.label,
+        CommunicationTemplate.objects.create(category="CraftMarket", sub_category=MarketerState.Invited.label,
                                                             subject="Old Test Subject", html_content="Old Test Body",
                                                             signature='Brantham Garage Sale',
                                                             use_from=timezone.now() - timedelta(days=10))
@@ -240,7 +240,7 @@ class TestEmailsOnTransitions(TestCase):
 
     def test_130_future_template(self):
         """Test transition emails when future templates are stored"""
-        CommunicationTemplate.objects.create(category="CraftMarket", transition=MarketerState.Invited.label,
+        CommunicationTemplate.objects.create(category="CraftMarket", sub_category=MarketerState.Invited.label,
                                                                subject="New Test Subject", html_content="New Test Body",
                                                                signature='Brantham Garage Sale',
                                                                use_from=timezone.now() + timedelta(days=10))
@@ -315,14 +315,14 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
 
 
         self.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
-                                                                    transition=MarketerState.Invited.label,
+                                                                    sub_category=MarketerState.Invited.label,
                                                                     subject="Test Subject",
                                                                     html_content="Dear {{contact_name}},\nWe hope this email finds you well.",
                                                                     signature='Brantham Garage Sale',
                                                                     use_from=timezone.now())
 
         self.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
-                                                                    transition=MarketerState.Confirmed.label,
+                                                                    sub_category=MarketerState.Confirmed.label,
                                                                     subject="Test Subject",
                                                                     html_content="Dear {{contact_name}},\nWe hope this email finds you well.",
                                                                     signature='Brantham Garage Sale',
@@ -643,27 +643,27 @@ class MarketeerRSVP(SmartHTMLTestMixins, SeleniumCommonMixin):
                                                        email=f"marketeer{i}@market.com") for i in range(4) ]
 
         self.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
-                                                                    transition=MarketerState.Invited.label,
+                                                                    sub_category=MarketerState.Invited.label,
                                                                     subject="Test Subject",
                                                                     html_content="Dear {trading_name},<br>We hope this email finds you well.",
                                                                     signature='Brantham Garage Sale',
                                                                     use_from=timezone.now())
 
         self.confirm_template = CommunicationTemplate.objects.create(category="CraftMarket",
-                                                                    transition=MarketerState.Confirmed.label,
+                                                                    sub_category=MarketerState.Confirmed.label,
                                                                     subject="Test Subject",
                                                                     html_content="Dear {{trading_name}},<br>Thank you for confirming your attendance.",
                                                                     signature='Brantham Garage Sale',
                                                                     use_from=timezone.now())
 
         self.tos_template = CommunicationTemplate.objects.create(category="CraftMarket",
-                            transition='TermsAndConditions',
+                            sub_category='TermsAndConditions',
                             subject="",
                             html_content="Terms and Conditions",
                             signature='',
                             use_from=timezone.now())
 
-        self.confirm_template.attachments.create(template_name=self.tos_template.transition, upload=False)
+        self.confirm_template.attachments.create(template_name=self.tos_template.sub_category, upload=False)
         self.request = MagicMock(HttpRequest)
         self.request.build_absolute_uri = MagicMock(side_effect=lambda u : "https://127.0.0.1:8080"+u)
         self.request.META = {'HTTP_HOST': '127.0.0.1:8080'}
@@ -823,7 +823,7 @@ class MarketeerRSVP(SmartHTMLTestMixins, SeleniumCommonMixin):
                                                                                                      'contact_name':self.marketers[0].contact_name,
                                                                                                      })) + "<br>-- <br>" + self.confirm_template.signature)
 
-        self.assertStartsWith(mail.outbox[0].attachments[0][0], self.tos_template.transition)
+        self.assertStartsWith(mail.outbox[0].attachments[0][0], self.tos_template.sub_category)
         self.assertEndsWith(mail.outbox[0].attachments[0][0], '.pdf')
         data = io.BytesIO(mail.outbox[0].attachments[0][1])
         pdf = pypdf.PdfReader(data)
@@ -863,7 +863,7 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
         self.manage_user.user_permissions.add(marketer_permissions)
 
         self.templates = {(transition, delta) : CommunicationTemplate.objects.create(category="CraftMarket",
-                                                                    transition=transition,
+                                                                    sub_category=transition,
                                                                     subject="Test Subject",
                                                                     summary=f'Summary {transition} {delta}',
                                                                     html_content="Dear {trading_name},<br>We hope this email finds you well.",
@@ -873,7 +873,7 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
                           for delta in [-10, 0, 10] }
 
 
-        self.tos = {('TermsAndConditions', delta): CommunicationTemplate.objects.create(category="CraftMarket", transition='TermsAndConditions',
+        self.tos = {('TermsAndConditions', delta): CommunicationTemplate.objects.create(category="CraftMarket", sub_category='TermsAndConditions',
                                                         subject="T&Cs",
                                                         summary="Terms and Conditions",
                                                         html_content="Terms and Conditions",
@@ -886,7 +886,7 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
                     template.attachments.create(template_name='TermsAndConditions', upload=False)
 
         # We need to have some templates that aren't attached to any templates - the deletion rules should be different.
-        self.unused =  {('Unused', delta) : CommunicationTemplate.objects.create(category="CraftMarket", summary='Unused',subject='not used at all', transition='Unused',
+        self.unused =  {('Unused', delta) : CommunicationTemplate.objects.create(category="CraftMarket", summary='Unused',subject='not used at all', sub_category='Unused',
                                                              use_from=date.today() + timedelta(days=delta)) for delta in [-10, 0, 10] }
 
         self.request = MagicMock(HttpRequest)
@@ -994,7 +994,7 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
         current = [template for (type_, delta), template in all_templates.items() if delta==0]
         to_delete = random.sample(current, 2)
         for i in to_delete:
-            all_templates.pop((i.transition, 0))
+            all_templates.pop((i.sub_category, 0))
             i.delete()
 
         exclude_old = [template for (type_, delta), template in  all_templates.items() if
@@ -1020,7 +1020,7 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
                                 f'div#id_item_list table tbody tr.data-row[tp_row_id="{i.id}"]')
                 except NoSuchElementException:
                     missing = CommunicationTemplate.objects.get(id=i.id)
-                    self.fail(f'No row for element {i.id} found : {missing.transition}, {missing.use_from}')
+                    self.fail(f'No row for element {i.id} found : {missing.sub_category}, {missing.use_from}')
 
     def test_950_templates_buttons(self):
         with self.identify_via_login(user=self.manage_user, password='wibble'):
@@ -1044,7 +1044,7 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
                             # Any unused template should be deletable
                             if inst in self.unused:
                                 self.assertNotEqual(row.select(f'span[tp_row_id="{row_id}"][tp_action="delete"]'), [],
-                                          f'No delete button found for row {index} : {row_id} - {inst.transition} {inst.use_from}')
+                                          f'No delete button found for row {index} : {row_id} - {inst.sub_category} {inst.use_from}')
                             else:
                                 # Can't delete a template if there is nothing younger than it
                                 # The data set has old, today and future entries - so delete row should be missing for the old rows
@@ -1052,10 +1052,10 @@ class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommon
                                 # Ignore the Terms and Conditions template for Now - since the test data only has one entry
                                 if inst.use_from >= date.today():
                                     self.assertNotEqual(row.select(f'span[tp_row_id="{row_id}"][tp_action="delete"]'), [],
-                                              f'No delete button found for row {index} : {row_id} - {inst.transition} {inst.use_from}')
+                                              f'No delete button found for row {index} : {row_id} - {inst.sub_category} {inst.use_from}')
                                 else:
                                     self.assertEqual(row.select(f'span[tp_row_id="{row_id}"][tp_action="delete"]'),[],
-                                              f'Delete button found for row {index} : {row_id} - {inst.transition} {inst.use_from}')
+                                              f'Delete button found for row {index} : {row_id} - {inst.sub_category} {inst.use_from}')
 
 
     def test_960_templates_view(self):

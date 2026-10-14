@@ -1,0 +1,41 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% block Title %}Upload contributor CSV{% endblock %}
+{% block PageStyles %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'Contributors/styles/column_matching.css' %}">
+{% endblock %}
+{% block SnappableSections %}
+<main class="contributor-import">
+  <form id="csv-upload-form" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="stage" value="select_file">
+
+    <div class="eyebrow">Contributors / CSV import</div>
+    <h1>Select your file</h1>
+    <p class="muted">Choose a CSV file containing your contributors. You’ll match its columns in the next step.</p>
+    <p><a href="{% url 'contributors:download' %}">Download current contributors as CSV</a></p>
+    <ol class="steps" aria-label="Import progress">
+      <li aria-current="step"><strong>1. Select file</strong></li><li>2. Match columns</li><li>3. Review changes</li>
+    </ol>
+
+    <section class="card" aria-labelledby="upload-title">
+      <div class="heading">
+        <h2 id="upload-title">Contributor CSV</h2>
+        <p class="muted" id="csv-file-help">Include a header row so you can identify each column.</p>
+      </div>
+      <div class="file">
+        <label for="csv-file">CSV file</label>
+        <input type="file" id="csv-file" name="csv_file" accept=".csv,text/csv" aria-describedby="csv-file-help" required>
+      </div>
+    </section>
+
+    {% if error %}<div id="message" role="alert">{{ error }}</div>{% endif %}
+    <footer>
+      <span class="muted">Step 1 of 3</span>
+      <div class="buttons"><input type="submit" value="Match columns"></div>
+    </footer>
+    <p class="note muted">You’ll review proposed changes before saving contributors.</p>
+  </form>
+</main>
+{% endblock %}

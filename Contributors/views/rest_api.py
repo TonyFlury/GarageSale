@@ -74,6 +74,13 @@ def _validate_contributor(contributor):
     if contributor.contact_name and len(contributor.contact_name) > 120:
         errors["contact_name"] = "Contact name must be 120 characters or fewer."
 
+    # Return model field errors to the spreadsheet rather than raising a server error.
+    try:
+        contributor.clean_fields()
+    except ValidationError as failure:
+        for field, messages in failure.message_dict.items():
+            errors.setdefault(field, " ".join(messages))
+
     return errors
 
 
@@ -87,6 +94,8 @@ def _contributor_response(contributor):
         "email": contributor.email,
         "description": contributor.description,
         "save_url": reverse("contributors:spreadsheet_save", args=[contributor.pk]),
+        "contact_history_url": reverse("contributors:contact_history", args=[contributor.pk]),
+        "details_url": reverse("contributors:details", args=[contributor.pk]),
     }
 
 
@@ -141,11 +150,6 @@ def contributor_spreadsheet_save(request, pk):
     contributor = get_object_or_404(Contributor, pk=pk)
     payload = _read_json_payload(request)
 
-    # Need to identify the fields which have changed
-    changed_fields = { key: (value, getattr(contributor,key)) for key, value in
-                                                payload.items() if value != getattr(contributor, key)
-                       }
-
     if payload is None:
         return JsonResponse(
             {
@@ -156,6 +160,10 @@ def contributor_spreadsheet_save(request, pk):
             },
             status=400,
         )
+
+    # Identify changed fields only after validating that a payload was received.
+    changed_fields = {key: (value, getattr(contributor, key)) for key, value in payload.items()
+                      if value != getattr(contributor, key)}
 
     contributor = _apply_contributor_payload(contributor, payload)
     errors = _validate_contributor(contributor)

@@ -19,11 +19,15 @@ import bs4
 from django.contrib.staticfiles import finders
 
 from django.core.mail import EmailMultiAlternatives
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import Subquery
 from django.http import HttpRequest
 from django.utils import timezone
+from django.utils.html import format_html
 from django.template import Template, Context, Engine
+from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from django_quill.fields import QuillField
 from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractUser
@@ -125,8 +129,35 @@ class EventData(models.Model):
         except EventData.DoesNotExist:
             return None
 
+
+class PrizeDrawWinner(models.Model):
+    """Winner and optional contact details for a single donated Prize Draw item."""
+
+    contribution = models.OneToOneField(
+        "Contributors.Contributions", on_delete=models.CASCADE, related_name="prize_draw_winner",
+        limit_choices_to={"cash": False, "classification": "prize_draw"},
+    )
+    name = models.CharField(max_length=200, blank=True)
+    ticket_number = models.CharField(max_length=50)
+    phone = models.CharField(max_length=32, blank=True)
+    address = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.name} — ticket {self.ticket_number}"
+
+    def clean(self):
+        super().clean()
+        if not self.contribution_id:
+            return
+        try:
+            contribution = self.contribution
+        except ObjectDoesNotExist:
+            return  # Foreign-key validation reports a missing contribution.
+        if contribution.cash or contribution.classification != "prize_draw":
+            raise ValidationError({"contribution": "Only non-cash Prize Draw items can have a winner."})
+
 def save_template_attachment_to(instance, filename):
-    return f'template_attachments/{instance.template.category}/{instance.template.tranisition}/{instance.template.use_from.iso_format()}/{filename}'
+    return f'template_attachments/{instance.template.category}/{instance.template.sub_category or "general"}/{instance.template.use_from.isoformat()}/{filename}'
 
 class TemplateAttachment(models.Model):
     template = models.ForeignKey("CommunicationTemplate", on_delete=models.CASCADE, related_name='attachments')
@@ -142,9 +173,9 @@ class TemplateAttachment(models.Model):
         if self.upload:
             return ''
         template_with_name = CommunicationTemplate.objects.filter(category=self.template.category,
-                                                                  transition=self.template_name)
+                                                                  sub_category=self.template_name)
         template_in_date = CommunicationTemplate.objects.filter(category=self.template.category,
-                                                                transition=self.template_name,
+                                                                sub_category=self.template_name,
                                                                 use_from__lte=self.template.use_from)
 
         match template_with_name.exists(), template_in_date.exists():
@@ -172,13 +203,13 @@ class CommunicationTemplate(models.Model):
     class Meta:
         indexes = [
             models.Index(name='CategoryByDate', fields=['category', '-use_from']),
-            models.Index(name='CategoryTransitionByDate', fields=['category', 'transition', '-use_from']),
+            models.Index(name='CategorySubCategoryByDate', fields=['category', 'sub_category', '-use_from']),
             models.Index(name='CategorySummaryByDate', fields=['category', 'summary', '-use_from'])
         ]
     objects = models.Manager()
     current_active = CurrentActive()
     category = models.CharField(max_length=20)
-    transition = models.CharField(max_length=20, null=True, blank=True)
+    sub_category = models.CharField(max_length=20, null=True, blank=True)
     summary = models.CharField(max_length=180, null=True, blank=True, )
     subject = models.CharField(max_length=180, null=False, blank=False)
     html_content  = models.TextField( blank=False, null=False,)
@@ -187,55 +218,103 @@ class CommunicationTemplate(models.Model):
     fields = ['attachment_warnings',]
 
     @classmethod
-    def get_template_for_category(cls, category:str, transition:str=None):
-        """Get the latest valid template for a given category and transition"""
+    def get_template_for_category(cls, category:str, sub_category:str=None):
+        """Get the latest valid template for a given category and sub_category"""
         try:
-            return CommunicationTemplate.objects.filter(category=category, transition=transition, use_from__lte=timezone.now() ).order_by('-use_from').first()
+            return CommunicationTemplate.objects.filter(category=category, sub_category=sub_category, use_from__lte=timezone.now() ).order_by('-use_from').first()
         except CommunicationTemplate.DoesNotExist:
             return None
 
     def get_use_from_display(self):
         return f'{day_name[self.use_from.weekday()]} {self.use_from.day} {month_name[self.use_from.month]} {self.use_from.year}'
 
+    def deletion_errors(self):
+        """Explain why deleting this version would leave templates without a replacement."""
+        today = timezone.localdate()
+        remaining = CommunicationTemplate.objects.filter(category=self.category).exclude(pk=self.pk)
+        errors = []
+
+        # Keep an in-date version with the same summary within this category.
+        if not remaining.filter(summary=self.summary, use_from__lte=today).exists():
+            errors.append("Another template in this category with the same summary and a Use from date on or before today must remain.")
+
+        # Named attachments resolve by summary within the same category and sub-category.
+        if self.summary:
+            earliest_use = TemplateAttachment.objects.filter(
+                upload=False, template__category=self.category,
+                template__sub_category=self.sub_category, template_name=self.summary,
+            ).exclude(template_id=self.pk).aggregate(date=models.Min("template__use_from"))["date"]
+
+            # A replacement must be usable by the earliest referencing template and be in date.
+            if earliest_use is not None and not remaining.filter(
+                sub_category=self.sub_category, summary=self.summary, use_from__lte=min(today, earliest_use),
+            ).exists():
+                errors.append(
+                    f'This template is used as the named attachment "{self.summary}". '
+                    f'A remaining template with the same summary, category and sub-category must be in date and have a Use from date '
+                    f'on or before {earliest_use:%d/%m/%Y}.'
+                )
+        return errors
+
     def attachment_warnings(self) -> str|None:
-        """Identify any warnings with regards the attachments"""
-        named_templates = CommunicationTemplate.objects.filter(category=self.category).annotate(name=models.F('transition'))
+        """Identify missing or late named attachments for this template."""
+        return self.attachment_warnings_for([self])[self.pk]
 
-        missing_names = (TemplateAttachment.objects.
-                            filter(template=self.id, upload=False).
-                            exclude(template_name__in = Subquery(named_templates.
-                                                                 values('name')
-                                                                 )
-                                    )
-                         )
+    @classmethod
+    def attachment_warnings_for(cls, templates):
+        """Check a list of templates together, avoiding queries for each table row."""
+        templates = {template.pk: template for template in templates}
+        warnings = {pk: "" for pk in templates}
+        if not templates:
+            return warnings
 
-        out_of_date = (TemplateAttachment.objects.
-                         filter(template=self.id, upload=False).
-                         exclude(template_name__in=Subquery(named_templates.
-                                                       filter(use_from__lte=self.use_from).
-                                                       values('name'))
-                                 )
-                       )
+        # Uploaded files are not named-template dependencies.
+        attachments = list(TemplateAttachment.objects.filter(
+            template_id__in=templates, upload=False,
+        ).values_list("template_id", "template_name"))
+        if not attachments:
+            return warnings
 
-        match bool(missing_names), bool(out_of_date):
-            case True, True:
-                return 'Missing and out of date Attachments'
-            case True, False:
-               return 'Out of date Attachments'
-            case False, True:
-                return 'Named attachments missing'
-            case _,_:
-                return ""
+        # A named attachment is usable when any same-category version is dated early enough.
+        earliest_dates = {}
+        for category, sub_category, summary, use_from in cls.objects.filter(
+            category__in={template.category for template in templates.values()},
+        ).values_list("category", "sub_category", "summary", "use_from"):
+            key = (category, sub_category, summary)
+            earliest_dates[key] = min(use_from, earliest_dates.get(key, use_from))
+
+        missing = {pk: set() for pk in templates}
+        late = {pk: set() for pk in templates}
+        for pk, name in attachments:
+            template = templates[pk]
+            first_date = earliest_dates.get((template.category, template.sub_category, name))
+            if first_date is None:
+                missing[pk].add(name)
+            elif first_date > template.use_from:
+                late[pk].add(name)
+
+        for pk in templates:
+            messages = []
+            if missing[pk]:
+                messages.append("Missing named attachment templates: " + ", ".join(sorted(missing[pk])) + ".")
+            if late[pk]:
+                messages.append("Named attachments become usable after this template: " + ", ".join(sorted(late[pk])) + ".")
+            warnings[pk] = " ".join(messages)
+        return warnings
 
     def warning_as_html_fragment(self):
         text = self.attachment_warnings()
         if text:
-            return f'<span class="tooltip"><image style="width:24px;" id="warning{self.id}" src="/static/GarageSale/images/icons/warning-svgrepo-com.svg" /><label for="warning{self.id}"></label><span class="tooltiptext arrow right">{text}</label></span>'
+            return format_html(
+                '<span class="tooltip"><img style="width:24px;" id="warning{}" '
+                'src="/static/GarageSale/images/icons/warning-svgrepo-com.svg" />'
+                '<span class="tooltiptext arrow right">{}</span></span>', self.pk, text,
+            )
         else:
             return ''
 
     def __str__(self):
-        return f'"{self.category}" "{self.transition}" "{self.get_use_from_display()}"'
+        return f'"{self.category}" "{self.sub_category}" "{self.get_use_from_display()}"'
 
     @staticmethod
     def html_to_text(html):
@@ -280,9 +359,47 @@ class CommunicationTemplate(models.Model):
         soup = BeautifulSoup(html, 'html.parser')
         return  tag_to_text(soup.contents)
 
+    @classmethod
+    def default_context(cls, request=None, context=None):
+        """Event and request defaults shared by all communication templates."""
+        context = context or {}
+        if "current_event" in context or "event" in context:
+            event = context.get("current_event", context.get("event"))
+        elif request is not None and hasattr(request, "current_event"):
+            event = request.current_event
+        elif request is not None:
+            event = EventData.objects.filter(use_from__lt=timezone.localdate()).order_by(
+                "-use_from", "-event_date", "-pk",
+            ).first()
+        else:
+            event = None
+        organisations = list(event.supporting_organisations.order_by("index", "pk")) if event else []
+        names = [organisation.name for organisation in organisations]
+        supporting = ", ".join(names[:-1]) + " and " + names[-1] if len(names) > 1 else "".join(names)
+        def absolute_url(url):
+            return request.build_absolute_uri(url) if request else url
+        icons = [{"url": absolute_url(organisation.logo.url), "name": organisation.name}
+                 for organisation in organisations if organisation.logo]
+        return {
+            "current_event": event, "event": event,
+            "event_date": event.get_event_date_display() if event else "",
+            "event_logo": absolute_url(event.event_logo.url) if event and event.event_logo else "",
+            "year": f"{event.event_date.year:04d}" if event else "",
+            "current_date": timezone.localdate(),
+            "supporting": supporting,
+            "supporting_icons": mark_safe(render_to_string("email/icon_set.html", {"icons": icons}).strip()),
+            "base_url": request.build_absolute_uri("/") if request else "",
+        }
+
+    @classmethod
+    def apply_context_defaults(cls, request, context):
+        for name, value in cls.default_context(request, context).items():
+            context.setdefault(name, value)
+
     def render_template_as_email(self, request:HttpRequest, context):
         """Convert the template to an email message - with attachments"""
 
+        self.apply_context_defaults(request, context)
         logger.debug(f'Rendering template as email {self=} for {context=} ')
         to = context.pop('email', [])
         from_ = context.pop('from', '')
@@ -317,12 +434,15 @@ class CommunicationTemplate(models.Model):
 
     def get_header_text(self, request:HttpRequest, context):
         """Get the header text for the email"""
+        self.apply_context_defaults(request, context)
         if request:
             host,scheme  = request.get_host(), request.scheme
         else:
             host, scheme = 'localhost', 'http'
         context['host'] = host
         context['scheme'] = scheme
+        # PDF headers and attachment bodies share the request-derived website root.
+        context.setdefault('base_url', request.build_absolute_uri('/') if request else '')
         context['summary'] = self.summary
         return CommunicationTemplate.pdf_header_template(context)
 
@@ -354,16 +474,16 @@ class CommunicationTemplate(models.Model):
                     mime_type = mimetypes.guess_type(attachment.attached_file.name)[0]
                     msg.attach_file(attachment.attached_file.path, mime_type)
                 case False:
-                    logger.debug(f'Generating PDF for {self}, {self.category}, {self.transition} {attachment.template_name}')
-                    try:
-                        content = CommunicationTemplate.current_active.filter(category=self.category).filter(transition=attachment.template_name).order_by("-use_from").latest('use_from')
-                    except CommunicationTemplate.DoesNotExist:
+                    logger.debug(f'Generating PDF for {self}, {self.category}, {self.sub_category} {attachment.template_name}')
+                    content = CommunicationTemplate.current_active.filter(
+                        category=self.category, sub_category=self.sub_category, summary=attachment.template_name,
+                    ).order_by("-use_from", "-pk").first()
+                    if content is None:
                         logger.error(f'Could not find a valid {attachment.template_name} and in date template for {self}')
-                        content = None
 
                     if content:
                         logger.debug(
-                            f'Found named template {content.transition} PDF for {self.category}, {self.transition} {attachment.template_name}')
+                            f'Found named template {content.sub_category} PDF for {self.category}, {self.sub_category} {attachment.template_name}')
                         pdf = content.render_template_as_pdf(request, context)
                         msg.attach( attachment.template_name+'-'+datetime.datetime.now().isoformat(sep='-')+'.pdf', pdf, 'application/pdf')
 

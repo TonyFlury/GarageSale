@@ -1,96 +1,13 @@
 /* TODO Validation - make either or Phone/email mandatory
-*  TODO : Remove 'Edit' button, and allow edit on text area by clicking the text itself (less screen real estate)
 * TODO : 'Data' driven actions (edit details, communicate, invite, confirm etc */
-
 
 (function () {
     const editableFields = [
-        "selected_contributor",
         "contributor_name",
         "contact_name",
         "phone",
         "email",
-        "description",
     ];
-
-        let activeDescriptionRow = null;
-    let activeDescriptionInput = null;
-
-    function getDescriptionDialog() {
-        return document.querySelector("#description-editor-dialog");
-    }
-
-    function getDescriptionEditor() {
-        return document.querySelector("#description-editor-textarea");
-    }
-
-    function updateDescriptionCounter() {
-        const editor = getDescriptionEditor();
-        const counter = document.querySelector("#description-editor-count");
-
-        if (!editor || !counter) {
-            return;
-        }
-
-        counter.textContent = `${editor.value.length} / ${editor.maxLength}`;
-    }
-
-    function openDescriptionEditor(row, input) {
-        if (row.classList.contains("locked")) {
-            return;
-        }
-
-        const dialog = getDescriptionDialog();
-        const editor = getDescriptionEditor();
-
-        console.log(dialog, editor);
-        if (!dialog || !editor) {
-            return;
-        }
-
-        activeDescriptionRow = row;
-        activeDescriptionInput = input;
-
-        editor.value = input.value;
-        updateDescriptionCounter();
-
-        dialog.showModal();
-        editor.focus();
-        editor.select();
-    }
-
-    function applyDescriptionEditor() {
-        const dialog = getDescriptionDialog();
-        const editor = getDescriptionEditor();
-
-        if (!activeDescriptionRow || !activeDescriptionInput || !dialog || !editor) {
-            return;
-        }
-
-        activeDescriptionInput.value = editor.value;
-        activeDescriptionInput.title = editor.value;
-
-        markDirty(activeDescriptionRow);
-        validateRow(activeDescriptionRow);
-
-        dialog.close();
-
-        activeDescriptionRow = null;
-        activeDescriptionInput = null;
-    }
-
-    function cancelDescriptionEditor() {
-        const dialog = getDescriptionDialog();
-
-        if (dialog) {
-            /** Need to prevent a bounce when the dialog is closed */
-            dialog.close();
-        }
-
-        console.log("cancel dialog closed");
-        activeDescriptionRow = null;
-        activeDescriptionInput = null;
-    }
 
     function getCookie(name) {
         const cookies = document.cookie ? document.cookie.split(";") : [];
@@ -133,7 +50,8 @@
         clearErrors(row);
 
         Object.entries(errors).forEach(([field, message]) => {
-            const errorElement = row.querySelector(`[data-error-for="${field}"]`);
+            const errorElement = row.querySelector(`[data-error-for="${field}"]`) ||
+                row.querySelector('[data-error-for="contributor_name"]');
 
             if (errorElement) {
                 errorElement.textContent = message;
@@ -146,15 +64,15 @@
 
     function validateRow(row) {
         const errors = {};
-        const contributorType = row.querySelector('[name="contributor_type"]').value.trim();
+        const contributorTypeInput = row.querySelector('[name="contributor_type"]');
         const contributorName = row.querySelector('[name="contributor_name"]').value.trim();
         const contactName = row.querySelector('[name="contact_name"]').value.trim();
         const phone = row.querySelector('[name="phone"]').value.trim();
         const email = row.querySelector('[name="email"]').value.trim();
-        const description = row.querySelector('[name="description"]').value.trim();
 
-        if (!contributorType) {
-            errors.contributor_type = "Contributor type is required.";
+        // Existing rows retain their stored type and do not have a type input.
+        if (row.dataset.isNew === "true" && !contributorTypeInput?.value.trim()) {
+            errors.contributor_type = `${getSheet()?.dataset.label || "Contributor"} type is required.`;
         }
 
         if (!contributorName) {
@@ -171,10 +89,6 @@
 
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             errors.email = "Enter a valid email address.";
-        }
-
-        if (description.length > 1000) {
-            errors.description = "Description must be 1000 characters or fewer.";
         }
 
         if (Object.keys(errors).length > 0) {
@@ -194,8 +108,7 @@
         }
 
         if (row.classList.contains("unlocked") && row.classList.contains('dirty')) {
-            saveRow(row).then(() => {});
-            return;
+            return saveRow(row);
         }
 
         row.classList.remove("locked");
@@ -205,17 +118,6 @@
             input.disabled = false;
         });
 
-        const descriptionInput = row.querySelector('[name="description"]');
-
-        if (descriptionInput) {
-            descriptionInput.readOnly = true;
-        }
-
-        const editDescriptionButton = row.querySelector(".edit-description");
-
-        if (editDescriptionButton) {
-            editDescriptionButton.disabled = false;
-        }
     }
 
     function lockRow(row, options={}) {
@@ -228,12 +130,6 @@
             input.disabled = true;
             input.dataset.originalValue = input.value;
         });
-
-        const editDescriptionButton = row.querySelector(".edit-description");
-
-        if (editDescriptionButton) {
-            editDescriptionButton.disabled = true;
-        }
 
   /*      const unlockButton = row.querySelector(".unlock-row");
         unlockButton.disabled = false;
@@ -267,6 +163,11 @@
             payload[field] = row.querySelector(`[name="${field}"]`).value;
         });
 
+        // Only new rows supply a contributor type; existing rows keep theirs.
+        if (row.dataset.isNew === "true") {
+            payload.contributor_type = row.querySelector('[name="contributor_type"]').value;
+        }
+
         return payload;
     }
 
@@ -274,7 +175,6 @@
         row.dataset.filterContributor_name = row.querySelector('[name="contributor_name"]').value.toLowerCase();
         row.dataset.filterContact_name = row.querySelector('[name="contact_name"]').value.toLowerCase();
         row.dataset.filterEmail = row.querySelector('[name="email"]').value.toLowerCase();
-        row.dataset.filterDescription = row.querySelector('[name="description"]').value.toLowerCase();
     }
 
     function undoRowEdits(row) {
@@ -282,33 +182,29 @@
             const input = row.querySelector(`[name="${field}"]`);
             input.value = input.dataset.originalValue;
         });
-        row.classList.remove('dirty')
+        clearErrors(row);
+        row.classList.remove('dirty');
+        // Keep the blank entry row available, but finish editing existing rows.
+        if (row.dataset.isNew !== "true") {
+            lockRow(row);
+        }
     }
 
     function bindRow(row) {
+        const selection = row.querySelector('[name="selected_contributor"]');
+        if (selection) {
+            selection.disabled = false;
+            selection.addEventListener("change", () => {
+                document.getElementById('select-all').checked = allSelected();
+                toggle_toolbar();
+            });
+        }
 
         getRowInputs(row).forEach((input) => {
             if (input === null)
                 return;
 
-            if (input.name !== 'contributor_selected')
-                input.dataset.originalValue = input.value;
-
-            if (input.name === "description") {
-                input.addEventListener("click", () => {
-                    console.log("click");
-                    openDescriptionEditor(row, input);
-                });
-
-                return;
-            }
-
-            if (input.name === "selected_contributor") {
-                input.addEventListener("change", () => {
-                    document.getElementById('select-all').checked = allSelected();
-                    toggle_toolbar();
-                });
-            }
+            input.dataset.originalValue = input.value;
 
             input.addEventListener("input", () => {
                 markDirty(row);
@@ -317,18 +213,6 @@
                 /* validateRow(row); */
             });
         });
-
-        const editDescriptionButton = row.querySelector(".edit-description");
-
-        if (editDescriptionButton) {
-            editDescriptionButton.addEventListener("click", () => {
-                const descriptionInput = row.querySelector('[name="description"]');
-
-                if (descriptionInput) {
-                    openDescriptionEditor(row, descriptionInput);
-                }
-            });
-        }
 
         const unlockButton = row.querySelector("td.row-status span.status");
         unlockButton.addEventListener("click", () => {
@@ -349,7 +233,6 @@
         row.dataset.filterContributor_name = "";
         row.dataset.filterContact_name = "";
         row.dataset.filterEmail = "";
-        row.dataset.filterDescription = "";
 
         row.innerHTML = `
             <td class="row-status">
@@ -383,26 +266,20 @@
                 <span class="field-error" data-error-for="email"></span>
             </td>
 
-            <td>
-                <div class="description-cell">
-                    <input
-                        name="description"
-                        class="description-preview"
-                        value=""
-                        maxlength="1000"
-                        readonly
-                        title=""
-                    >
-                </div>
-                <span class="field-error" data-error-for="description"></span>
-            </td>
+            <td><input class="last-contact-date" type="text" readonly aria-label="Last contact date" data-date="" value=""></td>
 
             <td>
                 <div class="actions">
-                        <span class="edit-details">Details</span>
                 </div>
             </td>
         `;
+
+        const actionsCell = row.querySelector(".actions").closest("td");
+        document.querySelectorAll("#contributor-sheet thead th.extra-column").forEach(() => {
+            const cell = document.createElement("td");
+            cell.className = "extra-column";
+            row.insertBefore(cell, actionsCell);
+        });
 
         bindRow(row);
 
@@ -427,13 +304,22 @@
     function applyCreatedContributorToRow(row, contributor) {
         row.dataset.contributorId = contributor.id;
         row.dataset.saveUrl = contributor.save_url;
+        const contactButton = document.querySelector("#contact-history-button-template")
+            .content.firstElementChild.cloneNode(true);
+        contactButton.dataset.contactHistoryUrl = contributor.contact_history_url;
+        contactButton.setAttribute("aria-label", `Record contact with ${contributor.contributor_name}`);
+        row.querySelector(".actions").appendChild(contactButton);
+        const detailsButton = document.querySelector("#contributor-details-button-template")
+            .content.firstElementChild.cloneNode(true);
+        detailsButton.dataset.detailsUrl = contributor.details_url;
+        detailsButton.setAttribute("aria-label", `Details for ${contributor.contributor_name}`);
+        row.querySelector(".actions").appendChild(detailsButton);
 
         row.querySelector('[name="contributor_type"]').value = contributor.contributor_type;
         row.querySelector('[name="contributor_name"]').value = contributor.contributor_name;
         row.querySelector('[name="contact_name"]').value = contributor.contact_name || "";
         row.querySelector('[name="phone"]').value = contributor.phone || "";
         row.querySelector('[name="email"]').value = contributor.email || "";
-        row.querySelector('[name="description"]').value = contributor.description || "";
 
         updateFilterData(row);
     }
@@ -447,16 +333,25 @@
         const sheet = getSheet();
         const url = isNew ? sheet.dataset.createUrl : row.dataset.saveUrl;
 
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCookie("csrftoken"),
-            },
-            body: JSON.stringify(getPayload(row)),
-        });
-
-        const data = await response.json();
+        let response, data;
+        try {
+            response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                body: JSON.stringify(getPayload(row)),
+            });
+            data = await response.json();
+        } catch (failure) {
+            console.error("Spreadsheet row save failed", failure);
+            const message = response ?
+                `The server returned an unexpected response (HTTP ${response.status}). Your edits are still available; reopen the spreadsheet to check whether they were saved.` :
+                "Could not reach the server. Your edits are still available; check your connection before retrying.";
+            setErrors(row, {"__all__": message});
+            return;
+        }
 
         if (!response.ok || !data.ok) {
             setErrors(row, data.errors || { "__all__": "Unable to save contributor." });
@@ -555,17 +450,22 @@
                 bindRow(row);
             }
         });
-        document.getElementById('select-all').addEventListener('change', (event) => {
+        const selectAll = document.getElementById('select-all');
+        selectAll.disabled = false;
+        window.addEventListener('pageshow', () => { selectAll.disabled = false; });
+        selectAll.addEventListener('change', (event) => {
             select_all( event);
         })
     }
 
     function initialiseFilters() {
         document.querySelector(
-            'section#section-filter span.filter-icon').addEventListener('click', (event)=>{
-                event.target.classList.toggle('active');
-                const filter_section = document.getElementById('search-bar');
-                filter_section.toggleAttribute('active');
+            'section#toolbar button.search-icon').addEventListener('click', (event)=>{
+                const button = event.currentTarget;
+                const searchBar = document.getElementById('search-bar');
+                const expanded = searchBar.toggleAttribute('active');
+                button.classList.toggle('active', expanded);
+                button.setAttribute('aria-expanded', String(expanded));
         });
 
         document.querySelectorAll("[data-filter-field]").forEach((input) => {
@@ -573,31 +473,91 @@
         });
     }
 
-    function initialiseDescriptionEditor() {
-        const editor = getDescriptionEditor();
-        const applyButton = document.querySelector("#description-editor-apply");
-        const cancelButton = document.querySelector("#description-editor-cancel");
-        const dialog = getDescriptionDialog();
+    function initialiseContactHistory() {
+        const dialog = document.querySelector("#contact-history-dialog");
+        const form = document.querySelector("#contact-history-form");
+        const error = document.querySelector("#contact-history-error");
+        const save = document.querySelector("#contact-history-save");
+        const cancel = document.querySelector("#contact-history-cancel");
+        let saving = false;
+        let contactRow = null;
 
-        if (!editor || !applyButton || !cancelButton || !dialog) {
-            return;
-        }
+        document.addEventListener("click", (event) => {
+            const button = event.target.closest(".add-contact-history");
+            if (!button) return;
+            contactRow = button.closest("tr") || getSheet().querySelector(`tr[data-contributor-id="${button.dataset.contributorId}"]`);
+            if (!contactRow || contactRow.dataset.isNew === "true") return;
+            form.reset();
+            form.action = button.dataset.contactHistoryUrl;
+            error.textContent = "";
+            document.querySelector("#contact-history-contributor").textContent =
+                contactRow.querySelector('[name="contributor_name"]').value;
+            const today = new Date();
+            document.querySelector("#contact-history-date").value =
+                `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+            dialog.showModal();
+            document.querySelector("#contact-history-note").focus();
+        });
 
-        editor.addEventListener("input", updateDescriptionCounter);
-
-        applyButton.addEventListener("click", applyDescriptionEditor);
-        cancelButton.addEventListener("click", cancelDescriptionEditor);
-
-        dialog.addEventListener("cancel", () => {
-            activeDescriptionRow = null;
-            activeDescriptionInput = null;
+        cancel.addEventListener("click", () => dialog.close());
+        dialog.addEventListener("cancel", (event) => {
+            if (saving) event.preventDefault();
+        });
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            if (saving) return;
+            saving = true;
+            save.disabled = true;
+            cancel.disabled = true;
+            error.textContent = "";
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST", body: new FormData(form),
+                    headers: {"X-CSRFToken": form.querySelector('[name="csrfmiddlewaretoken"]').value},
+                });
+                const data = await response.json();
+                if (!response.ok || !data.ok) {
+                    error.textContent = Object.values(data.errors || {}).flat()
+                        .map((item) => item.message).join(" ") || "Unable to save contact history.";
+                    return;
+                }
+                const lastContact = contactRow.querySelector(".last-contact-date");
+                const cutoff = getSheet().dataset.historicEventDate;
+                if (data.contact_date > (cutoff || "") && data.contact_date > (lastContact.dataset.date || "")) {
+                    lastContact.dataset.date = data.contact_date;
+                    const [year, month, day] = data.contact_date.split("-");
+                    lastContact.value = `${day}/${month}/${year}`;
+                }
+                dialog.close();
+                getSheet().dispatchEvent(new CustomEvent("contact-history-saved", {
+                    detail: {row: contactRow, contactDate: data.contact_date},
+                }));
+            } catch (failure) {
+                error.textContent = "Unable to save contact history. Please try again.";
+            } finally {
+                saving = false;
+                save.disabled = false;
+                cancel.disabled = false;
+            }
         });
     }
 
     function initialiseContributorSpreadsheet() {
         initialiseRows();
         initialiseFilters();
-        initialiseDescriptionEditor();
+        initialiseContactHistory();
+        getSheet().addEventListener("contributor-details-saved", (event) => {
+            const {row, contributor} = event.detail;
+            for (const field of ["contributor_name", "contact_name", "phone", "email", "contributor_type"]) {
+                const input = row.querySelector(`[name="${field}"]`);
+                if (input) input.value = contributor[field] || "";
+            }
+            lockRow(row);
+            updateFilterData(row);
+            applyFilters();
+            row.querySelector(".contributor-details-button").setAttribute("aria-label", `Details for ${contributor.contributor_name}`);
+            row.querySelector(".add-contact-history").setAttribute("aria-label", `Record contact with ${contributor.contributor_name}`);
+        });
 
     }
 
@@ -612,12 +572,10 @@
         unlockRow: toggleRowLock,
         lockRow,
         markDirty,
+        undoRowEdits,
         applyFilters,
         getPayload,
         createEmptyNewRow,
         appendEmptyNewRow,
-        openDescriptionEditor,
-        applyDescriptionEditor,
-        cancelDescriptionEditor
     };
 })();

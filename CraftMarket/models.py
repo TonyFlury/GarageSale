@@ -259,7 +259,7 @@ class Marketer(models.Model):
             context['bcc'] = ["Trustees@branthamGarageSale.org.uk", ]
 
             template = CommunicationTemplate.objects.filter(category=category,
-                                                            transition=new_state.label,
+                                                            sub_category=new_state.label,
                                                             use_from__lte=timezone.now()).order_by("-use_from").first()
             if template:
                 try:

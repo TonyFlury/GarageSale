@@ -132,7 +132,8 @@ if DEBUG:
     INSTALLED_APPS.extend(
         ['debug_toolbar',
          'mail_panel',
-         'django_lumen']
+         'django_lumen',
+         'data_browser']
     )
 
 MIDDLEWARE = [
@@ -224,7 +225,9 @@ APPS_SETTINGS = {
     "CraftMarket" : {'EmailTemplateCategory': 'CraftMarket',
                      'EmailFrom': 'craftmarket@branthamgaragesale.org.uk'},
     "Location": {'EmailTemplateCategory': 'Location',
-                    'EmailFrom': 'website@branthamgaragesale.org.uk'}
+                    'EmailFrom': 'website@branthamgaragesale.org.uk'},
+    "Sponsors": {'EmailTemplateCategory': 'Sponsors',
+                    'EmailFrom': 'sponsorship@branthamgaragesale.org.uk'}
 }
 APPS_SETTINGS |= google_drive_info.uploads
 

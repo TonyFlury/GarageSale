@@ -1,0 +1,11 @@
+{% if contributor.sponsor_status == "Confirmed" %}
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d"
+         stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+         role="img" aria-label="Confirmed" xmlns="http://www.w3.org/2000/svg">
+        <title>Confirmed</title>
+        <path d="M5 12l4 4L19 6" />
+    </svg>
+{% endif %}
+{% if contributor.sponsor_cash_donated %}
+    <span title="Cash contribution recorded for this event">Cash Donated</span>
+{% endif %}

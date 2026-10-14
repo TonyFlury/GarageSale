@@ -1,0 +1,19 @@
+<div class="detail-field">
+    {% if field.name == 'contributor_name' %}
+        <label for="{{ field.id_for_label }}">{{ data_label|default:'Contributor' }} name:</label>
+    {% else %}
+        {{ field.label_tag }}
+    {% endif %}
+    <div>
+        {{ field }}
+        {% if field.name == 'icon' %}
+            {% if contributor.icon %}
+                <img class="contributor-icon-preview" src="{{ contributor.icon.url }}" alt="Contributor icon">
+            {% else %}
+                <p class="details-no-icon">No icon provided.</p>
+            {% endif %}
+        {% endif %}
+        {% if field.help_text %}<p class="details-help">{{ field.help_text }}</p>{% endif %}
+        <p class="field-error" data-details-error="{{ field.name }}"></p>
+    </div>
+</div>

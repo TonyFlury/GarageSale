@@ -1,11 +1,20 @@
 from django.urls import path
 from . import views
 from Location import stats_view
+from Sponsors.views import SponsorEntryPoint
+from Sponsors.contribution_board import ContributionBoard
+from GarageSale.views.prize_draw_views import PrizeDrawWinners
+from GarageSale.views.template_views import CommunicationTemplateCategories, CommunicationTemplateCreate, CommunicationTemplateEdit, CommunicationTemplateDelete, CommunicationTemplateDuplicate
 
 app_name = 'TeamPages'
 urlpatterns = [
     path('', views.TeamPage.as_view(), name='Root'),
     path('<int:event_id>/', views.TeamPage.as_view(), name='EventRoot'),
+    path('communication-templates/', CommunicationTemplateCategories.as_view(), name='CommunicationTemplates'),
+    path('communication-templates/create/', CommunicationTemplateCreate.as_view(), name='CommunicationTemplateCreate'),
+    path('communication-templates/<int:pk>/edit/', CommunicationTemplateEdit.as_view(), name='CommunicationTemplateEdit'),
+    path('communication-templates/<int:pk>/delete/', CommunicationTemplateDelete.as_view(), name='CommunicationTemplateDelete'),
+    path('communication-templates/<int:pk>/duplicate/', CommunicationTemplateDuplicate.as_view(), name='CommunicationTemplateDuplicate'),
 
 
     path('motd/', views.MOTD_list, name='MOTDList'),
@@ -28,15 +37,13 @@ urlpatterns = [
     path('event/create/', views.EventCreate.as_view(), name='EventCreate'),
     path('event/<int:event_id>/edit/', views.EventEdit.as_view(), name='EventEdit'),
     path('event/<int:event_id>/view/', views.EventView.as_view(), name='EventView'),
+    path('event/<int:event_id>/use/', views.event_use, name='EventUse'),
 
-
-    path('sponsor/', views.SponsorEntryPoint.as_view(), name='SponsorEntryPoint'),
-    path('sponsor/<int:event_id>/', views.SponsorEntryPoint.as_view(), name='SponsorEntryPoint'),
-    path('sponsor/<int:event_id>/', views.SponsorsRoot.as_view(), name='Sponsor'),
-    path('sponsor/<int:event_id>/create/', views.SponsorCreate.as_view(), name='SponsorCreate'),
-    path('sponsor/<int:sponsor_id>/view/', views.SponsorView.as_view(), name='SponsorView'),
-    path('sponsor/<int:sponsor_id>/edit/', views.SponsorEdit.as_view(), name='SponsorEdit'),
-    path('sponsor/<int:sponsor_id>/confirm/', views.SponsorConfirm.as_view(), name='SponsorConfirm'),
-    path('sponsor/<int:sponsor_id>/delete/', views.SponsorDelete.as_view(), name='SponsorConfirm'),
+    path('sponsor/', SponsorEntryPoint.as_view(), name='SponsorEntryPoint'),
+    path('contributions/', ContributionBoard.as_view(), name='ContributionBoard'),
+    path('prize-draw-winners/', PrizeDrawWinners.as_view(), name='PrizeDrawWinners'),
+    path('prize-draw-winners/<int:event_id>/', PrizeDrawWinners.as_view(), name='PrizeDrawWinners'),
+    path('contributions/<int:event_id>/', ContributionBoard.as_view(), name='ContributionBoard'),
+    path('sponsor/<int:event_id>/', SponsorEntryPoint.as_view(), name='SponsorEntryPoint'),
     path("GoogleDrive/", views.GoogleDriveEntryPoint, name='GoogleDriveEntryPoint'),
 ]

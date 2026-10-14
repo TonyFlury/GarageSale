@@ -61,7 +61,6 @@ class ContributorSpreadsheetBrowserTests(StaticLiveServerTestCase):
         new_row.find_element(By.CSS_SELECTOR, '[name="contact_name"]').send_keys("Alex Contact")
         new_row.find_element(By.CSS_SELECTOR, '[name="phone"]').send_keys("07123456789")
         new_row.find_element(By.CSS_SELECTOR, '[name="email"]').send_keys("alex@example.com")
-        new_row.find_element(By.CSS_SELECTOR, '[name="description"]').send_keys("Created from spreadsheet")
 
         new_row.find_element(By.CSS_SELECTOR, ".save-row").click()
 

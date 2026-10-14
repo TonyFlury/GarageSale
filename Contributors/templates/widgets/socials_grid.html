@@ -1,0 +1,16 @@
+<div class="socials-editor">
+    <input type="hidden" name="{{ widget.name }}" id="{{ widget.attrs.id }}" value="{{ widget.value|default_if_none:'null' }}" class="socials-data">
+    <div class="socials-grid" role="group" aria-label="Socials sites and links" tabindex="0">
+        <div class="socials-heading"><span>Site</span><span>Link</span></div>
+        <div class="socials-rows">
+        {% for row in social_rows %}
+            <div class="social-pair" data-original-value="{{ row.original_json }}" data-original-text="{{ row.value }}">
+                <input class="social-key" type="text" value="{{ row.key }}" aria-label="Social site" disabled>
+                <input class="social-value" type="text" value="{{ row.value }}" aria-label="Social link" disabled>
+                <button type="button" class="social-remove social-edit-action" aria-label="Remove social entry" hidden>×</button>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+    <button type="button" class="social-add social-edit-action" hidden>Add entry</button>
+</div>
