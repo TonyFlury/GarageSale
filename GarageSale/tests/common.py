@@ -152,9 +152,12 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
     def setUp(self):
         super().setUp()
         self._screenshot_on_close = True
+        self._screenshot_saved_before_logout = False
 
-    def tearDown(self):
-        super().tearDown()
+    def _save_final_screenshot(self):
+        """Capture the page under test before logout or other cleanup changes it."""
+        if not getattr(self, '_screenshot_on_close', False):
+            return False
         if self.screenshot_sub_directory:
             screen_shot_path = (root_screenshot_directory
                                     / f'{datetime.datetime.now(datetime.timezone.utc).isoformat(sep="_", timespec="seconds")}' / self.screenshot_sub_directory)
@@ -162,9 +165,18 @@ class SeleniumCommonMixin(StaticLiveServerTestCase):
         else:
             screen_shot_path = None
 
-        if screen_shot_path and hasattr(self, "_screenshot_on_close") and self._screenshot_on_close:
+        if screen_shot_path:
             test_name = self.id().split('.')[-1]
             self.selenium.save_screenshot(screen_shot_path / f'{test_name}.png')
+            return True
+        return False
+
+    def tearDown(self):
+        try:
+            if not getattr(self, '_screenshot_saved_before_logout', False):
+                self._save_final_screenshot()
+        finally:
+            super().tearDown()
 
     @classmethod
     def tearDownClass(cls):
@@ -217,6 +229,7 @@ class IdentifyMixin(StaticLiveServerTestCase):
         return None
 
     def force_login(self, user, base_url):
+        self._screenshot_saved_before_logout = False
         SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
         base_url = base_url if base_url else (self.get_test_url() if hasattr(self, 'get_test_url') else '')
 
@@ -238,6 +251,9 @@ class IdentifyMixin(StaticLiveServerTestCase):
         self.selenium.refresh()
 
     def force_logout(self):
+        capture = getattr(self, '_save_final_screenshot', None)
+        if capture is not None:
+            self._screenshot_saved_before_logout = capture()
         self.selenium.delete_cookie(settings.SESSION_COOKIE_NAME)
         self.selenium.refresh()
 
