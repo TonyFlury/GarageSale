@@ -12,7 +12,7 @@ TODO Convert to official theme and layout
 -->
 {% block PageStyles %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}?v=craft-market-popups-1">
+    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}?v=craft-market-popups-2">
 {% endblock %}
 
 {% block Title %}
@@ -26,15 +26,26 @@ TODO Convert to official theme and layout
     <script defer src="{% static 'Contributors/js/contributor_contributions.js' %}?v=delete-1"></script>
     <script defer src="{% static 'Contributors/js/contributor_filters.js' %}"></script>
     <script defer src="{% static 'Contributors/js/contributor_modal.js' %}"></script>
-    <script defer src="{% static 'Contributors/js/contributor_toolbar.js' %}"></script>
+    <script defer src="{% static 'Contributors/js/contributor_toolbar.js' %}?v=new-row-1"></script>
 
 {% endblock %}
 
 {% block SnappableSections %}
 <main class="spreadsheet-page">
-    <h1>{{ title }}</h1>
+    <h1>{% if title %}{{ title }}{% else %}{{ data_label|default:"Contributor" }}s{% endif %}</h1>
 
     <section id="toolbar">
+        <button type="button" class="toolbar-action" id="spreadsheet-new-button"
+                aria-controls="contributor-sheet"
+                aria-label="New {{ contributor_type|default:data_label|default:'Contributor' }}"
+                title="New {{ contributor_type|default:data_label|default:'Contributor' }}">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                <path d="M12 8v8M8 12h8"></path>
+            </svg>
+        </button>
+        <span class="toolbar-separator" aria-hidden="true"></span>
         <a class="csv-icon" href="{% url 'contributors:upload' %}" aria-label="Upload CSV" title="Upload CSV">
             <img src="{% static 'Contributors/images/icons/upload-svgrepo-com.svg' %}" alt="" width="24" height="24">
         </a>

@@ -584,6 +584,17 @@
                 font: inherit;
             }
 
+            .craft-market-popup .market-send-email {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin: 1rem 0;
+            }
+
+            .craft-market-popup form:has(.market-send-email input:not(:checked)) .market-email-options {
+                display: none;
+            }
+
             .craft-market-popup .buttons {
                 display: flex;
                 flex-wrap: wrap;

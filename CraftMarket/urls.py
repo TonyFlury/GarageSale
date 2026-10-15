@@ -15,9 +15,11 @@ Testable Statements:
 from django.urls import path
 
 from . import views
+from .rsvp import ContributorRSVP
 
 app_name = "CraftMarket"
 urlpatterns = [
+    path('rsvp/<str:token>/', ContributorRSVP.as_view(), name='ContributorRSVP'),
     path('', views.MarketEntryPoint.as_view(), name='EntryPoint'),
     path('<int:event_id>/', views.MarketEntryPoint.as_view(), name='EntryPoint'),
 

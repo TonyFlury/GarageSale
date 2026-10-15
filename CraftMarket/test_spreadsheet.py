@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from Contributors.models import Contributor, ContributorEvent, ContributorHistory, Contributions
 from CraftMarket.views import MarketerSpreadsheetView, MarketEntryPoint
+from CraftMarket.rsvp import ContributorRSVP, invitation_url
 from GarageSale.models import CommunicationTemplate, EventData, TemplateAttachment
 
 
@@ -102,7 +103,9 @@ class MarketSpreadsheetTests(TestCase):
                 self.record_status("Invited")
             before = ContributorEvent.objects.count()
             view = self.action(status, selected_filters=["contacted"])
-            self.assertIn(f'Save {status} without email', view.modal_html)
+            self.assertIn('type="checkbox" name="delivery" value="send_email"', view.modal_html)
+            self.assertIn('name="confirm_action" value="1"', view.modal_html)
+            self.assertNotIn('Save ', view.modal_html)
             self.assertIn(f'<option value="{self.templates[status].pk}">', view.modal_html)
             self.assertIn('name="selected_filters" value="contacted"', view.modal_html)
             self.assertIn(f'name="market_event_id" value="{self.event.pk}"', view.modal_html)
@@ -123,7 +126,7 @@ class MarketSpreadsheetTests(TestCase):
         CommunicationTemplate.objects.all().delete()
         view = self.action("Invited")
         self.assertIn("No email templates", view.modal_html)
-        self.assertIn("Save Invited without email", view.modal_html)
+        self.assertIn('value="1">Invite</button>', view.modal_html)
         self.action("Invited", "without_email")
         self.assertEqual(self.marketer.contributorevent_set.get().status, "Invited")
 
@@ -140,6 +143,75 @@ class MarketSpreadsheetTests(TestCase):
         self.assertEqual(context["trading_name"], "Oak & Co")
         self.assertEqual(context["contact_name"], "Alex")
         self.assertNotIn("donation", context)
+
+    @patch("CraftMarket.spreadsheet.CommunicationTemplate.send_email", return_value=1)
+    def test_invite_email_contains_absolute_personalised_rsvp_url(self, send):
+        self.action("Invited", "send_email", self.templates["Invited"])
+        url = send.call_args.kwargs["context"]["url"]
+        self.assertTrue(url.startswith("http://testserver/"))
+        from urllib.parse import urlsplit
+        from django.urls import resolve
+        match = resolve(urlsplit(url).path)
+        self.assertEqual(match.view_name, "CraftMarket:ContributorRSVP")
+        response = ContributorRSVP.as_view()(self.factory_request(), **match.kwargs)
+        self.assertEqual(response.context_data["form_section"], "portal_login")
+
+    def factory_request(self, data=None, session=None):
+        request = RequestFactory().post('/', data) if data is not None else RequestFactory().get('/')
+        request.session = session if session is not None else {}
+        return request
+
+    @patch("CraftMarket.spreadsheet.CommunicationTemplate.send_email", return_value=1)
+    def test_rsvp_requires_email_and_records_response_against_invited_event(self, send):
+        from urllib.parse import urlsplit
+        from django.urls import resolve
+        self.action("Invited", "without_email")
+        url = invitation_url(self.factory_request(), self.marketer, self.event)
+        kwargs = resolve(urlsplit(url).path).kwargs
+        session = {}
+        def post(data):
+            return ContributorRSVP.as_view()(self.factory_request(data, session), **kwargs)
+
+        response = post({'form_section': 'accept_reject', 'RSVP_Yes': 'yes'})
+        self.assertEqual(response.context_data['form_section'], 'portal_login')
+        response = post({'form_section': 'portal_login', 'email': 'wrong@example.com'})
+        self.assertTrue(response.context_data['form'].errors)
+        response = post({'form_section': 'portal_login', 'email': self.marketer.email})
+        self.assertEqual(response.context_data['form_section'], 'accept_reject')
+        # A submitted ID must never select another trader.
+        response = post({'form_section': 'accept_reject', 'RSVP_Yes': 'yes', 'marketer_id': self.other.pk})
+        self.assertEqual(response.context_data['form_section'], 'accept')
+        self.assertEqual(self.marketer.contributorevent_set.latest('pk').status, 'Confirmed')
+        self.assertFalse(self.other.contributorevent_set.exists())
+        self.assertEqual(send.call_count, 1)
+        self.assertIn('error', post({'form_section': 'accept_reject', 'RSVP_Yes': 'yes'}).context_data)
+
+    def test_rsvp_rejects_tampered_links_and_links_superseded_by_new_invites(self):
+        from urllib.parse import urlsplit
+        from django.urls import resolve
+        self.action('Invited', 'without_email')
+        url = invitation_url(self.factory_request(), self.marketer, self.event)
+        kwargs = resolve(urlsplit(url).path).kwargs
+        response = ContributorRSVP.as_view()(self.factory_request(), token=kwargs['token'] + 'x')
+        self.assertIn('error', response.context_data)
+        ContributorEvent.objects.create(contributor=self.marketer, event=self.event, status='Invited')
+        response = ContributorRSVP.as_view()(self.factory_request(), **kwargs)
+        self.assertIn('error', response.context_data)
+
+    def test_rsvp_rejection_and_non_invited_email_context(self):
+        from urllib.parse import urlsplit
+        from django.urls import resolve
+        self.assertEqual(invitation_url(self.factory_request(), self.marketer, self.event), '')
+        self.action('Invited', 'without_email')
+        kwargs = resolve(urlsplit(invitation_url(self.factory_request(), self.marketer, self.event)).path).kwargs
+        session = {}
+        ContributorRSVP.as_view()(self.factory_request(
+            {'form_section': 'portal_login', 'email': self.marketer.email}, session), **kwargs)
+        response = ContributorRSVP.as_view()(self.factory_request(
+            {'form_section': 'accept_reject', 'RSVP_No': 'no'}, session), **kwargs)
+        self.assertEqual(response.context_data['form_section'], 'reject')
+        self.assertEqual(self.marketer.contributorevent_set.latest('pk').status, 'Rejected')
+        self.assertEqual(invitation_url(self.factory_request(), self.marketer, self.event), '')
 
     def test_template_selection_excludes_wrong_subcategories_attachments_and_future_versions(self):
         self.templates["Terms"].sub_category = "Confirmed"
@@ -201,11 +273,28 @@ class MarketSpreadsheetTests(TestCase):
     def test_rejection_requires_confirmation_and_has_no_email_option(self):
         self.record_status("Invited")
         view = self.action("Rejected")
-        self.assertIn("Save Rejected without email", view.modal_html)
+        self.assertIn('value="1">Decline invitation</button>', view.modal_html)
         self.assertNotIn('value="send_email"', view.modal_html)
         self.assertEqual(ContributorEvent.objects.count(), 1)
         self.action("Rejected", "without_email")
         self.assertEqual(self.marketer.contributorevent_set.latest("pk").status, "Rejected")
+
+    @patch("CraftMarket.spreadsheet.CommunicationTemplate.send_email", return_value=1)
+    def test_checkbox_submission_invites_without_email_when_unchecked(self, send):
+        view = self.action('Invited', confirm_action='1', email_template_id=str(self.templates['Invited'].pk))
+        self.assertEqual(self.marketer.contributorevent_set.latest('pk').status, 'Invited')
+        send.assert_not_called()
+        self.assertNotIn('Status recorded', view.modal_html)
+
+    @patch("CraftMarket.spreadsheet.CommunicationTemplate.send_email", return_value=1)
+    def test_checkbox_submission_validates_template_before_inviting(self, send):
+        view = self.action('Invited', 'send_email', confirm_action='1')
+        self.assertIn('Choose exactly one email template.', view.modal_html)
+        self.assertFalse(ContributorEvent.objects.exists())
+        send.assert_not_called()
+        self.action('Invited', 'send_email', self.templates['Invited'], confirm_action='1')
+        self.assertEqual(self.marketer.contributorevent_set.latest('pk').status, 'Invited')
+        send.assert_called_once()
 
     def test_stale_event_and_past_event_do_not_save(self):
         view = self.action("Invited", "without_email", market_event_id=str(self.previous.pk))

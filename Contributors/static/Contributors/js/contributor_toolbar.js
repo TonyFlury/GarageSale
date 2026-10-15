@@ -2,7 +2,23 @@
     function initialiseToolbar() {
         const form = document.querySelector('#toolbar .extra-toolbar-actions');
         const sheet = document.querySelector('#contributor-sheet');
-        if (!form || !sheet) return;
+        if (!sheet) return;
+
+        document.querySelector('#spreadsheet-new-button')?.addEventListener('click', () => {
+            const row = sheet.querySelector('tbody tr[data-is-new="true"]');
+            const firstField = row?.querySelector(
+                'input:not([type="hidden"]):not([type="checkbox"]):not([disabled]):not([readonly]), ' +
+                'select:not([disabled]), textarea:not([disabled]):not([readonly])'
+            );
+            const scrollArea = sheet.closest('.spreadsheet-grid-scroll');
+            if (!firstField || !scrollArea) return;
+
+            scrollArea.scrollTop = scrollArea.scrollHeight;
+            scrollArea.scrollLeft = 0;
+            firstField.focus({preventScroll: true});
+        });
+
+        if (!form) return;
 
         function selectedRows() {
             return sheet.querySelectorAll('tbody tr:not([hidden]) input[name="selected_contributor"]:checked');

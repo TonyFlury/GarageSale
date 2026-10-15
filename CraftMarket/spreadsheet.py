@@ -14,6 +14,7 @@ from django.utils.functional import cached_property
 from Contributors.models import Contributor, ContributorEvent, ContributorHistory
 from Contributors.views.general_views import ContributorSpreadsheetView, get_current_contribution_event
 from GarageSale.models import CommunicationTemplate, EventData, TemplateAttachment
+from CraftMarket.rsvp import invitation_url
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +149,10 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
             return
 
         action = {"Invited": "invite", "Confirmed": "confirm", "Rejected": "reject"}.get(status, "send_email")
-        without_email = status is not None and post_data.get("delivery") == "without_email"
+        without_email = status is not None and (
+            post_data.get("delivery") == "without_email" or
+            (post_data.get("confirm_action") == "1" and not post_data.get("delivery"))
+        )
         templates = [] if status == "Rejected" or without_email else self._available_templates(status)
         selected_ids = post_data.getlist("email_template_id")
         template = next((item for item in templates if len(selected_ids) == 1 and str(item.pk) == selected_ids[0]), None)
@@ -204,6 +208,7 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
                 "trading_name": marketer.contributor_name, "contributor_name": marketer.contributor_name,
                 "company_name": marketer.contributor_name, "contact_name": contact or "Sirs",
                 "attn": f"For Attn of :{contact}" if contact else "",
+                "url": invitation_url(self.request, marketer, self.market_event),
             }
             try:
                 sent = template.send_email(self.request, context=context)

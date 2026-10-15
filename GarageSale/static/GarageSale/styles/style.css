@@ -572,6 +572,7 @@ div.blaze-slider button {
     div.supporting:not(.organisation) {
         width:fit-content;
         margin:auto;
+        padding-bottom: 5px;
         font-size: 150%;
     }
 

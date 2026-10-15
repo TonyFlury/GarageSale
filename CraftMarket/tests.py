@@ -1,5 +1,4 @@
 import random
-import string
 import time
 from datetime import timedelta
 from typing import Type
@@ -19,19 +18,23 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import Permission
 from django.core import mail
-from django.test import TestCase
+from django.test import Client, RequestFactory, TestCase, override_settings
+from urllib.parse import urlsplit
 from django.urls import reverse
 from django.utils import timezone
 from datetime import date
 from selenium.common import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 import GarageSale.models
 from GarageSale.tests.common import IdentifyMixin, SeleniumCommonMixin, override_settings_dict, SmartHTMLTestMixins
 
 from GarageSale.models import EventData, CommunicationTemplate
 from .models import Marketer, MarketerState, History
+from Contributors.models import Contributor, ContributorEvent
+from .rsvp import invitation_url
 
 from user_management.models import UserExtended
 from pathlib import Path
@@ -624,8 +627,308 @@ class TestCraftMarketTeamPages(IdentifyMixin, SmartHTMLTestMixins, SeleniumCommo
             first.refresh_from_db()
             self.assertEqual(first.state, MarketerState.Rejected)
 
-class MarketeerRSVP(SmartHTMLTestMixins, SeleniumCommonMixin):
-    """Marketeer RSVP tests - test that Marketers can RSVP to an event"""
+class LegacyMarketerInvitationCodes(TestCase):
+    """Retain coverage of codes used by invitations sent before the spreadsheet migration."""
+
+    def setUp(self):
+        self.event = EventData.objects.create(
+            event_date=timezone.localdate() + timedelta(days=30), use_from=timezone.localdate(),
+        )
+        self.marketers = [Marketer.objects.create(
+            event=self.event, trading_name=f'Legacy trader {index}', email=f'legacy{index}@example.com',
+        ) for index in range(4)]
+
+    def test_invited_marketers_have_distinct_valid_codes(self):
+        self.assertTrue(all(marketer.code is None for marketer in self.marketers))
+        for marketer in self.marketers:
+            marketer.update_state(MarketerState.Invited, send_email=False)
+            marketer.refresh_from_db()
+            self.assertTrue(marketer.is_valid_code(marketer.code))
+        self.assertEqual(len({marketer.code for marketer in self.marketers}), len(self.marketers))
+
+    def test_changing_email_changes_invitation_code(self):
+        marketer = self.marketers[0]
+        marketer.update_state(MarketerState.Invited, send_email=False)
+        previous_code = marketer.code
+        marketer.email = 'different@example.com'
+        marketer.save()
+        self.assertNotEqual(marketer.code, previous_code)
+
+    def test_changing_invitation_timestamp_changes_code(self):
+        marketer = self.marketers[0]
+        marketer.update_state(MarketerState.Invited, send_email=False)
+        previous_code = marketer.code
+        # auto_now_add preserves an explicitly updated timestamp on existing history.
+        invitation = marketer.history.get(state=MarketerState.Invited)
+        invitation.timestamp -= timedelta(days=1)
+        invitation.save(update_fields=['timestamp'])
+        marketer.save()
+        self.assertNotEqual(marketer.code, previous_code)
+
+
+class ContributorPortalFixtures:
+    """Contributor invitations and templates shared by browser and HTTP portal tests."""
+
+    def setUp(self):
+        super().setUp()
+        today = timezone.localdate()
+        self.event = EventData.objects.create(event_date=today + timedelta(days=30), use_from=today - timedelta(days=1))
+        self.other_event = EventData.objects.create(event_date=today + timedelta(days=60), use_from=today + timedelta(days=31))
+        self.marketer = Contributor.objects.create(
+            contributor_type='Marketer', contributor_name='Willow Ceramics',
+            contact_name='Alex Willow', email='willow@example.com',
+        )
+        self.other_marketer = Contributor.objects.create(
+            contributor_type='Marketer', contributor_name='Meadow Honey', email='meadow@example.com',
+        )
+        self.invitation = ContributorEvent.objects.create(contributor=self.marketer, event=self.event, status='Invited')
+        self.url = self.invite_url(self.marketer, self.event)
+        self.invited_template = CommunicationTemplate.objects.create(
+            category='PortalTest', sub_category='Invited', summary='Invitation',
+            subject='Your Craft Market invitation', use_from=today,
+            signature='',
+            html_content='<p>Hello {{ trading_name }}</p><a href="{{ url }}">Respond to your invitation</a>',
+        )
+        self.confirm_template = CommunicationTemplate.objects.create(
+            category='PortalTest', sub_category='Confirmed', summary='Confirmation',
+            subject='Attendance confirmed for {{ trading_name }}', use_from=today,
+            signature='',
+            html_content='<p>Dear {{ contact_name }}, thank you for confirming {{ trading_name }} on {{ event_date }}.</p>',
+        )
+        self.tos_template = CommunicationTemplate.objects.create(
+            category='PortalTest', sub_category='TermsAndConditions', summary='Terms',
+            subject='', use_from=today,
+            signature='',
+            html_content='Terms for {{ trading_name }} at the Craft Market on {{ event_date }}.',
+        )
+
+    def invite_url(self, marketer, event):
+        return urlsplit(invitation_url(RequestFactory().get('/'), marketer, event)).path
+
+    def latest_status(self, marketer=None, event=None):
+        return ContributorEvent.objects.filter(
+            contributor=marketer or self.marketer, event=event or self.event,
+        ).order_by('-timestamp', '-pk').first().status
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    TEST_SERVER=False,
+    APPS_SETTINGS={'CraftMarket': {
+        'EmailTemplateCategory': 'PortalTest', 'EmailFrom': 'market@example.com',
+    }},
+)
+class ContributorPortalHTTPTests(ContributorPortalFixtures, TestCase):
+    """Exercise the contributor portal through URLs, middleware, forms and real email rendering."""
+
+    def login(self, email=None, url=None, client=None):
+        return (client or self.client).post(url or self.url, {
+            'form_section': 'portal_login', 'email': email or self.marketer.email,
+        })
+
+    def respond(self, answer='RSVP_Yes', url=None, client=None, **extra):
+        return (client or self.client).post(url or self.url, {
+            'form_section': 'accept_reject', answer: 'yes', **extra,
+        })
+
+    def assertPortalError(self, response):
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'portal/craft_market_RSVP.html')
+        self.assertTrue(BeautifulSoup(response.content, 'html.parser').select_one('div.error'))
+
+    def test_invitation_email_link_opens_portal_without_team_login(self):
+        user = get_user_model().objects.create_user(email='team@example.com', password='test-password')
+        user.user_permissions.add(*Permission.objects.filter(
+            content_type__app_label='CraftMarket', codename__in=['suggest_marketer', 'change_marketer'],
+        ))
+        self.client.force_login(user)
+        response = self.client.post(reverse('CraftMarket:EntryPoint'), {
+            'toolbar_action': 'invite', 'selected_contributor': self.other_marketer.pk,
+            'market_event_id': self.event.pk, 'confirm_action': '1',
+            'delivery': 'send_email', 'email_template_id': self.invited_template.pk,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.other_marketer.email])
+        html = mail.outbox[0].alternatives[0][0]
+        link = BeautifulSoup(html, 'html.parser').select_one('a')['href']
+        self.assertTrue(link.startswith('http://testserver/'))
+        self.client.logout()
+        response = self.client.get(urlsplit(link).path)
+        self.assertContains(response, 'Craft Market Portal')
+        self.assertEqual(response.context['form_section'], 'portal_login')
+        self.assertEqual(self.latest_status(self.other_marketer), 'Invited')
+
+    def test_portal_shows_email_prompt_without_changing_status(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, 'Craft Market Portal')
+        soup = BeautifulSoup(response.content, 'html.parser')
+        self.assertIsNotNone(soup.select_one('form input[type="email"][name="email"]'))
+        self.assertEqual(soup.select_one('input[name="form_section"]')['value'], 'portal_login')
+        self.assertEqual(ContributorEvent.objects.count(), 1)
+
+    def test_matching_email_displays_personalised_terms_and_response_buttons(self):
+        response = self.login(email=self.marketer.email.upper())
+        self.assertEqual(response.context['form_section'], 'accept_reject')
+        self.assertContains(response, f'Terms for {self.marketer.contributor_name}')
+        self.assertContains(response, self.event.get_event_date_display())
+        soup = BeautifulSoup(response.content, 'html.parser')
+        self.assertIsNotNone(soup.select_one('input[name="RSVP_Yes"]'))
+        self.assertIsNotNone(soup.select_one('input[name="RSVP_No"]'))
+        self.assertEqual(ContributorEvent.objects.count(), 1)
+
+    def test_invalid_or_wrong_email_keeps_portal_locked(self):
+        for email in ('', 'not-an-email', self.other_marketer.email):
+            with self.subTest(email=email):
+                response = self.client.post(self.url, {'form_section': 'portal_login', 'email': email})
+                self.assertEqual(response.context['form_section'], 'portal_login')
+                self.assertTrue(response.context['form'].errors)
+                self.assertNotContains(response, 'name="RSVP_Yes"')
+                self.assertEqual(self.latest_status(), 'Invited')
+        self.assertFalse(mail.outbox)
+
+    def test_acceptance_records_event_status_and_sends_personalised_confirmation(self):
+        self.login()
+        response = self.respond()
+        self.assertContains(response, 'thank you for accepting')
+        self.assertEqual(response.context['form_section'], 'accept')
+        self.assertEqual(self.latest_status(), 'Confirmed')
+        self.assertEqual(ContributorEvent.objects.count(), 2)
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.to, [self.marketer.email])
+        self.assertEqual(email.from_email, 'market@example.com')
+        self.assertEqual(email.subject, f'Attendance confirmed for {self.marketer.contributor_name}')
+        self.assertIn(self.marketer.contact_name, email.body)
+        self.assertIn(self.event.get_event_date_display(), email.body)
+        self.assertFalse(ContributorEvent.objects.filter(event=self.other_event).exists())
+        self.assertFalse(Marketer.objects.exists())
+
+    def test_declining_records_rejection_without_confirmation_email(self):
+        self.login()
+        response = self.respond('RSVP_No')
+        self.assertContains(response, "we are sorry that you can't attend")
+        self.assertEqual(response.context['form_section'], 'reject')
+        self.assertEqual(self.latest_status(), 'Rejected')
+        self.assertFalse(mail.outbox)
+
+    def test_confirmation_includes_configured_terms_pdf(self):
+        CommunicationTemplate.objects.create(
+            category='PortalTest', sub_category='Confirmed', summary='Event terms',
+            subject='', signature='', use_from=timezone.localdate(),
+            html_content='Terms and Conditions for {{ trading_name }}.',
+        )
+        self.confirm_template.attachments.create(template_name='Event terms', upload=False)
+        self.login()
+        response = self.respond()
+        self.assertEqual(response.context['form_section'], 'accept')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(len(mail.outbox[0].attachments), 1)
+        filename, content, mime_type = mail.outbox[0].attachments[0]
+        self.assertTrue(filename.startswith('Event terms-'))
+        self.assertTrue(filename.endswith('.pdf'))
+        self.assertEqual(mime_type, 'application/pdf')
+        pdf = pypdf.PdfReader(io.BytesIO(content))
+        text = '\n'.join(page.extract_text() for page in pdf.pages)
+        self.assertIn(f'Terms and Conditions for {self.marketer.contributor_name}', text)
+
+    def test_response_requires_email_verification_in_the_same_session(self):
+        response = self.respond()
+        self.assertEqual(response.context['form_section'], 'portal_login')
+        self.login()
+        response = self.respond(client=Client())
+        self.assertEqual(response.context['form_section'], 'portal_login')
+        self.assertEqual(ContributorEvent.objects.count(), 1)
+        self.assertFalse(mail.outbox)
+
+    def test_verification_for_one_invitation_does_not_unlock_another(self):
+        ContributorEvent.objects.create(contributor=self.other_marketer, event=self.event, status='Invited')
+        other_url = self.invite_url(self.other_marketer, self.event)
+        self.login()
+        response = self.respond(url=other_url)
+        self.assertEqual(response.context['form_section'], 'portal_login')
+        self.assertEqual(self.latest_status(self.other_marketer), 'Invited')
+
+    def test_posted_marketer_id_cannot_change_a_different_trader(self):
+        self.login()
+        self.respond(marketer_id=self.other_marketer.pk)
+        self.assertEqual(self.latest_status(), 'Confirmed')
+        self.assertFalse(self.other_marketer.contributorevent_set.exists())
+
+    def test_response_changes_invited_event_even_if_another_event_is_current(self):
+        ContributorEvent.objects.create(contributor=self.marketer, event=self.other_event, status='Invited')
+        self.login(url=self.invite_url(self.marketer, self.other_event))
+        self.respond(url=self.invite_url(self.marketer, self.other_event))
+        self.assertEqual(self.latest_status(event=self.other_event), 'Confirmed')
+        self.assertEqual(self.latest_status(), 'Invited')
+        self.assertIn(self.other_event.get_event_date_display(), mail.outbox[0].body)
+
+    def test_altered_link_is_rejected_on_get_and_post(self):
+        for request in (self.client.get, self.client.post):
+            self.assertPortalError(request(self.url.rstrip('/') + 'x/'))
+        self.assertEqual(ContributorEvent.objects.count(), 1)
+
+    def test_email_change_invalidates_existing_link(self):
+        self.marketer.email = 'new-address@example.com'
+        self.marketer.save(update_fields=['email'])
+        self.assertPortalError(self.client.get(self.url))
+
+    def test_past_event_link_is_inactive(self):
+        self.event.event_date = timezone.localdate() - timedelta(days=1)
+        self.event.save(update_fields=['event_date'])
+        self.assertPortalError(self.client.get(self.url))
+        self.assertEqual(self.latest_status(), 'Invited')
+
+    def test_new_invitation_invalidates_link_and_prior_email_verification(self):
+        self.login()
+        ContributorEvent.objects.create(contributor=self.marketer, event=self.event, status='Invited')
+        self.assertPortalError(self.respond())
+        new_url = self.invite_url(self.marketer, self.event)
+        self.assertNotEqual(new_url, self.url)
+        response = self.respond(url=new_url)
+        self.assertEqual(response.context['form_section'], 'portal_login')
+        self.assertEqual(self.latest_status(), 'Invited')
+
+    def test_completed_invitation_cannot_be_replayed(self):
+        self.login()
+        self.respond()
+        self.assertPortalError(self.respond())
+        self.assertPortalError(self.client.get(self.url))
+        self.assertEqual(ContributorEvent.objects.count(), 2)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_missing_or_conflicting_answers_leave_invitation_unchanged(self):
+        self.login()
+        for answers in ({}, {'RSVP_Yes': 'yes', 'RSVP_No': 'no'}):
+            response = self.client.post(self.url, {'form_section': 'accept_reject', **answers})
+            self.assertEqual(response.context['form_section'], 'accept_reject')
+            self.assertEqual(self.latest_status(), 'Invited')
+        self.assertFalse(mail.outbox)
+
+    def test_portal_response_requires_csrf_token(self):
+        client = Client(enforce_csrf_checks=True)
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        response = self.login(client=client)
+        self.assertEqual(response.status_code, 403)
+        token = client.cookies['csrftoken'].value
+        response = client.post(self.url, {'form_section': 'portal_login', 'email': self.marketer.email,
+                                          'csrfmiddlewaretoken': token})
+        self.assertEqual(response.context['form_section'], 'accept_reject')
+        response = client.post(self.url, {'form_section': 'accept_reject', 'RSVP_Yes': 'yes',
+                                          'csrfmiddlewaretoken': token})
+        self.assertEqual(response.context['form_section'], 'accept')
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    TEST_SERVER=False,
+    APPS_SETTINGS={'CraftMarket': {
+        'EmailTemplateCategory': 'PortalTest', 'EmailFrom': 'market@example.com',
+    }},
+)
+class MarketeerRSVP(ContributorPortalFixtures, SmartHTMLTestMixins, SeleniumCommonMixin):
+    """Follow the contributor invitation portal on screen as an anonymous trader."""
     screenshot_sub_directory = 'TestCraftMarketRSVP'
 
     @classmethod
@@ -634,203 +937,92 @@ class MarketeerRSVP(SmartHTMLTestMixins, SeleniumCommonMixin):
 
     def setUp(self):
         super().setUp()
-
-        self.screenshot_on_close = True
-
-        self.event = EventData.objects.create(event_date=date(month=6, day=21, year=timezone.now().year + 1),
-                                              use_from=timezone.now())
-        self.marketers = [Marketer.objects.create(event=self.event, trading_name=f"Marketeer{i}",
-                                                       email=f"marketeer{i}@market.com") for i in range(4) ]
-
-        self.invited_template = CommunicationTemplate.objects.create(category="CraftMarket",
-                                                                    sub_category=MarketerState.Invited.label,
-                                                                    subject="Test Subject",
-                                                                    html_content="Dear {trading_name},<br>We hope this email finds you well.",
-                                                                    signature='Brantham Garage Sale',
-                                                                    use_from=timezone.now())
-
-        self.confirm_template = CommunicationTemplate.objects.create(category="CraftMarket",
-                                                                    sub_category=MarketerState.Confirmed.label,
-                                                                    subject="Test Subject",
-                                                                    html_content="Dear {{trading_name}},<br>Thank you for confirming your attendance.",
-                                                                    signature='Brantham Garage Sale',
-                                                                    use_from=timezone.now())
-
-        self.tos_template = CommunicationTemplate.objects.create(category="CraftMarket",
-                            sub_category='TermsAndConditions',
-                            subject="",
-                            html_content="Terms and Conditions",
-                            signature='',
-                            use_from=timezone.now())
-
-        self.confirm_template.attachments.create(template_name=self.tos_template.sub_category, upload=False)
-        self.request = MagicMock(HttpRequest)
-        self.request.build_absolute_uri = MagicMock(side_effect=lambda u : "https://127.0.0.1:8080"+u)
-        self.request.META = {'HTTP_HOST': '127.0.0.1:8080'}
+        self.selenium.set_window_size(1280, 1000)
+        # The shared driver must not retain another trader's verified session.
+        self.selenium.get(self.live_server_url + self.url)
+        self.selenium.delete_all_cookies()
+        self.selenium.get(self.live_server_url + self.url)
 
     def get_test_url(self):
-        return self.live_server_url + reverse('CraftMarket:List', kwargs={'event_id': self.event.id})
+        return self.live_server_url + self.url
 
-    def assertStartsWith(self, a, b, msg=None):
-        """Assert that a string starts with another string"""
-        if not a.startswith(b):
-            standard_msg = f"{a!r} does not start with {b!r}"
-            self.fail(self._formatMessage(msg, standard_msg))
+    def visible(self, selector):
+        return WebDriverWait(self.selenium, 10).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, selector)),
+        )
 
-    def assertEndsWith(self, a, b, msg=None):
-        """Assert that a string starts with another string"""
-        if not a.endswith(b):
-            standard_msg = f"{a!r} does not start with {b!r}"
-            self.fail(self._formatMessage(msg, standard_msg))
+    def enter_portal(self, email=None):
+        field = self.visible('div.form input[type="email"]')
+        field.clear()
+        field.send_keys(email or self.marketer.email)
+        self.visible('div.buttons input[type="submit"]').click()
 
-    def test_400_unique_code_generation(self):
-        """Confirm each marketer can have a unique code"""
+    def choose_response(self, answer):
+        self.visible(f'input[name="{answer}"]').click()
+        section = 'accept' if answer == 'RSVP_Yes' else 'reject'
+        WebDriverWait(self.selenium, 10).until(EC.presence_of_element_located(
+            (By.CSS_SELECTOR, f'input[name="form_section"][value="{section}"]'),
+        ))
+        return self.visible('div.intro')
 
-        # With the marketers not yet invited, the codes will be None
-        codes = [marketer.code for marketer in self.marketers]
-        self.assertTrue( all(code is None for code in codes) )
+    def test_invitation_link_shows_email_prompt(self):
+        self.assertEqual(self.visible('div.body h1').text, 'Craft Market Portal')
+        self.assertTrue(self.visible('input[name="email"]').is_enabled())
+        self.assertTrue(self.visible('div.buttons input[type="submit"]').is_enabled())
+        self.assertEqual(self.latest_status(), 'Invited')
+        self.screenshot('email-prompt')
 
-        # code will be based on the marketer email address and most recent invite timestamp - so we can tweak these
-        # and confirm that the code changes accordingly.
-        _ = list(map( lambda x: x.update_state(MarketerState.Invited, send_email=False), self.marketers))
+    def test_matching_email_shows_terms_and_both_response_buttons(self):
+        self.enter_portal()
+        self.assertIn(self.marketer.contributor_name, self.visible('div.intro').text)
+        terms = self.visible('#CraftMarketToS')
+        self.assertIn(f'Terms for {self.marketer.contributor_name}', terms.text)
+        self.assertIn(self.event.get_event_date_display(), terms.text)
+        self.assertTrue(self.visible('input[name="RSVP_Yes"]').is_enabled())
+        self.assertTrue(self.visible('input[name="RSVP_No"]').is_enabled())
+        self.assertEqual(self.latest_status(), 'Invited')
+        self.screenshot('terms-and-response-buttons')
 
-        self.assertTrue(all(marketer.state == MarketerState.Invited for marketer in self.marketers),
-                        'Not all marketer states are now Invited')
+    def test_wrong_email_shows_error_and_allows_retry(self):
+        self.enter_portal(email=self.other_marketer.email)
+        self.assertIn('Please enter the email address', self.visible('.errorlist').text)
+        self.assertEqual(self.latest_status(), 'Invited')
+        self.enter_portal()
+        self.assertTrue(self.visible('input[name="RSVP_Yes"]').is_enabled())
 
-        self.assertTrue(all(i.code is not None for i in self.marketers))
-        self.assertTrue(all(i.is_valid_code(i.code) for i in self.marketers), 'Some codes are not valid')
-
-    def test_405_unique_code_generation(self):
-        """Confirm each marketer code is different if the email is tweaked or the last invite is tweaked"""
-        self.marketers[0].update_state(MarketerState.Invited, send_email=False)
-        self.marketers[0].refresh_from_db()
-        inst = self.marketers[0]
-
-        code = inst.code
-        inst.email = 'a' + inst.email
-        inst.save()
-
-        self.assertNotEqual(inst.code, code)
-
-    def test_406_unique_code_generation_tweaked_timestamp(self):
-        """Confirm each marketer code is different if the last invite is tweaked"""
-        self.marketers[0].update_state(MarketerState.Invited, send_email=False)
-        code = self.marketers[0].code
-        inst = History.most_recent.filter(state=MarketerState.Invited, marketeer=self.marketers[0])[0]
-        inst.timestamp = inst.timestamp - timedelta(seconds=1)
-        inst.save()
-        self.marketers[0].save()
-
-        self.assertNotEqual(self.marketers[0].code, code)
-
-    def test_410_rsvp_confirm(self):
-        """Confirm that the RSVP url brings up the correct page"""
-        marketer = self.marketers[0]
-        marketer.update_state(MarketerState.Invited, send_email=False)
-        code = marketer.code
-        self.selenium.get(self.live_server_url + reverse('CraftMarket:RSVP', kwargs={'marketer_code': code}))
-        self.selenium.implicitly_wait(1)
-        soup = BeautifulSoup(self.selenium.page_source, 'html.parser')
-        h1 = soup.select_one('div.body H1')
-        self.assertEqual(h1.text, 'Craft Market Portal')
-
-    def test_415_rsvp_confirm_on_error(self):
-        """Confirm that the RSVP url brings up the correct page on errors"""
-        code = ''.join(random.sample(string.ascii_letters+string.digits, 7))
-        self.selenium.get(self.live_server_url + reverse('CraftMarket:RSVP', kwargs={'marketer_code': code}))
-        self.selenium.implicitly_wait(1)
-        soup = BeautifulSoup(self.selenium.page_source, 'html.parser')
-        error = soup.select_one('div.error')
-        self.assertIn('Invalid Request to Market Portal - please check your emails and try again', error.text)
-
-    def test_420_rsvp_portal(self):
-        """Confirm that the RSVP url shows the email prompt"""
-        marketer = self.marketers[0]
-        marketer.update_state(MarketerState.Invited, send_email=False)
-        code = marketer.code
-        self.selenium.get(self.live_server_url + reverse('CraftMarket:RSVP', kwargs={'marketer_code': code}))
-        self.selenium.implicitly_wait(1)
-        email = self.selenium.find_element(By.CSS_SELECTOR, 'div.form input[type="email"]')
-        self.assertTrue(email.is_displayed())
-        submit = self.selenium.find_element(By.CSS_SELECTOR, 'div.buttons input.button.confirm')
-        self.assertTrue(submit.is_displayed())
-
-    def test_430_rsvp_enter(self):
-        """Confirm that the RSVP url shows the email prompt"""
-        marketer = self.marketers[0]
-        marketer.update_state(MarketerState.Invited, send_email=False)
-        code = marketer.code
-
-        self.selenium.get(self.live_server_url + reverse('CraftMarket:RSVP', kwargs={'marketer_code': code}))
-        email = self.selenium.find_element(By.CSS_SELECTOR, 'div.form input[type="email"]')
-        submit = self.selenium.find_element(By.CSS_SELECTOR, 'div.buttons input.button.confirm')
-
-        email.send_keys(self.marketers[0].email)
-
-        submit.click()
-        WebDriverWait(self.selenium,timeout=10).until(lambda _: self.selenium.find_element(By.CSS_SELECTOR, 'div.buttons input.button.confirm').is_displayed() & self.selenium.find_element(By.CSS_SELECTOR, 'div.buttons input.button.reject').is_displayed())
-
-        self._dump_page_source(name='rsvp.html', source=self.selenium.page_source)
-
-        soup = BeautifulSoup(self.selenium.page_source, 'html.parser')
-        intro = soup.select_one('div.intro')
-        self.assertIsNotNone(intro)
-        self.assertStartsWith(''.join(intro.stripped_strings),
-                              f'"{marketer.trading_name }": thank you for responding to our invite to the Craft Market.')
-
-
-    def test_440_rsvp_confirm(self):
-        marketer = self.marketers[0]
-        marketer.update_state(MarketerState.Invited, send_email=False)
-        code = marketer.code
-
-        self.selenium.get(self.live_server_url + reverse('CraftMarket:RSVP', kwargs={'marketer_code': code}))
-        self.selenium.find_element(By.CSS_SELECTOR, 'div.form input[type="email"]').send_keys(self.marketers[0].email)
-
-        self.selenium.find_element(By.CSS_SELECTOR, 'div.buttons input.button.confirm').click()
-
-        WebDriverWait(self.selenium,timeout=10).until(lambda _: self.selenium.find_element(By.CSS_SELECTOR, 'div.buttons input.button.confirm').is_displayed() & self.selenium.find_element(By.CSS_SELECTOR, 'div.buttons input.button.reject').is_displayed())
-
-        self.selenium.find_element(By.CSS_SELECTOR, 'div.buttons input.button.confirm').click()
-
-        WebDriverWait(self.selenium,timeout=10).until(lambda _: self.selenium.find_element(By.CSS_SELECTOR, 'input[type="hidden"][name="form_section"]').get_attribute('value') == 'accept')
-
-        try:
-            inst = Marketer.objects.get(id=marketer.id)
-        except Marketer.DoesNotExist:
-            self.fail('No Marketer found with id %d' % marketer.id)
-
-        now = timezone.now()
-        history = History.objects.filter(marketeer=inst).order_by('-timestamp')[0]
-        self.assertEqual(history.state, MarketerState.Confirmed)
-        self.assertAlmostEqual(history.timestamp, now, delta=timedelta(seconds=1) )
-
-        self.assertEqual(inst.state, MarketerState.Confirmed)
-
-        # Should have a confirmation email sent
+    def test_accept_invitation_shows_thanks_and_sends_confirmation(self):
+        self.enter_portal()
+        intro = self.choose_response('RSVP_Yes')
+        self.assertIn(self.marketer.contributor_name, intro.text)
+        self.assertIn('thank you for accepting', intro.text)
+        self.assertEqual(self.latest_status(), 'Confirmed')
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to, [self.marketers[0].email,])
-        self.assertEqual(mail.outbox[0].from_email, settings.APPS_SETTINGS['CraftMarket']['EmailFrom'])
-        self.assertEqual(mail.outbox[0].subject, self.confirm_template.subject)
-        self.assertEqual(mail.outbox[0].body,
-                         f"Dear {marketer.trading_name},\nThank you for confirming your attendance.\n-- \n"
-                         f"" + self.confirm_template.signature)
+        self.assertEqual(mail.outbox[0].to, [self.marketer.email])
+        self.assertIn(self.marketer.contact_name, mail.outbox[0].body)
+        self.screenshot('invitation-accepted')
 
-        html = mail.outbox[0].alternatives[0][0]
-        self.assertEqual(html, Template(self.confirm_template.html_content).render(RequestContext(self.request, {'trading_name': marketer.trading_name,
-                                                                                                     'supporting':'Boggs and Bean',
-                                                                                                     'event_date':self.event.get_event_date_display(),
-                                                                                                     'contact_name':self.marketers[0].contact_name,
-                                                                                                     })) + "<br>-- <br>" + self.confirm_template.signature)
+    def test_decline_invitation_shows_thanks_without_confirmation_email(self):
+        self.enter_portal()
+        intro = self.choose_response('RSVP_No')
+        self.assertIn(self.marketer.contributor_name, intro.text)
+        self.assertIn("we are sorry that you can't attend", intro.text)
+        self.assertEqual(self.latest_status(), 'Rejected')
+        self.assertFalse(mail.outbox)
+        self.screenshot('invitation-declined')
 
-        self.assertStartsWith(mail.outbox[0].attachments[0][0], self.tos_template.sub_category)
-        self.assertEndsWith(mail.outbox[0].attachments[0][0], '.pdf')
-        data = io.BytesIO(mail.outbox[0].attachments[0][1])
-        pdf = pypdf.PdfReader(data)
-        text = ''
-        for page in pdf.pages:
-            text += page.extract_text() + '\n'
-        self.assertIn('Terms and Conditions', text)
+    def test_altered_invitation_link_shows_error(self):
+        self.selenium.get(self.get_test_url().rstrip('/') + 'x/')
+        self.assertIn('Invalid invitation link', self.visible('div.error').text)
+        self.assertEqual(self.latest_status(), 'Invited')
+
+    def test_reopening_answered_invitation_shows_inactive_message(self):
+        self.enter_portal()
+        self.choose_response('RSVP_Yes')
+        self.selenium.get(self.get_test_url())
+        self.assertIn('This invitation is no longer active', self.visible('div.error').text)
+        self.assertEqual(self.latest_status(), 'Confirmed')
+        self.assertEqual(len(mail.outbox), 1)
+
 
 class TestCraftMarketTemplates(IdentifyMixin,SmartHTMLTestMixins, SeleniumCommonMixin):
     """Test the templates used in CraftMarket"""

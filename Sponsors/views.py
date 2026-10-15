@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView):
     contributor_type = "Sponsor"
+    data_label = "Sponsor"
     permission_required = ["Sponsors.view_sponsor"]
     show_contributions = True
     extra_columns = (
