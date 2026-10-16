@@ -86,13 +86,13 @@ class PublicSponsorListTests(SimpleTestCase):
     def test_headliners_use_valid_event_cash_totals_without_exposing_amounts(self, sponsors, contributions):
         sponsors.return_value = [Contributor(pk=i, contributor_name=f"Sponsor {i}") for i in range(1, 7)]
         contributions.return_value.values_list.return_value = [
-            (1, "£50"), (1, "£100"), (2, "200"), (3, "£300"), (4, "£400"),
-            (5, "1"), (6, "NaN"), (6, "-1000"), (6, "not cash"),
+            (1, "£50", True, None), (1, "£100", True, None), (2, "200", True, None), (3, "£300", True, None), (4, "£400", True, None),
+            (5, "1", True, None), (6, "NaN", True, None), (6, "-1000", True, None), (6, "not cash", True, None),
         ]
         event = SimpleNamespace(pk=123)
         wall = sponsor_wall_for_event(event)
         self.assertEqual([s.pk for s in wall if s.wall_headliner], [1, 2, 3, 4])
-        contributions.assert_called_once_with(contributor_id__in=[1, 2, 3, 4, 5, 6], event_id=123, cash=True)
+        contributions.assert_called_once_with(contributor_id__in=[1, 2, 3, 4, 5, 6], event_id=123)
         self.assertFalse(hasattr(wall[0], "cash_total"))
 
     @patch("Sponsors.public_sponsors.Contributions.objects.filter")

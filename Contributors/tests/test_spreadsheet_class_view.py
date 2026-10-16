@@ -276,8 +276,10 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
         context.pop("extra_columns")
         html = render_to_string("contributor_spreadsheet.html", context)
         self.assertNotIn('class="extra-column"', html)
-        self.assertEqual(html.count('class="toolbar-separator"'), 1)
-        self.assertLess(html.index('title="Download CSV"'), html.index('class="toolbar-separator"'))
+        self.assertEqual(html.count('class="toolbar-separator"'), 2)
+        self.assertLess(html.index('id="spreadsheet-new-button"'), html.index('class="toolbar-separator"'))
+        download = html.index('title="Download CSV"')
+        self.assertLess(download, html.index('class="toolbar-separator"', download))
         self.assertLess(html.index('class="toolbar-separator"'), html.index('class="search-icon"'))
         context["extra_toolbar_actions"] = (
             {"name": "refresh", "label": "Refresh data", "handler": "refresh_data"},
@@ -297,7 +299,7 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
             '<img src="/static/Contributors/images/icons/upload-svgrepo-com.svg" alt="" width="24" height="24">'
             '</button>', html,
         )
-        self.assertEqual(html.count('class="toolbar-separator"'), 3)
+        self.assertEqual(html.count('class="toolbar-separator"'), 4)
         self.assertLess(html.index('class="toolbar-separator"'), html.index('value="refresh"'))
         self.assertLess(html.index('value="refresh"'), html.rindex('class="toolbar-separator"'))
         self.assertLess(html.rindex('class="toolbar-separator"'), html.index('value="sync"'))

@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -76,12 +77,12 @@ class AddContributionTests(SimpleTestCase):
                 data = {"gift": "  Sponsorship donation  ", "event_id": "23"}
                 if cash:
                     data["cash"] = "on"
-                    data["gift"] = "£125.50"
+                    data["amount"] = "125.50"
                 response = add_contribution(self.request(data), pk=7)
                 self.assertEqual(response.status_code, 201)
                 create.assert_called_with(
                     contributor=lookup.return_value, event=event.return_value,
-                    gift="£125.50" if cash else "Sponsorship donation", cash=cash,
+                    gift="Sponsorship donation", cash=cash, amount=Decimal("125.50") if cash else None,
                 )
                 self.assertEqual(json.loads(response.content)["contributions_html"], "Updated gifts")
 
@@ -108,15 +109,29 @@ class AddContributionTests(SimpleTestCase):
     def test_event_id_is_required(self):
         self.assertFalse(ContributionForm({"gift": "Voucher"}).is_valid())
 
-    def test_cash_amount_is_validated_and_formatted(self):
-        for value, expected in (("25", "£25.00"), ("£12.5", "£12.50")):
-            form = ContributionForm({"gift": value, "cash": "on", "event_id": "23"})
+    def test_cash_requires_a_positive_numeric_amount_but_description_is_optional(self):
+        for value in ('50', '25.50'):
+            form = ContributionForm({'amount': value, 'cash': 'on', 'event_id': '23'})
             self.assertTrue(form.is_valid(), form.errors)
-            self.assertEqual(form.cleaned_data["gift"], expected)
-        for value in ("Voucher", "-5", "0", "12.345", "NaN", "Infinity"):
-            form = ContributionForm({"gift": value, "cash": "on", "event_id": "23"})
+            self.assertEqual(form.cleaned_data['amount'], Decimal(value))
+            self.assertEqual(form.cleaned_data['gift'], '')
+        for value in ('', 'Voucher', '-5', '0', '12.345', 'NaN', 'Infinity', '10000000000'):
+            form = ContributionForm({'amount': value, 'cash': 'on', 'event_id': '23'})
             self.assertFalse(form.is_valid())
-            self.assertIn("gift", form.errors)
+            self.assertIn('amount', form.errors)
+
+    def test_non_cash_requires_description_and_allows_optional_value(self):
+        for value in ('', '0', '250.50'):
+            form = ContributionForm({'gift': 'Donated equipment', 'amount': value, 'event_id': '23'})
+            self.assertTrue(form.is_valid(), form.errors)
+            self.assertEqual(form.cleaned_data['amount'], Decimal(value) if value else None)
+        form = ContributionForm({'amount': '250', 'event_id': '23'})
+        self.assertFalse(form.is_valid())
+        self.assertIn('gift', form.errors)
+        for value in ('-1', '12.345', 'NaN', 'Infinity'):
+            form = ContributionForm({'gift': 'Voucher', 'amount': value, 'event_id': '23'})
+            self.assertFalse(form.is_valid())
+            self.assertIn('amount', form.errors)
 
     def test_requires_login_and_post(self):
         request = self.request({})

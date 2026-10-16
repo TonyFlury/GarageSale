@@ -1,5 +1,6 @@
 """Create development sponsors and original SVG logos; see Sponsors/DEMO_SPONSORS.md."""
 import json
+from decimal import Decimal
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -111,7 +112,7 @@ class Command(BaseCommand):
                 if latest is None or latest.status != "Confirmed":
                     ContributorEvent.objects.create(contributor=sponsor, event=event, status="Confirmed")
                 if cash:
-                    Contributions.objects.get_or_create(contributor=sponsor, event=event, cash=True, gift=f"£{cash}")
+                    Contributions.objects.get_or_create(contributor=sponsor, event=event, cash=True, gift='', amount=Decimal(str(cash)))
                 if not cash or index % 4 == 0:
                     gift = ("A £25 gift voucher", "A hamper of local treats", "Two tickets to a workshop", "A family afternoon tea voucher")[index % 4]
                     Contributions.objects.get_or_create(contributor=sponsor, event=event, cash=False, gift=gift)

@@ -15,7 +15,7 @@
         {% if group.contributions %}
         <h5>Contributions</h5>
         {% for contribution in group.contributions %}
-            <p class="history-note event-contribution"><strong>{% if contribution.cash %}Cash{% else %}Gift{% endif %}:</strong> {{ contribution.gift|default_if_none:'' }}</p>
+            <p class="history-note event-contribution"><strong>{% if contribution.cash %}Cash{% else %}Gift{% endif %}:</strong> {% include 'widgets/contribution_value.html' %}</p>
         {% endfor %}
         {% endif %}
     </li>

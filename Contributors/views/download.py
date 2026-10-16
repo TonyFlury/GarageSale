@@ -12,6 +12,7 @@ class DownloadCSV(LoginRequiredMixin, View):
     """Export all contributors using the upload's standard model fields."""
 
     def get(self, request, *args, **kwargs):
+        """Render the initial page or download using the configured standard fields."""
         response = HttpResponse(content_type="text/csv; charset=utf-8")
         response["Content-Disposition"] = 'attachment; filename="contributors.csv"'
         writer = csv.writer(response)

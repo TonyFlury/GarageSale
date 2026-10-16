@@ -1,5 +1,8 @@
 import datetime
 from datetime import UTC
+from decimal import Decimal, InvalidOperation
+from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 
 import django.utils.timezone
 from django.db import models
@@ -61,5 +64,32 @@ class Contributions(models.Model):
     event = models.ForeignKey(EventData, on_delete=models.CASCADE, null=True, blank=True)
     gift = models.TextField(max_length=1000, null=True, blank=True)
     cash = models.BooleanField(default=False)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
+                                 validators=[MinValueValidator(Decimal('0'))])
     classification = models.CharField(max_length=12, choices=Classification.choices, default=Classification.UNCLASSIFIED)
     position = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [models.CheckConstraint(check=models.Q(amount__gte=0) | models.Q(amount__isnull=True),
+                                              name='contribution_amount_nonnegative')]
+
+    def clean(self):
+        super().clean()
+        if self.cash and (self.amount is None or self.amount <= 0):
+            raise ValidationError({'amount': 'Enter a positive cash amount in £.'})
+        if not self.cash and not (self.gift or '').strip():
+            raise ValidationError({'gift': 'Describe the non-cash contribution.'})
+
+    @property
+    def monetary_value(self):
+        if self.amount is not None:
+            return self.amount
+        # Support historical cash entries and older import/seed code using gift text.
+        if self.cash:
+            try:
+                value = Decimal((self.gift or '').strip().removeprefix('£').replace(',', '').strip())
+                if value.is_finite() and value >= 0:
+                    return value
+            except InvalidOperation:
+                pass
+        return None

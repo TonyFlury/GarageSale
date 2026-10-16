@@ -62,8 +62,8 @@ The four largest cash contributions are:
 | Northfield Works | £750 |
 | Meadow & Mill | £500 |
 
-The sponsor wall selects its headliners from the highest current-event cash
-totals across **all** confirmed sponsors. These four demo companies therefore
+The sponsor wall selects its headliners from the highest current-event combined
+cash amounts and estimated non-cash gift values across **all** confirmed sponsors. These four demo companies therefore
 become headliners unless other sponsors have larger totals. No separate
 headliner field is created.
 
@@ -84,7 +84,7 @@ duplicate sponsors, confirmations, or contributions:
 - A new confirmation is appended only if the latest status for that event is
   missing or is not `Confirmed`. Re-running therefore reconfirms a demo sponsor
   that you have subsequently declined.
-- Contributions are matched by contributor, event, cash flag, and exact gift
+- Contributions are matched by contributor, event, cash flag, amount (for cash), and exact gift
   text. Editing a contribution's text or changing the configured amount means
   the original seed contribution will be added again on the next run.
 - Logo files are regenerated and overwritten on every run.

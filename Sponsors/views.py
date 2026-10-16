@@ -5,7 +5,7 @@ from django.core.exceptions import SuspiciousFileOperation
 import logging
 import io
 import zipfile
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from django.db import transaction
 from django.http import FileResponse
 from django.db.models import CharField, Exists, OuterRef, Prefetch, Q, Subquery, Value
@@ -51,6 +51,7 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
     )
 
     def filter_queryset(self, queryset):
+        """Apply the configured filters and event-specific display annotations."""
         queryset = super().filter_queryset(queryset)
         selected = self.selected_filters
         queryset = self._filter_contact_status(queryset, selected)
@@ -61,17 +62,22 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
         return self._filter_email_address(queryset, selected)
 
     def _filter_email_address(self, queryset, selected):
+        """Distinguish usable addresses from both null and empty email values."""
+        # No email choice means neither empty nor populated addresses should be excluded.
         if not {"has_email", "no_email"}.intersection(selected):
             return queryset
         missing_email = Q(email__isnull=True) | Q(email="")
         return queryset.exclude(missing_email) if "has_email" in selected else queryset.filter(missing_email)
 
     def _filter_cash_contribution(self, queryset, selected):
+        """Filter on cash records without counting estimated non-cash values."""
+        # Cash availability must not restrict the list until the user requests it.
         if not {"cash_donated", "no_cash_donated"}.intersection(selected):
             return queryset
         return queryset.filter(sponsor_cash_donated="cash_donated" in selected)
 
     def _annotate_cash_contribution(self, queryset):
+        """Test for a current-event cash record without duplicating sponsor rows."""
         event = getattr(self.request, "current_event", None) or get_current_contribution_event()
         cash_contributions = Contributions.objects.filter(
             contributor_id=OuterRef("pk"), event_id=event.pk, cash=True,
@@ -79,6 +85,7 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
         return queryset.annotate(sponsor_cash_donated=Exists(cash_contributions))
 
     def _annotate_confirmation_status(self, queryset):
+        """Use the latest current-event status for sponsor confirmation."""
         event = getattr(self.request, "current_event", None) or get_current_contribution_event()
         # Past or missing events cannot show a confirmation tick.
         if event is None or event.event_date < timezone.localdate():
@@ -91,6 +98,8 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
 
     def _filter_contact_status(self, queryset, selected):
         # Leave contact history unrestricted unless a contact filter was selected.
+        """Count qualifying contact notes since the previous event."""
+        # Contact history should restrict results only when explicitly selected.
         if not {"contacted", "not_contacted"}.intersection(selected):
             return queryset
 
@@ -107,6 +116,8 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
 
     def _filter_confirmation_status(self, queryset, selected):
         # Leave confirmation status unrestricted unless a confirmation filter was selected.
+        """Keep filtering consistent with the displayed confirmation indicator."""
+        # An unrestricted list includes both confirmed and unconfirmed sponsors.
         if not {"confirmed", "not_confirmed"}.intersection(selected):
             return queryset
 
@@ -147,103 +158,104 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
     )
 
     def generate_pdf(self, post_data):
-        """Generate a ZIP of personalised sponsor PDFs after choosing a template."""
-        category = settings.APPS_SETTINGS["Sponsors"]["EmailTemplateCategory"]
-        self.pdf_templates = list(CommunicationTemplate.current_active.filter(category=category))
-        selected_ids = post_data.getlist("pdf_template_id")
-        selected_id = selected_ids[0] if len(selected_ids) == 1 else None
-        self.selected_pdf_template = next(
-            (template for template in self.pdf_templates if str(template.pk) == selected_id), None,
-        )
-        selection_error = ""
-        if len(selected_ids) > 1 or (post_data.get("pdf_template_choice") and not selected_id):
-            selection_error = "Choose exactly one PDF template."
-        elif selected_id and self.selected_pdf_template is None:
-            selection_error = "That template is no longer available. Choose another template."
-        if self.selected_pdf_template is not None and not selection_error:
+        """Offer a template chooser or download personalised sponsor PDFs."""
+        self.pdf_templates = self._active_templates()
+        self.selected_pdf_template, error = self._template_choice(post_data, "pdf", self.pdf_templates)
+        # Validate recipients before rendering anything or offering a partial archive.
+        if self.selected_pdf_template is not None and not error:
             sponsors = self._get_selected_email_sponsors(post_data)
-            if sponsors is None:
-                return
-            archive = io.BytesIO()
-            used_names = set()
-            with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zip_file:
-                for sponsor, context in self._sponsor_template_contexts(sponsors):
-                    pdf = self.selected_pdf_template.render_template_as_pdf(self.request, context)
-                    stem = self._pdf_filename(sponsor.contributor_name, f"Sponsor {sponsor.pk}")
-                    filename = f"{stem}.pdf"
-                    suffix = 2
-                    while filename.casefold() in used_names:
-                        filename = f"{stem} ({suffix}).pdf"
-                        suffix += 1
-                    used_names.add(filename.casefold())
-                    zip_file.writestr(filename, pdf)
-            archive.seek(0)
-            template_name = self._pdf_filename(
-                self.selected_pdf_template.summary or self.selected_pdf_template.subject, "Sponsor templates",
-            )
-            timestamp = timezone.localtime().strftime("%Y-%m-%d %H-%M-%S")
-            return FileResponse(archive, as_attachment=True,
-                                filename=f"{template_name} {timestamp}.zip", content_type="application/zip", status=200)
+            # Recipient validation supplies its own dialog instead of an incomplete download.
+            if sponsors is not None:
+                return self._pdf_download(sponsors)
+            return
+        self._template_dialog(post_data, "pdf", error)
+
+    def _active_templates(self):
+        """Use the configured Sponsor category for email and PDF choices."""
+        category = settings.APPS_SETTINGS["Sponsors"]["EmailTemplateCategory"]
+        return list(CommunicationTemplate.current_active.filter(category=category))
+
+    def _template_choice(self, post_data, kind, templates):
+        """Resolve a single choice against currently available templates."""
+        selected_ids = post_data.getlist(f"{kind}_template_id")
+        selected_id = selected_ids[0] if len(selected_ids) == 1 else None
+        # Recheck availability because a chooser can outlive its template.
+        template = next((item for item in templates if str(item.pk) == selected_id), None)
+        label = "PDF" if kind == "pdf" else "email"
+        # A submitted chooser must have exactly one choice; initial requests may have none.
+        if len(selected_ids) > 1 or (post_data.get(f"{kind}_template_choice") and not selected_id):
+            return template, f"Choose exactly one {label} template."
+        # Preserve the chooser when a previously offered template has expired.
+        if selected_id and template is None:
+            return None, "That template is no longer available. Choose another template."
+        return template, ""
+
+    def _template_dialog(self, post_data, kind, error):
+        """Keep selected recipients and filters when redisplaying either chooser."""
         self.modal_html = render_to_string(
-            "Sponsors/choose_pdf_template.html",
-            {"pdf_templates": self.pdf_templates,
-             "selected_template": self.selected_pdf_template,
-             "selection_error": selection_error,
+            f"Sponsors/choose_{kind}_template.html",
+            {f"{kind}_templates": getattr(self, f"{kind}_templates"),
+             "selected_template": getattr(self, f"selected_{kind}_template"),
+             "selection_error": error,
              "selected_sponsor_ids": post_data.getlist("selected_contributor"),
-             "selected_filters": self.selected_filters},
-            request=self.request,
+             "selected_filters": self.selected_filters}, request=self.request,
         )
+
+    def _pdf_download(self, sponsors):
+        """Return an archive whose member names remain unique across platforms."""
+        archive = io.BytesIO()
+        used_names = set()
+        # Finalise the ZIP before streaming it; its directory is written on close.
+        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+            # Each sponsor requires a fresh context because rendering consumes fields.
+            for sponsor, context in self._sponsor_template_contexts(sponsors):
+                pdf = self.selected_pdf_template.render_template_as_pdf(self.request, context)
+                zip_file.writestr(self._unique_pdf_filename(sponsor, used_names), pdf)
+        archive.seek(0)
+        template_name = self._pdf_filename(
+            self.selected_pdf_template.summary or self.selected_pdf_template.subject, "Sponsor templates",
+        )
+        timestamp = timezone.localtime().strftime("%Y-%m-%d %H-%M-%S")
+        return FileResponse(archive, as_attachment=True, filename=f"{template_name} {timestamp}.zip",
+                            content_type="application/zip", status=200)
+
+    def _unique_pdf_filename(self, sponsor, used_names):
+        """Avoid overwriting sponsors with duplicate or case-equivalent names."""
+        stem = self._pdf_filename(sponsor.contributor_name, f"Sponsor {sponsor.pk}")
+        filename = f"{stem}.pdf"
+        suffix = 2
+        # Case-insensitive uniqueness also protects downloads extracted on Windows.
+        while filename.casefold() in used_names:
+            filename = f"{stem} ({suffix}).pdf"
+            suffix += 1
+        used_names.add(filename.casefold())
+        return filename
 
     @staticmethod
     def _pdf_filename(name, fallback):
+        """Produce an extraction-safe filename with a fallback for unusable names."""
+        # Names containing only unsafe filename characters need a stable fallback.
         try:
             return get_valid_filename(name)
         except SuspiciousFileOperation:
             return fallback
 
     def send_email(self, post_data):
-        # Resolve the selected sponsors before applying recipient-dependent template rules.
+        """Choose an eligible template before sending personalised emails."""
         sponsors = self._get_selected_email_sponsors(post_data)
+        # Recipient validation supplies its own error dialog.
         if sponsors is None:
             return
-        # Fetch in-date templates using the Sponsor category configured in Django settings.
-        category = settings.APPS_SETTINGS["Sponsors"]["EmailTemplateCategory"]
-        templates = list(CommunicationTemplate.current_active.filter(category=category))
-        # Apply Sponsor email selection rules before using the template list.
-        self.email_templates = self.filter_email_templates(templates, sponsors)
-        # A mixed selection displays its own error dialog instead of the template chooser.
+        self.email_templates = self.filter_email_templates(self._active_templates(), sponsors)
+        # Mixed confirmation states cannot share an email template.
         if self.email_templates is None:
             return
-
-        # Accept only a template that is still present in the filtered list.
-        selected_ids = post_data.getlist("email_template_id")
-        selected_id = selected_ids[0] if len(selected_ids) == 1 else None
-        self.selected_email_template = next(
-            (template for template in self.email_templates if str(template.pk) == selected_id), None,
-        )
-        selection_error = ""
-        # Reject missing or multiple choices when the chooser is submitted.
-        if len(selected_ids) > 1 or (post_data.get("email_template_choice") and not selected_id):
-            selection_error = "Choose exactly one email template."
-        # Keep the chooser open if a submitted template is no longer available.
-        if selected_id and self.selected_email_template is None:
-            selection_error = "That template is no longer available. Choose another template."
-
-        # Generate and send one personalised email after a valid template choice.
+        self.selected_email_template, error = self._template_choice(post_data, "email", self.email_templates)
+        # Preserve the existing delivery contract for a resolved single template.
         if self.selected_email_template is not None:
             self._send_sponsor_emails(post_data, sponsors=sponsors)
             return
-
-        # Show the chooser through the spreadsheet's arbitrary-dialog mechanism.
-        self.modal_html = render_to_string(
-            "Sponsors/choose_email_template.html",
-            {"email_templates": self.email_templates,
-             "selected_template": self.selected_email_template,
-             "selection_error": selection_error,
-             "selected_sponsor_ids": post_data.getlist("selected_contributor"),
-             "selected_filters": self.selected_filters},
-            request=self.request,
-        )
+        self._template_dialog(post_data, "email", error)
 
     def filter_email_templates(self, templates, selected_sponsors):
         """Filter available templates for the selected sponsors, excluding named attachments."""
@@ -268,96 +280,98 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
         return [template for template in templates if (template.sub_category, template.summary) not in attachment_keys]
 
     def _get_selected_email_sponsors(self, post_data):
-        # Validate and deduplicate recipients before generating any messages.
+        """Reject stale, malformed, or non-sponsor selections before delivery."""
         selected_ids = post_data.getlist("selected_contributor")
+        # Deduplication must follow validation to avoid accepting malformed IDs.
         if not selected_ids or any(not value.isdecimal() for value in selected_ids):
             self._show_email_error("Select valid sponsors before sending email.")
             return None
         sponsor_ids = {int(value) for value in selected_ids}
-        event = getattr(self.request, "current_event", None) or get_current_contribution_event()
-        # Identify sponsors confirmed for an earlier event, excluding the current event.
-        previous_confirmations = ContributorEvent.objects.filter(
-            contributor_id=OuterRef("pk"), status="Confirmed",
-            event__event_date__lt=event.event_date if event else timezone.localdate(),
-        )
-        queryset = Contributor.objects.filter(
-            pk__in=sponsor_ids, contributor_type=self.contributor_type,
-        ).annotate(previously_confirmed=Exists(previous_confirmations))
-        # Apply the spreadsheet's current-event confirmation rule to the email recipients too.
+        queryset = self._email_sponsor_queryset(sponsor_ids)
         sponsors = list(self._annotate_confirmation_status(queryset).order_by("contributor_name"))
-        # Avoid sending to a partial selection containing missing or non-sponsor records.
+        # Never deliver to a partial selection that silently omitted missing records.
         if len(sponsors) != len(sponsor_ids):
             self._show_email_error("Some selected sponsors no longer exist. Refresh and select them again.")
             return None
         return sponsors
 
-    def _sponsor_template_contexts(self, sponsors):
-        """Build the same personalised context for email and standalone PDF templates."""
+    def _email_sponsor_queryset(self, sponsor_ids):
+        """Annotate earlier confirmations without counting the current event."""
         event = getattr(self.request, "current_event", None) or get_current_contribution_event()
+        previous_confirmations = ContributorEvent.objects.filter(
+            contributor_id=OuterRef("pk"), status="Confirmed",
+            event__event_date__lt=event.event_date if event else timezone.localdate(),
+        )
+        return Contributor.objects.filter(
+            pk__in=sponsor_ids, contributor_type=self.contributor_type,
+        ).annotate(previously_confirmed=Exists(previous_confirmations))
 
-        # Use the Sponsor sender configured in Django settings.
-        sender = settings.APPS_SETTINGS["Sponsors"]["EmailFrom"]
+    def _sponsor_template_contexts(self, sponsors):
+        """Build equivalent personalisation for emails and standalone PDFs."""
+        event = getattr(self.request, "current_event", None) or get_current_contribution_event()
         defaults = CommunicationTemplate.default_context(self.request, {"current_event": event})
-        # Total current-event cash contributions only for confirmed recipients.
         donations = self._cash_donations(sponsors, event)
+        # Rendering consumes recipient fields, so every sponsor needs a fresh mapping.
         for sponsor in sponsors:
-            # Give each rendering its own context because CommunicationTemplate consumes recipient fields.
-            contact_name = (sponsor.contact_name or "").strip()
-            context = {
-                **defaults,
-                "email": [sponsor.email], "from": sender,
-                "contributor_name": sponsor.contributor_name, "company_name": sponsor.contributor_name,
-                "contact_name": contact_name or "Sirs",
-                "attn": f"For Attn of :{contact_name}" if contact_name else "",
-                "previously_confirmed": sponsor.previously_confirmed,
-            }
-            # Only confirmed sponsors with recorded cash contributions get a donation value.
+            context = self._sponsor_context(sponsor, defaults)
+            # Omission distinguishes unknown donations from recorded zero amounts.
             if sponsor.pk in donations:
                 context["donation"] = donations[sponsor.pk]
             yield sponsor, context
 
+    def _sponsor_context(self, sponsor, defaults):
+        """Supply recipient fields with the established template compatibility names."""
+        contact_name = (sponsor.contact_name or "").strip()
+        return {
+            **defaults, "email": [sponsor.email], "from": settings.APPS_SETTINGS["Sponsors"]["EmailFrom"],
+            "contributor_name": sponsor.contributor_name, "company_name": sponsor.contributor_name,
+            "contact_name": contact_name or "Sirs",
+            "attn": f"For Attn of :{contact_name}" if contact_name else "",
+            "previously_confirmed": sponsor.previously_confirmed,
+        }
+
     def _send_sponsor_emails(self, post_data, sponsors=None):
-        """Send personalised emails; template variables are documented in Sponsors/EMAIL_CONTEXT.md."""
-        # Reuse the same sponsor selection that was passed into the template filter.
+        """Send independently and show each outcome; see Sponsors/EMAIL_CONTEXT.md."""
+        # Reuse the validated selection when called from the template chooser.
         if sponsors is None:
             sponsors = self._get_selected_email_sponsors(post_data)
+        # Selection errors already have a user-facing dialog.
         if sponsors is None:
             return
-        results = []
-        for sponsor, context in self._sponsor_template_contexts(sponsors):
-            if not sponsor.email:
-                results.append({"sponsor": sponsor, "message": "Not sent: no email address recorded."})
-                continue
-            # Continue processing other sponsors if rendering or delivery fails for one recipient.
-            try:
-                sent = self.selected_email_template.send_email(self.request, context=context)
-                result = "Email sent." if sent else "Email delivery could not be confirmed. Check the server email log before retrying."
-            except Exception:
-                logger.exception("Sponsor email failed for contributor %s", sponsor.pk)
-                result = "Email could not be sent. Check the server email log before retrying."
-            results.append({"sponsor": sponsor, "message": result})
-
-        # Show the outcome for every selected sponsor through the arbitrary dialog.
+        results = [{"sponsor": sponsor, "message": self._deliver_email(sponsor, context)}
+                   for sponsor, context in self._sponsor_template_contexts(sponsors)]
         self.modal_html = render_to_string(
             "Sponsors/email_results.html",
             {"selected_template": self.selected_email_template, "results": results}, request=self.request,
         )
 
+    def _deliver_email(self, sponsor, context):
+        """Isolate recipient failures so one bad address cannot stop a batch."""
+        # Missing addresses are expected data gaps, not mail-server failures.
+        if not sponsor.email:
+            return "Not sent: no email address recorded."
+        # A failed delivery must leave other recipients available for processing.
+        try:
+            sent = self.selected_email_template.send_email(self.request, context=context)
+            return "Email sent." if sent else "Email delivery could not be confirmed. Check the server email log before retrying."
+        except Exception:
+            logger.exception("Sponsor email failed for contributor %s", sponsor.pk)
+            return "Email could not be sent. Check the server email log before retrying."
+
     def _cash_donations(self, sponsors, event):
+        """Format current-event cash totals for confirmed sponsor templates."""
         confirmed_ids = [sponsor.pk for sponsor in sponsors if getattr(sponsor, "sponsor_status", None) == "Confirmed"]
         # A missing event or unconfirmed selection cannot have a donation context.
         if event is None or not confirmed_ids:
             return {}
         totals = {}
-        for sponsor_id, gift in Contributions.objects.filter(
+        # Read cash records only, preserving compatibility with older text-based amounts.
+        for sponsor_id, gift, value in Contributions.objects.filter(
             contributor_id__in=confirmed_ids, event=event, cash=True,
-        ).values_list("contributor_id", "gift"):
-            # Cash is stored as text, normally in the form £25.50.
-            try:
-                amount = Decimal((gift or "").strip().removeprefix("£").replace(",", "").strip())
-                if not amount.is_finite() or amount < 0:
-                    raise InvalidOperation
-            except InvalidOperation:
+        ).values_list("contributor_id", "gift", "amount"):
+            amount = Contributions(gift=gift, cash=True, amount=value).monetary_value
+            # An unreadable legacy amount must not corrupt totals for the remaining sponsors.
+            if amount is None:
                 logger.warning("Invalid cash contribution for sponsor %s and event %s", sponsor_id, event.pk)
                 continue
             totals[sponsor_id] = totals.get(sponsor_id, Decimal("0")) + amount
@@ -373,56 +387,58 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
         )
 
     def confirm_sponsorship(self, post_data):
-        # Use the request's current event, falling back to the latest activated event.
+        """Record all selected confirmations and offer their contribution editor."""
         event = getattr(self.request, "current_event", None) or get_current_contribution_event()
-        # Confirmation is available only for an event that has not passed.
-        if event is None or event.event_date < timezone.localdate():
-            # Open the arbitrary error dialog and stop without saving confirmations.
-            self.modal_html = render_to_string(
-                "Sponsors/confirmation_error.html",
-                {"error_message": "No active event is recorded. Sponsorship cannot be confirmed."
-                 if event is None else "The current event has passed. Sponsorship cannot be confirmed."},
-                request=self.request,
-            )
+        # Confirmation of a past event would misrepresent the current sponsor wall.
+        if not self._confirmation_event_valid(event):
             return
-
-        # Read the sponsor selections submitted by the toolbar action.
-        selected_ids = post_data.getlist("selected_contributor")
-        # Reject invalid selections before writing any confirmation records.
-        if not selected_ids or any(not value.isdecimal() for value in selected_ids):
-            messages.error(self.request, "Select valid sponsors to confirm sponsorship.")
+        sponsors = self._confirmation_sponsors(post_data, event)
+        # Reject the entire selection rather than confirming only surviving records.
+        if sponsors is None:
             return
-
-        # Deduplicate selections so each sponsor receives one confirmation record.
-        sponsor_ids = {int(value) for value in selected_ids}
-        # Load sponsors with only their contributions for this event, ready for the dialog.
-        sponsors = list(Contributor.objects.filter(
-            pk__in=sponsor_ids, contributor_type=self.contributor_type,
-        ).order_by("contributor_name").prefetch_related(Prefetch(
-            "contributions_set",
-            queryset=Contributions.objects.filter(event=event).order_by("pk"),
-            to_attr="event_contributions",
-        )))
-        # Do not partially confirm a selection containing missing or non-sponsor records.
-        if len(sponsors) != len(sponsor_ids):
-            messages.error(self.request, "Some selected sponsors no longer exist. Refresh and select them again.")
-            return
-
-        # Save all confirmations together; roll back if saving or rendering the dialog fails.
+        # Keep confirmations and dialog preparation atomic so failures can be retried safely.
         with transaction.atomic():
-            # Append statuses recording the event, confirmation time, and acting user.
             ContributorEvent.objects.bulk_create([
                 ContributorEvent(contributor=sponsor, event=event, status="Confirmed", user=self.request.user)
                 for sponsor in sponsors
             ])
-            # Open a dialog listing each sponsor's contributions and an Add contribution button.
             self.modal_html = render_to_string(
                 "Sponsors/confirmed_contributions.html",
-                {"sponsors": sponsors, "current_event": event},
-                request=self.request,
+                {"sponsors": sponsors, "current_event": event}, request=self.request,
             )
-        # Report success after all selected sponsors have been confirmed.
         messages.success(self.request, "Sponsorship confirmed.")
+
+    def _confirmation_event_valid(self, event):
+        """Explain why confirmation needs an active, unexpired event."""
+        # A missing event and a past event need different corrective action.
+        if event is not None and event.event_date >= timezone.localdate():
+            return True
+        message = ("No active event is recorded. Sponsorship cannot be confirmed." if event is None else
+                   "The current event has passed. Sponsorship cannot be confirmed.")
+        self.modal_html = render_to_string(
+            "Sponsors/confirmation_error.html", {"error_message": message}, request=self.request,
+        )
+        return False
+
+    def _confirmation_sponsors(self, post_data, event):
+        """Validate the full selection and prefetch only this event's contributions."""
+        selected_ids = post_data.getlist("selected_contributor")
+        # Reject malformed IDs before issuing a query or writing statuses.
+        if not selected_ids or any(not value.isdecimal() for value in selected_ids):
+            messages.error(self.request, "Select valid sponsors to confirm sponsorship.")
+            return None
+        sponsor_ids = {int(value) for value in selected_ids}
+        sponsors = list(Contributor.objects.filter(
+            pk__in=sponsor_ids, contributor_type=self.contributor_type,
+        ).order_by("contributor_name").prefetch_related(Prefetch(
+            "contributions_set", queryset=Contributions.objects.filter(event=event).order_by("pk"),
+            to_attr="event_contributions",
+        )))
+        # A deleted or reclassified record invalidates the complete selection.
+        if len(sponsors) != len(sponsor_ids):
+            messages.error(self.request, "Some selected sponsors no longer exist. Refresh and select them again.")
+            return None
+        return sponsors
 
 class SponsorEntryPoint( EntryPointMixin, SponsorSpreadsheetView):
     entry_point_url = 'TeamPages:SponsorEntryPoint'
@@ -433,10 +449,12 @@ class SponsorEntryPoint( EntryPointMixin, SponsorSpreadsheetView):
 
 
 def social_media_items():
+    """Define the social links supported by the public sponsor display."""
     return ['website','facebook','instagram']
 
 
 def sponsor_list(request):
+    """Render the public sponsor wall for the request event."""
     event = getattr(request, "current_event", None) or get_current_contribution_event()
     sponsors = sponsor_wall_for_event(event)
     return TemplateResponse(request,'view_sponsors.html',

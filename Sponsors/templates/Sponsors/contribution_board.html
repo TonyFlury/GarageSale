@@ -34,6 +34,7 @@
                     <li class="contribution-item" data-id="{{ item.pk }}" data-sort-key="{{ item.contributor.contributor_name }} {{ item.gift|default_if_none:'' }}"{% if can_edit %} draggable="true"{% endif %}>
                         <div class="contribution-item-heading"><span class="prize-number"{% if column.key != 'prize_draw' %} hidden{% endif %}>{{ forloop.counter }}</span><strong>{{ item.contributor.contributor_name }}</strong>{% if can_edit %}<span class="contribution-drag-handle" aria-hidden="true">⠿</span>{% endif %}</div>
                         <p class="contribution-description">{{ item.gift|default:'No description recorded' }}</p>
+                        {% if item.amount != None %}<p>Estimated value: £{{ item.amount|floatformat:2 }}</p>{% endif %}
                         {% if can_edit %}<div class="contribution-controls">
                             <label>Move to
                                 <select class="contribution-move" aria-label="Classification for {{ item.contributor.contributor_name }}: {{ item.gift|default_if_none:'' }}">

@@ -1,5 +1,5 @@
 from django.db.models import OuterRef, Subquery
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 
 from Contributors.models import Contributor, ContributorEvent, Contributions
 
@@ -18,18 +18,15 @@ def confirmed_sponsors_for_event(event):
 
 
 def sponsor_wall_for_event(event):
-    """Use event cash totals to give up to four confirmed sponsors prominence."""
+    """Feature up to four confirmed sponsors by cash plus valued non-cash gifts."""
     sponsors = list(confirmed_sponsors_for_event(event))
     totals = {}
     if event is not None and sponsors:
-        for sponsor_id, gift in Contributions.objects.filter(
-            contributor_id__in=[sponsor.pk for sponsor in sponsors], event_id=event.pk, cash=True,
-        ).values_list("contributor_id", "gift"):
-            try:
-                amount = Decimal((gift or "").strip().removeprefix("£").replace(",", "").strip())
-            except InvalidOperation:
-                continue
-            if amount.is_finite() and amount > 0:
+        for sponsor_id, gift, cash, value in Contributions.objects.filter(
+            contributor_id__in=[sponsor.pk for sponsor in sponsors], event_id=event.pk,
+        ).values_list("contributor_id", "gift", "cash", "amount"):
+            amount = Contributions(gift=gift, cash=cash, amount=value).monetary_value
+            if amount is not None and amount > 0:
                 totals[sponsor_id] = totals.get(sponsor_id, Decimal("0")) + amount
     ranked = sorted(sponsors, key=lambda sponsor: (
         -totals.get(sponsor.pk, Decimal("0")), sponsor.contributor_name.casefold(), sponsor.pk,

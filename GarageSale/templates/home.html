@@ -53,11 +53,13 @@ Brantham Garage Sale - Home Page
     </div>
     -->
 
-      <div class="sidebar entry tooltip" item="sponsors" id='sponsors' xmlns="http://www.w3.org/1999/html">
-        <img class="sidebar icon" alt="Our Sponsors" id='id_sponsors' src={% static "Accounts/images/icons/navigation/money-bag-pound-svgrepo-com.svg" %}>
-        <label for="id_sponsors">Our Sponsors</label>
-        <span class="tooltiptext arrow right">Our Sponsors</span>
-    </div>
+      <div class="sidebar entry direct tooltip" item="{% url 'sponsors:sponsor_list' %}" id='sponsors' xmlns="http://www.w3.org/1999/html">
+        <a href="{% url 'sponsors:sponsor_list' %}">
+            <img class="sidebar icon" alt="Our Sponsors" id='id_sponsors' src={% static "Accounts/images/icons/navigation/money-bag-pound-svgrepo-com.svg" %}>
+            <label for="id_sponsors">Our Sponsors</label>
+            <span class="tooltiptext arrow right">Our Sponsors</span>
+        </a>
+      </div>
 
     <div class="sidebar entry tooltip" item="AboutUs" id="AboutUs'" xmlns="http://www.w3.org/1999/html">
         <img class="sidebar icon" alt="About Us" id='id_AboutUs' src={% static "GarageSale/images/icons/menu/about-svgrepo-com.svg" %}>

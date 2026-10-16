@@ -16,6 +16,8 @@ function setup() {
     const dialog = element({open: false, showModal() {this.open = true;}, close() {this.open = false;}});
     const gift = element({focus() {this.focused = true;}});
     const cash = element({checked: false});
+    const amount = element();
+    const amountHelp = element();
     const eventInput = element();
     const cancel = element();
     const save = element();
@@ -23,12 +25,12 @@ function setup() {
     const form = element({attributes: {}, action: {toString: () => '[object RadioNodeList]'},
         setAttribute(name, value) {this.attributes[name] = value;},
         getAttribute(name) {return this.attributes[name];},
-        reset() {gift.value = ''; cash.checked = false;},
+        reset() {gift.value = ''; amount.value = ''; cash.checked = false;},
         querySelectorAll: () => [cancel, save, another], querySelector: () => ({value: 'csrf-token'})});
     const error = element();
     const status = element();
     const nodes = {'#contributor-details-dialog': details, '#spreadsheet-modal-dialog': sponsorDialog, '#contribution-dialog': dialog,
-        '#contribution-form': form, '#contribution-gift': gift, '#contribution-cash': cash,
+        '#contribution-amount': amount, '#contribution-amount-help': amountHelp, '#contribution-form': form, '#contribution-gift': gift, '#contribution-cash': cash,
         '#contribution-event': eventInput, '#contribution-error': error, '#contribution-status': status,
         '#contribution-cancel': cancel, '#contribution-contributor': element()};
     const document = element({readyState: 'loading', querySelector: selector => nodes[selector]});
@@ -36,7 +38,7 @@ function setup() {
     const requests = [];
     const context = {document, Object,
         CustomEvent: class {constructor(type) {this.type = type;}},
-        FormData: class {constructor() {this.gift = gift.value; this.cash = cash.checked; this.event_id = eventInput.value;}},
+        FormData: class {constructor() {this.gift = gift.value; this.amount = amount.value; this.cash = cash.checked; this.event_id = eventInput.value;}},
         fetch: async (url, options) => {
             requests.push({url, options});
             return {ok: true, json: async () => ({ok: true, contributions_html: 'Updated gifts',
@@ -44,7 +46,7 @@ function setup() {
         }};
     vm.runInNewContext(source, context);
     document.listeners.DOMContentLoaded();
-    return {context, requests, list, sponsorLists, dialog, gift, cash, eventInput, cancel, save, another, error, status,
+    return {context, requests, list, sponsorLists, dialog, gift, amount, cash, eventInput, cancel, save, another, error, status,
         openSponsor: index => sponsorDialog.listeners.click({target: {closest: () => ({
             closest: () => sponsorLists[index],
             dataset: {contributionUrl: `/contributions/${index + 7}/`, eventId: '23', contributorName: `Sponsor ${index}`},
@@ -149,18 +151,20 @@ test('browser update failure makes clear the contribution was already saved', as
     assert.equal(ui.dialog.open, true);
 });
 
-test('cash checkbox switches between pounds amount and description entry', () => {
+test('cash checkbox changes required amount and description without losing either value', () => {
     const ui = setup(); ui.open();
-    assert.equal(ui.gift.inputMode, 'text');
-    ui.cash.checked = true;
-    ui.cash.listeners.change();
-    assert.equal(ui.gift.inputMode, 'decimal');
-    assert.equal(ui.gift.placeholder, '£0.00');
-    assert.equal(ui.gift.rows, 1);
-    ui.cash.checked = false;
-    ui.cash.listeners.change();
-    assert.equal(ui.gift.inputMode, 'text');
-    assert.equal(ui.gift.rows, 3);
+    assert.equal(ui.gift.required, true);
+    assert.equal(ui.amount.required, false);
+    ui.gift.value = 'Donated goods'; ui.amount.value = '250.50';
+    ui.cash.checked = true; ui.cash.listeners.change();
+    assert.equal(ui.gift.required, false);
+    assert.equal(ui.amount.required, true);
+    assert.equal(ui.amount.min, '0.01');
+    assert.equal(ui.gift.value, 'Donated goods');
+    assert.equal(ui.amount.value, '250.50');
+    ui.cash.checked = false; ui.cash.listeners.change();
+    assert.equal(ui.gift.required, true);
+    assert.equal(ui.amount.required, false);
 });
 
 test('failed save retains the cash flag and description for retry', async () => {
