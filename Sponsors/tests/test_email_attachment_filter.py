@@ -45,6 +45,8 @@ class SponsorEmailAttachmentFilterTests(TestCase):
         TemplateAttachment.objects.create(template=invitation, template_name="Terms")
         request = RequestFactory().post("/", {"selected_contributor": str(sponsor.pk), "email_template_id": str(terms.pk)})
         view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         with patch.object(view, "_send_sponsor_emails") as send:
             view.send_email(request.POST)

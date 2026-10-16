@@ -130,7 +130,19 @@ function do_action(action, id)
     path = path.replace('<int:event_id>',id);
 
     path = path.replace('<str:action>', action);
-    window.location.replace(__current_base_url(path) + __params_as_url());
+    const destination = __current_base_url(path) + __params_as_url();
+    if (action === 'publish') {
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.action = destination;
+        const token = document.querySelector('[name="csrfmiddlewaretoken"]');
+        if (!token) return;
+        const input = document.createElement('input');
+        input.type = 'hidden'; input.name = 'csrfmiddlewaretoken'; input.value = token.value;
+        form.append(input); document.body.append(form); form.submit();
+        return;
+    }
+    window.location.replace(destination);
 }
 
 function __document_loaded(){

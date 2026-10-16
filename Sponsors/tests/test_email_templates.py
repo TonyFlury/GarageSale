@@ -38,6 +38,8 @@ class SponsorEmailTemplateTests(SimpleTestCase):
             get_event_date_display=lambda: "Upcoming sale",
         )
         view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         contexts = []
         def send(request, context):
@@ -87,6 +89,8 @@ class SponsorEmailTemplateTests(SimpleTestCase):
             get_event_date_display=lambda: "Upcoming sale",
         )
         view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         view.selected_email_template = SimpleNamespace(summary="Invite", subject="Hello", send_email=Mock(side_effect=[RuntimeError("failure"), 1]))
         view._send_sponsor_emails(request.POST)
@@ -104,6 +108,8 @@ class SponsorEmailTemplateTests(SimpleTestCase):
             "selected_contributor": ["7", "8"], "selected_filters": "confirmed",
         })
         view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         sponsors = [Contributor(pk=7), Contributor(pk=8)]
         with patch.object(view, "_get_selected_email_sponsors", return_value=sponsors), \
@@ -128,6 +134,8 @@ class SponsorEmailTemplateTests(SimpleTestCase):
         for selected_id in ("1", "999"):
             request = RequestFactory().post("/", {"selected_contributor": "7", "email_template_id": selected_id})
             view = SponsorSpreadsheetView()
+            if not hasattr(request, "user"):
+                request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
             view.setup(request)
             sponsors = [Contributor(pk=7)]
             with patch.object(view, "_get_selected_email_sponsors", return_value=sponsors), \
@@ -148,6 +156,8 @@ class SponsorEmailTemplateTests(SimpleTestCase):
                 "selected_contributor": "7", "email_template_choice": "1", "email_template_id": choices,
             })
             view = SponsorSpreadsheetView()
+            if not hasattr(request, "user"):
+                request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
             view.setup(request)
             with patch.object(view, "_get_selected_email_sponsors", return_value=[Contributor(pk=7)]):
                 view.send_email(request.POST)
@@ -158,6 +168,8 @@ class SponsorEmailTemplateTests(SimpleTestCase):
     def test_empty_template_list_shows_message(self, templates):
         request = RequestFactory().post("/", {"selected_contributor": "7"})
         view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         with patch.object(view, "_get_selected_email_sponsors", return_value=[Contributor(pk=7)]):
             view.send_email(request.POST)

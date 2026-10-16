@@ -1,3 +1,4 @@
+from GarageSale.tests.access_helpers import grant_workflow_permissions
 import csv
 import io
 
@@ -14,6 +15,7 @@ class DownloadCSVTests(TestCase):
         self.user = get_user_model().objects.create_user(
             email="download@example.com", password="test-password", phone="01234567890"
         )
+        grant_workflow_permissions(self.user)
         self.client.force_login(self.user)
         self.url = reverse("contributors:download")
 
@@ -48,4 +50,4 @@ class DownloadCSVTests(TestCase):
         for name in ("upload", "spreadsheet"):
             with self.subTest(page=name):
                 self.assertContains(self.client.get(reverse(f"contributors:{name}")),
-                                    f'href="{self.url}"')
+                                    f'href="{self.url}')

@@ -5,6 +5,7 @@
     let initialHTML = '';
     let editing = false;
     let busy = false;
+    let canEdit = false;
 
     /** Resolve controls only after the DOM has supplied the shared details dialog. */
     function findControls() {
@@ -24,14 +25,14 @@
 
     /** Make loaded details read-only until the user explicitly requests editing. */
     function setMode(value) {
-        editing = value;
+        editing = value && canEdit;
         form.dataset.editing = String(editing);
 
         // Dynamically rendered fields must obey the same editing state as the toolbar.
         for (const input of fields.querySelectorAll('input:not([type="hidden"]):not([type="button"]), textarea, select')) {
             input.disabled = !editing || busy;
         }
-        edit.hidden = editing || !initialHTML;
+        edit.hidden = editing || !initialHTML || !canEdit;
         save.hidden = !editing;
         cancel.hidden = !editing;
 
@@ -117,6 +118,7 @@
     function prepareDetails(button) {
         row = button.closest('tr');
         form.action = button.dataset.detailsUrl;
+        canEdit = false;
         initialHTML = '';
         fields.innerHTML = '';
         history.innerHTML = '';
@@ -139,12 +141,13 @@
 
         // An unsuccessful reply cannot replace the dialog with incomplete contributor data.
         if (!response.ok || !data.ok) throw new Error(`Unable to load ${dataLabel} details.`);
+        canEdit = data.can_edit === true;
         initialHTML = data.html;
         fields.innerHTML = initialHTML;
         history.innerHTML = data.history_html;
         contact.dataset.contactHistoryUrl = data.contact_history_url;
         contact.dataset.contributorId = data.contributor_id;
-        contact.hidden = false;
+        contact.hidden = data.can_contact !== true;
         clearErrors();
     }
 

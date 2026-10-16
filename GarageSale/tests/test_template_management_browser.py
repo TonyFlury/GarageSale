@@ -1,3 +1,4 @@
+from GarageSale.tests.access_helpers import grant_workflow_permissions
 """Browser coverage of the shared communication-template management interface."""
 from datetime import timedelta
 
@@ -27,7 +28,8 @@ class CommunicationTemplateBrowserTests(BrowserTestLabelMixin, IdentifyMixin, Sm
         self.user = get_user_model().objects.create_user(
             email='template-manager@example.com', password='test-password', is_verified=True,
         )
-        self.user.user_permissions.set(Permission.objects.filter(
+        grant_workflow_permissions(self.user)
+        self.user.user_permissions.add(*Permission.objects.filter(
             content_type__app_label='GarageSale', content_type__model='communicationtemplate',
             codename__in=['view_communicationtemplate', 'add_communicationtemplate',
                           'change_communicationtemplate', 'delete_communicationtemplate'],

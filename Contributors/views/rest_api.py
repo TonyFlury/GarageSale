@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from GarageSale.access_policy import require_contributor
 from Contributors.models import Contributor, ContributorHistory
 
 
@@ -132,6 +133,9 @@ def _save_row_response(contributor, payload, request, *, created):
     """Persist valid fields and the associated audit trail before returning row data."""
     changed_fields = {key: (value, getattr(contributor, key)) for key, value in payload.items()
                       if value != getattr(contributor, key)}
+    if not created and payload.get("contributor_type", contributor.contributor_type) != contributor.contributor_type:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("Contributor type cannot be changed through inline editing.")
     _apply_contributor_payload(contributor, payload)
     errors = _validate_contributor(contributor)
 
@@ -159,7 +163,15 @@ def contributor_spreadsheet_create(request):
     # Invalid JSON cannot be treated as an empty contributor submission.
     if payload is None:
         return _invalid_payload_response()
-    return _save_row_response(Contributor(), payload, request, created=True)
+    if not isinstance(payload, dict):
+        return _invalid_payload_response()
+    contributor = Contributor(contributor_type=payload.get("contributor_type", ""))
+    _apply_contributor_payload(contributor, payload)
+    errors = _validate_contributor(contributor)
+    if errors:
+        return JsonResponse({"ok": False, "errors": errors}, status=400)
+    require_contributor(request.user, contributor, "add")
+    return _save_row_response(contributor, payload, request, created=True)
 
 
 @login_required
@@ -167,6 +179,7 @@ def contributor_spreadsheet_create(request):
 def contributor_spreadsheet_save(request, pk):
     """Save an existing inline row without changing omitted fields."""
     contributor = get_object_or_404(Contributor, pk=pk)
+    require_contributor(request.user, contributor, "change")
     payload = _read_json_payload(request)
 
     # Decode before comparing fields so malformed requests cannot trigger an audit entry.

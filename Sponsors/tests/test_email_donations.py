@@ -21,6 +21,8 @@ class SponsorEmailDonationTests(TestCase):
         request = RequestFactory().post("/", {"selected_contributor": str(self.sponsor.pk)})
         request.current_event = self.event
         view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         view.selected_email_template = SimpleNamespace(summary="Thanks", subject="Thanks", send_email=Mock(return_value=1))
         view._send_sponsor_emails(request.POST)

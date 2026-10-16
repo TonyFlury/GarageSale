@@ -13,7 +13,7 @@ from Contributors.views.general_views import ContributorSpreadsheetView
 class ContributorSpreadsheetClassViewTests(SimpleTestCase):
     def request(self, authenticated=True):
         request = RequestFactory().get(reverse("contributors:spreadsheet"))
-        request.user = SimpleNamespace(is_authenticated=authenticated)
+        request.user = SimpleNamespace(is_authenticated=authenticated, is_active=True, has_perm=lambda permission: True)
         return request
 
     def test_url_uses_class_based_view_and_requires_login(self):
@@ -113,7 +113,7 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
         request = RequestFactory().post(reverse("contributors:spreadsheet"), {
             "toolbar_action": "refresh", "selected_contributor": ["1", "2"],
         })
-        request.user = SimpleNamespace(is_authenticated=True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         response = ActionSpreadsheet.as_view()(request)
         self.assertEqual(response.status_code, 200)
         self.assertIs(calls[0], request.POST)
@@ -137,7 +137,7 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
                 return []
 
         request = RequestFactory().post("/", {"toolbar_action": "refresh"})
-        request.user = SimpleNamespace(is_authenticated=True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         response = ActionSpreadsheet.as_view()(request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(calls, [(request, request.POST)])
@@ -145,7 +145,7 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
     def test_unknown_or_missing_toolbar_action_cannot_dispatch_arbitrary_methods(self):
         for data in ({}, {"toolbar_action": "get_queryset"}):
             request = RequestFactory().post("/", data)
-            request.user = SimpleNamespace(is_authenticated=True)
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
             with patch.object(ContributorSpreadsheetView, "get_queryset") as queryset:
                 response = ContributorSpreadsheetView.as_view(extra_toolbar_actions=({},))(request)
             self.assertEqual(response.status_code, 400)
@@ -171,7 +171,7 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
 
         for ids, expected in (([], 400), ([""], 400), (["7", "8"], 200)):
             request = RequestFactory().post("/", {"toolbar_action": "selected", "selected_contributor": ids})
-            request.user = SimpleNamespace(is_authenticated=True)
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
             with patch.object(SelectionSpreadsheet, "handle_selected") as handler, \
                  patch.object(SelectionSpreadsheet, "get") as get:
                 get.return_value = SimpleNamespace(status_code=200)
@@ -197,9 +197,10 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
 
         view = FilterSpreadsheet()
         view.setup(RequestFactory().get("/", {"selected_filters": ["sponsor", "unknown", "sponsor"]}))
+        view.request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         queryset = view.get_queryset()
         self.assertEqual(view.selected_filters, ["sponsor"])
-        self.assertEqual(queryset.query.where.children[0].rhs, "sponsor")
+        self.assertTrue(any(condition.rhs == "sponsor" for condition in queryset.query.where.children))
         self.assertIn("latest_contact_timestamp", queryset.query.annotations)
 
     def test_filter_selections_survive_toolbar_post_and_can_be_cleared(self):
@@ -220,7 +221,7 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
             ("get", {}, []),
         ):
             request = getattr(RequestFactory(), method)("/", data)
-            request.user = SimpleNamespace(is_authenticated=True)
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
             response = FilterSpreadsheet.as_view()(request)
             self.assertEqual(response.context_data["selected_filters"], expected)
             self.assertEqual(response.context_data["filter_options"], FilterSpreadsheet.filter_options)
@@ -259,7 +260,7 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
             pk=1, contributor_name="Acme", contact_name="Alex", phone="", email="",
             description="<description>", contributor_type="Sponsor",
         )
-        context = {"contributors": [contributor], "extra_columns": (
+        context = {"can_add": True, "can_import": True, "can_export": True, "contributors": [contributor], "extra_columns": (
             {"label": "Description", "template": "description_cell.html"},
             {"label": "Type", "template": "type_cell.html"},
         )}

@@ -58,7 +58,7 @@ Brantham Garage Sale - Home Page
             <ul>
                 <li><a href="/">Home</a></li>
                 {% User_menu  register="/register" login="/login" logoff="/logoff" getinvolved="/getinvolved"%}
-                {% if perms.GarageSale.is_administrator %}
+                {% if perms.GarageSale.access_team_pages %}
                     <li><a href="{% url 'TeamPages:Root' %}">Team</a></li>
                 {% endif %}
             </ul>

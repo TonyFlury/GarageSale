@@ -15,6 +15,8 @@ class SponsorPDFTemplateTests(SimpleTestCase):
             "selected_contributor": ["7", "8"], "selected_filters": "cash_donated",
         })
         view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         with patch("Sponsors.views.CommunicationTemplate.current_active.filter", return_value=templates or []) as lookup:
             view.generate_pdf(request.POST)
@@ -43,6 +45,8 @@ class SponsorPDFTemplateTests(SimpleTestCase):
             "pdf_template_choice": "1", "selected_contributor": ["7", "8"],
         })
         view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         with patch("Sponsors.views.CommunicationTemplate.current_active.filter", return_value=[template]), \
              patch.object(view, "_get_selected_email_sponsors", return_value=sponsors), \
@@ -74,6 +78,8 @@ class SponsorPDFTemplateTests(SimpleTestCase):
         request = RequestFactory().post("/sponsors/")
         request.current_event = None
         view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         sponsors = [SimpleNamespace(pk=i, contributor_name=f"Sponsor {i}", contact_name=" Alex ",
                                    email="", previously_confirmed=True) for i in (7, 8)]

@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from GarageSale.access_policy import require_contributor
 from Contributors.models import Contributor, ContributorHistory
 
 
@@ -20,6 +21,7 @@ class ContactHistoryForm(forms.Form):
 def add_contact_history(request, pk):
     """Record a dated contact note and return its local calendar date."""
     contributor = get_object_or_404(Contributor, pk=pk)
+    require_contributor(request.user, contributor, "contact")
     form = ContactHistoryForm(request.POST)
 
     # Return correctable field errors before creating records or audit history.

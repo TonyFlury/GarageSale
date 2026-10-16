@@ -14,6 +14,8 @@ class SponsorSpreadsheetFilterTests(SimpleTestCase):
         view = SponsorSpreadsheetView()
         request = RequestFactory().get("/", {"selected_filters": selected})
         request.current_event = SimpleNamespace(pk=123, event_date=timezone.localdate() + timedelta(days=1))
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         view.historic_event_date = date(2026, 9, 1)
         return view

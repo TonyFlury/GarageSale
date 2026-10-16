@@ -41,7 +41,7 @@ class ContributorDetailsTests(SimpleTestCase):
 
     def request(self, method="get", data=None):
         request = getattr(RequestFactory(), method)(self.url, data or {})
-        request.user = SimpleNamespace(is_authenticated=True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         return request
 
     def payload(self, **changes):
@@ -122,7 +122,7 @@ class ContributorDetailsTests(SimpleTestCase):
         request.user.is_authenticated = False
         self.assertEqual(contributor_details(request, pk=7).status_code, 302)
         request = RequestFactory().delete(self.url)
-        request.user = SimpleNamespace(is_authenticated=True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         self.assertEqual(contributor_details(request, pk=7).status_code, 405)
 
     @patch("Contributors.views.details.get_object_or_404")

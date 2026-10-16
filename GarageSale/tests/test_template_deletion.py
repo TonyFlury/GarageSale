@@ -32,7 +32,7 @@ class CommunicationTemplateDeletionTests(TestCase):
 
     def request(self, method="get", allowed=True):
         request = getattr(RequestFactory(), method)(reverse("TeamPages:CommunicationTemplateDelete", args=[self.template.pk]))
-        request.user = SimpleNamespace(is_authenticated=True, has_perms=lambda permissions: allowed)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: allowed, has_perms=lambda permissions: allowed)
         return request
 
     def test_only_in_date_same_summary_and_category_allow_deletion(self):

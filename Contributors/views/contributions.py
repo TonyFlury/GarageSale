@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 
+from GarageSale.access_policy import require_contributor, require
 from Contributors.models import Contributor, Contributions
 from Contributors.views.general_views import get_current_contribution_event
 
@@ -45,6 +46,8 @@ def delete_contribution(request, pk, contribution_pk):
     if event is None or str(event.pk) != request.POST.get("event_id"):
         return JsonResponse({"ok": False, "message": "The current event has changed. Reopen contributor details."}, status=409)
     contributor = get_object_or_404(Contributor, pk=pk)
+    require_contributor(request.user, contributor)
+    require(request.user, "Contributors.delete_contributions")
 
     # Database failures need a recoverable response without concealing missing records.
     try:
@@ -115,6 +118,8 @@ def _contribution_save_error(failure, pk, event):
 def add_contribution(request, pk):
     """Validate and save a cash amount or a described non-cash contribution."""
     contributor = get_object_or_404(Contributor, pk=pk)
+    require_contributor(request.user, contributor)
+    require(request.user, "Contributors.add_contributions")
     form = ContributionForm(request.POST)
 
     # Form errors must be returned before accessing potentially absent cleaned fields.

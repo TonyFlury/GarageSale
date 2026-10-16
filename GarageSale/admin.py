@@ -25,6 +25,7 @@ from Sponsors import models as sponsor_models
 from django.contrib.auth.models import Permission
 
 from .svgaimagefield import ImagePreviewWidget
+from GarageSale.access_policy import template_categories, require_template
 from django.contrib import admin
 
 from django_summernote.admin import SummernoteModelAdmin
@@ -108,4 +109,20 @@ class TemplatesAdminForm(SummernoteModelAdmin):
     list_display = ['category','sub_category', 'summary', 'use_from']
     inlines = [TemplateAttachmentInline]
     def get_queryset(self, request):
-        return super().get_queryset(request).order_by('category', 'sub_category', '-use_from')
+        queryset = super().get_queryset(request).order_by('category', 'sub_category', '-use_from')
+        categories = template_categories(request.user)
+        return queryset if categories is None else queryset.filter(category__in=categories)
+
+    def get_form(self, request, obj=None, **kwargs):
+        base_form = super().get_form(request, obj, **kwargs)
+
+        class ScopedTemplateForm(base_form):
+            def clean(self):
+                cleaned = super().clean()
+                category = obj.category if obj else cleaned.get("category", "")
+                require_template(request.user, category, "change" if obj else "add")
+                if obj and cleaned.get("category", obj.category) != obj.category:
+                    require_template(request.user, cleaned["category"], "change")
+                return cleaned
+
+        return ScopedTemplateForm

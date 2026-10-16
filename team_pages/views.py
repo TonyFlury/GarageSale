@@ -31,7 +31,7 @@ logger.setLevel(logging.DEBUG)
 
 register('Google Drive', 'TeamPages:GoogleDriveEntryPoint',
                        static('GarageSale/images/icons/navigation/network-drive-svgrepo-com.svg'),
-         permission='GarageSale.is_team_member', needs_event=False)
+         permission='GarageSale.access_drive', needs_event=False)
 def GoogleDriveEntryPoint(request):
     return TemplateResponse(request, template='GoogleDrive.html')
 
@@ -241,7 +241,7 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 
 class NewsRoot(CombinedView):
-    permission_required = ["News.can_manage_news"]
+    permission_required = ["News.view_newsarticle"]
     template_name = 'news/tp_manage_news.html'
     form_class = NewsForm
     model_class = NewsArticle
@@ -273,7 +273,7 @@ class NewsRoot(CombinedView):
 
 
 class NewsEdit(NewsRoot):
-    permission_required = ["News.change_news"]
+    permission_required = ["News.change_newsarticle"]
     form_class = NewsForm
     template_name = 'news/tp_edit_news.html'
 
@@ -293,7 +293,7 @@ class NewsEdit(NewsRoot):
 
 class NewsView(NewsEdit):
     """get_object is the same in both cases"""
-    permission_required = ["News.view_news"]
+    permission_required = ["News.view_newsarticle"]
     template_name = 'news/tp_view_news.html'
 
     def get_context_data(self, request, **request_kwargs):
@@ -303,7 +303,7 @@ class NewsView(NewsEdit):
 
 
 class NewsCreate(NewsRoot):
-    permission_required = ["News.can_create_news"]
+    permission_required = ["News.add_newsarticle"]
     template_name = 'news/tp_create_news.html'
 
     def get_context_data(self, request, **request_kwargs):
@@ -317,7 +317,7 @@ class NewsCreate(NewsRoot):
 
 class NewsDelete(NewsView):
     template_name = 'news/tp_delete_news.html'
-    permission_required = ["News.delete_news"]
+    permission_required = ["News.delete_newsarticle"]
     form_class = None
 
     def get_context_data(self, request, **kwargs):
@@ -384,7 +384,7 @@ class MotDEdit(MotDView):
 
 
 class MotDCreate(MotDBase):
-    permission_required = ["GarageSale.can_create_motd"]
+    permission_required = ["GarageSale.add_motd"]
     template_name = 'motd/tp_create_motd.html'
 
     def get_context_data(self, request, **kwargs):
@@ -413,7 +413,7 @@ def event_list(request):
     return render(request, 'event/event_list.html', context={'event_list': EventData.objects.all().order_by('-event_date'), 'data_type': 'event', 'action': 'list'})
 
 class EventBase(CombinedView):
-    permission_required = ["GarageSale.view_event"]
+    permission_required = ["GarageSale.view_eventdata"]
     template_name = 'motd/tp_view_event.html'
     form_class = EventForm
     model = EventData
@@ -446,7 +446,7 @@ class EventBase(CombinedView):
 
 
 class EventView(EventBase):
-    permission_required = ["GarageSale.view_event"]
+    permission_required = ["GarageSale.view_eventdata"]
     template_name = 'event/tp_view_event.html'
 
     def get_context_data(self, request, **kwargs):
@@ -456,7 +456,7 @@ class EventView(EventBase):
 
 
 class EventEdit(EventView):
-    permission_required = ["GarageSale.change_event"]
+    permission_required = ["GarageSale.change_eventdata"]
     template_name = 'event/tp_edit_event.html'
     success_url = reverse_lazy( 'TeamPages:Event')
 
@@ -467,7 +467,7 @@ class EventEdit(EventView):
 
 
 class EventCreate(EventBase):
-    permission_required = ["GarageSale.can_create_event"]
+    permission_required = ["GarageSale.add_eventdata"]
     template_name = 'event/tp_create_event.html'
     success_url = reverse_lazy( 'TeamPages:Event')
     _supporting = None

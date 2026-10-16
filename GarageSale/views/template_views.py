@@ -22,6 +22,7 @@ from django.views import View
 
 from GarageSale.forms import TemplateForm, AttachmentForm, CommunicationTemplateWebsiteForm, CommunicationTemplateAttachmentForm
 from GarageSale.models import CommunicationTemplate, TemplateAttachment
+from GarageSale.access_policy import template_categories, require_template
 from team_pages.framework_views import FrameworkView
 from TeamPageFramework.entry_point import EntryPointMixin
 
@@ -42,7 +43,11 @@ class CommunicationTemplateCategories(EntryPointMixin, LoginRequiredMixin, Permi
         context = super().get_context_data(**kwargs)
 
         # List every template by summary, including old and future versions.
-        rows = CommunicationTemplate.objects.order_by("category", "summary", "-use_from", "pk").values_list(
+        permitted = template_categories(self.request.user)
+        queryset = CommunicationTemplate.objects.order_by("category", "summary", "-use_from", "pk")
+        if permitted is not None:
+            queryset = queryset.filter(category__in=permitted)
+        rows = queryset.values_list(
             "category", "summary", "use_from", "pk", "sub_category",
         )
         categories = {}
@@ -73,6 +78,14 @@ class CommunicationTemplateFormView(LoginRequiredMixin, PermissionRequiredMixin)
     form_class = CommunicationTemplateWebsiteForm
     template_name = "team_pages/communication_template_form.html"
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        categories = template_categories(self.request.user, "manage")
+        if categories is not None:
+            form.fields["category"].widget = __import__("django.forms", fromlist=["Select"]).Select(
+                choices=[(category, category) for category in sorted(categories)])
+        return form
+
     def get_attachment_formset(self, instance=None):
         factory = inlineformset_factory(
             CommunicationTemplate, TemplateAttachment, form=CommunicationTemplateAttachmentForm,
@@ -92,6 +105,7 @@ class CommunicationTemplateFormView(LoginRequiredMixin, PermissionRequiredMixin)
         return attachments
 
     def form_valid(self, form):
+        require_template(self.request.user, form.cleaned_data["category"], "change" if self.object else "add")
         attachments = self.get_attachment_formset(instance=form.instance)
 
         # Keep the form open without saving anything if an attachment is invalid.
@@ -192,7 +206,7 @@ class CommunicationTemplateDelete(LoginRequiredMixin, PermissionRequiredMixin, D
 class TemplateManagement(FrameworkView):
     template_name = "team_pages/templates.html"
     login_url = '/user/login'
-    permission_required = 'CraftMarket.can_manage'
+    permission_required = 'CraftMarket.view_marketer'
     columns = [('warning_as_html_fragment',''),('sub_category', 'Sub-category'),('summary','Summary'), ('use_from', 'Use From')]
     model_class = CommunicationTemplate
     form_class = TemplateForm

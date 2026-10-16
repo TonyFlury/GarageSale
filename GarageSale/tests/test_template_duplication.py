@@ -20,7 +20,7 @@ class CommunicationTemplateDuplicationTests(TestCase):
 
     def request(self, method="post", allowed=True):
         request = getattr(RequestFactory(), method)(reverse("TeamPages:CommunicationTemplateDuplicate", args=[self.source.pk]))
-        request.user = SimpleNamespace(is_authenticated=True, has_perms=lambda permissions: allowed)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: allowed, has_perms=lambda permissions: allowed)
         return request
 
     @patch("GarageSale.views.template_views.timezone.localdate", return_value=date(2026, 10, 12))

@@ -1,3 +1,4 @@
+from GarageSale.tests.access_helpers import grant_workflow_permissions
 import json
 
 from django.contrib.auth import get_user_model
@@ -17,6 +18,7 @@ class ContributorSpreadsheetViewTests(TestCase):
             password="password123",
             phone="01234567890",
         )
+        grant_workflow_permissions(self.user)
 
         self.contributor = Contributor.objects.create(
             contributor_type="Sponsor",
@@ -130,7 +132,7 @@ class ContributorSpreadsheetViewTests(TestCase):
             reverse("contributors:spreadsheet_save", args=[self.contributor.pk]),
             data=json.dumps(
                 {
-                    "contributor_type": "Donor",
+                    "contributor_type": "Sponsor",
                     "contributor_name": "Updated Company",
                     "contact_name": "Jordan Jones",
                     "phone": "07123456789",
@@ -149,7 +151,7 @@ class ContributorSpreadsheetViewTests(TestCase):
 
         self.contributor.refresh_from_db()
 
-        self.assertEqual(self.contributor.contributor_type, "Donor")
+        self.assertEqual(self.contributor.contributor_type, "Sponsor")
         self.assertEqual(self.contributor.contributor_name, "Updated Company")
         self.assertEqual(self.contributor.contact_name, "Jordan Jones")
         self.assertEqual(self.contributor.phone, "07123456789")

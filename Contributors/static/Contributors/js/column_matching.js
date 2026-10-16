@@ -11,7 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
     { key: 'contact_name', label: 'Contact name' },
     { key: 'phone', label: 'Phone' },
     { key: 'email', label: 'Email' },
-    { key: 'contact_history', label: 'Contact History' }
+    { key: 'contact_history', label: 'Contact History (one note per row)' },
+    { key: 'contact_date', label: 'Contact date (YYYY-MM-DD)' }
   ];
   const IGNORE = '__ignore__';
   const SOCIALS = '__socials__';

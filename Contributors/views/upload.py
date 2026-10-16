@@ -1,12 +1,17 @@
 import csv
 import io
 import json
+from datetime import date, datetime, time
 from typing import TypedDict
 
 from django.http import HttpResponseBadRequest
 from django.db import transaction
 from django.shortcuts import redirect, render
 from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
+from GarageSale.access_policy import contributor_types, require_contributor
+from django.utils import timezone
 
 from Contributors.models import Contributor, ContributorHistory
 
@@ -17,6 +22,7 @@ class ImportChanges(TypedDict):
     new_instances: list[Contributor]
     modified_instances: list[Contributor]
     new_history_instances: list[ContributorHistory]
+    duplicate_history_count: int
 
 
 class ImportReviewContext(ImportChanges):
@@ -28,18 +34,27 @@ class ImportReviewContext(ImportChanges):
     contributor_type: str | None
 
 
-class UploadCSV(View):
+class UploadCSV(LoginRequiredMixin, View):
     """Handle file selection, column matching, and action review at one URL."""
 
     CSV_FIELD_NAMES = ("contributor_name", "contact_name", "phone", "email", "description", "contributor_type")
     CSV_FIELDS = set(CSV_FIELD_NAMES)
 
+    # History columns are import instructions, never attributes assigned to Contributor.
+    HISTORY_FIELDS = {"contact_history", "contact_date"}
+
     def get(self, request, *args, **kwargs):
         """Render the initial page or download using the configured standard fields."""
-        return render(request, "upload/upload.html")
+        kinds = contributor_types(request.user, "import")
+        if not kinds:
+            raise PermissionDenied("You do not have permission to import contributors.")
+        return render(request, "upload/upload.html", {"contributor_types": kinds})
 
     def post(self, request, *args, **kwargs):
         """Dispatch the submitted stage or action through the permitted workflow."""
+
+        if not contributor_types(request.user, "import"):
+            raise PermissionDenied("You do not have permission to import contributors.")
 
         # Only explicit workflow stages may advance a potentially destructive import.
         match request.POST.get("stage"):
@@ -117,7 +132,7 @@ class UploadCSV(View):
         # Shape validation must precede field access on client-supplied JSON.
         if not UploadCSV._valid_import_shape(rows, mapping, fields):
             return "Invalid CSV data or column mapping."
-        mapped_fields = [field for field in mapping.values() if field in fields | {"contact_history"}]
+        mapped_fields = [field for field in mapping.values() if field in fields | UploadCSV.HISTORY_FIELDS]
 
         # Contributor name is the identity key; duplicate destinations would discard data.
         if "contributor_name" not in mapped_fields or len(mapped_fields) != len(set(mapped_fields)):
@@ -144,7 +159,7 @@ class UploadCSV(View):
         # Destination keys are an allowlist rather than arbitrary model attributes.
         if not isinstance(mapping, dict):
             return False
-        allowed = fields | {"", "__ignore__", "__socials__", "contact_history"}
+        allowed = fields | {"", "__ignore__", "__socials__"} | UploadCSV.HISTORY_FIELDS
         return all(isinstance(column, str) and isinstance(field, str) and field in allowed
                    for column, field in mapping.items())
 
@@ -153,22 +168,51 @@ class UploadCSV(View):
         """Check identities and note lengths before building the review objects."""
 
         # Every row needs an identity even when its only change is a contact note.
-        for row in rows:
+        for row_number, row in enumerate(rows, start=2):
 
             # Every proposal needs a usable name for exact-match identity resolution.
             if not row.get(name_column, "").strip():
                 return "Each CSV row must have a contributor name."
 
-            # Each line becomes a separate history record with its own size limit.
-            for column, destination in mapping.items():
+            # One cell is one complete note, including embedded line breaks. Never
+            # interpret prose or a date inside the note as a separate contact.
+            comment = UploadCSV._normalise_comment(UploadCSV._mapped_value(row, mapping, "contact_history"))
+            contact_date = UploadCSV._mapped_value(row, mapping, "contact_date").strip()
+            if len(comment) > 1000:
+                return "Contact History comments must be 1000 characters or fewer."
 
-                # The note length limit applies to each line, not the complete CSV cell.
-                if destination == "contact_history":
-
-                    # Reject an oversized note before any part of the import can be saved.
-                    if any(len(line.strip()) > 1000 for line in row.get(column, "").splitlines()):
-                        return "Contact History comments must be 1000 characters or fewer."
+            # Blank contact columns permit ordinary contributor-only updates. A
+            # partial contact is rejected rather than silently dated as today.
+            if bool(comment) != bool(contact_date):
+                return f"CSV row {row_number}: Contact History and Contact date must both be supplied, or both left blank."
+            if contact_date:
+                try:
+                    UploadCSV._contact_day(contact_date)
+                except ValueError:
+                    return f"CSV row {row_number}: Contact date must be a valid date in YYYY-MM-DD format."
         return None
+
+    @staticmethod
+    def _mapped_value(row, mapping, destination):
+        """Read an optional import field regardless of the CSV's column heading."""
+        column = next((column for column, field in mapping.items() if field == destination), None)
+        return row.get(column, "")
+
+    @staticmethod
+    def _normalise_comment(value):
+        """Ignore surrounding whitespace and platform-specific line endings only."""
+        return (value or "").replace("\r\n", "\n").replace("\r", "\n").strip()
+
+    @staticmethod
+    def _contact_day(value):
+        """Require an unambiguous ISO calendar date, without accepting timestamps."""
+        day = date.fromisoformat(value)
+
+        # fromisoformat also accepts compact and week dates; CSV dates must use
+        # the documented calendar format so users can inspect them consistently.
+        if day.isoformat() != value:
+            raise ValueError("Use YYYY-MM-DD.")
+        return day
 
     def _columns_matched(self, request):
         """Prepare a review page without persisting the proposed changes."""
@@ -191,6 +235,7 @@ class UploadCSV(View):
             "new_instances": changes["new_instances"],
             "modified_instances": changes["modified_instances"],
             "new_history_instances": changes["new_history_instances"],
+            "duplicate_history_count": changes["duplicate_history_count"],
             "csv_path": request.POST.get("csv_path", ""),
             "csv_data_json": json.dumps(rows),
             "column_mapping_json": json.dumps(mapping),
@@ -240,12 +285,38 @@ class UploadCSV(View):
         modified_instances: list[Contributor] = []
         new_history_instances: list[ContributorHistory] = []
 
+        # Fetch existing contact comments once for all matched contributors.
+        # Include contacts entered manually: their local calendar date, rather
+        # than their time of day, identifies a date-only CSV contact.
+        seen_contacts = {
+            (name, timezone.localdate(timestamp), self._normalise_comment(details))
+            for name, timestamp, details in ContributorHistory.objects.filter(
+                contributor_id__in=[contributor.pk for contributor in existing.values()],
+                event_category="Contact", event_type="Comment",
+            ).values_list("contributor__contributor_name", "timestamp", "details")
+        }
+        duplicate_history_count = 0
+
         # Repeated names intentionally build on values proposed by earlier rows.
         for row, name in zip(rows, names):
             current = existing.get(name)
             proposed = self._propose_contributor(current, request.POST.get("contributor_type", ""))
+            original_type = proposed.contributor_type
             changed = self._apply_mapped_values(proposed, row, mapping)
-            new_history_instances.extend(self._prepare_history(proposed, row, mapping, request.user))
+            if current is not None and proposed.contributor_type != original_type:
+                raise PermissionDenied("Imports cannot change contributor type.")
+            require_contributor(request.user, proposed, "import")
+            if current is None or changed:
+                require_contributor(request.user, proposed, "add" if current is None else "change")
+            if self._mapped_value(row, mapping, "contact_history").strip():
+                require_contributor(request.user, proposed, "contact")
+
+            # The same set includes accepted rows from this file, so duplicates
+            # are skipped both within an upload and on subsequent reuploads.
+            history, duplicate = self._prepare_history(proposed, row, mapping, request.user, seen_contacts)
+            if history is not None:
+                new_history_instances.append(history)
+            duplicate_history_count += duplicate
 
             # New contributors need creation; existing records must retain their identity.
             if current is None:
@@ -262,6 +333,7 @@ class UploadCSV(View):
             "new_instances": new_instances,
             "modified_instances": modified_instances,
             "new_history_instances": new_history_instances,
+            "duplicate_history_count": duplicate_history_count,
         }
 
     @staticmethod
@@ -324,28 +396,31 @@ class UploadCSV(View):
         return value
 
     @staticmethod
-    def _prepare_history(contributor: Contributor, row: dict[str, str], mapping: dict[str, str], user) -> list[ContributorHistory]:
-        """Create a separate unsaved history entry for each non-blank comment line."""
-        histories: list[ContributorHistory] = []
+    def _prepare_history(contributor, row, mapping, user, seen_contacts):
+        """Append one dated contact per row; never edit an existing history entry."""
+        comment = UploadCSV._normalise_comment(UploadCSV._mapped_value(row, mapping, "contact_history"))
 
-        # History columns create notes rather than overwrite contributor fields.
-        for column, destination in mapping.items():
+        # Validation has already rejected incomplete contacts. Empty cells mean
+        # no contact occurred and must not manufacture a new history entry.
+        if not comment:
+            return None, 0
+        day = UploadCSV._contact_day(UploadCSV._mapped_value(row, mapping, "contact_date").strip())
+        key = (contributor.contributor_name, day, comment)
 
-            # Non-history destinations belong to the contributor or socials update path.
-            if destination != "contact_history":
-                continue
+        # Different notes on the same day remain distinct contacts. Text matching
+        # preserves case and punctuation; changed prose is a new append-only note.
+        if key in seen_contacts:
+            return None, 1
+        seen_contacts.add(key)
 
-            # A multiline cell represents separate dated contact notes.
-            for line in row.get(column, "").splitlines():
-                comment = line.strip()
-
-                # Blank lines are formatting gaps rather than meaningful contact events.
-                if comment:
-                    histories.append(ContributorHistory(
-                        contributor=contributor, event_category="Contact", event_type="Comment",
-                        details=comment, user=user if user.is_authenticated else None,
-                    ))
-        return histories
+        # Existing history readers use timestamp as the contact occurrence time.
+        # Store the supplied date at local midnight so last-contact dates and
+        # contacted filters reflect the contact day, never the upload day.
+        timestamp = timezone.make_aware(datetime.combine(day, time.min))
+        return ContributorHistory(
+            contributor=contributor, event_category="Contact", event_type="Comment",
+            details=comment, timestamp=timestamp, user=user if user.is_authenticated else None,
+        ), 0
 
     def _actions_reviewed(self, request):
         """Rebuild and save a confirmed import under locks in one transaction."""
@@ -380,4 +455,3 @@ class UploadCSV(View):
         for history in context["new_history_instances"]:
             history.contributor = saved.get(history.contributor.contributor_name, history.contributor)
             history.save()
-

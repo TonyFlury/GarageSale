@@ -41,7 +41,7 @@ function setup() {
         FormData: class {constructor() {this.name = input.value;}},
         fetch: async (url, options) => {
             requests.push({url, options});
-            return {ok: true, json: async () => ({ok: true, html: '<input>', history_html: 'Latest history',
+            return {ok: true, json: async () => ({ok: true, can_edit: true, can_contact: true, html: '<input>', history_html: 'Latest history',
                 contributor_id: 7, contact_history_url: '/contact/7/', contributor: {id: 7}})};
         }};
     vm.runInNewContext(source, context);

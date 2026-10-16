@@ -76,6 +76,7 @@ class SponsorConfirmationTests(SimpleTestCase):
             SimpleNamespace(pk=2, cash=False, gift="Voucher"),
         ]), SimpleNamespace(pk=8, contributor_name="Beta", event_contributions=[])]
         html = render_to_string("Sponsors/confirmed_contributions.html", {
+            "perms": {"Contributors": {"add_contributions": True, "delete_contributions": True}},
             "sponsors": sponsors, "current_event": EventData(pk=123, event_date=timezone.localdate()),
         })
         for value in ("Acme &lt;Ltd&gt;", "Cash", "£100.00", "Gift", "Voucher", "Beta",

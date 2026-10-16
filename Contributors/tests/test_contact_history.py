@@ -45,8 +45,9 @@ class ContactHistoryTests(SimpleTestCase):
             ],
         )
         html = engine.get_template("contributor_spreadsheet.html").render(Context({
+            "can_add": True,
             "contributors": [SimpleNamespace(
-                pk=7, contributor_name="Oak & Co.",
+                can_edit=True, can_contact=True, pk=7, contributor_name="Oak & Co.",
                 current_event_contributions=[SimpleNamespace(gift="Prize voucher"),
                                              SimpleNamespace(gift="Gift <basket>"),
                                              SimpleNamespace(gift=None)],
@@ -84,12 +85,13 @@ class ContactHistoryTests(SimpleTestCase):
     @patch("Contributors.views.contact_history.ContributorHistory.objects.create")
     @patch("Contributors.views.contact_history.get_object_or_404")
     def test_saves_contact_comment_with_selected_date_and_user(self, lookup, create):
+        lookup.return_value.contributor_type = "Sponsor"
         contributor = lookup.return_value
         create.return_value.pk = 42
         request = RequestFactory().post(reverse("contributors:contact_history", args=[7]), {
             "note": "  Called to discuss sponsorship  ", "date": "2026-10-09",
         })
-        request.user = SimpleNamespace(is_authenticated=True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         response = add_contact_history(request, pk=7)
         self.assertEqual(response.status_code, 201)
         values = create.call_args.kwargs
@@ -104,8 +106,9 @@ class ContactHistoryTests(SimpleTestCase):
     @patch("Contributors.views.contact_history.ContributorHistory.objects.create")
     @patch("Contributors.views.contact_history.get_object_or_404")
     def test_invalid_note_does_not_save(self, lookup, create):
+        lookup.return_value.contributor_type = "Sponsor"
         request = RequestFactory().post("/", {"note": "", "date": "2026-10-10"})
-        request.user = SimpleNamespace(is_authenticated=True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         self.assertEqual(add_contact_history(request, pk=7).status_code, 400)
         create.assert_not_called()
 
@@ -113,5 +116,5 @@ class ContactHistoryTests(SimpleTestCase):
         request = RequestFactory().get("/")
         request.user = SimpleNamespace(is_authenticated=False)
         self.assertEqual(add_contact_history(request, pk=7).status_code, 302)
-        request.user = SimpleNamespace(is_authenticated=True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         self.assertEqual(add_contact_history(request, pk=7).status_code, 405)

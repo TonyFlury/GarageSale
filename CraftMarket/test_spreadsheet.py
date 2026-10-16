@@ -1,4 +1,7 @@
+from GarageSale.tests.access_helpers import grant_workflow_permissions
 from datetime import timedelta
+import io
+import zipfile
 from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
@@ -17,11 +20,63 @@ from GarageSale.models import CommunicationTemplate, EventData, TemplateAttachme
     "EmailTemplateCategory": "MarketTest", "EmailFrom": "market@example.com",
 }})
 class MarketSpreadsheetTests(TestCase):
+    def test_pdf_chooser_uses_market_category_and_preserves_selection(self):
+        view = self.view({
+            "toolbar_action": "generate_pdf", "selected_contributor": [str(self.marketer.pk)],
+            "selected_filters": "invited",
+        })
+        view.generate_pdf(view.request.POST)
+        self.assertIn("Available Market Trader templates", view.modal_html)
+        for template in self.templates.values():
+            self.assertIn(f'<option value="{template.pk}">', view.modal_html)
+        self.assertIn(f'name="selected_contributor" value="{self.marketer.pk}"', view.modal_html)
+        self.assertIn('name="selected_filters" value="invited"', view.modal_html)
+
+    def test_pdf_download_reuses_market_context_without_email_or_status_changes(self):
+        self.record_status("Invited")
+        before = list(ContributorEvent.objects.values())
+        view = self.view({
+            "toolbar_action": "generate_pdf", "pdf_template_choice": "1",
+            "pdf_template_id": str(self.templates["Terms"].pk),
+            "selected_contributor": [str(self.marketer.pk), str(self.other.pk)],
+        }, event_id=self.event.pk)
+        with patch.object(CommunicationTemplate, "render_template_as_pdf", return_value=b"%PDF-test") as render, \
+             patch.object(view, "get", side_effect=AssertionError("Download must not rerender")):
+            response = view.post(view.request)
+        self.assertEqual(response["Content-Type"], "application/zip")
+        with zipfile.ZipFile(io.BytesIO(b"".join(response.streaming_content))) as archive:
+            self.assertEqual(set(archive.namelist()), {"Oak__Co.pdf", "Birch.pdf"})
+        contexts = [call.args[1] for call in render.call_args_list]
+        self.assertEqual({context["trading_name"] for context in contexts}, {"Oak & Co", "Birch"})
+        self.assertTrue(all(context["current_event"] == self.event for context in contexts))
+        self.assertIsNot(contexts[0], contexts[1])
+        oak = next(context for context in contexts if context["trading_name"] == "Oak & Co")
+        self.assertTrue(oak["url"])
+        self.assertEqual(list(ContributorEvent.objects.values()), before)
+        response.file_to_stream.close()
+
+    def test_pdf_rejects_foreign_templates_and_contributors(self):
+        foreign = CommunicationTemplate.objects.create(
+            category="Sponsors", summary="Foreign", subject="Foreign", html_content="Foreign",
+            use_from=timezone.localdate(),
+        )
+        view = self.view({"pdf_template_choice": "1", "pdf_template_id": str(foreign.pk),
+                          "selected_contributor": [str(self.marketer.pk)]})
+        with patch.object(CommunicationTemplate, "render_template_as_pdf") as render:
+            self.assertIsNone(view.generate_pdf(view.request.POST))
+            render.assert_not_called()
+        self.assertIn("no longer available", view.modal_html)
+        view = self.view({"pdf_template_id": str(self.templates["Terms"].pk),
+                          "selected_contributor": [str(self.sponsor.pk)]})
+        self.assertIsNone(view.generate_pdf(view.request.POST))
+        self.assertIn("no longer exist", view.modal_html)
+
     def setUp(self):
         today = timezone.localdate()
         self.event = EventData.objects.create(event_date=today + timedelta(days=30), use_from=today - timedelta(days=1))
         self.previous = EventData.objects.create(event_date=today - timedelta(days=60), use_from=today - timedelta(days=90))
         self.user = get_user_model().objects.create_user(email="market-team@example.com", password="test-password")
+        grant_workflow_permissions(self.user)
         self.user.user_permissions.add(*Permission.objects.filter(
             content_type__app_label="CraftMarket", codename__in=["suggest_marketer", "change_marketer"],
         ))

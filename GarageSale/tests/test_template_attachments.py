@@ -30,7 +30,7 @@ class CommunicationTemplateAttachmentTests(TestCase):
 
     def submit(self, data):
         request = RequestFactory().post("/", data)
-        request.user = SimpleNamespace(is_authenticated=True, has_perms=lambda permissions: True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True, has_perms=lambda permissions: True)
         return CommunicationTemplateEdit.as_view()(request, pk=self.template.pk)
 
     def test_add_named_attachment(self):

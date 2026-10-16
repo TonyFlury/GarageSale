@@ -34,6 +34,8 @@ class SponsorPreviousConfirmationTests(TestCase):
             contexts[context["company_name"]] = context
             return 1
         view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         view.selected_email_template = SimpleNamespace(summary="Invitation", subject="Hello", send_email=Mock(side_effect=send))
         view._send_sponsor_emails(request.POST)

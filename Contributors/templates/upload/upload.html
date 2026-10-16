@@ -10,6 +10,7 @@
   <form id="csv-upload-form" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <input type="hidden" name="stage" value="select_file">
+    <label>Contributor type <select name="contributor_type">{% for kind in contributor_types %}<option value="{{ kind }}">{{ kind }}</option>{% endfor %}</select></label>
 
     <div class="eyebrow">Contributors / CSV import</div>
     <h1>Select your file</h1>

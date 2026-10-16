@@ -27,7 +27,7 @@ import matplotlib.dates as mdates
 
 register('Ad Board Applications', 'Location:EventAdBoard',
          static('GarageSale/images/icons/navigation/ad-board-svgrepo-com.svg'),
-         permission='GarageSale.is_team_member',
+         permission='Location.view_location',
          needs_event=False, nav_page='TeamPagesData')
 def event_ad_board(request):
     events = EventData.objects.all().order_by('-event_date')
@@ -125,7 +125,7 @@ def create_plot( event_id,  _type:str=''):
 
 register('Statistics','Location:EventStats',
          static('GarageSale/images/icons/navigation/statistics-svgrepo-com.svg'),
-         'GarageSale.is_team_member', needs_event=False, nav_page='TeamPagesData')
+         'GarageSale.access_team_pages', needs_event=False, nav_page='TeamPagesData')
 def event_stats(request, event_id=None):
     """"Provide stats for this given event - so far it is counts of Billboard and sales locations """
 

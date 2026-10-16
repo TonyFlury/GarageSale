@@ -377,6 +377,40 @@ Simple class attributes can also be configured through `as_view()`, for example
 `ContributorSpreadsheetView.as_view(contributor_type="Sponsor")`. Use a
 subclass when adding handler methods or changing queryset behavior.
 
+## Downloading personalised PDFs
+
+PDF generation is provided by `ContributorSpreadsheetView`. A subclass can
+enable the chooser and ZIP download with a category and the shared toolbar action:
+
+```python
+class ExampleSpreadsheetView(ContributorSpreadsheetView):
+    contributor_type = "Sponsor"
+    pdf_template_category = "Sponsors"
+    extra_toolbar_actions = (ContributorSpreadsheetView.pdf_toolbar_action,)
+```
+
+The action offers all active templates in that category, including templates
+used as named attachments. After choosing one, the user downloads a ZIP containing
+one personalised PDF per selected contributor. Email addresses are not required.
+The chooser preserves the selected contributors and server-side filters. Duplicate
+or case-equivalent names receive unique filenames within the archive.
+
+Three hooks allow category-specific data without duplicating the download flow:
+
+- `get_pdf_templates()` returns the currently eligible templates. Override this
+  instead of setting `pdf_template_category` when the category comes from settings.
+- `get_pdf_contributors(post_data)` validates and returns the complete selection,
+  or displays an error and returns `None`. The default checks the view's filtered
+  queryset; overrides must retain contributor-type and selection validation.
+- `get_pdf_contexts(contributors)` yields `(contributor, context)` pairs. Each
+  contributor must receive a fresh dictionary. The default supplies event defaults,
+  `contributor_name`, `company_name`, `contact_name`, and `attn`.
+
+Sponsors reuse their email contexts, including donation and confirmation fields.
+CraftMarket reuses its trader email contexts and selected event, including the
+invitation URL when available. Generating PDFs does not send email or change
+confirmation/invitation status. Existing subclass action permissions still apply.
+
 ## Implementation and tests
 
 For how the initially empty details popup is populated and edited, see

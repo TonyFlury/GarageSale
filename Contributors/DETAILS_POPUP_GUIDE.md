@@ -57,6 +57,48 @@ DOM is ready:
 The handlers use event delegation on the sheet, dialog, or fields container,
 so they can handle buttons and controls inserted after initial page load.
 
+## Minimal example: a popup with arbitrary contents
+
+The spreadsheet also supports an independent popup, separate from row details.
+In a `ContributorSpreadsheetView` subclass, a toolbar handler can set
+`self.modal_html` to a rendered HTML fragment:
+
+```python
+from django.template.loader import render_to_string
+
+from Contributors.views.general_views import ContributorSpreadsheetView
+
+
+class ExampleSpreadsheetView(ContributorSpreadsheetView):
+    extra_toolbar_actions = (
+        {"name": "notice", "label": "Show notice", "handler": "show_notice"},
+    )
+
+    def show_notice(self, post_data):
+        self.modal_html = render_to_string(
+            "notice_dialog.html",
+            {"message": "Any content you want to display."},
+            request=self.request,
+        )
+```
+
+Create `notice_dialog.html` in an app's templates directory:
+
+```django
+<h2>Notice</h2>
+<p>{{ message }}</p>
+```
+
+Clicking **Show notice** submits the toolbar action. The handler finishes without
+returning a response, so the spreadsheet renders again and opens the popup
+automatically. The spreadsheet supplies the dialog shell and close button;
+the fragment must not contain another `<dialog>`. Close or Escape dismisses it.
+Keep the fragment server-rendered and let Django escape user-provided values.
+
+This mechanism requires the spreadsheet page. For forms, GET-triggered popups,
+and submission handling, see
+[View-provided modal dialogs](SPREADSHEET_VIEW_GUIDE.md#view-provided-modal-dialogs).
+
 ## Opening the popup
 
 1. Each saved row has a `.contributor-details-button` whose `data-details-url`
@@ -145,6 +187,46 @@ The details form is fetched again on the next opening. Optional read-only extra
 columns are not refreshed by that row listener; they render on a full-page reload.
 
 ## Related history and contribution updates
+
+### Importing contact history from CSV
+
+Uploads append contact history; they never edit or delete an existing entry.
+Use one row per contact, repeating the contributor name for multiple contacts:
+
+```csv
+Contributor,Contact date,Contact note
+Oak Supplies,2026-10-16,Called; no answer.
+Oak Supplies,2026-10-16,Jane returned my call; emailed details.
+Oak Supplies,2026-10-17,Followed up by email.
+```
+
+On the column-matching page, map **Contributor** to **Contributor name**,
+**Contact date** to **Contact date (YYYY-MM-DD)**, and **Contact note** to
+**Contact History (one note per row)**. Names are matched exactly; no internal IDs
+are needed. The existing contributor download contains contributor details;
+add the two contact columns while working offline and duplicate rows as needed.
+
+- Both date and note must be supplied for a contact. Leave both blank to update
+  only contributor details. Missing or invalid dates are rejected, never replaced
+  with today's date. Dates must use `YYYY-MM-DD`.
+- A multiline CSV cell is one note; quote the cell using your spreadsheet's CSV
+  export. The complete note may contain at most 1,000 characters.
+- Duplicate checking uses contributor name, contact date, and note. It checks
+  existing contact comments and earlier rows in the same upload. Surrounding
+  whitespace and line endings are normalised; case and punctuation remain
+  significant. Different notes on the same date are separate contacts.
+- The review page shows the proposed contact dates and the number of duplicates
+  skipped. Confirmation checks for duplicates again before saving.
+- Reuploading the same contacts adds nothing. Changing a previously imported
+  note makes a new contact; it does not correct the old entry. Make corrections
+  to existing history separately from CSV upload.
+
+Imported dates are stored at local midnight in the existing history timestamp,
+so last-contact dates and contacted filters use the actual contact date. The
+uploading user is recorded. No separate upload timestamp or within-day contact
+time is recorded, and existing history timestamps are left unchanged.
+
+### Updates made through the details popup
 
 The contact button within the details popup uses the same contact workflow as
 the row button. `contributor_spreadsheet.js` POSTs to the endpoint in

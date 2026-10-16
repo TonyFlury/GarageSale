@@ -22,7 +22,8 @@
   <div class="eyebrow">Contributors / CSV import</div>
   <h1>Match your columns</h1>
   <p class="muted">Choose where each CSV column goes. Only contributor name is required.</p>
-  <p class="muted">Contact History is optional. Each non-blank line adds a separate comment to the contributor’s history after confirmation.</p>
+  <p class="muted">Contact History is optional. Use one row per contact and map both Contact History and Contact date (YYYY-MM-DD). Repeat the contributor name for multiple contacts; line breaks within a note are preserved.</p>
+  <p class="muted">Existing history is never changed. Contacts with the same contributor name, date and note are skipped as duplicates. Leave both contact cells blank for details-only updates.</p>
   <ol class="steps" aria-label="Import progress">
     <li>✓ 1. Select file</li><li aria-current="step"><strong>2. Match columns</strong></li><li>3. Review changes</li>
   </ol>

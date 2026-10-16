@@ -1,12 +1,19 @@
+import io
+import zipfile
+
+from django.core.exceptions import SuspiciousFileOperation
+from django.template.loader import render_to_string
+from django.utils.text import get_valid_filename
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Max, Q
-from django.http import HttpResponseBadRequest, HttpResponseBase
+from django.http import FileResponse, HttpResponseBadRequest, HttpResponseBase, HttpResponseForbidden
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.views.generic import ListView
 
+from GarageSale.access_policy import allowed, custom, contributor_types, require_contributor
 from Contributors.models import Contributor
-from GarageSale.models import EventData
+from GarageSale.models import CommunicationTemplate, EventData
 
 
 def visible_last_contact_date(timestamp, historic_event_date):
@@ -60,6 +67,128 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
     # Optional `requires_selection=True` disables the action until a row is selected.
     extra_toolbar_actions = ()
 
+    # Subclasses advertise this shared action in extra_toolbar_actions and
+    # configure a category or override get_pdf_templates(). PDF generation is
+    # read-only and does not require recipients to have email addresses.
+    pdf_toolbar_action = {
+        "name": "generate_pdf", "label": "Generate PDF", "requires_selection": True,
+        "icon": "GarageSale/images/icons/pdf-send-portable-digital-file-svgrepo-com.svg",
+        "handler": "generate_pdf",
+    }
+    pdf_template_category = None
+
+    def get_pdf_templates(self):
+        """Offer active templates only from this spreadsheet's configured category."""
+        if not self.pdf_template_category:
+            return []
+        return list(CommunicationTemplate.current_active.filter(category=self.pdf_template_category))
+
+    def get_pdf_contributors(self, post_data):
+        """Validate the whole selection against this view's visible queryset."""
+        ids = post_data.getlist("selected_contributor")
+
+        # Reject malformed and missing IDs before querying. Never silently create
+        # an archive for only the surviving portion of a submitted selection.
+        if not ids or any(not value.isdecimal() for value in ids):
+            self._pdf_error("Select valid contributors before generating PDFs.")
+            return None
+        ids = {int(value) for value in ids}
+        contributors = list(self.get_queryset().filter(pk__in=ids))
+        if len(contributors) != len(ids):
+            self._pdf_error("Some selected contributors are no longer available. Refresh and select them again.")
+            return None
+        return contributors
+
+    def get_pdf_contexts(self, contributors):
+        """Provide basic personalisation; subclasses can reuse their email contexts."""
+        event = getattr(self.request, "current_event", None) or get_current_contribution_event()
+        defaults = CommunicationTemplate.default_context(self.request, {"current_event": event})
+        for contributor in contributors:
+            contact = (contributor.contact_name or "").strip()
+
+            # Every PDF receives a fresh dictionary because rendering adds fields.
+            yield contributor, {
+                **defaults, "contributor_name": contributor.contributor_name,
+                "company_name": contributor.contributor_name, "contact_name": contact or "Sirs",
+                "attn": f"For Attn of :{contact}" if contact else "",
+            }
+
+    def generate_pdf(self, post_data):
+        """Show the shared template chooser or download one PDF per contributor."""
+        self.pdf_templates = list(self.get_pdf_templates())
+        ids = post_data.getlist("pdf_template_id")
+        selected_id = ids[0] if len(ids) == 1 else None
+        self.selected_pdf_template = next(
+            (template for template in self.pdf_templates if str(template.pk) == selected_id), None,
+        )
+        error = ""
+
+        # Resolve against active category templates on every request, including
+        # chooser resubmissions: expired and foreign-category IDs are invalid.
+        if len(ids) > 1 or (post_data.get("pdf_template_choice") and not selected_id):
+            error = "Choose exactly one PDF template."
+        elif selected_id and self.selected_pdf_template is None:
+            error = "That template is no longer available. Choose another template."
+        if self.selected_pdf_template is not None and not error:
+            contributors = self.get_pdf_contributors(post_data)
+            if contributors is not None:
+                return self._pdf_download(contributors)
+            return
+        self.modal_html = render_to_string(
+            "choose_pdf_template.html",
+            {"pdf_templates": self.pdf_templates, "selection_error": error,
+             "data_label": self.data_label, "selected_filters": self.selected_filters,
+             "selected_contributor_ids": post_data.getlist("selected_contributor")},
+            request=self.request,
+        )
+
+    def _pdf_error(self, message):
+        """Display shared PDF validation errors in the spreadsheet modal."""
+        self.modal_html = render_to_string("pdf_error.html", {"error_message": message}, request=self.request)
+
+    def _pdf_download(self, contributors):
+        """Return an archive whose member names remain unique across platforms."""
+        archive = io.BytesIO()
+        used_names = set()
+
+        # Finalise the ZIP before streaming it; its directory is written on close.
+        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+
+            # Each contributor requires a fresh context because rendering consumes fields.
+            for contributor, context in self.get_pdf_contexts(contributors):
+                pdf = self.selected_pdf_template.render_template_as_pdf(self.request, context)
+                zip_file.writestr(self._unique_pdf_filename(contributor, used_names), pdf)
+        archive.seek(0)
+        template_name = self._pdf_filename(
+            self.selected_pdf_template.summary or self.selected_pdf_template.subject, "Contributor templates",
+        )
+        timestamp = timezone.localtime().strftime("%Y-%m-%d %H-%M-%S")
+        return FileResponse(archive, as_attachment=True, filename=f"{template_name} {timestamp}.zip",
+                            content_type="application/zip", status=200)
+
+    def _unique_pdf_filename(self, contributor, used_names):
+        """Avoid overwriting contributors with duplicate or case-equivalent names."""
+        stem = self._pdf_filename(contributor.contributor_name, f"{self.data_label} {contributor.pk}")
+        filename = f"{stem}.pdf"
+        suffix = 2
+
+        # Case-insensitive uniqueness also protects downloads extracted on Windows.
+        while filename.casefold() in used_names:
+            filename = f"{stem} ({suffix}).pdf"
+            suffix += 1
+        used_names.add(filename.casefold())
+        return filename
+
+    @staticmethod
+    def _pdf_filename(name, fallback):
+        """Produce an extraction-safe filename with a fallback for unusable names."""
+
+        # Names containing only unsafe filename characters need a stable fallback.
+        try:
+            return get_valid_filename(name)
+        except SuspiciousFileOperation:
+            return fallback
+
     # Defining options enables the toolbar filter. {} inserts a horizontal separator.
     # Each option is {"name": "active", "label": "Active contributors"}.
     # Optional `group` allows at most one selected option per nonempty group.
@@ -109,7 +238,22 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
 
     def get_extra_toolbar_actions(self):
         """Override to define the toolbar actions available for this request."""
-        return self.extra_toolbar_actions
+        if not hasattr(self, "request"):
+            return self.extra_toolbar_actions
+        actions = []
+        kind = self.contributor_type
+        permissions = {
+            "send_email": custom("email_sponsor" if kind == "Sponsor" else "email_marketer"),
+            "generate_pdf": custom("generate_sponsor_pdf" if kind == "Sponsor" else "generate_marketer_pdf"),
+            "confirm_sponsorship": "Sponsors.confirm_sponsor", "invite": custom("invite_marketer"),
+            "confirm": custom("confirm_marketer"), "reject": custom("reject_marketer"),
+        }
+        for action in self.extra_toolbar_actions:
+            if not action or action["name"] not in permissions or allowed(self.request.user, permissions[action["name"]]):
+                actions.append(action)
+        if not any(actions):
+            return ()
+        return tuple(actions)
 
     def post(self, request, *args, **kwargs):
         """Dispatch only advertised toolbar actions and refresh their display data."""
@@ -117,6 +261,8 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
 
         # Treat the advertised actions as an allowlist, never as arbitrary method names.
         if action is None:
+            if any(item and item["name"] == request.POST.get("toolbar_action") for item in self.extra_toolbar_actions):
+                return HttpResponseForbidden("You do not have permission for this toolbar action.")
             return HttpResponseBadRequest("Unknown toolbar action.")
 
         # Selection checks belong here so subclasses cannot accidentally bypass them.
@@ -162,6 +308,12 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
         # Derived views must not expose another contributor type through the shared list.
         if self.contributor_type is not None:
             contributors = contributors.filter(contributor_type=self.contributor_type)
+        if hasattr(self, "request"):
+            kinds = contributor_types(self.request.user)
+            if not kinds:
+                from django.core.exceptions import PermissionDenied
+                raise PermissionDenied("You do not have permission to view contributors.")
+            contributors = contributors.filter(contributor_type__in=kinds)
         contributors = self.filter_queryset(contributors)
         return contributors.annotate(
             latest_contact_timestamp=Max(
@@ -175,7 +327,11 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
 
         # Calculate display dates once so templates need no event comparison logic.
+        from GarageSale.access_policy import TYPE_PERMISSIONS
         for contributor in context["contributors"]:
+            permissions = TYPE_PERMISSIONS.get(getattr(contributor, "contributor_type", None), {})
+            contributor.can_edit = allowed(self.request.user, permissions.get("change", ""))
+            contributor.can_contact = allowed(self.request.user, permissions.get("contact", ""))
             contributor.last_contact_date = visible_last_contact_date(
                 contributor.latest_contact_timestamp, self.historic_event_date,
             )
@@ -194,5 +350,8 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
             extra_toolbar_actions=self.get_extra_toolbar_actions(),
             filter_options=self.get_filter_options(),
             selected_filters=self.selected_filters,
+            can_add=bool(contributor_types(self.request.user, "add")),
+            addable_contributor_types=contributor_types(self.request.user, "add"),
+            can_import=bool(contributor_types(self.request.user, "import")),
+            can_export=bool(contributor_types(self.request.user, "export")),
         )
-

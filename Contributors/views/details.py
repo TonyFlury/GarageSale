@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_http_methods
 
+from GarageSale.access_policy import require_contributor, allowed, TYPE_PERMISSIONS
 from Contributors.models import Contributor, ContributorEvent, ContributorHistory, Contributions
 from Contributors.views.contributions import contributions_context
 from Contributors.views.general_views import ContributorSpreadsheetView, get_current_contribution_event
@@ -89,7 +90,7 @@ def _details_contributions(request, contributor):
     enabled = preference == "1" if preference in {"0", "1"} else ContributorSpreadsheetView.show_contributions
 
     # Market Traders hide contribution controls even though the endpoint is shared.
-    if not enabled:
+    if not enabled or contributor.contributor_type != "Sponsor":
         return {"show_contributions": False}
     event = getattr(request, "current_event", None) or get_current_contribution_event()
     return contributions_context(contributor, event)
@@ -97,6 +98,7 @@ def _details_contributions(request, contributor):
 
 def _details_response(request, contributor):
     """Render details and history independently for lightweight history refreshes."""
+    require_contributor(request.user, contributor)
     history_html = render_to_string("contributor_history.html", event_history_context(contributor), request=request)
 
     # A saved contact note needs only fresh history, not a replacement edit form.
@@ -111,6 +113,8 @@ def _details_response(request, contributor):
         "history_html": history_html,
         "contact_history_url": _contributor_response(contributor)["contact_history_url"],
         "contributor_id": contributor.pk,
+        "can_edit": allowed(request.user, TYPE_PERMISSIONS[contributor.contributor_type]["change"]),
+        "can_contact": allowed(request.user, TYPE_PERMISSIONS[contributor.contributor_type]["contact"]),
     })
 
 
@@ -120,6 +124,7 @@ def _save_details(request, pk):
     # Lock the record so another editor cannot overwrite the audited values mid-save.
     with transaction.atomic():
         contributor = get_object_or_404(Contributor.objects.select_for_update(), pk=pk)
+        require_contributor(request.user, contributor, "change")
         form = ContributorDetailsForm(request.POST, request.FILES, instance=contributor, prefix="details")
 
         # Invalid forms must leave both contributor data and audit history untouched.

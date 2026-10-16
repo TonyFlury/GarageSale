@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -34,6 +35,8 @@ class SponsorEmailStatusFilterTests(TestCase):
         request = RequestFactory().post("/", data)
         request.current_event = self.event
         view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         view.setup(request)
         return view
 

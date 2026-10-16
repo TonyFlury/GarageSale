@@ -21,8 +21,8 @@ TODO Convert to official theme and layout
 
 {% block PageScripts %}
     {{ block.super }}
-    <script type='text/javascript' src="{% static 'Contributors/js/contributor_spreadsheet.js' %}?v=row-edit-fix-4" ></script>
-    <script defer src="{% static 'Contributors/js/contributor_details.js' %}"></script>
+    <script type='text/javascript' src="{% static 'Contributors/js/contributor_spreadsheet.js' %}?v=access-policy-2" ></script>
+    <script defer src="{% static 'Contributors/js/contributor_details.js' %}?v=access-policy-1"></script>
     <script defer src="{% static 'Contributors/js/contributor_contributions.js' %}?v=amount-value-1"></script>
     <script defer src="{% static 'Contributors/js/contributor_filters.js' %}"></script>
     <script defer src="{% static 'Contributors/js/contributor_modal.js' %}"></script>
@@ -35,7 +35,7 @@ TODO Convert to official theme and layout
     <h1>{% if title %}{{ title }}{% else %}{{ data_label|default:"Contributor" }}s{% endif %}</h1>
 
     <section id="toolbar">
-        <button type="button" class="toolbar-action" id="spreadsheet-new-button"
+        {% if can_add %}<button type="button" class="toolbar-action" id="spreadsheet-new-button"
                 aria-controls="contributor-sheet"
                 aria-label="New {% firstof contributor_type data_label 'Contributor' %}"
                 title="New {% firstof contributor_type data_label 'Contributor' %}">
@@ -45,14 +45,14 @@ TODO Convert to official theme and layout
                 <path d="M12 8v8M8 12h8"></path>
             </svg>
         </button>
-        <span class="toolbar-separator" aria-hidden="true"></span>
-        <a class="csv-icon" href="{% url 'contributors:upload' %}" aria-label="Upload CSV" title="Upload CSV">
+        {% endif %}<span class="toolbar-separator" aria-hidden="true"></span>
+        {% if can_import %}<a class="csv-icon" href="{% url 'contributors:upload' %}?contributor_type={{ contributor_type|urlencode }}" aria-label="Upload CSV" title="Upload CSV">
             <img src="{% static 'Contributors/images/icons/upload-svgrepo-com.svg' %}" alt="" width="24" height="24">
         </a>
-        <a class="csv-icon" href="{% url 'contributors:download' %}" aria-label="Download CSV" title="Download CSV">
+        {% endif %}{% if can_export %}<a class="csv-icon" href="{% url 'contributors:download' %}?contributor_type={{ contributor_type|urlencode }}" aria-label="Download CSV" title="Download CSV">
             <img src="{% static 'Contributors/images/icons/download-svgrepo-com.svg' %}" alt="" width="24" height="24">
         </a>
-        <span class="toolbar-separator" aria-hidden="true"></span>
+        {% endif %}<span class="toolbar-separator" aria-hidden="true"></span>
         <button type="button" class="search-icon" aria-label="Search {{ data_label|default:"Contributor"|lower }} records" title="Search {{ data_label|default:"Contributor"|lower }} records"
                 aria-controls="search-bar" aria-expanded="false"></button>
         {% if filter_options %}
@@ -138,6 +138,7 @@ TODO Convert to official theme and layout
             <tr
                 class="locked"
                 data-contributor-id="{{ contributor.pk }}"
+                data-can-edit="{{ contributor.can_edit|yesno:'true,false' }}"
                 data-save-url="{% url 'contributors:spreadsheet_save' contributor.pk %}"
                 data-filter-contributor_name="{{ contributor.contributor_name|default_if_none:''|lower }}"
                 data-filter-contact_name="{{ contributor.contact_name|default_if_none:''|lower }}"
@@ -214,24 +215,34 @@ TODO Convert to official theme and layout
                                 aria-haspopup="dialog" aria-controls="contributor-details-dialog">
                             <img src="{% static 'GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg' %}" alt="" width="24" height="24">
                         </button>
-                        <button type="button" class="add-contact-history"
+                        {% if contributor.can_contact %}<button type="button" class="add-contact-history"
                                 data-contact-history-url="{% url 'contributors:contact_history' contributor.pk %}"
                                 aria-label="Record contact with {{ contributor.contributor_name }}"
                                 title="Record contact" aria-haspopup="dialog" aria-controls="contact-history-dialog">
                             <img src="{% static 'GarageSale/images/icons/menu/contact-us-svgrepo-com.svg' %}" alt="" width="24" height="24">
                         </button>
+                        {% endif %}
                     </div>
                 </td>
             </tr>
         {% endfor %}
-      <tr
+      {% if can_add %}<tr
                 class="unlocked new-row"
                 data-is-new="true"
                 data-filter-contributor_name=""
                 data-filter-contact_name=""
                 data-filter-email=""
             >
-                <td class="select"></td>
+                <td class="select">
+                    {% if contributor_type %}
+                        <input type="hidden" name="contributor_type" value="{{ contributor_type }}">
+                    {% else %}
+                        <select name="contributor_type" aria-label="Contributor type" required>
+                            {% for kind in addable_contributor_types %}<option value="{{ kind }}">{{ kind }}</option>{% endfor %}
+                        </select>
+                    {% endif %}
+                    <span class="field-error" data-error-for="contributor_type"></span>
+                </td>
 
                 <td class="row-status unlocked">
                     <span class="status"></span>
@@ -290,7 +301,7 @@ TODO Convert to official theme and layout
                     </div>
                 </td>
             </tr>
-            </tbody>
+            {% endif %}</tbody>
     </table>
     </div>
 </main>

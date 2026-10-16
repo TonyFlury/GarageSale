@@ -23,6 +23,8 @@ class SponsorCashStatusTests(TestCase):
         request = RequestFactory().get("/")
         request.current_event = self.event
         self.view = SponsorSpreadsheetView()
+        if not hasattr(request, "user"):
+            request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         self.view.setup(request)
 
     def cash_status(self):

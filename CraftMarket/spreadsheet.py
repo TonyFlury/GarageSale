@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView):
     contributor_type = "Marketer"
-    permission_required = "CraftMarket.suggest_marketer"
+    permission_required = "CraftMarket.view_marketer"
     show_contributions = False
     data_label = "Market Trader"
     extra_columns = ({"label": "Status", "template": "CraftMarket/widgets/status.html"},)
@@ -44,6 +44,7 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
         {},
         {"name": "send_email", "label": "Send email", "requires_selection": True,
          "icon": "GarageSale/images/icons/email-open-svgrepo-com.svg", "handler": "send_email"},
+        ContributorSpreadsheetView.pdf_toolbar_action,
     )
     transitions = {"Invited": {None}, "Confirmed": {"Invited"}, "Rejected": {"Invited"}}
 
@@ -59,14 +60,12 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
 
     def get_extra_toolbar_actions(self):
         """Hide mutation actions from users who can only view traders."""
-        return self.extra_toolbar_actions if self.request.user.has_perm("CraftMarket.change_marketer") else ()
+        return super().get_extra_toolbar_actions()
 
     def post(self, request, *args, **kwargs):
         """Dispatch the submitted stage or action through the permitted workflow."""
 
         # Hiding buttons is insufficient protection against directly submitted actions.
-        if not request.user.has_perm("CraftMarket.change_marketer"):
-            return HttpResponseForbidden("You do not have permission to change market traders.")
         return super().post(request, *args, **kwargs)
 
     def _annotate_status(self, queryset):
@@ -160,6 +159,24 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
             upload=False, template__category=category,
         ).values_list("template__sub_category", "template_name"))
         return [template for template in templates if (template.sub_category, template.summary) not in attachments]
+
+    def get_pdf_templates(self):
+        """Allow standalone PDFs from every active CraftMarket subcategory."""
+        category = settings.APPS_SETTINGS["CraftMarket"]["EmailTemplateCategory"]
+
+        # Email eligibility excludes attachment templates and some statuses;
+        # those restrictions do not apply to explicitly downloaded PDFs.
+        return CommunicationTemplate.current_active.filter(category=category)
+
+    def get_pdf_contributors(self, post_data):
+        """Reuse trader selection validation without requiring an email address."""
+        return self._selected_marketers(post_data)
+
+    def get_pdf_contexts(self, contributors):
+        """Use the same event and invitation personalisation as trader emails."""
+        defaults = CommunicationTemplate.default_context(self.request, {"current_event": self.market_event})
+        for marketer in contributors:
+            yield marketer, self._email_context(marketer, defaults)
 
     def invite(self, post_data):
         """Start the invitation workflow for the selected traders."""
@@ -315,4 +332,3 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
         except Exception:
             logger.exception("Craft Market email failed for contributor %s", marketer.pk)
             return "Email could not be sent. Check the server email log before retrying."
-

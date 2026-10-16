@@ -1,8 +1,10 @@
-"""Acceptance tests for the three-stage CSV import (processing is still TODO)."""
+from GarageSale.tests.access_helpers import grant_workflow_permissions
+"""Acceptance tests for the three-stage CSV import and append-only contact history."""
 
 import csv
 import io
 import json
+from datetime import date, datetime
 from html.parser import HTMLParser
 from unittest.mock import patch
 
@@ -12,6 +14,7 @@ from django.test import RequestFactory, TestCase
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import escape
+from django.utils import timezone
 
 from Contributors.models import Contributor, ContributorHistory
 
@@ -36,6 +39,7 @@ class UploadCSVTests(TestCase):
         cls.user = get_user_model().objects.create_user(
             email="upload@example.com", password="test-password", phone="01234567890"
         )
+        grant_workflow_permissions(cls.user)
         cls.original = Contributor.objects.create(
             contributor_type="Sponsor", contributor_name="Oak & Co.",
             contact_name="Sam Taylor", phone="07700900123",
@@ -223,15 +227,17 @@ class UploadCSVTests(TestCase):
         )
         before = list(ContributorHistory.objects.values())
         response, payload = self.review([
-            {"Name": "Oak & Co.", "Notes": " First comment\r\n\n Second comment \n", "Email": ""},
-            {"Name": "Meadow Crafts", "Notes": "New contributor comment", "Email": "jo@example.com"},
-        ], {"Name": "contributor_name", "Notes": "contact_history", "Email": "email"}, 1, 0)
+            {"Name": "Oak & Co.", "Notes": " First comment\r\n\n Second comment \n", "Date": "2026-10-12", "Email": ""},
+            {"Name": "Meadow Crafts", "Notes": "New contributor comment", "Date": "2026-10-13", "Email": "jo@example.com"},
+        ], {"Name": "contributor_name", "Notes": "contact_history", "Date": "contact_date", "Email": "email"}, 1, 0)
         self.assertEqual(list(ContributorHistory.objects.values()), before)
         self.assertContains(response, "First comment")
         self.assertContains(response, "Second comment")
         histories = response.context["new_history_instances"]
         self.assertEqual([history.details for history in histories],
-                         ["First comment", "Second comment", "New contributor comment"])
+                         ["First comment\n\n Second comment", "New contributor comment"])
+        self.assertEqual([timezone.localdate(history.timestamp) for history in histories],
+                         [date(2026, 10, 12), date(2026, 10, 13)])
         for history in histories:
             self.assertIsInstance(history, ContributorHistory)
             self.assertIsNone(history.pk)
@@ -242,7 +248,7 @@ class UploadCSVTests(TestCase):
         self.assertEqual(self.original.email, "sam@example.com")
         self.assertEqual(list(ContributorHistory.objects.filter(contributor=self.original)
                               .order_by("pk").values_list("details", flat=True)),
-                         ["Existing comment", "First comment", "Second comment"])
+                         ["Existing comment", "First comment\n\n Second comment"])
         new = Contributor.objects.get(contributor_name="Meadow Crafts")
         comment = ContributorHistory.objects.get(contributor=new)
         self.assertEqual((comment.details, comment.event_category, comment.event_type, comment.user),
@@ -261,13 +267,14 @@ class UploadCSVTests(TestCase):
 
     def test_history_only_import_does_not_save_contributor(self):
         response, payload = self.review([
-            {"Name": "Oak & Co.", "Notes": "Called today"},
-        ], {"Name": "contributor_name", "Notes": "contact_history"}, 0, 0)
+            {"Name": "Oak & Co.", "Notes": "Called today", "Date": "2026-10-16"},
+        ], {"Name": "contributor_name", "Notes": "contact_history", "Date": "contact_date"}, 0, 0)
         self.assertNotIn('value="Confirm import" disabled', response.content.decode())
         with patch.object(Contributor, "save", side_effect=AssertionError("Contributor must remain unchanged")):
             self.confirm(payload)
         history = ContributorHistory.objects.get(contributor=self.original)
         self.assertEqual(history.details, "Called today")
+        self.assertEqual(timezone.localdate(history.timestamp), date(2026, 10, 16))
 
     def test_overlong_contact_history_is_rejected_before_saving(self):
         before = self.snapshot()
@@ -281,6 +288,114 @@ class UploadCSVTests(TestCase):
                 self.assertEqual(response.status_code, 400)
                 self.assertEqual(self.snapshot(), before)
                 self.assertFalse(ContributorHistory.objects.exists())
+
+    def test_same_day_contacts_are_distinct_but_exact_duplicates_are_skipped(self):
+        rows = [
+            {"Name": "Oak & Co.", "Date": "2026-10-16", "Notes": "Called; no answer."},
+            {"Name": "Oak & Co.", "Date": "2026-10-16", "Notes": "Jane called back."},
+            {"Name": "Oak & Co.", "Date": "2026-10-16", "Notes": " Called; no answer. \r\n"},
+            {"Name": "Oak & Co.", "Date": "2026-10-17", "Notes": "Called; no answer."},
+        ]
+        mapping = {"Name": "contributor_name", "Date": "contact_date", "Notes": "contact_history"}
+        response, payload = self.review(rows, mapping, 0, 0)
+        self.assertEqual(len(response.context["new_history_instances"]), 3)
+        self.assertEqual(response.context["duplicate_history_count"], 1)
+        self.assertContains(response, "1 duplicate contact skipped")
+        self.assertContains(response, "2026-10-16")
+        self.confirm(payload)
+        before = list(ContributorHistory.objects.order_by("pk").values())
+        response, payload = self.review(rows, mapping, 0, 0)
+        self.assertEqual(response.context["new_history_instances"], [])
+        self.assertEqual(response.context["duplicate_history_count"], 4)
+        self.confirm(payload)
+        self.assertEqual(list(ContributorHistory.objects.order_by("pk").values()), before)
+
+    def test_existing_manual_contact_uses_local_date_and_normalised_multiline_note(self):
+        timestamp = timezone.make_aware(datetime(2026, 7, 16, 0, 30))
+        old = ContributorHistory.objects.create(
+            contributor=self.original, event_category="Contact", event_type="Comment",
+            details=" Called Jane\r\nSent details. ", timestamp=timestamp, user=self.user,
+        )
+        response, payload = self.review([
+            {"Name": "Oak & Co.", "Date": "2026-07-16", "Notes": "Called Jane\nSent details."},
+        ], {"Name": "contributor_name", "Date": "contact_date", "Notes": "contact_history"}, 0, 0)
+        self.assertEqual(response.context["duplicate_history_count"], 1)
+        self.assertEqual(response.context["new_history_instances"], [])
+        self.confirm(payload)
+        old.refresh_from_db()
+        self.assertEqual(old.timestamp, timestamp)
+        self.assertEqual(old.details, " Called Jane\r\nSent details. ")
+
+    def test_duplicate_check_preserves_case_punctuation_and_contributor_identity(self):
+        rows = [
+            {"Name": name, "Date": "2026-10-16", "Notes": note}
+            for name, note in [
+                ("Oak & Co.", "Called"), ("Oak & Co.", "called"),
+                ("Oak & Co.", "Called."), ("River Studio", "Called"),
+            ]
+        ]
+        response, payload = self.review(rows, {
+            "Name": "contributor_name", "Date": "contact_date", "Notes": "contact_history",
+        }, 0, 0)
+        self.assertEqual(len(response.context["new_history_instances"]), 4)
+        self.assertEqual(response.context["duplicate_history_count"], 0)
+        self.confirm(payload)
+        self.assertEqual(ContributorHistory.objects.count(), 4)
+
+    def test_confirmation_rechecks_contacts_added_since_review(self):
+        response, payload = self.review([
+            {"Name": "Oak & Co.", "Date": "2026-10-16", "Notes": "Called Jane"},
+        ], {"Name": "contributor_name", "Date": "contact_date", "Notes": "contact_history"}, 0, 0)
+        proposed = response.context["new_history_instances"][0]
+        ContributorHistory.objects.create(
+            contributor=self.original, event_category="Contact", event_type="Comment",
+            details=proposed.details, timestamp=proposed.timestamp,
+        )
+        self.confirm(payload)
+        self.assertEqual(ContributorHistory.objects.count(), 1)
+
+    def test_repeated_new_contributor_contacts_share_identity_and_skip_duplicates(self):
+        rows = [
+            {"Name": "New sponsor", "Date": "2026-10-16", "Notes": note}
+            for note in ["Called", "Emailed", "Called"]
+        ]
+        response, payload = self.review(rows, {
+            "Name": "contributor_name", "Date": "contact_date", "Notes": "contact_history",
+        }, 1, 0)
+        self.assertEqual(response.context["duplicate_history_count"], 1)
+        self.confirm(payload)
+        new = Contributor.objects.get(contributor_name="New sponsor")
+        self.assertEqual(ContributorHistory.objects.filter(contributor=new).count(), 2)
+
+    def test_invalid_or_incomplete_contact_dates_reject_both_stages_without_writes(self):
+        mapping = {"Name": "contributor_name", "Date": "contact_date", "Notes": "contact_history"}
+        for stage in ("match_columns", "review_changes"):
+            for day, note in [
+                ("", "Called"), ("2026-10-16", ""), ("16/10/2026", "Called"),
+                ("2026-02-30", "Called"), ("20261016", "Called"),
+                ("2026-10-16T12:00:00", "Called"),
+            ]:
+                with self.subTest(stage=stage, day=day, note=note):
+                    before = self.snapshot()
+                    response = self.client.post(self.url, {
+                        "stage": stage,
+                        "csv_data": json.dumps([{"Name": "Oak & Co.", "Date": day, "Notes": note}]),
+                        "column_mapping": json.dumps(mapping),
+                    })
+                    self.assertEqual(response.status_code, 400)
+                    self.assertEqual(self.snapshot(), before)
+                    self.assertFalse(ContributorHistory.objects.exists())
+
+    def test_whole_multiline_note_must_fit_history_field(self):
+        response = self.client.post(self.url, {
+            "stage": "match_columns",
+            "csv_data": json.dumps([{"Name": "Oak & Co.", "Date": "2026-10-16",
+                                     "Notes": "a" * 600 + "\n" + "b" * 600}]),
+            "column_mapping": json.dumps({"Name": "contributor_name", "Date": "contact_date",
+                                          "Notes": "contact_history"}),
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(ContributorHistory.objects.exists())
 
     def test_column_matching_reviews_new_modified_and_unchanged_rows_without_saving(self):
         response, _ = self.review([

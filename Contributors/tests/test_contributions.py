@@ -23,8 +23,10 @@ class AddContributionTests(SimpleTestCase):
     @patch("Contributors.views.contributions.get_current_contribution_event", return_value=SimpleNamespace(pk=23))
     @patch("Contributors.views.contributions.get_object_or_404")
     def test_server_failure_returns_explanation_and_exits_transaction_with_error(self, lookup, event, create, context, render, logger):
+        lookup.return_value.contributor_type = "Sponsor"
         for failure in (DatabaseError("Database unavailable"), RuntimeError("Template failure")):
             with self.subTest(failure=type(failure).__name__):
+                lookup.return_value.contributor_type = "Sponsor"
                 create.return_value.pk = 42
                 render.side_effect = failure
                 response = add_contribution(self.request({"gift": "Voucher", "event_id": "23"}), pk=7)
@@ -37,15 +39,16 @@ class AddContributionTests(SimpleTestCase):
 
     def request(self, data):
         request = RequestFactory().post(reverse("contributors:add_contribution", args=[7]), data)
-        request.user = SimpleNamespace(is_authenticated=True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         return request
 
     @patch("Contributors.views.contributions.render_to_string", return_value="Updated list")
     @patch("Contributors.views.contributions.contributions_context", return_value={})
     @patch("Contributors.views.contributions.get_object_or_404")
     def test_delete_scopes_contribution_to_contributor_and_current_event(self, lookup, context, render):
+        lookup.return_value.contributor_type = "Sponsor"
         from Contributors.models import Contributions
-        contributor = SimpleNamespace(pk=7)
+        contributor = SimpleNamespace(pk=7, contributor_type="Sponsor")
         contribution = SimpleNamespace(delete=Mock())
         lookup.side_effect = [contributor, contribution]
         request = self.request({"event_id": "23"})
@@ -58,6 +61,7 @@ class AddContributionTests(SimpleTestCase):
 
     @patch("Contributors.views.contributions.get_object_or_404")
     def test_delete_rejects_stale_event_before_looking_up_contribution(self, lookup):
+        lookup.return_value.contributor_type = "Sponsor"
         request = self.request({"event_id": "22"})
         request.current_event = SimpleNamespace(pk=23)
         response = delete_contribution(request, pk=7, contribution_pk=42)
@@ -70,7 +74,9 @@ class AddContributionTests(SimpleTestCase):
     @patch("Contributors.views.contributions.get_current_contribution_event")
     @patch("Contributors.views.contributions.get_object_or_404")
     def test_saves_cash_and_non_cash_for_contributor_and_current_event(self, lookup, event, create, context, render):
+        lookup.return_value.contributor_type = "Sponsor"
         event.return_value = SimpleNamespace(pk=23)
+        lookup.return_value.contributor_type = "Sponsor"
         create.return_value.pk = 42
         for cash in (False, True):
             with self.subTest(cash=cash):
@@ -90,6 +96,7 @@ class AddContributionTests(SimpleTestCase):
     @patch("Contributors.views.contributions.get_current_contribution_event")
     @patch("Contributors.views.contributions.get_object_or_404")
     def test_missing_or_changed_current_event_does_not_save(self, lookup, event, create):
+        lookup.return_value.contributor_type = "Sponsor"
         for current_event in (None, SimpleNamespace(pk=24)):
             with self.subTest(event=current_event):
                 event.return_value = current_event
@@ -100,6 +107,7 @@ class AddContributionTests(SimpleTestCase):
     @patch("Contributors.views.contributions.Contributions.objects.create")
     @patch("Contributors.views.contributions.get_object_or_404")
     def test_invalid_description_does_not_save(self, lookup, create):
+        lookup.return_value.contributor_type = "Sponsor"
         for gift in ("", "  ", "x" * 1001):
             with self.subTest(gift=gift):
                 response = add_contribution(self.request({"gift": gift, "event_id": "23"}), pk=7)
@@ -138,5 +146,5 @@ class AddContributionTests(SimpleTestCase):
         request.user.is_authenticated = False
         self.assertEqual(add_contribution(request, pk=7).status_code, 302)
         request = RequestFactory().get("/")
-        request.user = SimpleNamespace(is_authenticated=True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
         self.assertEqual(add_contribution(request, pk=7).status_code, 405)

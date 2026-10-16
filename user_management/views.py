@@ -764,7 +764,7 @@ class UserProfile(View):
             except TeamMember.DoesNotExist:
                 return HttpResponseServerError('Team member does not exist')
         else:
-            if request.user.has_perm('GarageSale.is_team_member'):
+            if request.user.has_perm('GarageSale.manage_own_team_profile'):
                 member_data = TeamMember.objects.get_or_create(user=request.user,
                                                            defaults={'user' : request.user})[0]
             else:
@@ -809,7 +809,7 @@ class TeamMemberIDCard(EntryPointMixin, View):
     entry_point_url = 'user_management:team_member_id_cards'
     entry_point_label = 'Id Cards'
     entry_point_icon = static('user_management/images/icons/id-cards-with-profile-images-variant-svgrepo-com.svg')
-    entry_point_permission ='GarageSale.is_manager'
+    entry_point_permission ='user_management.generate_id_card'
     template_name = 'id_cards/request_id_cards.html'
 
     def get(self, request):

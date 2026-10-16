@@ -189,6 +189,18 @@ function do_action(action, id) {
     else
         full_path = __current_base_url(url_base) + '/' + action + __params_as_url();
 
+    if (action === 'duplicate') {
+        const form = document.createElement('form');
+        const destination = new URL(full_path, window.location.href);
+        if (!destination.pathname.endsWith('/')) destination.pathname += '/';
+        form.method = 'post'; form.action = destination.href;
+        const token = document.querySelector('[name="csrfmiddlewaretoken"]');
+        if (!token) return;
+        const input = document.createElement('input');
+        input.type = 'hidden'; input.name = 'csrfmiddlewaretoken'; input.value = token.value;
+        form.append(input); document.body.append(form); form.submit();
+        return;
+    }
     if (popup_element) {
 
         /* Add the path to the input button on that popup */

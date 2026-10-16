@@ -20,7 +20,8 @@
     <p class="muted">Check the new contributors and proposed updates before saving. No contributors will be deleted.</p>
     <p class="muted">Existing contributors are matched by name. Non-blank CSV values replace existing values; blanks leave them unchanged.</p>
     <p class="muted">Additional details are merged into existing socials data. Other keys are preserved.</p>
-    <p class="muted">Each Contact History comment shown below will be added as a new history entry after confirmation.</p>
+    <p class="muted">Each contact shown below will be appended using its supplied date, not the upload date. Existing history will not be changed. Matching contributor names, dates and notes are skipped as duplicates.</p>
+    <p class="muted">{{ duplicate_history_count }} duplicate contact{{ duplicate_history_count|pluralize }} skipped.</p>
     <ol class="steps" aria-label="Import progress">
       <li>✓ 1. Select file</li><li>✓ 2. Match columns</li><li aria-current="step"><strong>3. Review changes</strong></li>
     </ol>
@@ -41,9 +42,9 @@
       <div class="preview-scroll">
         <table class="preview-table">
           <caption>Comments to add after confirmation</caption>
-          <thead><tr><th scope="col">Contributor name</th><th scope="col">Comment</th></tr></thead>
+          <thead><tr><th scope="col">Contributor name</th><th scope="col">Contact date</th><th scope="col">Comment</th></tr></thead>
           <tbody>{% for history in new_history_instances %}
-            <tr><td>{{ history.contributor.contributor_name }}</td><td>{{ history.details }}</td></tr>
+            <tr><td>{{ history.contributor.contributor_name }}</td><td>{{ history.timestamp|date:"Y-m-d" }}</td><td><pre>{{ history.details }}</pre></td></tr>
           {% endfor %}</tbody>
         </table>
       </div>

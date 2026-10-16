@@ -22,7 +22,8 @@ class CommunicationTemplateCategoryTests(SimpleTestCase):
 
     def request(self, authenticated=True, allowed=True):
         request = RequestFactory().get(reverse("TeamPages:CommunicationTemplates"))
-        request.user = SimpleNamespace(is_authenticated=authenticated, has_perms=lambda permissions: allowed)
+        request.user = SimpleNamespace(is_authenticated=authenticated, is_active=True,
+                                       has_perm=lambda permission: allowed, has_perms=lambda permissions: allowed)
         return request
 
     @patch("GarageSale.views.template_views.CommunicationTemplate.objects.order_by")
@@ -119,7 +120,7 @@ class CommunicationTemplateFormTests(SimpleTestCase):
 
     def request(self, method="get", data=None, allowed=True):
         request = getattr(RequestFactory(), method)("/team_page/communication-templates/create/?category=Sponsors", data or {})
-        request.user = SimpleNamespace(is_authenticated=True, has_perms=lambda permissions: allowed)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: allowed, has_perms=lambda permissions: allowed)
         return request
 
     def template_data(self):

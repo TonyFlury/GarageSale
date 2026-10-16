@@ -73,8 +73,6 @@ class Supporting(models.Model):
     def __str__(self):
         return self.name
 
-    class Meta:
-        permissions = [('can_create_supporting', 'Can create a record for a supporting organisation'),]
 
 class CurrentFuture(models.Manager):
     def get_queryset(self):
@@ -493,3 +491,15 @@ class CommunicationTemplate(models.Model):
         except Exception as e:
             logger.error(f'Could not send email for {self} for {context} - {e}')
             return None
+
+
+from GarageSale.access_policy import CUSTOM_PERMISSIONS
+
+
+class ApplicationAccess(models.Model):
+    """Permission anchor only; no table or broad role flags are required."""
+
+    class Meta:
+        managed = False
+        default_permissions = ()
+        permissions = CUSTOM_PERMISSIONS

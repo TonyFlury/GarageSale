@@ -3,16 +3,11 @@
 'use strict';
 {
     const newRowHTML = `
+            <td class="select"></td>
             <td class="row-status">
                     <span class="status" > </span>
                     <span class="undo" > </span>
                 </td>
-            </td>
-
-            <td>
-                <input name="contributor_type" value="" maxlength="30" required>
-                <span class="field-error" data-error-for="contributor_type"></span>
-            </td>
 
             <td>
                 <input name="contributor_name" value="" maxlength="120" required>
@@ -140,6 +135,7 @@
     }
 
     function toggleRowLock(row) {
+        if (row.dataset.canEdit === "false") return;
 
         if (row.classList.contains("unlocked") && !row.classList.contains('dirty')) {
             lockRow(row);
@@ -271,6 +267,9 @@
         row.dataset.filterContact_name = "";
         row.dataset.filterEmail = "";
         row.innerHTML = newRowHTML;
+        const typeField = document.querySelector('#contributor-sheet [name="contributor_type"]').cloneNode(true);
+        typeField.disabled = false;
+        row.querySelector('.select').appendChild(typeField);
         const actionsCell = row.querySelector(".actions").closest("td");
 
         // Display-only extension columns still need blank cells to preserve alignment.

@@ -16,7 +16,7 @@ logger = logging.getLogger('CraftMarket.views')
 class MarketEntryPoint(EntryPointMixin, MarketerSpreadsheetView):
     entry_point_url = 'CraftMarket:EntryPoint'
     entry_point_label = 'Craft Market'
-    entry_point_permission = 'CraftMarket.suggest_marketer'
+    entry_point_permission = 'CraftMarket.view_marketer'
     entry_point_icon = static('GarageSale/images/icons/navigation/market-stand-svgrepo-com.svg')
 
 class MarketTemplates(TemplateManagement):
@@ -86,7 +86,7 @@ class MarketTemplateView(TemplatesView):
 
 class MarketTemplateEdit(TemplatesEdit):
     category = 'CraftMarket'
-    permission_required =  ['CraftMarket.change_marketer', 'GarageSale.edit_communicationtemplate']
+    permission_required =  ['CraftMarket.change_marketer', 'GarageSale.change_communicationtemplate']
     sub_category_list = [('Invite','Invite'), ('Confirm','Confirm')]
     url_base = 'CraftMarket/templates'
     template_help = MarketTemplateCreate.template_help

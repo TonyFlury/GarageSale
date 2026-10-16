@@ -1,14 +1,14 @@
 <div class="contribution-list">
     {% for contribution in contributions %}
         <p class="contribution-gift"><strong>{% if contribution.cash %}Cash{% else %}Gift{% endif %}:</strong> {% include 'widgets/contribution_value.html' %}
-            <button type="button" class="delete-contribution" aria-label="Delete contribution" title="Delete contribution" data-delete-url="{% url 'contributors:delete_contribution' contributor.pk contribution.pk %}" data-event-id="{{ current_event.pk }}"><span aria-hidden="true">×</span></button>
+            {% if perms.Contributors.delete_contributions %}<button type="button" class="delete-contribution" aria-label="Delete contribution" title="Delete contribution" data-delete-url="{% url 'contributors:delete_contribution' contributor.pk contribution.pk %}" data-event-id="{{ current_event.pk }}"><span aria-hidden="true">×</span></button>{% endif %}
         </p>
     {% empty %}
         <p>No contributions recorded for this event.</p>
     {% endfor %}
 </div>
 <p class="contribution-delete-error field-error" role="alert"></p>
-<button type="button" class="add-contribution"
+{% if perms.Contributors.add_contributions %}<button type="button" class="add-contribution"
         data-contribution-url="{% url 'contributors:add_contribution' contributor.pk %}"
         data-event-id="{{ current_event.pk }}" data-contributor-name="{{ contributor.contributor_name }}"
-        aria-haspopup="dialog" aria-controls="contribution-dialog">Add contribution</button>
+        aria-haspopup="dialog" aria-controls="contribution-dialog">Add contribution</button>{% endif %}

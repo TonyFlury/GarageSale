@@ -1,19 +1,14 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib import messages
 from django.conf import settings
-from django.core.exceptions import SuspiciousFileOperation
 import logging
-import io
-import zipfile
 from decimal import Decimal
 from django.db import transaction
-from django.http import FileResponse
 from django.db.models import CharField, Exists, OuterRef, Prefetch, Q, Subquery, Value
 from django.template.loader import render_to_string
 from django.templatetags.static import static
 from django.shortcuts import render
 from django.utils import timezone
-from django.utils.text import get_valid_filename
 
 # Create your views here.
 
@@ -157,29 +152,20 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
             'requires_selection': True,
             "handler": "confirm_sponsorship",
         },
-        {
-            "name": "generate_pdf",
-            "label": "Generate PDF",
-            "icon": "GarageSale/images/icons/pdf-send-portable-digital-file-svgrepo-com.svg",
-            'requires_selection': True,
-            "handler": "generate_pdf",
-        },
+        ContributorSpreadsheetView.pdf_toolbar_action,
     )
 
-    def generate_pdf(self, post_data):
-        """Offer a template chooser or download personalised sponsor PDFs."""
-        self.pdf_templates = self._active_templates()
-        self.selected_pdf_template, error = self._template_choice(post_data, "pdf", self.pdf_templates)
+    def get_pdf_templates(self):
+        """Use the same configured category as Sponsor emails."""
+        return self._active_templates()
 
-        # Validate recipients before rendering anything or offering a partial archive.
-        if self.selected_pdf_template is not None and not error:
-            sponsors = self._get_selected_email_sponsors(post_data)
+    def get_pdf_contributors(self, post_data):
+        """Retain Sponsor selection validation and confirmation annotations."""
+        return self._get_selected_email_sponsors(post_data)
 
-            # Recipient validation supplies its own dialog instead of an incomplete download.
-            if sponsors is not None:
-                return self._pdf_download(sponsors)
-            return
-        self._template_dialog(post_data, "pdf", error)
+    def get_pdf_contexts(self, contributors):
+        """Reuse email personalisation, including donation and confirmation fields."""
+        return self._sponsor_template_contexts(contributors)
 
     def _active_templates(self):
         """Use the configured Sponsor category for email and PDF choices."""
@@ -214,49 +200,6 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
              "selected_sponsor_ids": post_data.getlist("selected_contributor"),
              "selected_filters": self.selected_filters}, request=self.request,
         )
-
-    def _pdf_download(self, sponsors):
-        """Return an archive whose member names remain unique across platforms."""
-        archive = io.BytesIO()
-        used_names = set()
-
-        # Finalise the ZIP before streaming it; its directory is written on close.
-        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zip_file:
-
-            # Each sponsor requires a fresh context because rendering consumes fields.
-            for sponsor, context in self._sponsor_template_contexts(sponsors):
-                pdf = self.selected_pdf_template.render_template_as_pdf(self.request, context)
-                zip_file.writestr(self._unique_pdf_filename(sponsor, used_names), pdf)
-        archive.seek(0)
-        template_name = self._pdf_filename(
-            self.selected_pdf_template.summary or self.selected_pdf_template.subject, "Sponsor templates",
-        )
-        timestamp = timezone.localtime().strftime("%Y-%m-%d %H-%M-%S")
-        return FileResponse(archive, as_attachment=True, filename=f"{template_name} {timestamp}.zip",
-                            content_type="application/zip", status=200)
-
-    def _unique_pdf_filename(self, sponsor, used_names):
-        """Avoid overwriting sponsors with duplicate or case-equivalent names."""
-        stem = self._pdf_filename(sponsor.contributor_name, f"Sponsor {sponsor.pk}")
-        filename = f"{stem}.pdf"
-        suffix = 2
-
-        # Case-insensitive uniqueness also protects downloads extracted on Windows.
-        while filename.casefold() in used_names:
-            filename = f"{stem} ({suffix}).pdf"
-            suffix += 1
-        used_names.add(filename.casefold())
-        return filename
-
-    @staticmethod
-    def _pdf_filename(name, fallback):
-        """Produce an extraction-safe filename with a fallback for unusable names."""
-
-        # Names containing only unsafe filename characters need a stable fallback.
-        try:
-            return get_valid_filename(name)
-        except SuspiciousFileOperation:
-            return fallback
 
     def send_email(self, post_data):
         """Choose an eligible template before sending personalised emails."""

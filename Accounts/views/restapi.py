@@ -133,7 +133,7 @@ def add_split(request, transaction_id):
 
 
 @require_http_methods(['PUT'])
-@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.change_transaction'))
+@user_passes_test(lambda u: u.is_superuser or u.has_perm('Accounts.delete_transaction'))
 def delete_transaction(request, transaction_id):
     try:
         transaction = Transaction.objects.get(id=transaction_id)

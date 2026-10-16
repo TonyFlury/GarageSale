@@ -58,7 +58,7 @@ class CommunicationTemplateWarningTests(TestCase):
         TemplateAttachment.objects.create(template=self.template, template_name="Terms")
         healthy = self.create_template(sub_category="Thanks", summary="Thanks")
         request = RequestFactory().get("/", {"category": "Sponsors"})
-        request.user = SimpleNamespace(is_authenticated=True, has_perms=lambda permissions: True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True, has_perms=lambda permissions: True)
         with self.assertNumQueries(3):
             response = CommunicationTemplateCategories.as_view()(request)
         rows = {row["pk"]: row for row in response.context_data["templates"]}
@@ -71,7 +71,7 @@ class CommunicationTemplateWarningTests(TestCase):
         TemplateAttachment.objects.create(template=self.template, template_name="Thank you certificate")
         self.create_template(summary="Thank you certificate", sub_category="confirmed")
         request = RequestFactory().get("/", {"category": "Sponsors"})
-        request.user = SimpleNamespace(is_authenticated=True, has_perms=lambda permissions: True)
+        request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True, has_perms=lambda permissions: True)
         response = CommunicationTemplateCategories.as_view()(request)
         rows = {row["pk"]: row for row in response.context_data["templates"]}
         self.assertEqual(rows[self.template.pk]["attachment_warning"], "")
