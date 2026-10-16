@@ -14,7 +14,7 @@ from django.template.response import TemplateResponse
 from django.views import View
 from django.http import HttpResponseServerError, HttpResponse
 from django.contrib.admin.widgets import AdminDateWidget
-from django.views.generic import DetailView
+from django.views.generic import CreateView, DetailView, UpdateView
 
 from News.models import NewsArticle
 from News.views import publish_news
@@ -455,42 +455,22 @@ class EventView(EventBase):
         return context
 
 
-class EventEdit(EventView):
-    permission_required = ["GarageSale.change_eventdata"]
-    template_name = 'event/tp_edit_event.html'
-    success_url = reverse_lazy( 'TeamPages:Event')
-
-    def get_context_data(self, request, **kwargs):
-        context = super().get_context_data(request, **kwargs)
-        context['action'] = 'edit'
-        return context
-
-
-class EventCreate(EventBase):
-    permission_required = ["GarageSale.add_eventdata"]
+class EventFormView(LoginRequiredMixin, PermissionRequiredMixin):
+    model = EventData
+    form_class = EventForm
     template_name = 'event/tp_create_event.html'
-    success_url = reverse_lazy( 'TeamPages:Event')
-    _supporting = None
+    success_url = reverse_lazy('TeamPages:EventList')
 
-    def get_context_data(self, request, **kwargs):
-        context = super().get_context_data(request, **kwargs)
-        context['action'] = 'create'
-        return context
 
-    def get_object(self, request, **kwargs):
-        return None
+class EventEdit(EventFormView, UpdateView):
+    permission_required = "GarageSale.change_eventdata"
+    pk_url_kwarg = "event_id"
+    template_name = 'event/tp_edit_event.html'
 
-    def get_new_instance(self, request, form, **kwargs):
-        supporting = form.cleaned_data['supporting_organisations']
-        self._supporting = form.cleaned_data.pop('supporting_organisations')
-        inst = self.model(**form.cleaned_data)
-        return inst
 
-    def post_save(self, request, instance, form, **kwargs):
-        for item in self._supporting:
-            instance.supporting_organisations.add( item.id )
-        self._supporting = None
-        return instance
+class EventCreate(EventFormView, CreateView):
+    permission_required = "GarageSale.add_eventdata"
+
 
 def event_use(request, event_id):
     """Simple invocation of a template - option to add more complexity if needed"""

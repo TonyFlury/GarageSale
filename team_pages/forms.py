@@ -3,15 +3,65 @@ import datetime
 from django import forms
 from django_summernote.widgets import SummernoteWidget
 
-from GarageSale.models import EventData, MOTD
+from GarageSale.models import EventData, MOTD, Supporting
+from django.db import transaction
 from Sponsors.models import Sponsor
 from News.models import NewsArticle
 
 
+class OrderedSupportingWidget(forms.CheckboxSelectMultiple):
+    template_name = "event/supporting_widget.html"
+
+
+class OrderedSupportingField(forms.ModelMultipleChoiceField):
+    def clean(self, value):
+        organisations = super().clean(value)
+        by_id = {str(item.pk): item for item in organisations}
+        return [by_id[pk] for pk in dict.fromkeys(map(str, value or []))]
+
+
+class SupportingForm(forms.ModelForm):
+    class Meta:
+        model = Supporting
+        fields = ["name", "website", "logo"]
+
+
 class EventForm(forms.ModelForm):
+    supporting_organisations = OrderedSupportingField(
+        queryset=Supporting.objects.order_by("index", "pk"), required=False,
+        widget=OrderedSupportingWidget,
+        help_text="Select charities and use Move up / Move down to set their order. "
+                  "This order is shared by all events supporting these charities.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["event_logo"].required = False
+        # Show selected organisations first, preserving their current order.
+        selected = self["supporting_organisations"].value() or []
+        selected_ids = [str(getattr(item, "pk", item)) for item in selected]
+        organisations = list(self.fields["supporting_organisations"].queryset)
+        positions = {pk: i for i, pk in enumerate(selected_ids)}
+        organisations.sort(key=lambda item: positions.get(str(item.pk), len(positions)))
+        self.fields["supporting_organisations"].choices = [(item.pk, item.name) for item in organisations]
+
+    def _save_m2m(self):
+        super()._save_m2m()
+        for index, organisation in enumerate(self.cleaned_data["supporting_organisations"], start=1):
+            Supporting.objects.filter(pk=organisation.pk).update(index=index)
+
+    @transaction.atomic
+    def save(self, commit=True):
+        return super().save(commit=commit)
+
     class Meta:
         model = EventData
         fields = '__all__'
+        widgets = {"event_logo": forms.ClearableFileInput(), **{
+            name: forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"})
+            for name in ("event_date", "open_billboard_bookings", "close_billboard_bookings",
+                         "open_sales_bookings", "close_sales_bookings", "use_from")
+        }}
 
 
 class SponsorForm(forms.ModelForm):
@@ -44,4 +94,3 @@ class NewsForm(forms.ModelForm):
 
         if cleaned_data['front_page'] and not cleaned_data['synopsis']:
             self.add_error('synopsis', 'A synopsis must be provided for articles intended for the front-page')
-

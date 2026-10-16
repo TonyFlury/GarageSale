@@ -17,6 +17,8 @@ class AccessPolicyMiddleware(MiddlewareMixin):
             permission = custom("access_drive")
         elif namespace == "TeamPages":
             fixed = {"Root": custom("access_team_pages"), "EventRoot": custom("access_team_pages"),
+                     "SupportingList": "GarageSale.view_supporting", "SupportingDetail": "GarageSale.view_supporting",
+                     "SupportingCreate": "GarageSale.add_supporting", "SupportingEdit": "GarageSale.change_supporting",
                      "EventList": "GarageSale.view_eventdata", "Event": "GarageSale.view_eventdata",
                      "EventDisplay": "GarageSale.view_eventdata", "EventView": "GarageSale.view_eventdata",
                      "EventUse": "GarageSale.view_eventdata", "EventCreate": "GarageSale.add_eventdata",

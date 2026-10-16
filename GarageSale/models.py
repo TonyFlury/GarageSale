@@ -69,7 +69,7 @@ class Supporting(models.Model):
     name = models.CharField(max_length = 100)
     logo = models.FileField(upload_to=save_supported_logo_to, null=True, blank=True)
     website = models.URLField()
-    index = models.IntegerField()
+    index = models.IntegerField(default=100)
     def __str__(self):
         return self.name
 

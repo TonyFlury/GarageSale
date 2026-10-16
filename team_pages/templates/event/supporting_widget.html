@@ -1,0 +1,11 @@
+<div class="supporting-picker" id="{{ widget.attrs.id }}">
+    <ol>
+        {% for group, options, group_index in widget.optgroups %}{% for option in options %}
+        <li>
+            {% include option.template_name with widget=option %}
+            <button type="button" data-move="up" aria-label="Move {{ option.label }} up">Move up</button>
+            <button type="button" data-move="down" aria-label="Move {{ option.label }} down">Move down</button>
+        </li>
+        {% endfor %}{% empty %}<li>No charities available. Add a supported charity first.</li>{% endfor %}
+    </ol>
+</div>
