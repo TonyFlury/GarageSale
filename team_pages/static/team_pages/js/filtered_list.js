@@ -8,6 +8,7 @@
 
     constructor( element) {
         this.element = element;
+
         /* Record all of the options in a cache - allows filtering */
         for (let i = 0; i < element.options.length; i++) {
             this.cache.set(element.options[i].text, element.options[i].value );
@@ -86,6 +87,7 @@ class FilteredSelectBox {
 
         /* Build the elements needed for the filter */
         if (element.classList.contains('select-filter')) {
+
             /* Build the filter element */
             let filter_div = make_element('div', null,{'classList': 'select-filter'})
             outer.insertBefore(filter_div, element);
@@ -221,6 +223,7 @@ class FilteredSelectBox {
     }
 
     function submit_form(event) {
+
         /* event.preventDefault(); */
         let owner = event.target.owner_obj;
         return validate_select(owner);

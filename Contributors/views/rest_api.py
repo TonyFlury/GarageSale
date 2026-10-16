@@ -28,6 +28,7 @@ def _record_history(contributor, event_category:str, event_type:str, details:str
 
 def _read_json_payload(request):
     """Decode the editor request, distinguishing invalid JSON from form errors."""
+
     # Malformed request bodies need a field-level response rather than a server error.
     try:
         return json.loads(request.body.decode("utf-8"))
@@ -47,6 +48,7 @@ def _apply_contributor_payload(contributor, payload):
 
     # The inline editor must never assign arbitrary model attributes.
     for field in allowed_fields:
+
         # Omitted fields retain their existing value during partial row edits.
         if field in payload:
             setattr(contributor, field, payload[field])
@@ -73,6 +75,7 @@ def _validate_contributor(contributor):
 
     # An absent address is allowed; a supplied one must be deliverable in principle.
     if contributor.email:
+
         # Use Django email validation so browser and server address rules stay aligned.
         try:
             validate_email(contributor.email)
@@ -93,10 +96,12 @@ def _validate_contributor(contributor):
 
 def _merge_model_errors(contributor, errors):
     """Preserve friendly spreadsheet errors while adding model-level restrictions."""
+
     # Model validation catches field constraints beyond the inline editor's rules.
     try:
         contributor.clean_fields()
     except ValidationError as failure:
+
         # Friendly editor messages take priority when both validators reject a field.
         for field, messages in failure.message_dict.items():
             errors.setdefault(field, " ".join(messages))
@@ -129,6 +134,7 @@ def _save_row_response(contributor, payload, request, *, created):
                       if value != getattr(contributor, key)}
     _apply_contributor_payload(contributor, payload)
     errors = _validate_contributor(contributor)
+
     # Invalid data remains in the browser for correction rather than being saved partially.
     if errors:
         return JsonResponse({"ok": False, "errors": errors}, status=400)
@@ -149,6 +155,7 @@ def _save_row_response(contributor, payload, request, *, created):
 def contributor_spreadsheet_create(request):
     """Create an inline spreadsheet row and its initial history entry."""
     payload = _read_json_payload(request)
+
     # Invalid JSON cannot be treated as an empty contributor submission.
     if payload is None:
         return _invalid_payload_response()
@@ -161,6 +168,7 @@ def contributor_spreadsheet_save(request, pk):
     """Save an existing inline row without changing omitted fields."""
     contributor = get_object_or_404(Contributor, pk=pk)
     payload = _read_json_payload(request)
+
     # Decode before comparing fields so malformed requests cannot trigger an audit entry.
     if payload is None:
         return _invalid_payload_response()

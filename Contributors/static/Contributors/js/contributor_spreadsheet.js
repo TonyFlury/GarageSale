@@ -105,6 +105,7 @@
     /** Validate inline fields without losing edits that need correction. */
     function validateRow(row) {
         const errors = rowValidationErrors(row);
+
         // Keep invalid input available so the user can correct it in place.
         if (Object.keys(errors).length > 0) {
             setErrors(row, errors);
@@ -122,14 +123,17 @@
         const contact = row.querySelector('[name="contact_name"]').value.trim();
         const phone = row.querySelector('[name="phone"]').value.trim();
         const email = row.querySelector('[name="email"]').value.trim();
+
         // Existing rows retain their stored type and do not need a type input.
         if (row.dataset.isNew === "true" && !type?.value.trim()) {
             errors.contributor_type = `${getSheet()?.dataset.label || "Contributor"} type is required.`;
         }
+
         // Reject whitespace identities and values longer than the rendered input limits.
         if (!name) errors.contributor_name = "Company name is required.";
         if (contact.length > 120) errors.contact_name = "Contact name must be 120 characters or fewer.";
         if (phone.length > 12) errors.phone = "Phone must be 12 characters or fewer.";
+
         // Email is optional but must resemble an address when present.
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Enter a valid email address.";
         return errors;
@@ -210,6 +214,7 @@
         });
         clearErrors(row);
         row.classList.remove('dirty');
+
         // Keep the blank entry row available, but finish editing existing rows.
         if (row.dataset.isNew !== "true") {
             lockRow(row);
@@ -219,11 +224,13 @@
     /** Bind editing and selection controls for initial or newly created rows. */
     function bindRow(row) {
         const selection = row.querySelector('[name="selected_contributor"]');
+
         // Unsaved rows have no persistent identity and cannot join toolbar selections.
         if (selection) {
             selection.disabled = false;
             selection.addEventListener("change", selectionChanged);
         }
+
         // Cache original values so Undo does not require another server request.
         for (const input of getRowInputs(row)) {
             if (input === null) continue;
@@ -265,6 +272,7 @@
         row.dataset.filterEmail = "";
         row.innerHTML = newRowHTML;
         const actionsCell = row.querySelector(".actions").closest("td");
+
         // Display-only extension columns still need blank cells to preserve alignment.
         for (const column of document.querySelectorAll("#contributor-sheet thead th.extra-column")) {
             const cell = document.createElement("td");
@@ -295,6 +303,7 @@
         row.dataset.contributorId = contributor.id;
         row.dataset.saveUrl = contributor.save_url;
         addCreatedRowActions(row, contributor);
+
         // Server-normalized values become both the display and the next Undo baseline.
         for (const field of ["contributor_type", ...editableFields]) {
             row.querySelector(`[name="${field}"]`).value = contributor[field] || "";
@@ -318,12 +327,15 @@
 
     /** Save valid edits and leave uncertain results unlocked for inspection. */
     async function saveRow(row) {
+
         // Client-side validation avoids a request while retaining invalid edits.
         if (!validateRow(row)) return;
         const isNew = row.dataset.isNew === "true";
         const result = await requestRowSave(row, isNew);
+
         // Transport and validation errors already display beside the row.
         if (!result) return;
+
         // A successful creation consumes the entry row and needs a fresh blank replacement.
         if (isNew) {
             applyCreatedContributorToRow(row, result.contributor);
@@ -340,6 +352,7 @@
     async function requestRowSave(row, isNew) {
         const url = isNew ? getSheet().dataset.createUrl : row.dataset.saveUrl;
         let response;
+
         // A non-JSON reply may follow a committed save, so edits must remain available.
         try {
             response = await fetch(url, {
@@ -370,10 +383,12 @@
     /** Filter saved rows while keeping the blank entry row accessible. */
     function applyFilters() {
         const filters = {};
+
         // Normalize once so each row uses the same case-insensitive substring rules.
         for (const input of document.querySelectorAll("[data-filter-field]")) {
             filters[input.dataset.filterField] = input.value.trim().toLowerCase();
         }
+
         // Selection is preserved on hidden rows but excluded from toolbar actions.
         for (const row of document.querySelectorAll("#contributor-sheet tbody tr")) {
             if (row.dataset.isNew === "true") {
@@ -387,6 +402,7 @@
 
     /** Combine nonempty search fields without requiring exact matches. */
     function rowMatchesFilters(row, filters) {
+
         // Every populated field must match so adding a search term narrows the list.
         for (const [field, value] of Object.entries(filters)) {
             if (!value) continue;
@@ -484,9 +500,11 @@
     /** Populate identity and local date without permitting notes on unsaved rows. */
     function openContactHistory(event) {
         const button = event.target.closest(".add-contact-history");
+
         // Most document clicks do not target contact controls.
         if (!button) return;
         contact.row = button.closest("tr") || getSheet().querySelector(`tr[data-contributor-id="${button.dataset.contributorId}"]`);
+
         // Details dialogs locate their saved contributor row through its persistent identity.
         if (!contact.row || contact.row.dataset.isNew === "true") return;
         contact.form.reset();
@@ -508,6 +526,7 @@
 
     /** Keep an unresolved contact save visible until the server responds. */
     function cancelContactHistory(event) {
+
         // Escape must follow the same restriction as the disabled Cancel control.
         if (contact.saving) event.preventDefault();
     }
@@ -515,10 +534,12 @@
     /** Prevent duplicate notes while preserving input after validation failures. */
     async function submitContactHistory(event) {
         event.preventDefault();
+
         // Repeated submit events must not append duplicate history records.
         if (contact.saving) return;
         setContactSaving(true);
         contact.error.textContent = "";
+
         // Release the popup controls after both transport and server-side failures.
         try {
             await saveContactHistory();
@@ -543,6 +564,7 @@
             headers: {"X-CSRFToken": contact.form.querySelector('[name="csrfmiddlewaretoken"]').value},
         });
         const data = await response.json();
+
         // Keep the note editable when validation rejects its date or text.
         if (!response.ok || !data.ok) {
             contact.error.textContent = Object.values(data.errors || {}).flat()
@@ -560,6 +582,7 @@
     function updateLastContact(row, date) {
         const lastContact = row.querySelector(".last-contact-date");
         const cutoff = getSheet().dataset.historicEventDate;
+
         // Backdated notes belong in history but must not regress the visible last-contact date.
         if (date > (cutoff || "") && date > (lastContact.dataset.date || "")) {
             lastContact.dataset.date = date;

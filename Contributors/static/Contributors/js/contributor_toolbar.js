@@ -10,6 +10,7 @@
     /** Disable selection-dependent actions without affecting unrestricted actions. */
     function updateActions() {
         const disabled = selectedRows().length === 0;
+
         // Each action declares its own selection requirement in the rendered configuration.
         for (const button of form.querySelectorAll('[data-requires-selection]')) button.disabled = disabled;
     }
@@ -22,6 +23,7 @@
             'select:not([disabled]), textarea:not([disabled]):not([readonly])'
         );
         const scrollArea = sheet.closest('.spreadsheet-grid-scroll');
+
         // Custom spreadsheets may omit a new row or their own scroll container.
         if (!firstField || !scrollArea) return;
         scrollArea.scrollTop = scrollArea.scrollHeight;
@@ -32,12 +34,14 @@
     /** Snapshot visible selections into the standalone toolbar form at submission. */
     function submitAction(event) {
         const selected = selectedRows();
+
         // Recheck at submission because browser state restoration can stale button states.
         if (event.submitter?.hasAttribute('data-requires-selection') && selected.length === 0) {
             event.preventDefault();
             updateActions();
             return;
         }
+
         // A second submission must not retain hidden IDs from the previous selection.
         for (const input of form.querySelectorAll('input[name="selected_contributor"]')) input.remove();
         for (const checkbox of selected) {
@@ -53,12 +57,15 @@
     function initialiseToolbar() {
         form = document.querySelector('#toolbar .extra-toolbar-actions');
         sheet = document.querySelector('#contributor-sheet');
+
         // The shared script can be included on pages without an editable grid.
         if (!sheet) return;
         document.querySelector('#spreadsheet-new-button')?.addEventListener('click', focusNewRow);
+
         // The New control also works when a subclass declares no toolbar actions.
         if (!form) return;
         sheet.addEventListener('change', updateActions);
+
         // Client-side search changes which selected rows are eligible for actions.
         for (const input of document.querySelectorAll('[data-filter-field]')) {
             input.addEventListener('input', updateActions);

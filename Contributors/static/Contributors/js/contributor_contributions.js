@@ -23,6 +23,7 @@
     /** Keep duplicate submissions and popup dismissal disabled during a save. */
     function setSaving(value) {
         saving = value;
+
         // Both save actions and Cancel must wait for a definitive server response.
         for (const button of form.querySelectorAll('input[type="submit"], input[type="button"]')) {
             button.disabled = value;
@@ -32,6 +33,7 @@
     /** Delete one record while preserving uncertainty about interrupted responses. */
     async function deleteContribution(event) {
         const button = event.target.closest('.delete-contribution');
+
         // Delegated clicks also include unrelated controls and repeated clicks.
         if (!button || saving) return;
         const sponsor = button.closest('[data-sponsor-contributions]');
@@ -40,6 +42,7 @@
         saving = true;
         button.disabled = true;
         message.textContent = '';
+
         // Always unlock after failure without assuming that the deletion was rolled back.
         try {
             await requestDeletion(button, list, sponsor, message);
@@ -59,11 +62,13 @@
             body: new URLSearchParams({event_id: button.dataset.eventId}),
         });
         const data = await response.json();
+
         // Failed event checks must leave the displayed list intact for inspection.
         if (!response.ok || !data.ok) {
             message.textContent = data.message || `Unable to delete contribution (HTTP ${response.status}). Reopen the popup.`;
             return;
         }
+
         // A committed deletion must not be retried if only browser rendering fails.
         try {
             list.innerHTML = sponsor ? data.sponsor_contributions_html : data.contributions_html;
@@ -86,6 +91,7 @@
     /** Reuse the editor for either a details list or a sponsor confirmation list. */
     function openContribution(event) {
         const button = event.target.closest('.add-contribution');
+
         // Delegation must ignore unrelated clicks and protect an in-flight save.
         if (!button || saving) return;
         const sponsorContributions = button.closest('[data-sponsor-contributions]');
@@ -93,6 +99,7 @@
         contributionList = sponsorContributions || details.querySelector('#details-contributions');
         form.reset();
         updateAmountInput();
+
         // Buttons named "action" shadow the form.action property.
         form.setAttribute('action', button.dataset.contributionUrl);
         eventInput.value = button.dataset.eventId;
@@ -105,11 +112,13 @@
 
     /** Explain non-JSON replies without implying that an uncertain save failed. */
     async function readSaveResponse(response) {
+
         // Expired sessions often return a login page rather than the JSON API response.
         if (response.redirected || response.status === 401) {
             error.textContent = 'Your session may have expired. Sign in again before saving this contribution.';
             return null;
         }
+
         // Proxy and permission errors may also return HTML instead of JSON.
         try {
             return await response.json();
@@ -128,17 +137,20 @@
     /** Refresh the originating list and notify history only when details is open. */
     function refreshContributionList(data) {
         const updatedHTML = sponsorList ? data.sponsor_contributions_html : data.contributions_html;
+
         // A missing fragment is a browser refresh failure after a successful save.
         if (!contributionList || typeof updatedHTML !== 'string') {
             throw new Error('Contribution list or updated HTML is missing');
         }
         contributionList.innerHTML = updatedHTML;
+
         // Sponsor confirmation lists do not own the details history panel.
         if (!sponsorList) details.dispatchEvent(new CustomEvent('contributions-changed'));
     }
 
     /** Preserve contributor and event identity while preparing another gift. */
     function finishSave(addAnother) {
+
         // Save-and-add-another deliberately keeps this contributor's popup open.
         if (addAnother) {
             gift.value = '';
@@ -165,6 +177,7 @@
     /** Submit once and retain enough progress information to prevent accidental duplicates. */
     async function submitContribution(event) {
         event.preventDefault();
+
         // Repeated clicks must not create duplicate gifts.
         if (saving) return;
         const body = new FormData(form);
@@ -172,6 +185,7 @@
         error.textContent = '';
         status.textContent = '';
         const progress = {saved: false, stage: 'preparing request'};
+
         // Unlock controls for every outcome, including browser-side refresh failures.
         try {
             await saveContribution(body, event.submitter?.value === 'Save and Add another', progress);
@@ -185,6 +199,7 @@
     /** Validate the reply before replacing the originating list or closing the popup. */
     async function saveContribution(body, addAnother, progress) {
         const csrfToken = form.querySelector('[name="csrfmiddlewaretoken"]');
+
         // Missing CSRF protection means nothing should be sent to the server.
         if (!csrfToken) throw new Error('Contribution form has no CSRF token');
         progress.stage = 'sending request';
@@ -192,8 +207,10 @@
             method: 'POST', body, headers: {'X-CSRFToken': csrfToken.value},
         });
         const data = await readSaveResponse(response);
+
         // Session or non-JSON errors already have an actionable message.
         if (!data) return;
+
         // Field errors must preserve the user's entered values for correction.
         if (!response.ok || !data.ok) {
             error.textContent = Object.values(data.errors || {}).flat()
@@ -208,6 +225,7 @@
 
     /** Keep Escape from closing the editor while the result is unknown. */
     function cancelWhileSaving(event) {
+
         // Closing mid-request would hide whether the contribution was committed.
         if (saving) event.preventDefault();
     }

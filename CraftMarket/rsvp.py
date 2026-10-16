@@ -68,6 +68,7 @@ class ContributorRSVP(View):
             reject = 'RSVP_No' in request.POST
             if accept != reject:
                 with transaction.atomic():
+
                     # Serialize with the spreadsheet's status changes and reject repeated responses.
                     get_object_or_404(Contributor.objects.select_for_update(), pk=trader.pk)
                     latest = ContributorEvent.objects.filter(contributor=trader, event=invitation.event).order_by('-timestamp', '-pk').first()
@@ -77,6 +78,7 @@ class ContributorRSVP(View):
                                                     status='Confirmed' if accept else 'Rejected')
                 request.session.pop(session_key, None)
                 if accept:
+
                     # Use the same personalised email context and delivery handling as the spreadsheet.
                     from CraftMarket.spreadsheet import MarketerSpreadsheetView
                     view = MarketerSpreadsheetView()

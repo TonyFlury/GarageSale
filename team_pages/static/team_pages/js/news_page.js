@@ -32,6 +32,7 @@ function __current_base_url(new_path=''){
 }
 
 function __params_as_url() {
+
 /*
     Need to find a way to data drive this
 */
@@ -48,6 +49,7 @@ function __params_as_url() {
                 continue;
 
             var checked = node.checked;
+
             /* Strip off the ! from the start of a fragment attribute */
             if (node_fragment[0] == '!'){
                 if (!checked)

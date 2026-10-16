@@ -51,6 +51,7 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
     def market_event(self):
         """Prefer an explicitly selected event before the currently activated event."""
         event_id = self.kwargs.get("event_id")
+
         # An explicitly selected event must not silently fall back to another event.
         if event_id is not None:
             return get_object_or_404(EventData, pk=event_id)
@@ -62,6 +63,7 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
 
     def post(self, request, *args, **kwargs):
         """Dispatch the submitted stage or action through the permitted workflow."""
+
         # Hiding buttons is insufficient protection against directly submitted actions.
         if not request.user.has_perm("CraftMarket.change_marketer"):
             return HttpResponseForbidden("You do not have permission to change market traders.")
@@ -78,11 +80,14 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
         """Combine contact filters with the latest status for the selected event."""
         queryset = self._annotate_status(super().filter_queryset(queryset))
         queryset = self._filter_contacts(queryset)
+
         # Empty legacy statuses mean the same thing as no status record.
         if "none" in self.selected_filters:
             return queryset.filter(Q(marketer_status__isnull=True) | Q(marketer_status__in=["", "None"]))
+
         # Status options are mutually exclusive, so one match fully determines the filter.
         for status in ("Invited", "Confirmed", "Rejected"):
+
             # Grouped status options permit only one matching status restriction.
             if status.lower() in self.selected_filters:
                 return queryset.filter(marketer_status=status)
@@ -91,12 +96,14 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
     def _filter_contacts(self, queryset):
         """Count contact notes only since the preceding event."""
         selected = self.selected_filters
+
         # Leave the query unrestricted when the user has not chosen a contact filter.
         if not {"contacted", "not_contacted"}.intersection(selected):
             return queryset
         contacts = ContributorHistory.objects.filter(
             contributor_id=OuterRef("pk"), event_category="Contact", event_type="Comment",
         )
+
         # Without a preceding event there is no reliable historical cutoff.
         if self.historic_event_date is not None:
             contacts = contacts.filter(timestamp__date__gt=self.historic_event_date)
@@ -113,16 +120,19 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
     def _selected_marketers(self, post_data, *, lock=False):
         """Validate the complete trader selection, optionally acquiring write locks."""
         ids = post_data.getlist("selected_contributor")
+
         # Validate the complete selection before converting IDs or acquiring locks.
         if not ids or any(not value.isdecimal() for value in ids):
             self._error("Select valid market traders before continuing.")
             return None
         ids = {int(value) for value in ids}
         queryset = Contributor.objects.filter(pk__in=ids, contributor_type=self.contributor_type)
+
         # Review is read-only; confirmed imports need locks against competing updates.
         if lock:
             queryset = queryset.select_for_update()
         marketers = list(self._annotate_status(queryset).order_by("pk"))
+
         # Deleted or reclassified records invalidate the batch rather than allow partial changes.
         if len(marketers) != len(ids):
             self._error("Some selected market traders no longer exist. Refresh and select them again.")
@@ -138,11 +148,13 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
         """Offer eligible emails while excluding named PDF attachment templates."""
         category = settings.APPS_SETTINGS["CraftMarket"]["EmailTemplateCategory"]
         templates = CommunicationTemplate.current_active.filter(category=category)
+
         # Status-changing actions must use templates appropriate to their destination status.
         if status:
             templates = templates.filter(sub_category__iexact=status)
         else:
             templates = templates.exclude(sub_category__iexact="Invited").exclude(sub_category__iexact="Confirmed")
+
         # Named PDF attachment templates are not standalone emails.
         attachments = set(TemplateAttachment.objects.filter(
             upload=False, template__category=category,
@@ -167,17 +179,21 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
 
     def _action(self, post_data, status=None):
         """Validate a toolbar request, then choose or apply its delivery settings."""
+
         # An old chooser must never act on a newly activated or expired event.
         if not self._action_event_valid(post_data):
             return
         marketers = self._selected_marketers(post_data)
+
         # Selection and transition errors supply their own explanatory dialog.
         if marketers is None or not self._valid_transition(marketers, status):
             return
         template, without_email, submitted = self._choose_delivery(post_data, marketers, status)
+
         # Initial requests and invalid choices must stay in the chooser.
         if not submitted:
             return
+
         # Locked revalidation protects against concurrent team or portal changes.
         if status and not self._record_status(post_data, status):
             return
@@ -187,10 +203,12 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
     def _action_event_valid(self, post_data):
         """Reject expired events and submissions from an outdated event chooser."""
         event = self.market_event
+
         # Past events cannot accept new invitations or attendance decisions.
         if event is None or event.event_date < timezone.localdate():
             self._error("Choose a current or upcoming event before continuing.")
             return False
+
         # Hidden event identity prevents a valid selection affecting a different event.
         if post_data.get("market_event_id") and post_data["market_event_id"] != str(event.pk):
             self._error("The event has changed. Refresh and try again.")
@@ -206,9 +224,11 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
         templates = [] if status == "Rejected" or without_email else self._available_templates(status)
         template, error = self._delivery_template(post_data, templates, without_email)
         submitted = without_email or (post_data.get("delivery") == "send_email" and template is not None)
+
         # Rejection deliberately has no email workflow and always needs explicit consent.
         if status == "Rejected":
             submitted = without_email
+
         # Keep the same selection visible while the user corrects a delivery choice.
         if error or not submitted:
             action = {"Invited": "invite", "Confirmed": "confirm", "Rejected": "reject"}.get(status, "send_email")
@@ -223,12 +243,15 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
         selected_ids = post_data.getlist("email_template_id")
         template = next((item for item in templates
                          if len(selected_ids) == 1 and str(item.pk) == selected_ids[0]), None)
+
         # Unchecked email delivery must not require a template.
         if without_email or post_data.get("delivery") != "send_email":
             return template, ""
+
         # Distinguish a missing choice from a template that expired after opening the dialog.
         if len(selected_ids) != 1 or not selected_ids[0]:
             return template, "Choose exactly one email template."
+
         # A chooser can outlive the template that was originally available.
         if template is None:
             return None, "That template is no longer available. Choose another template."
@@ -236,9 +259,11 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
 
     def _record_status(self, post_data, status):
         """Recheck transitions while holding row locks before appending statuses."""
+
         # Hold locks until the complete selection's statuses have been written.
         with transaction.atomic():
             marketers = self._selected_marketers(post_data, lock=True)
+
             # Concurrent changes invalidate the entire batch rather than a subset.
             if marketers is None or not self._valid_transition(marketers, status):
                 return False
@@ -250,6 +275,7 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
 
     def _valid_transition(self, marketers, status):
         """Reject batches containing any trader outside the required source status."""
+
         # One invalid source status must prevent a partial batch transition.
         if status and any(self._status(marketer) not in self.transitions[status] for marketer in marketers):
             source = "None" if status == "Invited" else "Invited"
@@ -276,10 +302,12 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
 
     def _deliver_email(self, marketer, template, defaults):
         """Report one delivery outcome without interrupting the remaining batch."""
+
         # Missing addresses are data gaps and do not warrant mail-server errors.
         if not marketer.email:
             return "Not sent: no email address recorded."
         context = self._email_context(marketer, defaults)
+
         # Status changes are already committed; delivery failure must not reverse them.
         try:
             sent = template.send_email(self.request, context=context)

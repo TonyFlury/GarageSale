@@ -40,6 +40,7 @@ class CommunicationTemplateCategories(EntryPointMixin, LoginRequiredMixin, Permi
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
         # List every template by summary, including old and future versions.
         rows = CommunicationTemplate.objects.order_by("category", "summary", "-use_from", "pk").values_list(
             "category", "summary", "use_from", "pk", "sub_category",
@@ -50,10 +51,12 @@ class CommunicationTemplateCategories(EntryPointMixin, LoginRequiredMixin, Permi
         context["template_categories"] = [
             {"name": category} for category in sorted(categories)
         ]
+
         # Show summaries only for a category chosen from the available list.
         selected_category = self.request.GET.get("category")
         context["selected_category"] = selected_category if selected_category in categories else None
         context["templates"] = categories.get(selected_category, [])
+
         # Check only the displayed category and attach warning text to its rows.
         warnings = CommunicationTemplate.attachment_warnings_for([
             CommunicationTemplate(pk=row["pk"], category=selected_category,
@@ -76,10 +79,12 @@ class CommunicationTemplateFormView(LoginRequiredMixin, PermissionRequiredMixin)
             fields=("upload", "template_name", "attached_file"), extra=0, can_delete=True,
         )
         kwargs = {"instance": instance or self.object, "prefix": "attachments"}
+
         # Bind files and attachment values on submission so validation can be shown in place.
         if self.request.method == "POST":
             kwargs.update(data=self.request.POST, files=self.request.FILES)
         attachments = factory(**kwargs)
+
         # Every explicitly added row needs a name or file, unless marked for deletion.
         if self.request.method == "POST":
             for attachment_form in attachments.forms:
@@ -88,9 +93,11 @@ class CommunicationTemplateFormView(LoginRequiredMixin, PermissionRequiredMixin)
 
     def form_valid(self, form):
         attachments = self.get_attachment_formset(instance=form.instance)
+
         # Keep the form open without saving anything if an attachment is invalid.
         if not attachments.is_valid():
             return self.render_to_response(self.get_context_data(form=form, attachments=attachments))
+
         # Save the template and its attachment entries as one database transaction.
         with transaction.atomic():
             self.object = form.save()
@@ -99,11 +106,13 @@ class CommunicationTemplateFormView(LoginRequiredMixin, PermissionRequiredMixin)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
+
         # Return to the category containing the saved template.
         return reverse("TeamPages:CommunicationTemplates") + "?" + urlencode({"category": self.object.category})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
         # Preserve the submitted formset and its errors when rerendering the form.
         if "attachments" not in context:
             context["attachments"] = self.get_attachment_formset()
@@ -132,6 +141,7 @@ class CommunicationTemplateDuplicate(LoginRequiredMixin, PermissionRequiredMixin
     http_method_names = ["post", "options"]
 
     def post(self, request, pk):
+
         # Copy the saved template and attachment entries together before opening the new version.
         with transaction.atomic():
             source = get_object_or_404(CommunicationTemplate.objects.select_for_update(), pk=pk)
@@ -146,6 +156,7 @@ class CommunicationTemplateDelete(LoginRequiredMixin, PermissionRequiredMixin, D
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
         # Explain blocked deletion on the confirmation page.
         if "deletion_errors" not in context:
             context["deletion_errors"] = self.object.deletion_errors()
@@ -154,6 +165,7 @@ class CommunicationTemplateDelete(LoginRequiredMixin, PermissionRequiredMixin, D
 
     def post(self, request, *args, **kwargs):
         template = self.get_object()
+
         # Lock the category's versions so concurrent deletions cannot remove each other's replacements.
         with transaction.atomic():
             category_templates = CommunicationTemplate.objects.select_for_update().filter(
@@ -162,6 +174,7 @@ class CommunicationTemplateDelete(LoginRequiredMixin, PermissionRequiredMixin, D
             list(category_templates)
             self.object = get_object_or_404(category_templates, pk=template.pk)
             errors = self.object.deletion_errors()
+
             # Recheck the rules at submission time; never delete from a GET request.
             if errors:
                 return self.render_to_response(self.get_context_data(deletion_errors=errors), status=409)
@@ -362,6 +375,7 @@ class TemplatesCreate(TemplateManagement):
         return context
 
     def get_form(self, form_instance=None):
+
         # Set the category field and limit the transitions to those for the current category
 
         if form_instance is None:
@@ -369,6 +383,7 @@ class TemplatesCreate(TemplateManagement):
 
         form_instance.fields['category'].initial = self.category
         form_instance.fields['category'].widget.attrs['readonly'] = True
+
         # form_instance.fields['sub_category'].choices = self.sub_category_list + [('Other','Other')]
         form_instance.fields['sub_category'].widget.widgets[0].choices=self.sub_category_list + [('Other','Other')]
         form_instance.fields['sub_category'].widget.widgets[0].initial=self.sub_category_list[0][0]
@@ -394,6 +409,7 @@ class TemplatesView(TemplateManagement):
             template_id = instance.id
         else:
             template_id = kwargs.get('template_id', None)
+
         #factory = formset_factory(AttachmentForm, extra=1, can_delete=True)
         attachments = TemplateAttachment.objects.filter(template_id=template_id)
         return attachments
@@ -407,6 +423,7 @@ class TemplatesView(TemplateManagement):
         return context
 
     def get_form(self, form_instance=None):
+
         # Set the category field and limit the transitions to those for the current category
 
         if form_instance is None:
@@ -501,6 +518,7 @@ def duplicate_template(inst_id, *, preserve_summary=False):
     new_inst = copy(instance)
     new_inst.id = new_inst.pk = None
     new_inst.use_from = timezone.localdate()
+
     # Website duplication creates another version with the same summary.
     if not preserve_summary:
         new_inst.summary = f'{new_inst.summary} (Duplicate)'

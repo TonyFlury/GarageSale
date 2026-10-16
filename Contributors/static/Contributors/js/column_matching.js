@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const destination = Object.hasOwn(possibleMatches, column) ? possibleMatches[column] : '';
     return fields.some(field => field.key === destination) ? destination : '';
   });
+
   // Multiple suggestions for one field are ambiguous: leave all of them unmapped.
   const counts = new Map();
   suggestions.filter(Boolean).forEach(key => counts.set(key, (counts.get(key) || 0) + 1));

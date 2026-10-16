@@ -20,6 +20,7 @@ class SocialsGridWidget(forms.Textarea):
     def get_context(self, name, value, attrs):
         """Preserve JSON values while exposing editable social-name pairs."""
         context = super().get_context(name, value, attrs)
+
         # Older records may hold serialized JSON or malformed values.
         try:
             socials = json.loads(value) if isinstance(value, str) else value
@@ -49,6 +50,7 @@ class ContributorDetailsForm(forms.ModelForm):
     def clean_socials(self):
         """Keep additional details as a JSON object of named entries."""
         value = self.cleaned_data["socials"]
+
         # Named social entries need an object; null still represents no additional details.
         if value is not None and not isinstance(value, dict):
             raise forms.ValidationError("Additional details must be a JSON object.")
@@ -69,6 +71,7 @@ def event_history_context(contributor):
         "event", "user",
     ).order_by("-timestamp", "-pk"):
         group_for(confirmation.event)["confirmations"].append(confirmation)
+
     # Gifts and statuses share event groups even when only one kind was recorded.
     for contribution in Contributions.objects.filter(contributor=contributor).select_related("event").order_by("-pk"):
         group_for(contribution.event)["contributions"].append(contribution)
@@ -84,6 +87,7 @@ def _details_contributions(request, contributor):
     """Respect each spreadsheet's choice to expose contribution editing."""
     preference = request.GET.get("show_contributions")
     enabled = preference == "1" if preference in {"0", "1"} else ContributorSpreadsheetView.show_contributions
+
     # Market Traders hide contribution controls even though the endpoint is shared.
     if not enabled:
         return {"show_contributions": False}
@@ -94,6 +98,7 @@ def _details_contributions(request, contributor):
 def _details_response(request, contributor):
     """Render details and history independently for lightweight history refreshes."""
     history_html = render_to_string("contributor_history.html", event_history_context(contributor), request=request)
+
     # A saved contact note needs only fresh history, not a replacement edit form.
     if request.GET.get("history") == "1":
         return JsonResponse({"ok": True, "history_html": history_html})
@@ -111,14 +116,17 @@ def _details_response(request, contributor):
 
 def _save_details(request, pk):
     """Serialize edits and their audit record within the same transaction."""
+
     # Lock the record so another editor cannot overwrite the audited values mid-save.
     with transaction.atomic():
         contributor = get_object_or_404(Contributor.objects.select_for_update(), pk=pk)
         form = ContributorDetailsForm(request.POST, request.FILES, instance=contributor, prefix="details")
+
         # Invalid forms must leave both contributor data and audit history untouched.
         if not form.is_valid():
             return JsonResponse({"ok": False, "errors": form.errors.get_json_data()}, status=400)
         changed_fields = list(form.changed_data)
+
         # Avoid creating misleading history for an unchanged form submission.
         if changed_fields:
             contributor = form.save()
@@ -133,6 +141,7 @@ def _save_details(request, pk):
 @require_http_methods(["GET", "POST"])
 def contributor_details(request, pk):
     """Serve the shared details dialog or persist its submitted changes."""
+
     # GET rendering cannot take the write path or create audit entries.
     if request.method == "GET":
         return _details_response(request, get_object_or_404(Contributor, pk=pk))

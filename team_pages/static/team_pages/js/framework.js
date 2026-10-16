@@ -1,5 +1,6 @@
 
 function preview_image(event, field_name) {
+
     /* Invoked when the form has an image field - to preview the image identified in the field */
     const reader = new FileReader();
     reader.onload = function(){
@@ -12,6 +13,7 @@ function preview_image(event, field_name) {
 }
 
 function __get_filters(){
+
     /* Extract filter check boxes from the filter pop-up  */
     let pop_up = document.getElementById("filter-pop-up")
        if (pop_up == null) {
@@ -22,6 +24,7 @@ function __get_filters(){
 }
 
 function __current_base_url(new_path=''){
+
     /** return the current base URL - excluding the query string **/
     const protocol = window.location.protocol;
     const host = window.location.host;
@@ -34,6 +37,7 @@ function __current_base_url(new_path=''){
 }
 
 function __params_as_url() {
+
     /* converts the status of the filter check boxes in a URL query String*/
     let fragments = [];
     const nodes = __get_filters();
@@ -43,12 +47,14 @@ function __params_as_url() {
 
     for (const node of nodes)
     {
+
         /* Extract the relevant query fragment from that check box field */
         let node_fragment = node.getAttribute('tp-fragment');
         if (!node_fragment)
             continue;
 
         let checked = node.checked;
+
         /* Strip off the ! from the start of a fragment attribute - and use if not checked - ie exclusion */
         if (node_fragment[0] === '!'){
             if (!checked)
@@ -56,6 +62,7 @@ function __params_as_url() {
         }
         else
         {
+
             /* No leading ! - so use if checked - ie inclusion */
             if (checked)
                 fragments.push(node_fragment);
@@ -68,6 +75,7 @@ function __params_as_url() {
 }
 
 function __url_as_params() {
+
     /* converts URL query String into a set of checked or unchecked filter check boxes */
     const nodes = __get_filters();
     const queryString = window.location.search;
@@ -86,6 +94,7 @@ function __url_as_params() {
         if (fragment_name[0] === '!')
             node.checked = !urlParams.has(fragment_name.slice(1));
         else
+
             /* Fragments that don't start with a ! are inclusion fragments - ie checked if the fragment is present */
             node.checked = urlParams.has(fragment_name);
     }
@@ -96,6 +105,7 @@ function _popup_element(event, element, force_state) {
         element.style.visibility = force_state;
         element.style.display = (force_state === 'visible') ? 'block' : 'None';
     } else {
+
         /* Toggle the visibility of the window */
         element.style.display = (element.style.display === "block") ? 'None' : 'block';
         element.style.visibility = (element.style.visibility === "visible") ? 'hidden' : 'visible';
@@ -121,6 +131,7 @@ function _popup_element(event, element, force_state) {
 }
 
 function popup(event, name, force_state) {
+
     /* Force a change of state onto a named pop-up window  */
     const pop_window = document.getElementById(name);
     _popup_element(event, pop_window, force_state);
@@ -128,12 +139,14 @@ function popup(event, name, force_state) {
 
 function cancel_filter_popup()
 {
+
     /* Close and ignore the filter popup */
     popup(null, "filter-pop-up", 'hidden');
     __url_as_params(); /* Force a re-read of the URL into the filter check-boxes - revert any changes */
 }
 
 function save_list_options() {
+
     /* Save the current filter check boxes into the URL and reload */
     let url_parameters = __params_as_url();
     popup( null, 'filter-pop-up', 'hidden');
@@ -143,6 +156,7 @@ function save_list_options() {
 /* ToDo - Extend pair system to a more generalised group idea - where at least one in the group remains checked */
 function __filter_changed()
 {
+
     /* Handle a change in the state of a filter - if it has a pair, for example, */
     /* Ensure one of the pair is always highlighted */
     const pair = this.getAttribute('tp-pair');
@@ -159,6 +173,7 @@ function __filter_changed()
 
 function do_action(action, id) {
     console.log(action + ' invoked for ' + id)
+
     /* Perform an action on a list item - ie edit, cancel, delete */
     let action_info = actions.get(action);
     if (action_info == null) {
@@ -175,6 +190,7 @@ function do_action(action, id) {
         full_path = __current_base_url(url_base) + '/' + action + __params_as_url();
 
     if (popup_element) {
+
         /* Add the path to the input button on that popup */
         let confirm_button = popup_element.querySelector('input.button.confirm');
         let cancel_button = popup_element.querySelector('input.button.cancel');
@@ -222,6 +238,7 @@ function do_action(action, id) {
 
 function __set_row_actions()
 {
+
     /* Find the 'icons' column for each row - and set an event listener for each action */
     const list_rows = document.getElementById("tp_item_list").children
     for( const row of list_rows)
@@ -241,6 +258,7 @@ function __set_row_actions()
 
                     if (action_info == null)
                         continue;
+
 /*                    if (action_info.path === '' || action_info.path === null)
                         continue; */
                     span.addEventListener('click',
@@ -255,6 +273,7 @@ function __set_row_actions()
 
 function  __set_multi_select_actions()
 {
+
     /** Set the various actions for the multiple select buttons **/
     if (!allow_multiple)
         return;

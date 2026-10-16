@@ -6,8 +6,10 @@
     function chooseGroupedFilter(event) {
         const selected = event.target;
         const group = selected.dataset.filterGroup;
+
         // Unchecking a choice and ungrouped choices must not affect other checkboxes.
         if (!selected.checked || !group) return;
+
         // Exclusive choices remain checkboxes so every group can also have no restriction.
         for (const option of form.querySelectorAll('input[name="selected_filters"][data-filter-group]')) {
             if (option !== selected && option.dataset.filterGroup === group) option.checked = false;
@@ -28,6 +30,7 @@
 
     /** Clear pending choices without applying them until the Filter button is used. */
     function clearFilters() {
+
         // Clearing is an editable draft so Cancel can still recover the applied filters.
         for (const option of form.querySelectorAll('input[name="selected_filters"]')) option.checked = false;
     }
@@ -44,6 +47,7 @@
         form = document.querySelector('#spreadsheet-filter-form');
         cancel = document.querySelector('#spreadsheet-filter-cancel');
         clear = document.querySelector('#spreadsheet-filter-clear');
+
         // Derived spreadsheets can deliberately omit the entire filter interface.
         if (!button || !dialog || !form || !cancel) return;
         form.addEventListener('change', chooseGroupedFilter);

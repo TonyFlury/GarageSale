@@ -10,6 +10,7 @@
     /** Open an action result only when the server supplied a modal fragment. */
     function initialiseModal() {
         dialog = document.querySelector('#spreadsheet-modal-dialog');
+
         // Ordinary spreadsheet requests have no action chooser or result to display.
         if (!dialog) return;
         dialog.querySelector('.spreadsheet-modal-close').addEventListener('click', closeModal);
