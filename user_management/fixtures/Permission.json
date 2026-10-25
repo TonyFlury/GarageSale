@@ -2066,5 +2066,27 @@
         "drivefile"
       ]
     }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can view prize allocation",
+      "codename": "view_prize_allocation",
+      "content_type": [
+        "Contributors",
+        "contributions"
+      ]
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can categorise and order prizes",
+      "codename": "change_prize_allocation",
+      "content_type": [
+        "Contributors",
+        "contributions"
+      ]
+    }
   }
 ]

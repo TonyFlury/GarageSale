@@ -48,13 +48,30 @@ class UploadCSV(LoginRequiredMixin, View):
         kinds = contributor_types(request.user, "import")
         if not kinds:
             raise PermissionDenied("You do not have permission to import contributors.")
-        return render(request, "upload/upload.html", {"contributor_types": kinds})
+        selected = self._contributor_type(request)
+        return render(request, "upload/upload.html", {
+            "contributor_types": kinds, "contributor_type": selected,
+            "contributor_label": "Market Trader" if selected == "Marketer" else selected,
+        })
+
+    @staticmethod
+    def _contributor_type(request):
+        """Keep the originating spreadsheet's type throughout the import."""
+        selected = request.GET.get("contributor_type")
+        if selected:
+            if selected not in contributor_types(request.user, "import"):
+                raise PermissionDenied("You do not have permission to import these contributors.")
+            posted = request.POST.get("contributor_type")
+            if posted and posted != selected:
+                raise PermissionDenied("The import must use the originating spreadsheet's contributor type.")
+        return selected or request.POST.get("contributor_type")
 
     def post(self, request, *args, **kwargs):
         """Dispatch the submitted stage or action through the permitted workflow."""
 
         if not contributor_types(request.user, "import"):
             raise PermissionDenied("You do not have permission to import contributors.")
+        self._contributor_type(request)
 
         # Only explicit workflow stages may advance a potentially destructive import.
         match request.POST.get("stage"):
@@ -78,7 +95,7 @@ class UploadCSV(LoginRequiredMixin, View):
             return HttpResponseBadRequest(str(error))
         return render(request, "upload/column_matching.html", {
             "csv_path": csv_path, "csv_data": rows, "possible_matches": self._match_names(columns),
-            "contributor_type": request.POST.get("contributor_type"),
+            "contributor_type": self._contributor_type(request),
         })
 
     @staticmethod
@@ -239,7 +256,7 @@ class UploadCSV(LoginRequiredMixin, View):
             "csv_path": request.POST.get("csv_path", ""),
             "csv_data_json": json.dumps(rows),
             "column_mapping_json": json.dumps(mapping),
-            "contributor_type": request.POST.get("contributor_type"),
+            "contributor_type": self._contributor_type(request),
         }
 
     def _read_import_data(self, request) -> tuple[list[dict[str, str]], dict[str, str]]:
@@ -300,9 +317,12 @@ class UploadCSV(LoginRequiredMixin, View):
         # Repeated names intentionally build on values proposed by earlier rows.
         for row, name in zip(rows, names):
             current = existing.get(name)
-            proposed = self._propose_contributor(current, request.POST.get("contributor_type", ""))
+            selected_type = self._contributor_type(request)
+            proposed = self._propose_contributor(current, selected_type or "")
             original_type = proposed.contributor_type
             changed = self._apply_mapped_values(proposed, row, mapping)
+            if request.GET.get("contributor_type") and proposed.contributor_type != selected_type:
+                raise PermissionDenied("The import must use the originating spreadsheet's contributor type.")
             if current is not None and proposed.contributor_type != original_type:
                 raise PermissionDenied("Imports cannot change contributor type.")
             require_contributor(request.user, proposed, "import")
@@ -434,7 +454,8 @@ class UploadCSV(LoginRequiredMixin, View):
             except ValueError as error:
                 return HttpResponseBadRequest(str(error))
             self._save_import(context)
-        return redirect("contributors:spreadsheet")
+        destination = {"Sponsor": "TeamPages:SponsorEntryPoint", "Marketer": "CraftMarket:EntryPoint"}
+        return redirect(destination.get(self._contributor_type(request), "contributors:spreadsheet"))
 
     @staticmethod
     def _save_import(context):

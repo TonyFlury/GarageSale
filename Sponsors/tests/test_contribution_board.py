@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Permission
+from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -92,9 +93,54 @@ class ContributionBoardTests(TestCase):
     def test_permissions_and_login_are_enforced(self):
         self.assertEqual(self.request(user=AnonymousUser()).status_code, 302)
         viewer = get_user_model().objects.create_user("viewer@example.com", "password")
-        viewer.user_permissions.add(Permission.objects.get(content_type__app_label="Contributors", codename="view_contributions"))
+        viewer.user_permissions.add(Permission.objects.get(content_type__app_label="Contributors", codename="view_prize_allocation"))
         response = self.request(user=viewer)
         self.assertFalse(response.context_data["can_edit"])
+        self.assertEqual(self.request("post", self.payload(), user=viewer).status_code, 403)
+
+    def test_contribution_recording_permissions_do_not_grant_board_access(self):
+        recorder = get_user_model().objects.create_user("recorder@example.com", "password")
+        recorder.user_permissions.add(*Permission.objects.filter(
+            content_type__app_label="Contributors",
+            codename__in=["view_contributions", "add_contributions", "change_contributions"],
+        ))
+        for method in ("get", "post"):
+            with self.subTest(method=method), self.assertRaises(PermissionDenied):
+                self.request(method, self.payload(), user=recorder)
+        self.client.force_login(recorder)
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.assertFalse(any(entry["name"] == "Prize Allocation" for entry in
+                             get_entry_points(recorder, nav_page="TeamPagesData")))
+
+        from django.contrib import admin
+        from Contributors.admin import ContributionsAdmin
+        request = RequestFactory().get("/")
+        request.user = recorder
+        readonly = ContributionsAdmin(Contributions, admin.site).get_readonly_fields(request, self.first)
+        self.assertIn("classification", readonly)
+        self.assertIn("position", readonly)
+
+    def test_allocation_permissions_allow_changes_without_contribution_editing(self):
+        organiser = get_user_model().objects.create_user("organiser@example.com", "password")
+        organiser.user_permissions.add(*Permission.objects.filter(
+            content_type__app_label="Contributors",
+            codename__in=["view_prize_allocation", "change_prize_allocation"],
+        ))
+        self.assertFalse(organiser.has_perm("Contributors.change_contributions"))
+        self.client.force_login(organiser)
+        self.assertContains(self.client.get(self.url), 'class="contribution-move"')
+        response = self.client.post(self.url, data=json.dumps(self.payload()), content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.first.refresh_from_db()
+        self.assertEqual((self.first.classification, self.first.position), ("prize_draw", 1))
+
+    def test_allocation_viewer_cannot_edit_even_with_contribution_edit_permission(self):
+        viewer = get_user_model().objects.create_user("recording-viewer@example.com", "password")
+        viewer.user_permissions.add(*Permission.objects.filter(
+            content_type__app_label="Contributors",
+            codename__in=["view_prize_allocation", "change_contributions"],
+        ))
+        self.assertFalse(self.request(user=viewer).context_data["can_edit"])
         self.assertEqual(self.request("post", self.payload(), user=viewer).status_code, 403)
 
     def test_page_renders_and_entry_point_is_in_data_section(self):

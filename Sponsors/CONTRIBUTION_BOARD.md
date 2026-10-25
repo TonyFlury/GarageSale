@@ -2,7 +2,7 @@
 
 Open **Team Page → Data and Statistics → Prize Allocation**.
 The entry uses the three-column board icon and is visible to users with
-`Contributors.view_contributions`. Its base URL is
+`Contributors.view_prize_allocation`. Its base URL is
 `/team_page/contributions/`; the named route is `TeamPages:ContributionBoard`.
 
 Select an event and choose **Show event**. The initial event is taken from
@@ -35,7 +35,9 @@ separate contributions.
 
 Changes save immediately. While a save is pending, move controls and the event
 picker are disabled. View-only users can read all three columns but need
-`Contributors.change_contributions` to move items. Standard Django login and
+`Contributors.change_prize_allocation` to move items. These permissions are
+independent of recording or editing sponsor contributions. Both allocation
+permissions are required to categorise and order prizes. Standard Django login and
 CSRF protections apply.
 
 ## Saving and concurrent edits
@@ -76,7 +78,15 @@ Apply the migration using the project's Python environment:
 python manage.py migrate Contributors
 ```
 
-Migration: `Contributors/0005_contribution_classification_position`.
+Migrations: `Contributors/0005_contribution_classification_position` and
+`Contributors/0007_prize_allocation_permissions` (separate allocation permissions).
+After migrating, assign the new permissions to the users or groups responsible
+for prize allocation. Existing contribution permissions do not grant allocation
+access, and the migration does not copy existing grants.
+The `PrizeAllocationManager` group bundles both allocation permissions with
+Team Page and own-profile access. Create/update it using the documented
+`sync_access_policy` deployment process, then assign users explicitly. It does
+not grant contribution recording or winner recording permissions.
 The public `/PrizeDraw/` list reads current-event, non-cash contributions classified
 as Prize Draw, ordered by position then primary key. Allocation and ordering changes
 appear on the next page request. Once every listed prize has a recorded ticket,

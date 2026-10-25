@@ -8,6 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
 from GarageSale.models import EventData, Supporting
@@ -71,6 +72,35 @@ class SupportingManagementTests(TestCase):
         self.assertTrue(response.context["form"].errors)
         self.assertFalse(Supporting.objects.filter(name="Invalid").exists())
 
+    def test_directory_search_is_paginated_and_excludes_selected_organisations(self):
+        Supporting.objects.bulk_create([
+            Supporting(name=f"Directory charity {index:03}", website="https://example.com")
+            for index in range(45)
+        ])
+        url = reverse("TeamPages:SupportingSearch")
+        first_page = self.client.get(url).json()
+        self.assertEqual((len(first_page["results"]), first_page["count"], first_page["pages"]), (20, 48, 3))
+        second_page = self.client.get(url, {"page": 2}).json()
+        self.assertFalse({row["id"] for row in first_page["results"]} & {row["id"] for row in second_page["results"]})
+        response = self.client.get(url, {"q": "FIRST", "selected": [self.first.pk]}).json()
+        self.assertEqual(response["results"], [])
+        response = self.client.get(url, {"q": "FIRST", "selected": ["invalid"]}).json()
+        self.assertEqual(response["results"], [{"id": self.first.pk, "name": self.first.name}])
+        self.client.force_login(get_user_model().objects.create_user("no-directory@example.com", "password"))
+        self.assertEqual(self.client.get(url).status_code, 403)
+
+    def test_event_form_renders_only_selected_charities_and_keeps_submitted_order_after_error(self):
+        event = EventData.objects.create(event_date=date(2027, 6, 1), use_from=date(2027, 1, 1))
+        event.supporting_organisations.add(self.first)
+        response = self.client.get(reverse("TeamPages:EventEdit", args=[event.pk]))
+        self.assertContains(response, self.first.name)
+        self.assertNotContains(response, self.unselected.name)
+        data = event_data([self.second, self.first])
+        data["event_date"] = "invalid"
+        response = self.client.post(reverse("TeamPages:EventEdit", args=[event.pk]), data)
+        choices = list(response.context["form"].fields["supporting_organisations"].choices)
+        self.assertEqual(choices, [(self.second.pk, self.second.name), (self.first.pk, self.first.name)])
+
     def test_create_and_edit_event_save_selection_and_order(self):
         response = self.client.post(reverse("TeamPages:EventCreate"), event_data([self.second, self.first]))
         self.assertEqual(response.status_code, 302, response.context["form"].errors if response.status_code == 200 else "")
@@ -124,6 +154,53 @@ class SupportingManagementTests(TestCase):
 
 @override_settings(TEST_SERVER=False)
 class SupportingOrderBrowserTests(IdentifyMixin, SeleniumCommonMixin):
+    screenshot_sub_directory = "SupportedCharities"
+
+    def setUp(self):
+        super().setUp()
+        self.selenium.set_window_size(1440, 1100)
+
+    def drag_charity(self, source, target, before=False):
+        # HTML5 drag events avoid Selenium pointer/scroll timing failures while
+        # exercising the real browser handlers and DataTransfer contract.
+        self.selenium.execute_script("""
+            const [source, target, before] = arguments;
+            const handle = source.querySelector('.supporting-drag-handle');
+            const transfer = new DataTransfer();
+            const bounds = target.getBoundingClientRect();
+            const options = {bubbles: true, cancelable: true, dataTransfer: transfer,
+                clientX: bounds.left + bounds.width / 2,
+                clientY: before ? bounds.top + 5 : bounds.bottom - 5};
+            if (!handle.dispatchEvent(new DragEvent('dragstart', options)))
+                throw new Error('Charity drag was rejected');
+            if (target.dispatchEvent(new DragEvent('dragover', options)))
+                throw new Error('Charity drop target did not accept the drag');
+            target.dispatchEvent(new DragEvent('drop', options));
+            handle.dispatchEvent(new DragEvent('dragend', options));
+        """, source, target, before)
+
+    def test_drag_into_empty_selection_and_back_without_saving(self):
+        user = get_user_model().objects.create_user("empty-selection@example.com", "password", is_verified=True)
+        grant_workflow_permissions(user)
+        charity = Supporting.objects.create(name="Only charity", website="https://example.com")
+        url = self.live_server_url + reverse("TeamPages:EventCreate")
+        self.force_login(user, url)
+        self.selenium.get(url)
+        wait = WebDriverWait(self.selenium, 10)
+        wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, "[data-results] li")) == 1)
+        source = self.selenium.find_element(By.CSS_SELECTOR, "[data-results] li")
+        destination = self.selenium.find_element(By.CSS_SELECTOR, '[data-drop-zone="selected"] h3')
+        self.drag_charity(source, destination)
+        rows = self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].find_element(By.CSS_SELECTOR, 'input[type="hidden"]').get_attribute("value"), str(charity.pk))
+        self.drag_charity(rows[0], self.selenium.find_element(By.CSS_SELECTOR, '[data-drop-zone="available"] h3'))
+        wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, "[data-results] li")) == 1)
+        self.assertFalse(self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li"))
+        self.assertFalse(self.selenium.find_elements(By.CSS_SELECTOR, ".supporting-drop-marker, .is-dragging, .is-drop-target"))
+        self.assertFalse(EventData.objects.exists())
+        self.assertTrue(Supporting.objects.filter(pk=charity.pk).exists())
+
     def test_event_editor_moves_selected_charities_and_saves_their_indexes(self):
         user = get_user_model().objects.create_user("order@example.com", "password", is_verified=True)
         grant_workflow_permissions(user)
@@ -135,13 +212,72 @@ class SupportingOrderBrowserTests(IdentifyMixin, SeleniumCommonMixin):
         event.supporting_organisations.add(first, second)
         self.force_login(user, self.live_server_url + reverse("TeamPages:EventEdit", args=[event.pk]))
         self.selenium.get(self.live_server_url + reverse("TeamPages:EventEdit", args=[event.pk]))
-        rows = self.selenium.find_elements(By.CSS_SELECTOR, ".supporting-picker li")
+        rows = self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")
         self.assertEqual(len(rows), 2, self.selenium.page_source)
         rows[1].find_element(By.CSS_SELECTOR, '[data-move="up"]').click()
-        self.assertIn("Second charity", self.selenium.find_elements(By.CSS_SELECTOR, ".supporting-picker li")[0].text)
+        self.assertIn("Second charity", self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")[0].text)
+        rows = self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")
+        self.drag_charity(rows[0], rows[1])
+        self.assertIn("First charity", self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")[0].text)
+        rows = self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")
+        self.drag_charity(rows[1], rows[0], before=True)
+        self.assertIn("Second charity", self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")[0].text)
+        self.assertFalse(self.selenium.find_elements(By.CSS_SELECTOR, ".supporting-drop-marker, .is-dragging"))
         self.selenium.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
         WebDriverWait(self.selenium, 10).until(lambda driver: driver.current_url.endswith(reverse("TeamPages:EventList")))
         self.assertEqual(list(event.supporting_organisations.order_by("index", "pk")), [second, first])
         first.refresh_from_db()
         second.refresh_from_db()
         self.assertEqual((second.index, first.index), (1, 2))
+
+    def test_large_directory_search_add_remove_and_direct_position_save(self):
+        user = get_user_model().objects.create_user("large-order@example.com", "password", is_verified=True)
+        grant_workflow_permissions(user)
+        charities = Supporting.objects.bulk_create([
+            Supporting(name=f"Directory charity {index:03}", website="https://example.com")
+            for index in range(62)
+        ])
+        target = Supporting.objects.create(name="Target charity", website="https://target.example.com")
+        event = EventData.objects.create(event_date=date(2027, 6, 1), use_from=date(2027, 1, 1),
+                                         open_billboard_bookings=date(2027, 2, 1), close_billboard_bookings=date(2027, 5, 1),
+                                         open_sales_bookings=date(2027, 3, 1), close_sales_bookings=date(2027, 5, 30))
+        event.supporting_organisations.add(*charities[:2])
+        url = self.live_server_url + reverse("TeamPages:EventEdit", args=[event.pk])
+        self.force_login(user, url)
+        self.selenium.get(url)
+        self.selenium.set_window_size(1440, 1100)
+        wait = WebDriverWait(self.selenium, 10)
+        wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, "[data-results] li")) == 20)
+        self.assertEqual(len(self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")), 2)
+        self.selenium.find_element(By.CSS_SELECTOR, '[data-page="next"]').click()
+        wait.until(lambda driver: driver.find_element(By.CSS_SELECTOR, "[data-page-label]").text == "Page 2 of 4")
+        self.selenium.find_element(By.CSS_SELECTOR, "[data-search]").send_keys("Target")
+        add = wait.until(lambda driver: driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Add Target charity"]'))
+        add.click()
+        target_row = self.selenium.find_element(By.CSS_SELECTOR, f'[data-selected] li[data-charity-id="{target.pk}"]')
+        position = target_row.find_element(By.CSS_SELECTOR, "[data-position]")
+        position.send_keys(Keys.CONTROL, "a")
+        position.send_keys("1", Keys.ENTER)
+        self.assertIn("Target charity", self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")[0].text)
+        self.selenium.find_element(By.CSS_SELECTOR, 'button[aria-label="Remove Directory charity 000"]').click()
+        self.assertEqual(len(self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")), 2)
+        target_row = self.selenium.find_element(By.CSS_SELECTOR, f'[data-selected] li[data-charity-id="{target.pk}"]')
+        available_zone = self.selenium.find_element(By.CSS_SELECTOR, '[data-drop-zone="available"] h3')
+        self.drag_charity(target_row, available_zone)
+        wait.until(lambda driver: driver.find_elements(By.CSS_SELECTOR, f'[data-results] li[data-charity-id="{target.pk}"]'))
+        self.assertEqual(len(self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")), 1)
+        # Removing an organisation from the event does not delete the organisation.
+        self.assertTrue(Supporting.objects.filter(pk=target.pk).exists())
+        available_row = self.selenium.find_element(By.CSS_SELECTOR, f'[data-results] li[data-charity-id="{target.pk}"]')
+        selected_row = self.selenium.find_element(By.CSS_SELECTOR, "[data-selected] li")
+        self.drag_charity(available_row, selected_row, before=True)
+        self.assertEqual(len(self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")), 2)
+        self.assertIn("Target charity", self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")[0].text)
+        self.assertEqual(list(event.supporting_organisations.order_by("pk")), charities[:2])
+        rows = self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")
+        self.drag_charity(rows[0], rows[1])
+        self.assertIn("Directory charity 001", self.selenium.find_elements(By.CSS_SELECTOR, "[data-selected] li")[0].text)
+        self.screenshot("search-and-selected-charities")
+        self.selenium.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+        wait.until(lambda driver: driver.current_url.endswith(reverse("TeamPages:EventList")))
+        self.assertEqual(list(event.supporting_organisations.order_by("index", "pk")), [charities[1], target])

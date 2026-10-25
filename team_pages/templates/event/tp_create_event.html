@@ -2,7 +2,11 @@
 {% load static %}
 {% block PageScripts %}
     {{ block.super }}
-    <script defer src="{% static 'team_pages/js/supporting_order.js' %}"></script>
+    <script defer src="{% static 'team_pages/js/supporting_order.js' %}?v=drag-between-lists-1"></script>
+{% endblock %}
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'team_pages/styles/supporting_picker.css' %}?v=drag-between-lists-1">
 {% endblock %}
 {% block SnappableSections %}
 <main class="form">

@@ -479,6 +479,13 @@
         document.querySelectorAll("[data-filter-field]").forEach((input) => {
             input.addEventListener("input", applyFilters);
         });
+        document.getElementById('spreadsheet-clear-search')?.addEventListener('click', () => {
+            const inputs = [...document.querySelectorAll('#search-bar [data-filter-field]')];
+            for (const input of inputs) input.value = '';
+            // Use the normal search event to refresh rows and selected-row actions.
+            inputs[0]?.dispatchEvent(new Event('input', {bubbles: true}));
+            inputs[0]?.focus();
+        });
     }
 
     const contact = {saving: false, row: null};

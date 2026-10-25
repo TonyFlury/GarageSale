@@ -4,12 +4,13 @@ from Location import stats_view
 from Sponsors.views import SponsorEntryPoint
 from Sponsors.contribution_board import ContributionBoard
 from GarageSale.views.prize_draw_views import PrizeDrawWinners
-from GarageSale.views.supporting_views import SupportingList, SupportingDetail, SupportingCreate, SupportingEdit
+from GarageSale.views.supporting_views import SupportingList, SupportingDetail, SupportingCreate, SupportingEdit, SupportingSearch
 from GarageSale.views.template_views import CommunicationTemplateCategories, CommunicationTemplateCreate, CommunicationTemplateEdit, CommunicationTemplateDelete, CommunicationTemplateDuplicate
 
 app_name = 'TeamPages'
 urlpatterns = [
     path('supporting/', SupportingList.as_view(), name='SupportingList'),
+    path('supporting/search/', SupportingSearch.as_view(), name='SupportingSearch'),
     path('supporting/create/', SupportingCreate.as_view(), name='SupportingCreate'),
     path('supporting/<int:pk>/', SupportingDetail.as_view(), name='SupportingDetail'),
     path('supporting/<int:pk>/edit/', SupportingEdit.as_view(), name='SupportingEdit'),

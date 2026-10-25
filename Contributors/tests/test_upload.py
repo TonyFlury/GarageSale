@@ -125,6 +125,50 @@ class UploadCSVTests(TestCase):
         self.assertContains(response, 'enctype="multipart/form-data"')
         self.assertEqual(HiddenInputs(response.content.decode()).values["stage"], "select_file")
 
+    def test_specialist_upload_keeps_type_through_import_and_returns_to_its_view(self):
+        for kind, destination in (("Sponsor", "TeamPages:SponsorEntryPoint"), ("Marketer", "CraftMarket:EntryPoint")):
+            with self.subTest(kind=kind):
+                url = f"{self.url}?contributor_type={kind}"
+                initial = self.client.get(url)
+                self.assertEqual(initial.status_code, 200)
+                self.assertEqual(HiddenInputs(initial.content.decode()).values["contributor_type"], kind)
+                self.assertNotContains(initial, '<select name="contributor_type">')
+                self.assertContains(initial, "Market Trader" if kind == "Marketer" else "Sponsor")
+                name = f"Imported {kind}"
+                uploaded = self.client.post(url, {
+                    "stage": "select_file", "contributor_type": kind,
+                    "csv_file": SimpleUploadedFile("contacts.csv", f"Name\n{name}\n".encode(), "text/csv"),
+                })
+                self.assertEqual(uploaded.status_code, 200)
+                payload = HiddenInputs(uploaded.content.decode()).values
+                self.assertEqual(payload["contributor_type"], kind)
+                review = self.client.post(url, {**payload, "csv_data": json.dumps(uploaded.context["csv_data"]),
+                    "column_mapping": json.dumps({"Name": "contributor_name"})})
+                self.assertEqual(review.status_code, 200)
+                self.assertFalse(Contributor.objects.filter(contributor_name=name).exists())
+                confirmed = self.client.post(url, HiddenInputs(review.content.decode()).values)
+                self.assertRedirects(confirmed, reverse(destination), fetch_redirect_response=False)
+                self.assertEqual(Contributor.objects.get(contributor_name=name).contributor_type, kind)
+
+    def test_specialist_upload_rejects_a_different_posted_type(self):
+        response = self.client.post(f"{self.url}?contributor_type=Sponsor", {
+            "stage": "select_file", "contributor_type": "Marketer",
+        })
+        self.assertEqual(response.status_code, 403)
+
+    def test_specialist_upload_rejects_csv_type_override(self):
+        response = self.client.post(f"{self.url}?contributor_type=Sponsor", {
+            "stage": "match_columns", "contributor_type": "Sponsor",
+            "csv_data": json.dumps([{"Name": "Wrong type", "Type": "Marketer"}]),
+            "column_mapping": json.dumps({"Name": "contributor_name", "Type": "contributor_type"}),
+        })
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Contributor.objects.filter(contributor_name="Wrong type").exists())
+
+    def test_upload_rejects_an_unavailable_origin_type(self):
+        response = self.client.get(f"{self.url}?contributor_type=Unknown")
+        self.assertEqual(response.status_code, 403)
+
     def test_csv_upload_reads_headers_and_passes_data_to_column_matching(self):
         content = '"Contributor, name",Email\nOak & Co.,oak@example.com\n'
         mapping = {"Contributor, name": "contributor_name", "Email": "email"}

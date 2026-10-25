@@ -8,7 +8,7 @@ from django.core.exceptions import PermissionDenied
 # Explicit ownership prevents a newly installed library being swept into cleanup.
 PROJECT_APPS = frozenset({"Accounts", "Billboard", "Contributors", "CraftMarket", "DjangoGoogleMap",
                           "GarageSale", "GoogleDrive", "Location", "News", "SaleLocation", "Sponsors", "user_management"})
-GROUP_NAMES = ("ExecMember", "Officer", "SponsorshipManager", "CraftMarketManager", "Financier", "WebAdmin", "Volunteer")
+GROUP_NAMES = ("ExecMember", "Officer", "SponsorshipManager", "PrizeAllocationManager", "CraftMarketManager", "Financier", "WebAdmin", "Volunteer")
 CUSTOM_CODES = (
     "access_team_pages", "manage_own_team_profile", "view_all_template_categories", "manage_all_template_categories",
     "view_sponsor_templates", "manage_sponsor_templates", "view_market_templates", "manage_market_templates",
@@ -37,6 +37,7 @@ MARKET_WORK = {"CraftMarket.view_marketer", "CraftMarket.change_marketer"} | {
                               "email_marketer", "generate_marketer_pdf", "import_marketers", "export_marketers")}
 TEMPLATE_WORK = crud("GarageSale", "communicationtemplate", "view add change") | crud("GarageSale", "templateattachment", "view add change")
 PRIZES = crud("Contributors", "contributions", "view add change") | crud("GarageSale", "prizedrawwinner", "view add change")
+PRIZE_ALLOCATION = {"Contributors.view_prize_allocation", "Contributors.change_prize_allocation"}
 OWN = {custom("manage_own_team_profile")}
 TEAM = OWN | {custom("access_team_pages")}
 FINANCE_READ = {"Accounts.view_transaction", "Accounts.view_account", "Accounts.view_categories"}
@@ -55,6 +56,7 @@ GROUP_PERMISSIONS = {
     "ExecMember": EXEC,
     # Redundant grants are avoided: every Officer is explicitly also an ExecMember.
     "Officer": TEAM | FINANCE_READ,
+    "PrizeAllocationManager": TEAM | PRIZE_ALLOCATION,
     "SponsorshipManager": TEAM | SPONSOR_WORK | TEMPLATE_WORK | PRIZES | {"GarageSale.view_eventdata",
         custom("view_sponsor_templates"), custom("manage_sponsor_templates")},
     "CraftMarketManager": TEAM | MARKET_WORK | TEMPLATE_WORK | {"GarageSale.view_eventdata",

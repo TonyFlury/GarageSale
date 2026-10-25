@@ -19,7 +19,7 @@
     {% endif %}
     {% if board_event %}
     <h2>{{ board_event }}</h2>
-    <p>{% if can_edit %}Drag contributions between columns. Drag within Prize Draw to set the prize order, or use the move controls. Changes save automatically.{% else %}You can view this board. Permission to change contributions is required to move items.{% endif %}</p>
+    <p>{% if can_edit %}Drag contributions between columns. Drag within Prize Draw to set the prize order, or use the move controls. Changes save automatically.{% else %}You can view this board. Permission to categorise and order prizes is required to move items.{% endif %}</p>
     <div id="contribution-board" data-save-url="{% url 'TeamPages:ContributionBoard' board_event.pk %}" data-revision="{{ revision }}" data-can-edit="{{ can_edit|yesno:'true,false' }}">
         <form hidden id="contribution-board-csrf">{% csrf_token %}</form>
         <p id="contribution-board-status" role="status" aria-live="polite">{% if can_edit %}Ready to organise contributions.{% else %}View only.{% endif %}</p>

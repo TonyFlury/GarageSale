@@ -27,6 +27,12 @@ class ContributorHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(Contributions)
 class ContributionsAdmin(admin.ModelAdmin):
+    def get_readonly_fields(self, request, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        if not request.user.has_perm('Contributors.change_prize_allocation'):
+            return (*fields, 'classification', 'position')
+        return fields
+
     class Meta:
         model = Contributions
         fields = '__all__'

@@ -18,6 +18,7 @@ class AccessPolicyMiddleware(MiddlewareMixin):
         elif namespace == "TeamPages":
             fixed = {"Root": custom("access_team_pages"), "EventRoot": custom("access_team_pages"),
                      "SupportingList": "GarageSale.view_supporting", "SupportingDetail": "GarageSale.view_supporting",
+                     "SupportingSearch": "GarageSale.view_supporting",
                      "SupportingCreate": "GarageSale.add_supporting", "SupportingEdit": "GarageSale.change_supporting",
                      "EventList": "GarageSale.view_eventdata", "Event": "GarageSale.view_eventdata",
                      "EventDisplay": "GarageSale.view_eventdata", "EventView": "GarageSale.view_eventdata",
@@ -29,7 +30,7 @@ class AccessPolicyMiddleware(MiddlewareMixin):
                      "MotdCreate": "GarageSale.add_motd", "MotdEdit": "GarageSale.change_motd",
                      "MotdView": "GarageSale.view_motd", "MotdDelete": "GarageSale.delete_motd",
                      "GoogleDriveEntryPoint": custom("access_drive"), "SponsorEntryPoint": "Sponsors.view_sponsor",
-                     "ContributionBoard": "Contributors.view_contributions", "PrizeDrawWinners": "GarageSale.view_prizedrawwinner"}
+                     "ContributionBoard": "Contributors.view_prize_allocation", "PrizeDrawWinners": "GarageSale.view_prizedrawwinner"}
             permission = fixed.get(name)
             if permission is None and not name.startswith("CommunicationTemplate"):
                 raise PermissionDenied("No access policy is defined for this management route.")

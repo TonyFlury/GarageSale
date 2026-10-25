@@ -10,12 +10,17 @@
   <form id="csv-upload-form" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <input type="hidden" name="stage" value="select_file">
+    {% if contributor_type %}
+    <input type="hidden" name="contributor_type" value="{{ contributor_type }}">
+    <p class="badge">Importing: {{ contributor_label }}</p>
+    {% else %}
     <label>Contributor type <select name="contributor_type">{% for kind in contributor_types %}<option value="{{ kind }}">{{ kind }}</option>{% endfor %}</select></label>
+    {% endif %}
 
     <div class="eyebrow">Contributors / CSV import</div>
     <h1>Select your file</h1>
     <p class="muted">Choose a CSV file containing your contributors. You’ll match its columns in the next step.</p>
-    <p><a href="{% url 'contributors:download' %}">Download current contributors as CSV</a></p>
+    <p><a href="{% url 'contributors:download' %}{% if contributor_type %}?contributor_type={{ contributor_type|urlencode }}{% endif %}">Download current contributors as CSV</a></p>
     <ol class="steps" aria-label="Import progress">
       <li aria-current="step"><strong>1. Select file</strong></li><li>2. Match columns</li><li>3. Review changes</li>
     </ol>

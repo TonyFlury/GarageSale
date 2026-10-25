@@ -29,7 +29,7 @@ def board_queryset(event):
 
 
 class ContributionBoard(EntryPointMixin, LoginRequiredMixin, PermissionRequiredMixin, View):
-    permission_required = "Contributors.view_contributions"
+    permission_required = "Contributors.view_prize_allocation"
     entry_point_permission = permission_required
     entry_point_url = "TeamPages:ContributionBoard"
     entry_point_label = "Prize Allocation"
@@ -58,12 +58,12 @@ class ContributionBoard(EntryPointMixin, LoginRequiredMixin, PermissionRequiredM
         return TemplateResponse(request, "Sponsors/contribution_board.html", {
             "columns": columns, "board_event": event,
             "events": EventData.objects.filter(event_date__gte=timezone.localdate()).order_by("event_date", "pk"),
-            "revision": board_revision(items), "can_edit": request.user.has_perm("Contributors.change_contributions"),
+            "revision": board_revision(items), "can_edit": request.user.has_perm("Contributors.change_prize_allocation"),
             "classifications": Contributions.Classification.choices,
         })
 
     def post(self, request, event_id=None):
-        if not request.user.has_perm("Contributors.change_contributions"):
+        if not request.user.has_perm("Contributors.change_prize_allocation"):
             return JsonResponse({"ok": False, "message": "You do not have permission to organise contributions."}, status=403)
         event = self.selected_event(request, event_id)
         if event is None:

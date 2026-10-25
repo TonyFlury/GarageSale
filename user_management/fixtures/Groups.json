@@ -1317,6 +1317,16 @@
           "view_userextended",
           "user_management",
           "userextended"
+        ],
+        [
+          "view_prize_allocation",
+          "Contributors",
+          "contributions"
+        ],
+        [
+          "change_prize_allocation",
+          "Contributors",
+          "contributions"
         ]
       ]
     }
@@ -1721,6 +1731,34 @@
           "manage_own_team_profile",
           "GarageSale",
           "applicationaccess"
+        ]
+      ]
+    }
+  },
+  {
+    "model": "auth.group",
+    "fields": {
+      "name": "PrizeAllocationManager",
+      "permissions": [
+        [
+          "access_team_pages",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_own_team_profile",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "view_prize_allocation",
+          "Contributors",
+          "contributions"
+        ],
+        [
+          "change_prize_allocation",
+          "Contributors",
+          "contributions"
         ]
       ]
     }

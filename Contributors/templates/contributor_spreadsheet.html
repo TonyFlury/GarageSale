@@ -12,7 +12,7 @@ TODO Convert to official theme and layout
 -->
 {% block PageStyles %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}?v=craft-market-popups-2">
+    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}?v=clear-search-1">
 {% endblock %}
 
 {% block Title %}
@@ -21,7 +21,7 @@ TODO Convert to official theme and layout
 
 {% block PageScripts %}
     {{ block.super }}
-    <script type='text/javascript' src="{% static 'Contributors/js/contributor_spreadsheet.js' %}?v=access-policy-2" ></script>
+    <script type='text/javascript' src="{% static 'Contributors/js/contributor_spreadsheet.js' %}?v=clear-search-1" ></script>
     <script defer src="{% static 'Contributors/js/contributor_details.js' %}?v=access-policy-1"></script>
     <script defer src="{% static 'Contributors/js/contributor_contributions.js' %}?v=amount-value-1"></script>
     <script defer src="{% static 'Contributors/js/contributor_filters.js' %}"></script>
@@ -106,7 +106,7 @@ TODO Convert to official theme and layout
             Email
             <input type="search" data-filter-field="email" placeholder="Search email">
         </label>
-
+        <button type="button" id="spreadsheet-clear-search">Clear search</button>
         </div>
     </section>
 

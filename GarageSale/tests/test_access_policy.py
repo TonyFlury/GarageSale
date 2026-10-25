@@ -73,6 +73,33 @@ class AccessPolicyTests(TestCase):
         self.assertFalse(self.users["ExecMember"].has_perm("Accounts.view_transaction"))
         self.assertTrue(officer.has_perm("Sponsors.change_sponsor"))
 
+    def test_prize_allocation_manager_has_only_allocation_and_team_access(self):
+        manager = self.users["PrizeAllocationManager"]
+        self.assertEqual(manager.get_all_permissions(), {
+            custom("access_team_pages"), custom("manage_own_team_profile"),
+            "Contributors.view_prize_allocation", "Contributors.change_prize_allocation",
+        })
+        self.login("PrizeAllocationManager")
+        self.assertEqual(self.client.get(reverse("TeamPages:Root")).status_code, 200)
+        url = reverse("TeamPages:ContributionBoard", args=[self.event.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["can_edit"])
+        self.assertEqual(self.client.get(reverse("contributors:spreadsheet")).status_code, 403)
+        from TeamPageFramework.entry_point import get_entry_points
+        self.assertTrue(any(entry["name"] == "Prize Allocation" for entry in
+                            get_entry_points(manager, nav_page="TeamPagesData")))
+
+    def test_other_operational_groups_do_not_gain_prize_allocation(self):
+        url = reverse("TeamPages:ContributionBoard", args=[self.event.pk])
+        for name in ("SponsorshipManager", "CraftMarketManager", "ExecMember", "Officer", "Financier", "Volunteer"):
+            with self.subTest(group=name):
+                user = self.users[name]
+                self.assertFalse(user.has_perm("Contributors.view_prize_allocation"))
+                self.assertFalse(user.has_perm("Contributors.change_prize_allocation"))
+                self.login(name)
+                self.assertEqual(self.client.get(url).status_code, 403)
+
     def test_domain_managers_cannot_read_or_edit_other_contributor_type(self):
         self.login("SponsorshipManager")
         spreadsheet = self.client.get(reverse("contributors:spreadsheet"))

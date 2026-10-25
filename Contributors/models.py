@@ -70,6 +70,10 @@ class Contributions(models.Model):
     position = models.PositiveIntegerField(default=0)
 
     class Meta:
+        permissions = [
+            ('view_prize_allocation', 'Can view prize allocation'),
+            ('change_prize_allocation', 'Can categorise and order prizes'),
+        ]
         constraints = [models.CheckConstraint(check=models.Q(amount__gte=0) | models.Q(amount__isnull=True),
                                               name='contribution_amount_nonnegative')]
 

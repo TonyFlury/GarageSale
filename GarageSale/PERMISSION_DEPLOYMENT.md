@@ -55,12 +55,39 @@ Check with ordinary accounts, rather than only a superuser:
 - Financier without ExecMember: Team Pages and Accounts only; no transaction deletion.
 - Officer: automatically also ExecMember, with underlying financial visibility.
 - SponsorshipManager: Sponsor data/templates only; no trader IDs or categories.
+- PrizeAllocationManager: Team Pages and prize categorisation/ordering; no contribution recording or winner recording.
 - CraftMarketManager: trader data/templates only; no Sponsor IDs or categories.
 - ExecMember: reports without underlying transactions, own-profile edits only.
 - WebAdmin: full project capabilities, including admin-only deletions when staff.
 
 Check template category URLs and contributor CSV exports as well as menu links.
 The policy tests live in GarageSale/tests/test_access_policy.py.
+
+## Prize allocation group
+
+After applying migration `Contributors/0007_prize_allocation_permissions`, use
+the preview/apply commands above to create `PrizeAllocationManager` with
+`Contributors.view_prize_allocation` and `Contributors.change_prize_allocation`,
+plus Team Page access and own-profile access. Assign membership explicitly to
+the people responsible for categorisation and prize ordering. No existing users
+are automatically added. Users who also record sponsor contributions can belong
+to both `SponsorshipManager` and `PrizeAllocationManager`.
+
+Other operational groups do not receive allocation permissions. WebAdmin retains
+all project permissions. Direct grants remain effective; review those separately
+when checking responsibility boundaries. The policy sync manages the new group's
+grants on each run, just like the existing groups.
+
+The event charity picker uses the existing Supporting view permission for its
+search endpoint. Available organisations are searched in pages of 20; only
+selected charities are rendered in the ordering list. ExecMember, Officer and
+WebAdmin retain their existing access, with no group reassignment needed.
+Verify search, dragging organisations between available and selected lists,
+adding/removing selections with buttons, drag-and-drop ordering, direct position
+changes and saving the event. Dragged changes are saved with the event form.
+Changes to the selected order still update Supporting.index globally.
+Deploy the picker JavaScript, stylesheet and templates together and collect static
+files; this picker update adds no database migration.
 
 Development verification on 2026-10-16: 324 regression tests passed across
 Contributors, Sponsors, GarageSale, user management and CraftMarket, including

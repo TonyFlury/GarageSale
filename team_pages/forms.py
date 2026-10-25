@@ -12,6 +12,12 @@ from News.models import NewsArticle
 class OrderedSupportingWidget(forms.CheckboxSelectMultiple):
     template_name = "event/supporting_widget.html"
 
+    def get_context(self, name, value, attrs):
+        from django.urls import reverse
+        context = super().get_context(name, value, attrs)
+        context["widget"]["search_url"] = reverse("TeamPages:SupportingSearch")
+        return context
+
 
 class OrderedSupportingField(forms.ModelMultipleChoiceField):
     def clean(self, value):
@@ -30,7 +36,7 @@ class EventForm(forms.ModelForm):
     supporting_organisations = OrderedSupportingField(
         queryset=Supporting.objects.order_by("index", "pk"), required=False,
         widget=OrderedSupportingWidget,
-        help_text="Select charities and use Move up / Move down to set their order. "
+        help_text="Search and add charities, then set the order of the selected charities. "
                   "This order is shared by all events supporting these charities.",
     )
 
@@ -40,7 +46,9 @@ class EventForm(forms.ModelForm):
         # Show selected organisations first, preserving their current order.
         selected = self["supporting_organisations"].value() or []
         selected_ids = [str(getattr(item, "pk", item)) for item in selected]
-        organisations = list(self.fields["supporting_organisations"].queryset)
+        # Only selected records belong in the page; the directory is searched in pages.
+        valid_ids = [pk for pk in selected_ids if pk.isdecimal()]
+        organisations = list(self.fields["supporting_organisations"].queryset.filter(pk__in=valid_ids))
         positions = {pk: i for i, pk in enumerate(selected_ids)}
         organisations.sort(key=lambda item: positions.get(str(item.pk), len(positions)))
         self.fields["supporting_organisations"].choices = [(item.pk, item.name) for item in organisations]

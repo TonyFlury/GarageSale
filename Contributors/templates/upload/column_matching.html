@@ -61,7 +61,7 @@
     <span class="muted" id="summary"></span>
     <input type="hidden" name="action" value="review">
     <div class="buttons">
-      <a href="{% url 'contributors:upload' %}">Abort upload</a>
+      <a href="{% url 'contributors:upload' %}{% if contributor_type %}?contributor_type={{ contributor_type|urlencode }}{% endif %}">Abort upload</a>
       <input id="review" type="submit" value="Review changes">
     </div>
   </footer>
