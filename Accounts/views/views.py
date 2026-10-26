@@ -40,7 +40,7 @@ expected_fields = ['Transaction Date','Sort Code','Account Number','Transaction 
 
 entry_point = register( 'Finances', 'Account:EntryPoint',
             static('Accounts/images/icons/navigation/money-bag-pound-svgrepo-com.svg'),
-                        'Accounts.view_account', needs_event=False)
+                        'Accounts.report_transaction', needs_event=False)
 def EntryPoint(request):
     return TemplateResponse(request, 'entry_point.html')
 
@@ -201,7 +201,7 @@ class TransactionList(EntryPointMixin,LoginRequiredMixin, UserPassesTestMixin, L
 
     def test_func(self):
         user = self.request.user
-        return user.is_superuser or user.has_perm('Accounts.view_transaction') or user.has_perm('Accounts.edit_transaction')
+        return user.is_superuser or user.has_perm('Accounts.view_transaction') or user.has_perm('Accounts.change_transaction')
 
     @staticmethod
     def get_yearset():

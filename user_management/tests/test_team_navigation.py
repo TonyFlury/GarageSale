@@ -7,8 +7,8 @@ from django.urls import reverse
 
 @override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
 class TeamNavigationTests(TestCase):
-    def test_navigation_supports_both_permission_policies(self):
-        for model, codename in [('applicationaccess', 'access_team_pages'), ('general', 'is_team_member')]:
+    def test_navigation_supports_team_access_capability(self):
+        for model, codename in [('applicationaccess', 'access_team_pages')]:
             with self.subTest(permission=codename):
                 content_type, _ = ContentType.objects.get_or_create(app_label='GarageSale', model=model)
                 permission, _ = Permission.objects.get_or_create(
@@ -28,8 +28,8 @@ class TeamNavigationTests(TestCase):
         self.client.force_login(user)
         self.assertNotContains(self.client.get(reverse('home')), "id='id_team'")
 
-    def test_data_and_statistics_tiles_support_current_and_legacy_permissions(self):
-        for app, codename in [('Location', 'view_location'), ('GarageSale', 'is_team_member')]:
+    def test_data_and_statistics_tiles_require_location_view(self):
+        for app, codename in [('Location', 'view_location')]:
             with self.subTest(permission=codename):
                 permission = Permission.objects.get(content_type__app_label=app, codename=codename)
                 user = get_user_model().objects.create_user(f'{codename}-reports@example.com', 'password', is_verified=True)

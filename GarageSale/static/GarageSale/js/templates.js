@@ -38,7 +38,7 @@ function showPopup(element, name, action)
     return true;
 }
 
-function __set_action_event(action, event_id, url_head)
+function __set_action_event(action, url_head)
 {
     let popup = document.getElementById(action + '_popup')
 
@@ -63,9 +63,9 @@ function __set_action_event(action, event_id, url_head)
 function __document_loaded() {
     const url_head = window.location.protocol + '//' + window.location.host + '/CraftMarket/'
 
-    __set_action_event('invite', , url_head)
-    __set_action_event('confirm', , url_head)
+    __set_action_event('invite', url_head)
+    __set_action_event('confirm', url_head)
 
 }
 
-<!-- document.addEventListener('DOMContentLoaded', __document_loaded);-->
+// document.addEventListener('DOMContentLoaded', __document_loaded);

@@ -30,7 +30,7 @@
     </div>
     <div class="buttons">
     <input type="button" onclick="cancel_close()" value="No">
-    <input type="button" onclick='window.location="{%  url "Account:FinancialYearClose" fy=FinancialYear.year %}" ' value="Yes - close this year">
+    <form method="post" action="{% url 'Account:FinancialYearClose' fy=FinancialYear.year %}">{% csrf_token %}<button type="submit">Yes - close this year</button></form>
     </div>
 </dialog>
 

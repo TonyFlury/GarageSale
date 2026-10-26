@@ -25,6 +25,8 @@
         {% endfor %}
     </div>
     <div class="buttons">
+        {% if perms.GarageSale.add_eventdata %}
         <input type="button" onclick='window.location = "{% url "TeamPages:EventCreate" %}" ' value="Record New Event" >
+        {% endif %}
     </div>
 {% endblock %}

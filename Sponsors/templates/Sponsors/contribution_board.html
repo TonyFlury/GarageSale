@@ -1,0 +1,60 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% block Title %}Prize Allocation{% endblock %}
+{% block PageStyles %}{{ block.super }}<link rel="stylesheet" href="{% static 'Sponsors/styles/contribution_board.css' %}">{% endblock %}
+{% block PageScripts %}{{ block.super }}<script defer src="{% static 'Sponsors/js/contribution_board.js' %}"></script>{% endblock %}
+{% block breadcrumb %}<a href="{% url 'TeamPages:Root' %}">Team Page</a> / Prize Allocation{% endblock %}
+{% block SnappableSections %}
+<main class="contribution-board-page">
+    <h1>Prize Allocation</h1>
+    {% if events|length > 1 %}
+    <form method="get" action="{% url 'TeamPages:ContributionBoard' %}" class="contribution-event-form">
+        <label for="contribution-board-event">Event</label>
+        <select id="contribution-board-event" name="event" required>
+            {% if not board_event %}<option value="">Choose an event</option>{% endif %}
+            {% for event in events %}<option value="{{ event.pk }}"{% if event.pk == board_event.pk %} selected{% endif %}>{{ event }}</option>{% endfor %}
+        </select>
+        <div class="buttons"><button type="submit" class="communication-template-button">Show event</button></div>
+    </form>
+    {% endif %}
+    {% if board_event %}
+    <h2>{{ board_event }}</h2>
+    <p>{% if can_edit %}Drag contributions between columns. Drag within Prize Draw to set the prize order, or use the move controls. Changes save automatically.{% else %}You can view this board. Permission to categorise and order prizes is required to move items.{% endif %}</p>
+    <div id="contribution-board" data-save-url="{% url 'TeamPages:ContributionBoard' board_event.pk %}" data-revision="{{ revision }}" data-can-edit="{{ can_edit|yesno:'true,false' }}">
+        <form hidden id="contribution-board-csrf">{% csrf_token %}</form>
+        <p id="contribution-board-status" role="status" aria-live="polite">{% if can_edit %}Ready to organise contributions.{% else %}View only.{% endif %}</p>
+        <p id="contribution-board-error" role="alert"></p>
+        <button type="button" id="contribution-board-reload" hidden>Reload latest contributions</button>
+        <div class="contribution-board-columns">
+        {% for column in columns %}
+            <section class="contribution-column" data-classification="{{ column.key }}" aria-labelledby="column-{{ column.key }}">
+                <h3 id="column-{{ column.key }}">{{ column.label }} <span class="contribution-count">{{ column.items|length }}</span></h3>
+                <ol class="contribution-items" aria-label="{{ column.label }} contributions">
+                    {% for item in column.items %}
+                    <li class="contribution-item" data-id="{{ item.pk }}" data-sort-key="{{ item.contributor.contributor_name }} {{ item.gift|default_if_none:'' }}"{% if can_edit %} draggable="true"{% endif %}>
+                        <div class="contribution-item-heading"><span class="prize-number"{% if column.key != 'prize_draw' %} hidden{% endif %}>{{ forloop.counter }}</span><strong>{{ item.contributor.contributor_name }}</strong>{% if can_edit %}<span class="contribution-drag-handle" aria-hidden="true">⠿</span>{% endif %}</div>
+                        <p class="contribution-description">{{ item.gift|default:'No description recorded' }}</p>
+                        {% if item.amount != None %}<p>Estimated value: £{{ item.amount|floatformat:2 }}</p>{% endif %}
+                        {% if can_edit %}<div class="contribution-controls">
+                            <label>Move to
+                                <select class="contribution-move" aria-label="Classification for {{ item.contributor.contributor_name }}: {{ item.gift|default_if_none:'' }}">
+                                    {% for key, label in classifications %}<option value="{{ key }}"{% if key == column.key %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                                </select>
+                            </label>
+                            <div class="prize-order-controls"{% if column.key != 'prize_draw' %} hidden{% endif %}>
+                                <button type="button" class="prize-up" aria-label="Move prize up" title="Move prize up"{% if forloop.first %} disabled{% endif %}>↑</button>
+                                <button type="button" class="prize-down" aria-label="Move prize down" title="Move prize down"{% if forloop.last %} disabled{% endif %}>↓</button>
+                            </div>
+                        </div>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ol>
+                <p class="contribution-empty"{% if column.items %} hidden{% endif %}>No contributions here yet.</p>
+            </section>
+        {% endfor %}
+        </div>
+    </div>
+    <noscript><p>Enable JavaScript to move and order contributions. You can still read the current classifications above.</p></noscript>
+    {% else %}<p>Select an event to organise its non-cash sponsor contributions.</p>{% endif %}
+</main>
+{% endblock %}

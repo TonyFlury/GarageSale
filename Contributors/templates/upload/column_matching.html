@@ -1,0 +1,75 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% block Title %}Match contributor CSV columns{% endblock %}
+{% block PageStyles %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'Contributors/styles/column_matching.css' %}">
+{% endblock %}
+{% block PageScripts %}
+{{ block.super }}
+<script defer src="{% static 'Contributors/js/column_matching.js' %}"></script>
+{% endblock %}
+{% block SnappableSections %}
+<main class="contributor-import">
+<form id="column-matching-form" method="post">
+{% csrf_token %}
+<input type="hidden" name="stage" value="match_columns">
+<input type="hidden" name="csv_path" value="{{ csv_path }}">
+<input type="hidden" name="contributor_type" value="{{ contributor_type|default_if_none:'' }}">
+<input type="hidden" name="column_mapping" id="column-mapping-value">
+<input type="hidden" name="csv_data" id="csv-data-value">
+
+  <div class="eyebrow">Contributors / CSV import</div>
+  <h1>Match your columns</h1>
+  <p class="muted">Choose where each CSV column goes. Only contributor name is required.</p>
+  <p class="muted">Contact History is optional. Use one row per contact and map both Contact History and Contact date (YYYY-MM-DD). Repeat the contributor name for multiple contacts; line breaks within a note are preserved.</p>
+  <p class="muted">Existing history is never changed. Contacts with the same contributor name, date and note are skipped as duplicates. Leave both contact cells blank for details-only updates.</p>
+  <ol class="steps" aria-label="Import progress">
+    <li>✓ 1. Select file</li><li aria-current="step"><strong>2. Match columns</strong></li><li>3. Review changes</li>
+  </ol>
+  <section class="card file" aria-label="Selected file">
+    <div class="file-info"><span class="file-path"><span class="muted">File path:</span> <strong>{% firstof csv_path csv_filename "Uploaded CSV" %}</strong></span><span class="muted"><span id="file-summary"></span></span></div>
+    {% if contributor_type %}<div class="badge">Contributor type: {{ contributor_type }}</div>{% endif %}
+  </section>
+  <div class="workspace">
+  <section class="card" aria-labelledby="mapping-title">
+    <div class="heading"><h2 id="mapping-title">Your CSV columns</h2><p class="muted">Choose a destination. Selecting an occupied field clears its previous mapping.</p><div class="mapping-legend"><span class="model">Contributor field</span><span class="details">Additional details selected</span><span>Neutral: not mapped</span></div></div>
+    <div class="mapping">
+      <div class="row column-head" aria-hidden="true"><span>CSV column</span><span>First row sample</span><span>Save to</span></div>
+      <div id="mappings"></div>
+    </div>
+    <div class="extras">
+      <h2>Additional details <span id="extra-count" class="badge"></span></h2>
+      <p class="muted">Only columns assigned to Additional details are saved in <code>socials</code>. Unmapped and ignored columns are not imported.</p>
+      <div id="extras" class="chips"></div>
+    </div>
+  </section>
+  <details class="card preview-panel" id="preview-panel">
+    <summary>Import preview <span id="preview-count" class="badge"></span></summary>
+    <p class="muted">All CSV rows with the current mapping. Missing optional values are shown blank; they leave existing contributor values unchanged. Ignored columns are excluded from this preview.</p>
+    <div class="preview-scroll" role="region" aria-label="Mapped contributor rows" tabindex="0">
+      <table class="preview-table">
+        <caption>Contributors as they would be imported</caption>
+        <thead id="preview-head"></thead>
+        <tbody id="preview-body"></tbody>
+      </table>
+    </div>
+  </details>
+  </div>
+  <div id="message" role="status" aria-live="polite"></div>
+  <footer>
+    <span class="muted" id="summary"></span>
+    <input type="hidden" name="action" value="review">
+    <div class="buttons">
+      <a href="{% url 'contributors:upload' %}{% if contributor_type %}?contributor_type={{ contributor_type|urlencode }}{% endif %}">Abort upload</a>
+      <input id="review" type="submit" value="Review changes">
+    </div>
+  </footer>
+<p class="note muted">Continue to review proposed changes before saving contributors.</p>
+
+</form>
+{{ possible_matches|json_script:"csv-possible-matches" }}
+{{ csv_data|json_script:"csv-data" }}
+<noscript>Enable JavaScript to match CSV columns and preview the import.</noscript>
+</main>
+{% endblock %}

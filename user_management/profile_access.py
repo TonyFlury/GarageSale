@@ -4,13 +4,13 @@ from django.core.exceptions import PermissionDenied
 
 def can_manage_own_profile(user):
     return user.is_authenticated and user.is_active and any(user.has_perm(permission) for permission in (
-        'user_management.manage_own_profile', 'GarageSale.manage_own_team_profile', 'GarageSale.is_team_member',
+        'user_management.manage_own_profile', 'GarageSale.manage_own_team_profile',
     ))
 
 
 def can_access_team_pages(user):
     return user.is_authenticated and user.is_active and any(user.has_perm(permission) for permission in (
-        'GarageSale.access_team_pages', 'GarageSale.is_team_member', 'user_management.manage_team_access',
+        'GarageSale.access_team_pages',
     ))
 
 

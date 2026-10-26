@@ -8,7 +8,7 @@ from TeamPageFramework.entry_point import EntryPointMixin, register
 from Accounts.models import Categories
 
 register(label='Categories', url_path='Account:CategoryList', icon_path=static('Accounts/images/icons/navigation/category-svgrepo-com.svg'),
-          permission='Accounts.view_category',
+          permission='Accounts.view_categories',
           needs_event=False, nav_page='AccountsEntryPoint')
 def category_list(request):
     categories = Categories.objects.filter(parent=None)

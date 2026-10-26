@@ -1,0 +1,29 @@
+{% extends "team_pages_base.html" %}
+
+{% block Title %}Delete Communication Template{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'TeamPages:Root' %}">Team Page</a> /
+    <a href="{{ cancel_url }}">Communication Templates</a> / Delete
+{% endblock %}
+
+{% block SnappableSections %}
+    <section>
+        <h1>Delete Communication Template</h1>
+        <p><strong>{{ object.summary }}</strong> — {{ object.category }} — Use from {{ object.use_from|date:"d/m/Y" }}</p>
+        {% if deletion_errors %}
+            <p role="alert">This template cannot be deleted:</p>
+            <ul>{% for error in deletion_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+            <a href="{{ cancel_url }}">Return to templates</a>
+        {% else %}
+            <p>Delete this template and its own attachment entries?</p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="buttons">
+                    <button type="submit">Delete template</button>
+                    <a href="{{ cancel_url }}">Cancel</a>
+                </div>
+            </form>
+        {% endif %}
+    </section>
+{% endblock %}

@@ -1,0 +1,34 @@
+<div class="supporting-picker" id="{{ widget.attrs.id }}" data-search-url="{{ widget.search_url }}" data-field-name="{{ widget.name }}">
+    <section aria-label="Selected charities" data-drop-zone="selected">
+        <h3>Selected charities <span data-selected-count></span></h3>
+        <p>Drag organisations here to support them. Drag selected charities into order, or back to available organisations to remove them. Save the event to keep your changes.</p>
+        <ol data-selected>
+            {% for group, options, group_index in widget.optgroups %}{% for option in options %}{% if option.selected %}
+            <li data-charity-id="{{ option.value }}" data-charity-label="{{ option.label }}">
+                <input type="hidden" name="{{ widget.name }}" value="{{ option.value }}">
+                <span data-charity-name><span class="supporting-drag-handle" draggable="true" aria-hidden="true">⠿ </span>{{ option.label }}</span>
+                <label>Position <input type="number" min="1" data-position aria-label="Position of {{ option.label }}"></label>
+                <button type="button" data-move="up" aria-label="Move {{ option.label }} up">Move up</button>
+                <button type="button" data-move="down" aria-label="Move {{ option.label }} down">Move down</button>
+                <button type="button" data-remove aria-label="Remove {{ option.label }}">Remove</button>
+            </li>
+            {% endif %}{% endfor %}{% endfor %}
+        </ol>
+        <p data-empty-selected>No charities selected.</p>
+        <p data-selection-status role="status" class="supporting-status"></p>
+    </section>
+    <section aria-label="Available organisations" data-drop-zone="available">
+        <h3>Available organisations</h3>
+        <p>Drag an organisation into the selected list, or use Add. Drop selected charities here to remove them.</p>
+        <label for="{{ widget.attrs.id }}_search">Search organisations</label>
+        <input type="search" id="{{ widget.attrs.id }}_search" data-search placeholder="Type an organisation name" autocomplete="off">
+        <p data-search-status role="status" class="supporting-status"></p>
+        <ul data-results></ul>
+        <div class="supporting-pagination">
+            <button type="button" data-page="previous">Previous</button>
+            <span data-page-label></span>
+            <button type="button" data-page="next">Next</button>
+        </div>
+        <noscript>Enable JavaScript to search for and add charities.</noscript>
+    </section>
+</div>

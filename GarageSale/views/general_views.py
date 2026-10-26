@@ -21,7 +21,8 @@ from News.models import NewsArticle
 from django.views.generic import CreateView, ListView, DetailView
 from django.templatetags.static import static
 from TeamPageFramework.entry_point import EntryPointMixin
-from ..models import Nomination
+from Contributors.views.general_views import get_current_contribution_event
+from Sponsors.public_sponsors import confirmed_sponsors_for_event
 
 # from .forms import TestForm
 from ..forms import NominationCreate
@@ -29,7 +30,9 @@ from ..models import Nomination
 
 def home(incoming_request: HttpRequest) -> TemplateResponse:
     qs = NewsArticle.FrontPageOrder.all()
-    t = TemplateResponse(incoming_request, template="home.html", context={'articles': qs})
+    event = getattr(incoming_request, "current_event", None) or get_current_contribution_event()
+    sponsors = confirmed_sponsors_for_event(event)
+    t = TemplateResponse(incoming_request, template="home.html", context={'articles': qs, 'sponsors': sponsors})
     return t
 
 #def testing(request, case=0):
@@ -60,11 +63,11 @@ class NominationCreateView(CreateView):
 class NominationsList(EntryPointMixin, LoginRequiredMixin, PermissionRequiredMixin, ListView):
     login_url = reverse_lazy('user_management:login')
     redirect_field_name = 'next'
-    permission_required = 'GarageSale.is_trustee'
+    permission_required = 'GarageSale.view_nomination'
     entry_point_url = 'NominationsList'
     entry_point_label = 'Funding Nominations'
     entry_point_icon = static('GarageSale/images/icons/navigation/loving-charity-svgrepo-com.svg')
-    entry_point_permission = 'GarageSale.is_trustee'
+    entry_point_permission = 'GarageSale.view_nomination'
     entry_point_nav_page = 'TeamPage'
     entry_point_needs_event = False
     model = Nomination
@@ -90,12 +93,15 @@ class NominationsList(EntryPointMixin, LoginRequiredMixin, PermissionRequiredMix
 class NominationView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     login_url = reverse_lazy('user_management:login')
     redirect_field_name = 'next'
-    permission_required = 'GarageSale.is_trustee'
+    permission_required = 'GarageSale.view_nomination'
     model = Nomination
     template_name = 'team_pages/nominations/nomination_view.html'
     context_object_name = 'nomination'
 
     def post(self, request, *args, **kwargs):
+        if not request.user.has_perm("GarageSale.change_nomination"):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("You do not have permission to change nominations.")
         nomination = self.get_object()
 #        print(nomination.status, request.POST)
         match nomination.status :

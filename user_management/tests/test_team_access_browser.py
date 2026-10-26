@@ -7,10 +7,11 @@ from django.urls import reverse
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from Contributors.tests.retained_tables import RetainedTablesCleanupMixin
 
 
 @override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'], TEST_SERVER=False)
-class TeamAccessBrowserTests(StaticLiveServerTestCase):
+class TeamAccessBrowserTests(RetainedTablesCleanupMixin, StaticLiveServerTestCase):
     def test_officer_can_review_and_assign_access_on_desktop_and_mobile(self):
         officer = get_user_model().objects.create_user('browser-officer@example.com', 'password', is_verified=True)
         officer.groups.add(Group.objects.get(name='Officer'))

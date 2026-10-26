@@ -153,8 +153,8 @@ class NominationSeleniumTests(SeleniumCommonMixin):
             last_name='User',
             phone='01234567890',
         )
-        trustee_perm = Permission.objects.get(codename='is_trustee', content_type__app_label='GarageSale')
-        trustee.user_permissions.add(trustee_perm)
+        trustee_perms = Permission.objects.filter(codename__in=['view_nomination', 'change_nomination'], content_type__app_label='GarageSale')
+        trustee.user_permissions.add(*trustee_perms)
         return trustee
 
     def _open_detail(self, nomination):
@@ -283,7 +283,7 @@ class NominationSeleniumTests(SeleniumCommonMixin):
         self.assertEqual(self.selenium.current_url, self.live_server_url + reverse('NominationsList'))
 
     @override_settings(TEST_SERVER=False)
-    def test_list_and_detail_require_trustee_permission(self):
+    def test_list_and_detail_require_nomination_permission(self):
         nomination = self._create_nomination()
         user_model = get_user_model()
         non_trustee = user_model.objects.create_user(
@@ -300,8 +300,8 @@ class NominationSeleniumTests(SeleniumCommonMixin):
             last_name='User',
             phone='01234567890',
         )
-        trustee_perm = Permission.objects.get(codename='is_trustee', content_type__app_label='GarageSale')
-        trustee.user_permissions.add(trustee_perm)
+        trustee_perms = Permission.objects.filter(codename__in=['view_nomination', 'change_nomination'], content_type__app_label='GarageSale')
+        trustee.user_permissions.add(*trustee_perms)
 
         list_url = self.live_server_url + reverse('NominationsList')
         detail_url = self.live_server_url + reverse('NominationView', kwargs={'pk': nomination.pk})
@@ -336,8 +336,8 @@ class NominationSeleniumTests(SeleniumCommonMixin):
             last_name='User',
             phone='01234567890',
         )
-        trustee_perm = Permission.objects.get(codename='is_trustee', content_type__app_label='GarageSale')
-        trustee.user_permissions.add(trustee_perm)
+        trustee_perms = Permission.objects.filter(codename__in=['view_nomination', 'change_nomination'], content_type__app_label='GarageSale')
+        trustee.user_permissions.add(*trustee_perms)
 
         self._create_nomination(nominee='New Org', status=Nomination.Status.NEW)
         self._create_nomination(nominee='Accepted Org', status=Nomination.Status.ACCEPTED)

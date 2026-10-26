@@ -1,0 +1,12 @@
+{% extends "team_pages_base.html" %}
+{% block SnappableSections %}
+<main class="form">
+    <h1>Supported charities</h1>
+    {% if perms.GarageSale.add_supporting %}<div class="buttons"><a href="{% url 'TeamPages:SupportingCreate' %}">Support New Charity</a></div>{% endif %}
+    <ul>
+        {% for charity in organisations %}
+            <li><a href="{% url 'TeamPages:SupportingDetail' charity.pk %}">{{ charity.name }}</a></li>
+        {% empty %}<li>No charities have been added yet.</li>{% endfor %}
+    </ul>
+</main>
+{% endblock %}

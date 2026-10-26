@@ -69,3 +69,5 @@ wsproto==1.2.0
 zopfli==0.2.3.post1
 matplotlib==3.10.8
 mpld3==0.5.12
+django-lumen==0.2.3
+django-data-browser==4.2.14

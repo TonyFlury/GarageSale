@@ -10,27 +10,7 @@
           "account"
         ],
         [
-          "delete_account",
-          "Accounts",
-          "account"
-        ],
-        [
-          "view_account",
-          "Accounts",
-          "account"
-        ],
-        [
           "add_categories",
-          "Accounts",
-          "categories"
-        ],
-        [
-          "delete_categories",
-          "Accounts",
-          "categories"
-        ],
-        [
-          "view_categories",
           "Accounts",
           "categories"
         ],
@@ -40,12 +20,27 @@
           "financialyear"
         ],
         [
-          "delete_financialyear",
+          "add_uploaderror",
           "Accounts",
-          "financialyear"
+          "uploaderror"
         ],
         [
-          "view_financialyear",
+          "add_uploadhistory",
+          "Accounts",
+          "uploadhistory"
+        ],
+        [
+          "change_account",
+          "Accounts",
+          "account"
+        ],
+        [
+          "change_categories",
+          "Accounts",
+          "categories"
+        ],
+        [
+          "change_financialyear",
           "Accounts",
           "financialyear"
         ],
@@ -55,9 +50,24 @@
           "transaction"
         ],
         [
-          "delete_transaction",
+          "change_uploaderror",
           "Accounts",
-          "transaction"
+          "uploaderror"
+        ],
+        [
+          "delete_account",
+          "Accounts",
+          "account"
+        ],
+        [
+          "delete_categories",
+          "Accounts",
+          "categories"
+        ],
+        [
+          "delete_financialyear",
+          "Accounts",
+          "financialyear"
         ],
         [
           "report_transaction",
@@ -70,24 +80,24 @@
           "transaction"
         ],
         [
+          "view_account",
+          "Accounts",
+          "account"
+        ],
+        [
+          "view_categories",
+          "Accounts",
+          "categories"
+        ],
+        [
+          "view_financialyear",
+          "Accounts",
+          "financialyear"
+        ],
+        [
           "view_transaction",
           "Accounts",
           "transaction"
-        ],
-        [
-          "add_uploaderror",
-          "Accounts",
-          "uploaderror"
-        ],
-        [
-          "change_uploaderror",
-          "Accounts",
-          "uploaderror"
-        ],
-        [
-          "delete_uploaderror",
-          "Accounts",
-          "uploaderror"
         ],
         [
           "view_uploaderror",
@@ -95,34 +105,24 @@
           "uploaderror"
         ],
         [
-          "add_uploadhistory",
-          "Accounts",
-          "uploadhistory"
-        ],
-        [
-          "change_uploadhistory",
-          "Accounts",
-          "uploadhistory"
-        ],
-        [
-          "delete_uploadhistory",
-          "Accounts",
-          "uploadhistory"
-        ],
-        [
           "view_uploadhistory",
           "Accounts",
           "uploadhistory"
         ],
         [
-          "is_team_member",
+          "access_team_pages",
           "GarageSale",
-          "general"
+          "applicationaccess"
         ],
         [
-          "is_trustee",
+          "close_financialyear",
           "GarageSale",
-          "general"
+          "applicationaccess"
+        ],
+        [
+          "manage_own_team_profile",
+          "GarageSale",
+          "applicationaccess"
         ]
       ]
     }
@@ -133,32 +133,7 @@
       "name": "CraftMarketManager",
       "permissions": [
         [
-          "add_history",
-          "CraftMarket",
-          "history"
-        ],
-        [
-          "delete_history",
-          "CraftMarket",
-          "history"
-        ],
-        [
-          "view_history",
-          "CraftMarket",
-          "history"
-        ],
-        [
           "change_marketer",
-          "CraftMarket",
-          "marketer"
-        ],
-        [
-          "delete_marketer",
-          "CraftMarket",
-          "marketer"
-        ],
-        [
-          "suggest_marketer",
           "CraftMarket",
           "marketer"
         ],
@@ -168,24 +143,19 @@
           "marketer"
         ],
         [
+          "access_team_pages",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
           "add_communicationtemplate",
           "GarageSale",
           "communicationtemplate"
         ],
         [
-          "delete_communicationtemplate",
+          "add_marketer",
           "GarageSale",
-          "communicationtemplate"
-        ],
-        [
-          "view_communicationtemplate",
-          "GarageSale",
-          "communicationtemplate"
-        ],
-        [
-          "is_team_member",
-          "GarageSale",
-          "general"
+          "applicationaccess"
         ],
         [
           "add_templateattachment",
@@ -193,9 +163,79 @@
           "templateattachment"
         ],
         [
-          "delete_templateattachment",
+          "change_communicationtemplate",
+          "GarageSale",
+          "communicationtemplate"
+        ],
+        [
+          "change_templateattachment",
           "GarageSale",
           "templateattachment"
+        ],
+        [
+          "confirm_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "contact_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "email_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "export_marketers",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "generate_marketer_pdf",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "import_marketers",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "invite_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_market_templates",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_own_team_profile",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "reject_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "view_communicationtemplate",
+          "GarageSale",
+          "communicationtemplate"
+        ],
+        [
+          "view_eventdata",
+          "GarageSale",
+          "eventdata"
+        ],
+        [
+          "view_market_templates",
+          "GarageSale",
+          "applicationaccess"
         ],
         [
           "view_templateattachment",
@@ -211,24 +251,34 @@
       "name": "SponsorshipManager",
       "permissions": [
         [
+          "add_contributions",
+          "Contributors",
+          "contributions"
+        ],
+        [
+          "change_contributions",
+          "Contributors",
+          "contributions"
+        ],
+        [
+          "view_contributions",
+          "Contributors",
+          "contributions"
+        ],
+        [
+          "access_team_pages",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
           "add_communicationtemplate",
           "GarageSale",
           "communicationtemplate"
         ],
         [
-          "delete_communicationtemplate",
+          "add_prizedrawwinner",
           "GarageSale",
-          "communicationtemplate"
-        ],
-        [
-          "view_communicationtemplate",
-          "GarageSale",
-          "communicationtemplate"
-        ],
-        [
-          "is_team_member",
-          "GarageSale",
-          "general"
+          "prizedrawwinner"
         ],
         [
           "add_templateattachment",
@@ -236,9 +286,74 @@
           "templateattachment"
         ],
         [
-          "delete_templateattachment",
+          "change_communicationtemplate",
+          "GarageSale",
+          "communicationtemplate"
+        ],
+        [
+          "change_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
+        ],
+        [
+          "change_templateattachment",
           "GarageSale",
           "templateattachment"
+        ],
+        [
+          "contact_sponsor",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "email_sponsor",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "export_sponsors",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "generate_sponsor_pdf",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "import_sponsors",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_own_team_profile",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_sponsor_templates",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "view_communicationtemplate",
+          "GarageSale",
+          "communicationtemplate"
+        ],
+        [
+          "view_eventdata",
+          "GarageSale",
+          "eventdata"
+        ],
+        [
+          "view_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
+        ],
+        [
+          "view_sponsor_templates",
+          "GarageSale",
+          "applicationaccess"
         ],
         [
           "view_templateattachment",
@@ -246,12 +361,17 @@
           "templateattachment"
         ],
         [
-          "confirm_sponsor",
+          "add_sponsor",
           "Sponsors",
           "sponsor"
         ],
         [
-          "delete_sponsor",
+          "change_sponsor",
+          "Sponsors",
+          "sponsor"
+        ],
+        [
+          "confirm_sponsor",
           "Sponsors",
           "sponsor"
         ],
@@ -274,29 +394,14 @@
           "account"
         ],
         [
-          "delete_account",
-          "Accounts",
-          "account"
-        ],
-        [
-          "view_account",
-          "Accounts",
-          "account"
-        ],
-        [
           "add_categories",
           "Accounts",
           "categories"
         ],
         [
-          "delete_categories",
+          "add_categoryproxy",
           "Accounts",
-          "categories"
-        ],
-        [
-          "view_categories",
-          "Accounts",
-          "categories"
+          "categoryproxy"
         ],
         [
           "add_financialyear",
@@ -304,19 +409,104 @@
           "financialyear"
         ],
         [
+          "add_publishedreports",
+          "Accounts",
+          "publishedreports"
+        ],
+        [
+          "add_transaction",
+          "Accounts",
+          "transaction"
+        ],
+        [
+          "add_uploaderror",
+          "Accounts",
+          "uploaderror"
+        ],
+        [
+          "add_uploadhistory",
+          "Accounts",
+          "uploadhistory"
+        ],
+        [
+          "change_account",
+          "Accounts",
+          "account"
+        ],
+        [
+          "change_categories",
+          "Accounts",
+          "categories"
+        ],
+        [
+          "change_categoryproxy",
+          "Accounts",
+          "categoryproxy"
+        ],
+        [
+          "change_financialyear",
+          "Accounts",
+          "financialyear"
+        ],
+        [
+          "change_publishedreports",
+          "Accounts",
+          "publishedreports"
+        ],
+        [
+          "change_transaction",
+          "Accounts",
+          "transaction"
+        ],
+        [
+          "change_uploaderror",
+          "Accounts",
+          "uploaderror"
+        ],
+        [
+          "change_uploadhistory",
+          "Accounts",
+          "uploadhistory"
+        ],
+        [
+          "delete_account",
+          "Accounts",
+          "account"
+        ],
+        [
+          "delete_categories",
+          "Accounts",
+          "categories"
+        ],
+        [
+          "delete_categoryproxy",
+          "Accounts",
+          "categoryproxy"
+        ],
+        [
           "delete_financialyear",
           "Accounts",
           "financialyear"
         ],
         [
-          "view_financialyear",
+          "delete_publishedreports",
           "Accounts",
-          "financialyear"
+          "publishedreports"
         ],
         [
           "delete_transaction",
           "Accounts",
           "transaction"
+        ],
+        [
+          "delete_uploaderror",
+          "Accounts",
+          "uploaderror"
+        ],
+        [
+          "delete_uploadhistory",
+          "Accounts",
+          "uploadhistory"
         ],
         [
           "report_transaction",
@@ -329,89 +519,134 @@
           "transaction"
         ],
         [
+          "view_account",
+          "Accounts",
+          "account"
+        ],
+        [
+          "view_categories",
+          "Accounts",
+          "categories"
+        ],
+        [
+          "view_categoryproxy",
+          "Accounts",
+          "categoryproxy"
+        ],
+        [
+          "view_financialyear",
+          "Accounts",
+          "financialyear"
+        ],
+        [
+          "view_publishedreports",
+          "Accounts",
+          "publishedreports"
+        ],
+        [
           "view_transaction",
           "Accounts",
           "transaction"
         ],
         [
-          "add_logentry",
-          "admin",
-          "logentry"
+          "view_uploaderror",
+          "Accounts",
+          "uploaderror"
         ],
         [
-          "change_logentry",
-          "admin",
-          "logentry"
+          "view_uploadhistory",
+          "Accounts",
+          "uploadhistory"
         ],
         [
-          "delete_logentry",
-          "admin",
-          "logentry"
+          "add_contributions",
+          "Contributors",
+          "contributions"
         ],
         [
-          "view_logentry",
-          "admin",
-          "logentry"
+          "add_contributor",
+          "Contributors",
+          "contributor"
         ],
         [
-          "add_group",
-          "auth",
-          "group"
+          "add_contributorevent",
+          "Contributors",
+          "contributorevent"
         ],
         [
-          "change_group",
-          "auth",
-          "group"
+          "add_contributorhistory",
+          "Contributors",
+          "contributorhistory"
         ],
         [
-          "delete_group",
-          "auth",
-          "group"
+          "change_contributions",
+          "Contributors",
+          "contributions"
         ],
         [
-          "view_group",
-          "auth",
-          "group"
+          "change_contributor",
+          "Contributors",
+          "contributor"
         ],
         [
-          "add_permission",
-          "auth",
-          "permission"
+          "change_contributorevent",
+          "Contributors",
+          "contributorevent"
         ],
         [
-          "change_permission",
-          "auth",
-          "permission"
+          "change_contributorhistory",
+          "Contributors",
+          "contributorhistory"
         ],
         [
-          "delete_permission",
-          "auth",
-          "permission"
+          "change_prize_allocation",
+          "Contributors",
+          "contributions"
         ],
         [
-          "view_permission",
-          "auth",
-          "permission"
+          "delete_contributions",
+          "Contributors",
+          "contributions"
         ],
         [
-          "add_contenttype",
-          "contenttypes",
-          "contenttype"
+          "delete_contributor",
+          "Contributors",
+          "contributor"
         ],
         [
-          "change_contenttype",
-          "contenttypes",
-          "contenttype"
+          "delete_contributorevent",
+          "Contributors",
+          "contributorevent"
         ],
         [
-          "delete_contenttype",
-          "contenttypes",
-          "contenttype"
+          "delete_contributorhistory",
+          "Contributors",
+          "contributorhistory"
         ],
         [
-          "view_contenttype",
-          "contenttypes",
-          "contenttype"
+          "view_contributions",
+          "Contributors",
+          "contributions"
+        ],
+        [
+          "view_contributor",
+          "Contributors",
+          "contributor"
+        ],
+        [
+          "view_contributorevent",
+          "Contributors",
+          "contributorevent"
+        ],
+        [
+          "view_contributorhistory",
+          "Contributors",
+          "contributorhistory"
+        ],
+        [
+          "view_prize_allocation",
+          "Contributors",
+          "contributions"
         ],
         [
           "add_history",
@@ -419,12 +654,17 @@
           "history"
         ],
         [
-          "delete_history",
+          "change_history",
           "CraftMarket",
           "history"
         ],
         [
-          "view_history",
+          "change_marketer",
+          "CraftMarket",
+          "marketer"
+        ],
+        [
+          "delete_history",
           "CraftMarket",
           "history"
         ],
@@ -439,42 +679,27 @@
           "marketer"
         ],
         [
+          "view_history",
+          "CraftMarket",
+          "history"
+        ],
+        [
           "view_marketer",
           "CraftMarket",
           "marketer"
         ],
         [
-          "add_attachment",
-          "django_summernote",
-          "attachment"
+          "access_drive",
+          "GarageSale",
+          "applicationaccess"
         ],
         [
-          "change_attachment",
-          "django_summernote",
-          "attachment"
-        ],
-        [
-          "delete_templateattachement",
-          "django_summernote",
-          "attachment"
-        ],
-        [
-          "view_attachment",
-          "django_summernote",
-          "attachment"
+          "access_team_pages",
+          "GarageSale",
+          "applicationaccess"
         ],
         [
           "add_communicationtemplate",
-          "GarageSale",
-          "communicationtemplate"
-        ],
-        [
-          "delete_communicationtemplate",
-          "GarageSale",
-          "communicationtemplate"
-        ],
-        [
-          "view_communicationtemplate",
           "GarageSale",
           "communicationtemplate"
         ],
@@ -484,34 +709,9 @@
           "eventdata"
         ],
         [
-          "delete_eventdata",
+          "add_marketer",
           "GarageSale",
-          "eventdata"
-        ],
-        [
-          "view_eventdata",
-          "GarageSale",
-          "eventdata"
-        ],
-        [
-          "is_administrator",
-          "GarageSale",
-          "general"
-        ],
-        [
-          "is_manager",
-          "GarageSale",
-          "general"
-        ],
-        [
-          "is_team_member",
-          "GarageSale",
-          "general"
-        ],
-        [
-          "is_trustee",
-          "GarageSale",
-          "general"
+          "applicationaccess"
         ],
         [
           "add_motd",
@@ -519,32 +719,22 @@
           "motd"
         ],
         [
-          "delete_motd",
+          "add_newsletter",
           "GarageSale",
-          "motd"
+          "applicationaccess"
         ],
         [
-          "view_motd",
+          "add_nomination",
           "GarageSale",
-          "motd"
+          "nomination"
+        ],
+        [
+          "add_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
         ],
         [
           "add_supporting",
-          "GarageSale",
-          "supporting"
-        ],
-        [
-          "create_supporting",
-          "GarageSale",
-          "supporting"
-        ],
-        [
-          "delete_supporting",
-          "GarageSale",
-          "supporting"
-        ],
-        [
-          "view_supporting",
           "GarageSale",
           "supporting"
         ],
@@ -554,9 +744,234 @@
           "templateattachment"
         ],
         [
+          "change_communicationtemplate",
+          "GarageSale",
+          "communicationtemplate"
+        ],
+        [
+          "change_eventdata",
+          "GarageSale",
+          "eventdata"
+        ],
+        [
+          "change_motd",
+          "GarageSale",
+          "motd"
+        ],
+        [
+          "change_newsletter",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "change_nomination",
+          "GarageSale",
+          "nomination"
+        ],
+        [
+          "change_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
+        ],
+        [
+          "change_supporting",
+          "GarageSale",
+          "supporting"
+        ],
+        [
+          "change_templateattachment",
+          "GarageSale",
+          "templateattachment"
+        ],
+        [
+          "close_financialyear",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "confirm_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "contact_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "contact_sponsor",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "delete_communicationtemplate",
+          "GarageSale",
+          "communicationtemplate"
+        ],
+        [
+          "delete_eventdata",
+          "GarageSale",
+          "eventdata"
+        ],
+        [
+          "delete_motd",
+          "GarageSale",
+          "motd"
+        ],
+        [
+          "delete_newsletter",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "delete_nomination",
+          "GarageSale",
+          "nomination"
+        ],
+        [
+          "delete_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
+        ],
+        [
+          "delete_supporting",
+          "GarageSale",
+          "supporting"
+        ],
+        [
           "delete_templateattachment",
           "GarageSale",
           "templateattachment"
+        ],
+        [
+          "email_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "email_sponsor",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "export_location",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "export_marketers",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "export_sponsors",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "generate_marketer_pdf",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "generate_sponsor_pdf",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "import_marketers",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "import_sponsors",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "invite_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_all_template_categories",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_market_templates",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_own_team_profile",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_sponsor_templates",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "reject_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "send_newsletter",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "view_all_template_categories",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "view_communicationtemplate",
+          "GarageSale",
+          "communicationtemplate"
+        ],
+        [
+          "view_eventdata",
+          "GarageSale",
+          "eventdata"
+        ],
+        [
+          "view_market_templates",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "view_motd",
+          "GarageSale",
+          "motd"
+        ],
+        [
+          "view_newsletter",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "view_nomination",
+          "GarageSale",
+          "nomination"
+        ],
+        [
+          "view_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
+        ],
+        [
+          "view_sponsor_templates",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "view_supporting",
+          "GarageSale",
+          "supporting"
         ],
         [
           "view_templateattachment",
@@ -564,7 +979,52 @@
           "templateattachment"
         ],
         [
+          "add_drivefile",
+          "GoogleDrive",
+          "drivefile"
+        ],
+        [
+          "add_googledrivecompanycredential",
+          "GoogleDrive",
+          "googledrivecompanycredential"
+        ],
+        [
+          "change_drivefile",
+          "GoogleDrive",
+          "drivefile"
+        ],
+        [
+          "change_googledrivecompanycredential",
+          "GoogleDrive",
+          "googledrivecompanycredential"
+        ],
+        [
+          "delete_drivefile",
+          "GoogleDrive",
+          "drivefile"
+        ],
+        [
+          "delete_googledrivecompanycredential",
+          "GoogleDrive",
+          "googledrivecompanycredential"
+        ],
+        [
+          "view_drivefile",
+          "GoogleDrive",
+          "drivefile"
+        ],
+        [
+          "view_googledrivecompanycredential",
+          "GoogleDrive",
+          "googledrivecompanycredential"
+        ],
+        [
           "add_location",
+          "Location",
+          "location"
+        ],
+        [
+          "change_location",
           "Location",
           "location"
         ],
@@ -584,7 +1044,32 @@
           "newsarticle"
         ],
         [
+          "add_newslettermailinglist",
+          "News",
+          "newslettermailinglist"
+        ],
+        [
+          "change_newsarticle",
+          "News",
+          "newsarticle"
+        ],
+        [
+          "change_newslettermailinglist",
+          "News",
+          "newslettermailinglist"
+        ],
+        [
           "delete_newsarticle",
+          "News",
+          "newsarticle"
+        ],
+        [
+          "delete_newslettermailinglist",
+          "News",
+          "newslettermailinglist"
+        ],
+        [
+          "publish_news",
           "News",
           "newsarticle"
         ],
@@ -594,34 +1079,19 @@
           "newsarticle"
         ],
         [
-          "add_newslettermailinglist",
-          "News",
-          "newslettermailinglist"
-        ],
-        [
-          "delete_newslettermailinglist",
-          "News",
-          "newslettermailinglist"
-        ],
-        [
           "view_newslettermailinglist",
           "News",
           "newslettermailinglist"
         ],
         [
-          "add_session",
-          "sessions",
-          "session"
+          "add_sponsor",
+          "Sponsors",
+          "sponsor"
         ],
         [
-          "delete_session",
-          "sessions",
-          "session"
-        ],
-        [
-          "view_session",
-          "sessions",
-          "session"
+          "change_sponsor",
+          "Sponsors",
+          "sponsor"
         ],
         [
           "confirm_sponsor",
@@ -644,27 +1114,7 @@
           "additionaldata"
         ],
         [
-          "delete_additionaldata",
-          "user_management",
-          "additionaldata"
-        ],
-        [
-          "view_additionaldata",
-          "user_management",
-          "additionaldata"
-        ],
-        [
           "add_guestverifier",
-          "user_management",
-          "guestverifier"
-        ],
-        [
-          "delete_guestverifier",
-          "user_management",
-          "guestverifier"
-        ],
-        [
-          "view_guestverifier",
           "user_management",
           "guestverifier"
         ],
@@ -674,29 +1124,19 @@
           "passwordresetapplication"
         ],
         [
-          "delete_passwordresetapplication",
-          "user_management",
-          "passwordresetapplication"
-        ],
-        [
-          "view_passwordresetapplication",
-          "user_management",
-          "passwordresetapplication"
-        ],
-        [
           "add_registrationverifier",
           "user_management",
           "registrationverifier"
         ],
         [
-          "delete_registrationverifier",
+          "add_teaminvitation",
           "user_management",
-          "registrationverifier"
+          "teaminvitation"
         ],
         [
-          "view_registrationverifier",
+          "add_teammember",
           "user_management",
-          "registrationverifier"
+          "teammember"
         ],
         [
           "add_userextended",
@@ -704,17 +1144,122 @@
           "userextended"
         ],
         [
+          "change_additionaldata",
+          "user_management",
+          "additionaldata"
+        ],
+        [
+          "change_guestverifier",
+          "user_management",
+          "guestverifier"
+        ],
+        [
+          "change_passwordresetapplication",
+          "user_management",
+          "passwordresetapplication"
+        ],
+        [
+          "change_registrationverifier",
+          "user_management",
+          "registrationverifier"
+        ],
+        [
+          "change_teaminvitation",
+          "user_management",
+          "teaminvitation"
+        ],
+        [
+          "change_teammember",
+          "user_management",
+          "teammember"
+        ],
+        [
+          "change_userextended",
+          "user_management",
+          "userextended"
+        ],
+        [
+          "delete_additionaldata",
+          "user_management",
+          "additionaldata"
+        ],
+        [
+          "delete_guestverifier",
+          "user_management",
+          "guestverifier"
+        ],
+        [
+          "delete_passwordresetapplication",
+          "user_management",
+          "passwordresetapplication"
+        ],
+        [
+          "delete_registrationverifier",
+          "user_management",
+          "registrationverifier"
+        ],
+        [
+          "delete_teaminvitation",
+          "user_management",
+          "teaminvitation"
+        ],
+        [
+          "delete_teammember",
+          "user_management",
+          "teammember"
+        ],
+        [
           "delete_userextended",
           "user_management",
           "userextended"
         ],
         [
-          "view_userextended",
+          "generate_id_card",
+          "user_management",
+          "teammember"
+        ],
+        [
+          "manage_team_access",
           "user_management",
           "userextended"
         ],
         [
-          "manage_team_access",
+          "view_additionaldata",
+          "user_management",
+          "additionaldata"
+        ],
+        [
+          "view_guestverifier",
+          "user_management",
+          "guestverifier"
+        ],
+        [
+          "view_passwordresetapplication",
+          "user_management",
+          "passwordresetapplication"
+        ],
+        [
+          "view_registrationverifier",
+          "user_management",
+          "registrationverifier"
+        ],
+        [
+          "view_teamaccesschange",
+          "user_management",
+          "teamaccesschange"
+        ],
+        [
+          "view_teaminvitation",
+          "user_management",
+          "teaminvitation"
+        ],
+        [
+          "view_teammember",
+          "user_management",
+          "teammember"
+        ],
+        [
+          "view_userextended",
           "user_management",
           "userextended"
         ]
@@ -737,44 +1282,29 @@
           "categories"
         ],
         [
-          "view_financialyear",
-          "Accounts",
-          "financialyear"
-        ],
-        [
-          "report_transaction",
-          "Accounts",
-          "transaction"
-        ],
-        [
           "view_transaction",
           "Accounts",
           "transaction"
         ],
         [
-          "view_marketer",
-          "CraftMarket",
-          "marketer"
-        ],
-        [
-          "is_trustee",
+          "access_team_pages",
           "GarageSale",
-          "general"
+          "applicationaccess"
         ],
         [
-          "view_supporting",
+          "change_nomination",
           "GarageSale",
-          "supporting"
+          "nomination"
         ],
         [
-          "view_location",
-          "Location",
-          "location"
+          "manage_own_team_profile",
+          "GarageSale",
+          "applicationaccess"
         ],
         [
-          "view_sponsor",
-          "Sponsors",
-          "sponsor"
+          "view_nomination",
+          "GarageSale",
+          "nomination"
         ],
         [
           "manage_team_access",
@@ -790,22 +1320,27 @@
       "name": "ExecMember",
       "permissions": [
         [
-          "view_categories",
+          "report_transaction",
           "Accounts",
-          "categories"
+          "transaction"
         ],
         [
-          "view_financialyear",
-          "Accounts",
-          "financialyear"
+          "add_contributions",
+          "Contributors",
+          "contributions"
         ],
         [
-          "view_publishedreports",
-          "Accounts",
-          "publishedreports"
+          "change_contributions",
+          "Contributors",
+          "contributions"
         ],
         [
-          "suggest_marketer",
+          "view_contributions",
+          "Contributors",
+          "contributions"
+        ],
+        [
+          "change_marketer",
           "CraftMarket",
           "marketer"
         ],
@@ -815,19 +1350,209 @@
           "marketer"
         ],
         [
-          "view_eventdata",
+          "access_team_pages",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "add_communicationtemplate",
+          "GarageSale",
+          "communicationtemplate"
+        ],
+        [
+          "add_eventdata",
           "GarageSale",
           "eventdata"
         ],
         [
-          "is_team_member",
+          "add_marketer",
           "GarageSale",
-          "general"
+          "applicationaccess"
         ],
         [
-          "is_trustee",
+          "add_motd",
           "GarageSale",
-          "general"
+          "motd"
+        ],
+        [
+          "add_newsletter",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "add_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
+        ],
+        [
+          "add_supporting",
+          "GarageSale",
+          "supporting"
+        ],
+        [
+          "add_templateattachment",
+          "GarageSale",
+          "templateattachment"
+        ],
+        [
+          "change_communicationtemplate",
+          "GarageSale",
+          "communicationtemplate"
+        ],
+        [
+          "change_eventdata",
+          "GarageSale",
+          "eventdata"
+        ],
+        [
+          "change_motd",
+          "GarageSale",
+          "motd"
+        ],
+        [
+          "change_newsletter",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "change_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
+        ],
+        [
+          "change_supporting",
+          "GarageSale",
+          "supporting"
+        ],
+        [
+          "change_templateattachment",
+          "GarageSale",
+          "templateattachment"
+        ],
+        [
+          "confirm_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "contact_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "contact_sponsor",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "delete_communicationtemplate",
+          "GarageSale",
+          "communicationtemplate"
+        ],
+        [
+          "delete_motd",
+          "GarageSale",
+          "motd"
+        ],
+        [
+          "delete_newsletter",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "delete_supporting",
+          "GarageSale",
+          "supporting"
+        ],
+        [
+          "delete_templateattachment",
+          "GarageSale",
+          "templateattachment"
+        ],
+        [
+          "email_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "email_sponsor",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "export_location",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "export_marketers",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "export_sponsors",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "generate_marketer_pdf",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "generate_sponsor_pdf",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "import_marketers",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "import_sponsors",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "invite_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_all_template_categories",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_own_team_profile",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "reject_marketer",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "send_newsletter",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "view_all_template_categories",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "view_communicationtemplate",
+          "GarageSale",
+          "communicationtemplate"
+        ],
+        [
+          "view_eventdata",
+          "GarageSale",
+          "eventdata"
         ],
         [
           "view_motd",
@@ -835,9 +1560,34 @@
           "motd"
         ],
         [
+          "view_newsletter",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "view_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
+        ],
+        [
           "view_supporting",
           "GarageSale",
           "supporting"
+        ],
+        [
+          "view_templateattachment",
+          "GarageSale",
+          "templateattachment"
+        ],
+        [
+          "add_location",
+          "Location",
+          "location"
+        ],
+        [
+          "change_location",
+          "Location",
+          "location"
         ],
         [
           "view_location",
@@ -845,7 +1595,62 @@
           "location"
         ],
         [
-          "suggest_sponsor",
+          "add_newsarticle",
+          "News",
+          "newsarticle"
+        ],
+        [
+          "add_newslettermailinglist",
+          "News",
+          "newslettermailinglist"
+        ],
+        [
+          "change_newsarticle",
+          "News",
+          "newsarticle"
+        ],
+        [
+          "change_newslettermailinglist",
+          "News",
+          "newslettermailinglist"
+        ],
+        [
+          "delete_newsarticle",
+          "News",
+          "newsarticle"
+        ],
+        [
+          "delete_newslettermailinglist",
+          "News",
+          "newslettermailinglist"
+        ],
+        [
+          "publish_news",
+          "News",
+          "newsarticle"
+        ],
+        [
+          "view_newsarticle",
+          "News",
+          "newsarticle"
+        ],
+        [
+          "view_newslettermailinglist",
+          "News",
+          "newslettermailinglist"
+        ],
+        [
+          "add_sponsor",
+          "Sponsors",
+          "sponsor"
+        ],
+        [
+          "change_sponsor",
+          "Sponsors",
+          "sponsor"
+        ],
+        [
+          "confirm_sponsor",
           "Sponsors",
           "sponsor"
         ],
@@ -853,6 +1658,16 @@
           "view_sponsor",
           "Sponsors",
           "sponsor"
+        ],
+        [
+          "generate_id_card",
+          "user_management",
+          "teammember"
+        ],
+        [
+          "view_teammember",
+          "user_management",
+          "teammember"
         ]
       ]
     }
@@ -863,9 +1678,50 @@
       "name": "Volunteer",
       "permissions": [
         [
-          "manage_own_profile",
-          "user_management",
-          "teammember"
+          "manage_own_team_profile",
+          "GarageSale",
+          "applicationaccess"
+        ]
+      ]
+    }
+  },
+  {
+    "model": "auth.group",
+    "fields": {
+      "name": "PrizeAllocationManager",
+      "permissions": [
+        [
+          "change_prize_allocation",
+          "Contributors",
+          "contributions"
+        ],
+        [
+          "view_prize_allocation",
+          "Contributors",
+          "contributions"
+        ],
+        [
+          "access_team_pages",
+          "GarageSale",
+          "applicationaccess"
+        ],
+        [
+          "manage_own_team_profile",
+          "GarageSale",
+          "applicationaccess"
+        ]
+      ]
+    }
+  },
+  {
+    "model": "auth.group",
+    "fields": {
+      "name": "Volunteer",
+      "permissions": [
+        [
+          "manage_own_team_profile",
+          "GarageSale",
+          "applicationaccess"
         ]
       ]
     }

@@ -12,17 +12,20 @@
             <div class="blaze-container">
                 <div class="blaze-track-container">
                     <div class="blaze-track">
-                        {% for sponsor in request.current_event.sponsors.all %}
+                        {% for sponsor in sponsors %}
                             <div>
-                                <img class="sponsor-logo" alt="{{ sponsor.company_name }}"
-                                     src="{{ MEDIA_URL }}{{ sponsor.logo }}">
+                                {% if sponsor.icon %}
+                                    <img class="sponsor-logo" alt="{{ sponsor.contributor_name }}" src="{{ sponsor.icon.url }}">
+                                {% else %}
+                                    <span class="sponsor-name">{{ sponsor.contributor_name }}</span>
+                                {% endif %}
                             </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
             <button name="Full Sponsors List" alt="View full list of sponsors"
-                    onclick="document.location.replace({% url 'sponsors:sponsor_list' %})">Full Sponsor List
+                    onclick="document.location.replace('{% url 'sponsors:sponsor_list' %}')">Full Sponsor List
             </button>
         </div>
         <script type="text/javascript">

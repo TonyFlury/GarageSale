@@ -16,6 +16,13 @@ from user_management.models import TeamAccessChange, TeamInvitation, TeamMember
                    PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
 class TeamAccessTests(TestCase):
     def setUp(self):
+        from tempfile import TemporaryDirectory
+        from pathlib import Path
+        from io import StringIO
+        from django.core.management import call_command
+        with TemporaryDirectory() as directory:
+            call_command('sync_access_policy', apply=True,
+                         backup=Path(directory) / 'permissions.json', stdout=StringIO())
         self.officer_group = Group.objects.get(name='Officer')
         self.permission = Permission.objects.get(codename='manage_team_access', content_type__app_label='user_management')
         self.officer = get_user_model().objects.create_user('officer@example.com', 'password', is_verified=True)
@@ -85,7 +92,7 @@ class TeamAccessTests(TestCase):
         profile = TeamMember.objects.get(user=self.person)
         self.assertEqual(profile.role, 'Volunteer')
         self.person.refresh_from_db()
-        self.assertEqual(self.person.get_all_permissions(), {'user_management.manage_own_profile'})
+        self.assertEqual(self.person.get_all_permissions(), {'GarageSale.manage_own_team_profile'})
         self.client.force_login(self.person)
         response = self.client.get(reverse('user_management:profile'))
         self.assertContains(response, 'Edit Profile')
@@ -179,12 +186,13 @@ class TeamAccessTests(TestCase):
         review = self.review(url, membership='ordinary', roles=[])
         self.assertContains(self.save_review(review, url), 'Keep at least one active Officer')
 
-    def test_legacy_permission_checker_preserves_management_and_readonly_audit_permissions(self):
+    def test_legacy_permission_command_delegates_to_policy_preview(self):
         from GarageSale.management.commands.CheckGroups import Command
-        command = Command()
-        command._identify_models_and_permissions('user_management', None, {})
-        self.assertIn('manage_team_access', command.found_perms['user_management']['userextended'])
-        self.assertEqual(command.found_perms['user_management']['teamaccesschange'], {'view_teamaccesschange'})
+        with patch('GarageSale.management.commands.CheckGroups.call_command') as command:
+            wrapper = Command()
+            wrapper.handle(autofix=False, backup=None)
+        command.assert_called_once_with('sync_access_policy', apply=False,
+                                        backup=None, stdout=wrapper.stdout)
 
     def test_stale_review_and_revoked_actor_permission_do_not_save(self):
         review = self.review()
@@ -208,6 +216,7 @@ class TeamAccessTests(TestCase):
         self.assertFalse(TeamAccessChange.objects.exists())
 
     def test_search_and_pagination_and_missing_prize_app(self):
+        Group.objects.filter(name='PrizeAllocationManager').delete()
         response = self.client.get(reverse('user_management:team_access'), {'scope': 'all', 'q': 'Pat'})
         self.assertContains(response, 'person@example.com')
         self.assertNotContains(response, 'other@example.com')
@@ -266,6 +275,23 @@ class TeamAccessTests(TestCase):
         self.assertEqual(self.client.get(url).status_code, 410)
         self.assertEqual(self.client.post(url, {'new_password1': password, 'new_password2': password}).status_code, 410)
         self.assertTrue(self.client.login(email=invitation.user.email, password=password))
+
+    def test_new_volunteer_invitation_uses_canonical_profile_access(self):
+        url = reverse('user_management:team_access_invite')
+        review = self.review(url, email='volunteer-new@example.com', first_name='New',
+                             last_name='Volunteer', membership='volunteer', roles=[])
+        self.assertEqual(self.save_review(review, url).status_code, 302)
+        invitation = TeamInvitation.objects.get(user__email='volunteer-new@example.com')
+        self.client.logout()
+        password = 'A-new-secure-password-937!'
+        acceptance = reverse('user_management:team_invitation', args=[invitation.token])
+        self.assertContains(self.client.post(acceptance, {
+            'new_password1': password, 'new_password2': password,
+        }), 'Your account is ready')
+        self.assertTrue(self.client.login(email=invitation.user.email, password=password))
+        self.assertEqual(self.client.get(reverse('user_management:profile')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('TeamPages:Root')).status_code, 403)
+        self.assertEqual(invitation.user.get_all_permissions(), {'GarageSale.manage_own_team_profile'})
 
     def test_invitation_expiry_resend_and_send_failure(self):
         invitation = self.invite()

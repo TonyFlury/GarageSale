@@ -1,0 +1,28 @@
+<h2>Choose an email template</h2>
+{% if selection_error %}<p role="alert">{{ selection_error }}</p>{% endif %}
+{% if selected_template %}
+    <p role="status">Selected template: <strong>{{ selected_template.summary|default:selected_template.subject }}</strong></p>
+    <p>Subject: {{ selected_template.subject }}</p>
+{% elif email_templates %}
+    <form method="post" action="{{ request.path }}">
+        {% csrf_token %}
+        <input type="hidden" name="toolbar_action" value="send_email">
+        <input type="hidden" name="email_template_choice" value="1">
+        {% for sponsor_id in selected_sponsor_ids %}
+            <input type="hidden" name="selected_contributor" value="{{ sponsor_id }}">
+        {% endfor %}
+        {% for filter in selected_filters %}
+            <input type="hidden" name="selected_filters" value="{{ filter }}">
+        {% endfor %}
+        <label for="sponsor-email-template">Available Sponsor templates</label>
+        <select id="sponsor-email-template" name="email_template_id" size="10" required>
+            <option value="" disabled selected>Choose a template</option>
+            {% for template in email_templates %}
+                <option value="{{ template.pk }}">{{ template.summary }}</option>
+            {% endfor %}
+        </select>
+        <div class="buttons"><button type="submit">Use template and send emails</button></div>
+    </form>
+{% else %}
+    <p role="alert">No email templates are currently available for Sponsors.</p>
+{% endif %}

@@ -839,12 +839,12 @@ class TeamMemberIDCard(EntryPointMixin, LoginRequiredMixin, PermissionRequiredMi
     entry_point_url = 'user_management:team_member_id_cards'
     entry_point_label = 'Id Cards'
     entry_point_icon = static('user_management/images/icons/id-cards-with-profile-images-variant-svgrepo-com.svg')
-    entry_point_permission = ('user_management.generate_id_card', 'GarageSale.is_manager')
+    entry_point_permission = 'user_management.generate_id_card'
     login_url = 'user_management:login'
     template_name = 'id_cards/request_id_cards.html'
 
     def has_permission(self):
-        return any(self.request.user.has_perm(permission) for permission in self.entry_point_permission)
+        return self.request.user.has_perm(self.entry_point_permission)
 
     def get(self, request):
 

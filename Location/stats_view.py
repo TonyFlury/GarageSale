@@ -29,12 +29,12 @@ import matplotlib.dates as mdates
 
 def require_report_access(user, export=False):
     permission = 'GarageSale.export_location' if export else 'Location.view_location'
-    if not (user.has_perm(permission) or user.has_perm('GarageSale.is_team_member')):
+    if not user.has_perm(permission):
         raise PermissionDenied('You do not have permission to access this report.')
 
 register('Ad Board Applications', 'Location:EventAdBoard',
          static('GarageSale/images/icons/navigation/ad-board-svgrepo-com.svg'),
-         permission=('Location.view_location', 'GarageSale.is_team_member'),
+         permission='Location.view_location',
          needs_event=False, nav_page='TeamPagesData')
 def event_ad_board(request):
     require_report_access(request.user)
@@ -135,7 +135,7 @@ def create_plot( event_id,  _type:str=''):
 
 register('Statistics','Location:EventStats',
          static('GarageSale/images/icons/navigation/statistics-svgrepo-com.svg'),
-         ('Location.view_location', 'GarageSale.is_team_member'), needs_event=False, nav_page='TeamPagesData')
+         'Location.view_location', needs_event=False, nav_page='TeamPagesData')
 def event_stats(request, event_id=None):
     """"Provide stats for this given event - so far it is counts of Billboard and sales locations """
 

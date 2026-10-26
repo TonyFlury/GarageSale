@@ -31,7 +31,7 @@ class FinancialYearClose(View):
     def get_object(self, queryset=None):
         return FinancialYear.objects.get(year=self.kwargs['fy'])
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         this_year = self.get_object()
         end_year = this_year.year_end.year
         this_year.active = False

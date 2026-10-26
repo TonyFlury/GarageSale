@@ -1,0 +1,14 @@
+{% extends "team_pages_base.html" %}
+{% block SnappableSections %}
+<main class="form">
+    <h1>{% if object %}Edit {{ object.name }}{% else %}Support New Charity{% endif %}</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="buttons">
+            <button type="submit">{% if object %}Save changes{% else %}Save new charity{% endif %}</button>
+            {% if object %}<a href="{% url 'TeamPages:SupportingDetail' object.pk %}">Cancel</a>{% else %}<a href="{% url 'TeamPages:SupportingList' %}">Cancel</a>{% endif %}
+        </div>
+    </form>
+</main>
+{% endblock %}
