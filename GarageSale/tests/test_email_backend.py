@@ -65,3 +65,48 @@ class EmailCredentialLookupTests(SimpleTestCase):
                                        'Internal Server Error', (), sys.exc_info())
         with self.assertLogs('GarageSale.middleware.email', level='WARNING'):
             AdminEmailHandler().handle(record)
+
+    @override_settings(EMAIL_CREDENTIALS={
+        'website@example.com': {'host': 'smtp.example.com', 'password': 'private-smtp-password'},
+    })
+    def test_smtp_acceptance_is_logged_with_a_stable_message_id_without_secrets(self):
+        message = EmailMessage('Private subject', 'Private invitation token',
+                               'website@example.com', ['private-recipient@example.com'])
+        with patch('GarageSale.middleware.email.smtp.EmailBackend') as backend, self.assertLogs(
+            'GarageSale.middleware.email', level='INFO',
+        ) as logs:
+            backend.return_value.__enter__.return_value.send_messages.return_value = 1
+            self.assertEqual(EmailExtended().send_messages([message]), 1)
+        output = '\n'.join(logs.output)
+        self.assertIn('SMTP accepted message', output)
+        self.assertIn("host='smtp.example.com'", output)
+        self.assertIn(message.extra_headers['Message-ID'], output)
+        for private in ('private-smtp-password', 'Private subject', 'Private invitation token',
+                        'private-recipient@example.com'):
+            self.assertNotIn(private, output)
+
+    @override_settings(EMAIL_CREDENTIALS={'website@example.com': {'host': 'smtp.example.com'}})
+    def test_smtp_failure_is_logged_and_still_raises(self):
+        from smtplib import SMTPAuthenticationError
+        message = EmailMessage('Invitation', 'Private token', 'website@example.com', ['invitee@example.com'])
+        with patch('GarageSale.middleware.email.smtp.EmailBackend') as backend, self.assertLogs(
+            'GarageSale.middleware.email', level='WARNING',
+        ) as logs:
+            backend.return_value.__enter__.return_value.send_messages.side_effect = SMTPAuthenticationError(
+                535, b'Authentication failed',
+            )
+            with self.assertRaises(SMTPAuthenticationError):
+                EmailExtended().send_messages([message])
+        self.assertIn('error_type=SMTPAuthenticationError smtp_code=535', logs.output[0])
+
+    @override_settings(EMAIL_CREDENTIALS={'website@example.com': {'host': 'smtp.example.com'}})
+    def test_zero_send_count_is_logged_and_stays_zero(self):
+        message = EmailMessage('Invitation', 'Test', 'website@example.com', ['invitee@example.com'],
+                               headers={'Message-ID': '<existing@example.com>'})
+        with patch('GarageSale.middleware.email.smtp.EmailBackend') as backend, self.assertLogs(
+            'GarageSale.middleware.email', level='WARNING',
+        ) as logs:
+            backend.return_value.__enter__.return_value.send_messages.return_value = 0
+            self.assertEqual(EmailExtended().send_messages([message]), 0)
+        self.assertIn('SMTP accepted no messages', logs.output[0])
+        self.assertEqual(message.extra_headers['Message-ID'], '<existing@example.com>')
