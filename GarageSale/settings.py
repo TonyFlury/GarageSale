@@ -82,6 +82,26 @@ if debug and TEST_SERVER:
     }
     import logging.config
     logging.config.dictConfig(LOGGING)
+else:
+    # Record the original exception before Django attempts an admin notification.
+    # PythonAnywhere captures StreamHandler output in the web app's error log.
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'request_errors': {
+                'class': 'logging.StreamHandler',
+                'level': 'ERROR',
+            },
+        },
+        'loggers': {
+            'django.request': {
+                'handlers': ['request_errors'],
+                'level': 'ERROR',
+                'propagate': True,
+            },
+        },
+    }
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
