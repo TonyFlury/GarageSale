@@ -166,8 +166,6 @@ TEMPLATES = [
                 'user_management_tags': "user_management.templatetags.user_extras",
                 'newsletter_tags': "News.templatetags.enrol",
                 'sponsor_tags': 'Sponsors.templatetags.social_media',
-                # TODO(legacy-removal): Remove with the retired Craft Market team pages.
-                'craftmarket': 'CraftMarket.templatetags.legacy_craftmarket_framework',
             },
             'context_processors': [
                 'django.template.context_processors.debug',

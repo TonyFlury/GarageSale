@@ -1,91 +1,59 @@
-from django.apps import apps
-from django.db.models import Max
-from django.test import TestCase
+from django.core.management import call_command
+from django.db import connection, connections
 from django.db.migrations.executor import MigrationExecutor
-from django.db.migrations.recorder import MigrationRecorder
+from django.test import TransactionTestCase
 
-from django.db import connection
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-def latest_applied_migration_names_by_app():
-    recorder = MigrationRecorder(connection)
-
-    latest = {}
-
-    migrations = (
-        recorder.migration_qs
-        .order_by("app", "applied", "id")
-        .values("app", "name")
-    )
-
-    for migration in migrations:
-        latest[migration["app"]] = migration["name"]
-
-    return latest
-
-class TestMigrations(TestCase):
-
-    @property
-    def app(self):
-        """Get the app for this test case
-            should be overidden if the test cases are in a child package (ie where the module is tests not an app"""
-        return apps.get_containing_app_config(type(self).__module__).name
+class TestMigrations(TransactionTestCase):
+    """Run fixed migration targets and always restore the test database schema."""
 
     migrate_from = None
     migrate_to = None
 
-    @staticmethod
-    def last_migration(app):
-        """Find the most recent migration from the app"""
-        try:
-            return MigrationRecorder.Migration.objects.filter(app=app).last().name
-        except (MigrationRecorder.Migration.DoesNotExist, AttributeError):
-            return None
-
-    @staticmethod
-    def first_migration( app):
-        """Find the most recent migration from the app"""
-        try:
-            return MigrationRecorder.Migration.objects.filter(app=app).first().name
-        except (MigrationRecorder.Migration.DoesNotExist, AttributeError):
-            return None
-
     def setUp(self):
-
-        migrations = latest_applied_migration_names_by_app()
-        p = {(app, name) for app, name in migrations.items() if app in ['CraftMarket', 'Contributors']}
-
-        assert self.migrate_from and self.migrate_to, \
-            "TestCase '{}' must define migrate_from and migrate_to properties".format(type(self).__name__)
-        if type(self.migrate_from) == str:
-            self.migrate_from = [(self.app, self.migrate_from)]
-        if type(self.migrate_from) == str:
-            self.migrate_to = [(self.app, self.migrate_to)]
+        super().setUp()
+        if not self.migrate_from or not self.migrate_to:
+            raise ValueError('Declare source and destination migration targets.')
         executor = MigrationExecutor(connection)
-
-
-        # Reverse to the original migration
-        executor.loader.build_graph()
+        self.restore_targets = executor.loader.graph.leaf_nodes()
+        self.addCleanup(self.restore_schema)
         executor.migrate(self.migrate_from)
-        old_apps = executor.loader.project_state().apps
-
-        migrations = latest_applied_migration_names_by_app()
-        executor.loader.build_graph()
-        p = {(app, name) for app, name in migrations.items() if app in ['CraftMarket', 'Contributors']}
-
-        self.setUpBeforeMigration(old_apps)
-
-        cm = old_apps.get_model('CraftMarket', 'Marketer').objects.all()
-
-
-        # Run the migration to test
+        source_nodes = [target for target in self.migrate_from if target[1] is not None]
+        self.old_apps = executor.loader.project_state(source_nodes).apps
+        self.setUpBeforeMigration(self.old_apps)
         executor = MigrationExecutor(connection)
-        executor.loader.build_graph()  # reload.
         executor.migrate(self.migrate_to)
-
         self.apps = executor.loader.project_state(self.migrate_to).apps
+        self.setUpAfterMigration(self.apps)
+
+    def restore_schema(self):
+        try:
+            # Remove migrated test rows before clearing their source fixtures.
+            executor = MigrationExecutor(connection)
+            executor.migrate(self.migrate_from)
+            nodes = [target for target in self.migrate_from if target[1] is not None]
+            self.clear_source_data(executor.loader.project_state(nodes).apps)
+        finally:
+            MigrationExecutor(connection).migrate(self.restore_targets)
+
+    def _fixture_teardown(self):
+        # Retained historical tables can reference live tables even when no
+        # runtime model exists for them. PostgreSQL then requires CASCADE.
+        for alias in self._databases_names(include_mirrors=False):
+            inhibit_post_migrate = self.available_apps is not None or (
+                self.serialized_rollback and hasattr(connections[alias], '_test_serialized_contents')
+            )
+            call_command(
+                'flush', verbosity=0, interactive=False, database=alias,
+                reset_sequences=False, allow_cascade=True,
+                inhibit_post_migrate=inhibit_post_migrate,
+            )
 
     def setUpBeforeMigration(self, apps):
+        pass
+
+    def setUpAfterMigration(self, apps):
+        pass
+
+    def clear_source_data(self, apps):
         pass

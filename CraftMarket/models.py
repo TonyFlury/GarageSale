@@ -1,12 +1,10 @@
-"""Compatibility imports for historical Craft Market tables and migrations.
+"""Upload-path compatibility for historical Craft Market migrations.
 
-The active trader data lives in Contributors.models. Keep the original ORM model
-names and upload callable import path until the legacy tables are removed by migration.
+Active trader data lives in Contributors.models. Historical migrations reconstruct
+the old models themselves, but still reference this upload callable by import path.
 """
-# TODO(legacy-removal): Remove these exports with the legacy tables after migration compatibility is retired.
-from .legacy_models import LegacyHistory, LegacyMarketer, LegacyMarketerState, save_logo_to
+from django.utils.text import slugify
 
-# Historical migration and Django model identities; use Legacy* names in runtime code.
-History = LegacyHistory
-Marketer = LegacyMarketer
-MarketerState = LegacyMarketerState
+
+def save_logo_to(instance, file_name: str) -> str:
+    return f'marketeer_{instance.event.event_date.year}/{slugify(instance.trading_name)}_{file_name}'

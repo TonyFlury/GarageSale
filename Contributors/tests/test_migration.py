@@ -1,471 +1,237 @@
 import datetime
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from django.conf import settings
-from django.core.files.uploadedfile import UploadedFile
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from django.utils.text import slugify
 
-import CraftMarket
-from CraftMarket.models import History, Marketer, MarketerState
-from Sponsors.models import Sponsor
-from GarageSale.models import EventData
 from .__common import TestMigrations
-
-import tempfile
-from Contributors.models import Contributor, ContributorHistory, ContributorEvent
-
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-# Turn off the default logging for CraftMarket models
-logger = logging.getLogger("CraftMarket.models")
-logger.setLevel(logging.WARNING)
 
 
 class BaseMigrationTests(TestMigrations):
-    """Base class for migration tests"""
-    migrate_from = []
-    migrate_to = []
-    def __init__(self, *args, **kwargs):
-        cls = self.__class__
-        cls.migrate_from = [('CraftMarket', cls.last_migration('CraftMarket')),
-                                             ('Contributors', None)]
-        cls.migrate_to = [('CraftMarket', cls.last_migration('CraftMarket')),
-                                            ('Contributors', cls.first_migration('Contributors')) ]
+    migrate_from = [
+        ('CraftMarket', '0011_alter_marketer_options'),
+        ('Sponsors', '0002_alter_sponsor_options'),
+        ('Contributors', None),
+    ]
+    migrate_to = [('Contributors', '0001_initial')]
 
-        super().__init__(*args, **kwargs)
+    def setUp(self):
+        media = TemporaryDirectory()
+        self.addCleanup(media.cleanup)
+        media_settings = override_settings(MEDIA_ROOT=media.name)
+        media_settings.enable()
+        self.addCleanup(media_settings.disable)
+        super().setUp()
 
-    def check_history(self, contributor):
-        return
-
-class MarketerMigrationsBase(BaseMigrationTests):
-    def __init__(self, *args, **kwargs):
-        self.cms=[]
-        self.events=[]
-        super().__init__(*args, **kwargs)
-
-    def fix_history(self):
-        """Correct the history for all marketeers in self.cms"""
-        for marketer in self.cms:
-            event_date = datetime.datetime.combine(marketer.event.event_date,
-                                                   datetime.time.min, tzinfo=datetime.UTC)
-            marketer.history.filter(state='NW').update(timestamp=event_date - datetime.timedelta(days=30))
-            marketer.history.filter(state='IN').update(timestamp=event_date - datetime.timedelta(days=29))
-            marketer.history.filter(state='CO').update(timestamp=event_date - datetime.timedelta(days=25))
-            marketer.history.filter(state='Re').update(timestamp=event_date - datetime.timedelta(days=25))
-
-    def check_history(self, contributor):
-        """Check the migrated history is the same as the original"""
-        if contributor.contributor_type == 'Marketer':
-            for event in self.events:
-                with self.subTest(event=event, msg=f'Checking history for all contributors for event {event}'):
-                    # The old history per event
-                    event_history = History.objects.filter(marketeer__trading_name=contributor.contributor_name,
-                                                           marketeer__event=event).exclude(state='NW').order_by('timestamp')
-                    # The contributor event history
-                    contributor_event_history = ContributorEvent.objects.filter(contributor=contributor, event=event).order_by(
-                        'timestamp')
-
-                    # Counts should be the same as a minimum
-                    self.assertEqual(event_history.count(), contributor_event_history.count(),
-                                     f' Counts for {event} do not agree {event_history.count()=} {contributor_event_history.count()=}')
-
-                    # For each history and contributor event, check that the status and timestamp agree
-                    for cm_history_item, co_history_item in zip(event_history, contributor_event_history):
-                        self.assertEqual({'IN': 'Invited', 'CO': 'Confirmed', 'RE': 'Rejected'}[cm_history_item.state],
-                                         co_history_item.status)
-                        self.assertEqual(cm_history_item.timestamp, co_history_item.timestamp)
-        super().check_history(contributor)
-
-
-class CraftMarketSingleMigration(MarketerMigrationsBase,):
-    """Test single migrated CraftMarket Instance is migrated correctly - ie
-    a single contributor is created with the correct details
-    and a single history record and HistoryEvent is created"""
     def setUpBeforeMigration(self, apps):
-        """Create a basic instance for a marketer"""
-        self.event = EventData.objects.create( event_date = datetime.date(year=2025, month=6, day=20), use_from = datetime.date(year=2025, month=6, day=19))
+        self.EventData = apps.get_model('GarageSale', 'EventData')
+        self.Marketer = apps.get_model('CraftMarket', 'Marketer')
+        self.History = apps.get_model('CraftMarket', 'History')
+        self.Sponsor = apps.get_model('Sponsors', 'Sponsor')
+        self.seed_records()
 
-        instance = Marketer.objects.create( event = self.event,
-                           trading_name= 'B&M wood working', email='bm.wood_working@marketer.com',
-                          contact_name='Bary wood')
+    def setUpAfterMigration(self, apps):
+        self.Contributor = apps.get_model('Contributors', 'Contributor')
+        self.ContributorHistory = apps.get_model('Contributors', 'ContributorHistory')
+        self.ContributorEvent = apps.get_model('Contributors', 'ContributorEvent')
+        self.Contributions = apps.get_model('Contributors', 'Contributions')
 
-        self.new_time_stamp = History.objects.filter(marketeer=instance, state='NW').first().timestamp
+    def clear_source_data(self, apps):
+        # A normal flush may not discover tables without live model definitions.
+        apps.get_model('CraftMarket', 'History').objects.all().delete()
+        apps.get_model('CraftMarket', 'Marketer').objects.all().delete()
+        apps.get_model('Sponsors', 'Sponsor').objects.all().delete()
 
-        instance.update_state(MarketerState.Invited, send_email=False)
+    def seed_records(self):
+        pass
 
-        self.invite_time_stamp = History.objects.filter(marketeer=instance, state=MarketerState.Invited).first().timestamp
+    def create_event(self, year):
+        return self.EventData.objects.create(
+            event_date=datetime.date(year, 6, 20), use_from=datetime.date(year, 6, 19),
+        )
 
-        instance.update_state(MarketerState.Confirmed, send_email=False)
-        self.confirm_time_stamp = History.objects.filter(marketeer=instance, state=MarketerState.Confirmed).first().timestamp
+    def create_marketer(self, event, name='B&M wood working', contact='Bary Wood', states=('IN', 'CO')):
+        marketer = self.Marketer.objects.create(
+            event_id=event.pk, trading_name=name, contact_name=contact,
+            email=f'{slugify(name)}@marketer.example.com',
+        )
+        origin = datetime.datetime.combine(event.event_date, datetime.time.min, tzinfo=datetime.UTC)
+        for state in ('NW', *states):
+            history = self.History.objects.create(marketeer_id=marketer.pk, state=state)
+            days_before = {'NW': 30, 'IN': 29, 'CO': 25, 'RE': 25}[state]
+            # Historical managers/save methods do not create or date history.
+            self.History.objects.filter(pk=history.pk).update(timestamp=origin - datetime.timedelta(days=days_before))
+        return marketer
+
+    def create_sponsor(self, event, name='Sponsor1', confirmed=False, gift=None, logo=b'logo'):
+        sponsor = self.Sponsor.objects.create(
+            event_id=event.pk, company_name=name, email=f'{slugify(name)}@sponsor.example.com',
+            description=f'Sponsor for {event.event_date.year}', confirmed=confirmed, gift=gift,
+            logo=SimpleUploadedFile('logo.jpg', logo, content_type='image/jpeg') if logo is not None else '',
+        )
+        timestamp = datetime.datetime.combine(event.event_date, datetime.time.min, tzinfo=datetime.UTC) - datetime.timedelta(days=30)
+        self.Sponsor.objects.filter(pk=sponsor.pk).update(creation_date=timestamp)
+        sponsor.refresh_from_db()
+        return sponsor
+
+    def check_marketer(self, contributor, records):
+        matching = [record for record in records if record.trading_name == contributor.contributor_name]
+        latest = max(matching, key=lambda record: record.event.event_date)
+        self.assertEqual((contributor.contributor_type, contributor.email, contributor.contact_name),
+                         ('Marketer', latest.email, latest.contact_name))
+        expected = self.History.objects.filter(marketeer_id__in=[record.pk for record in matching])
+        created_at = expected.filter(state='NW').order_by('timestamp').first().timestamp
+        self.assertEqual(self.ContributorHistory.objects.get(contributor_id=contributor.pk, event_type='Create').timestamp, created_at)
+        expected_events = sorted(
+            (row.marketeer.event_id, {'IN': 'Invited', 'CO': 'Confirmed', 'RE': 'Rejected'}[row.state], row.timestamp)
+            for row in expected.exclude(state='NW').select_related('marketeer')
+        )
+        actual_events = sorted(self.ContributorEvent.objects.filter(contributor_id=contributor.pk).values_list('event_id', 'status', 'timestamp'))
+        self.assertEqual(actual_events, expected_events)
+
+    def check_sponsor(self, contributor, records):
+        matching = sorted((record for record in records if record.company_name == contributor.contributor_name), key=lambda record: record.creation_date)
+        latest = matching[-1]
+        self.assertEqual((contributor.contributor_type, contributor.email, contributor.description, contributor.contact_name),
+                         ('Sponsor', latest.email, latest.description, ''))
+        self.assertEqual(self.ContributorHistory.objects.get(contributor_id=contributor.pk, event_type='Create').timestamp,
+                         matching[0].creation_date)
+        self.assertEqual(
+            sorted(self.ContributorEvent.objects.filter(contributor_id=contributor.pk).values_list('event_id', 'status', 'timestamp')),
+            sorted((record.event_id, 'Confirmed', record.creation_date) for record in matching if record.confirmed),
+        )
+        self.assertEqual(
+            sorted(self.Contributions.objects.filter(contributor_id=contributor.pk).values_list('event_id', 'gift')),
+            sorted((record.event_id, record.gift) for record in matching if record.confirmed and record.gift is not None),
+        )
+        with_logo = [record for record in matching if record.logo]
+        if with_logo:
+            original = with_logo[-1]
+            self.assertEqual(Path(contributor.icon.path).parent, Path(settings.MEDIA_ROOT) / 'contributors')
+            self.assertEqual(Path(contributor.icon.path).name, f'{slugify(contributor.contributor_name)}_logo.jpg')
+            with contributor.icon.open('rb') as copied, original.logo.open('rb') as source:
+                self.assertEqual(copied.read(), source.read())
+        else:
+            self.assertFalse(contributor.icon)
+
+
+class CraftMarketSingleMigration(BaseMigrationTests):
+    def seed_records(self):
+        event = self.create_event(2025)
+        self.event_id = event.pk
+        self.marketer = self.create_marketer(event)
 
     def test_simple_case_migration(self):
-        contributor_list = Contributor.objects.all()
-        self.assertEqual(len(contributor_list), 1)
-        contributor = contributor_list[0]
-        self.assertEqual(contributor.contributor_type, 'Marketer')
+        self.assertEqual(self.Contributor.objects.count(), 1)
+        contributor = self.Contributor.objects.get()
         self.assertEqual(contributor.contributor_name, 'B&M wood working')
-        self.assertEqual(contributor.email, 'bm.wood_working@marketer.com')
+        self.check_marketer(contributor, [self.marketer])
 
     def test_timestamps_migrated(self):
-        contributor_list = Contributor.objects.all()
-        self.assertEqual(len(contributor_list), 1)
-        contributor = contributor_list[0]
+        self.check_marketer(self.Contributor.objects.get(), [self.marketer])
+        self.assertEqual(self.ContributorEvent.objects.filter(event_id=self.event_id).count(), 2)
 
-        creation = ContributorHistory.objects.filter(contributor=contributor,
-                                                     event_type='Create')
-        self.assertEqual(creation.count(), 1)
-        self.assertEqual(creation[0].timestamp, self.new_time_stamp)
 
-        invite = ContributorEvent.objects.filter(contributor=contributor,status='Invited', event=self.event)
-        self.assertEqual(invite.count(), 1)
-        self.assertEqual(invite[0].timestamp, self.invite_time_stamp)
-
-        confirm = ContributorEvent.objects.filter(contributor=contributor,status='Confirmed', event=self.event)
-        self.assertEqual(confirm.count(), 1)
-        self.assertEqual(confirm[0].timestamp, self.confirm_time_stamp)
-
-    #ToDO - test two CraftMarketer instances with the same name on different events.
-
-class CraftMarketMultipleEventMigration(MarketerMigrationsBase):
-    """Test two CraftMarket Instances for the same trader on different events are migrated correctly - ie
-    a single contributor is created with the correct details
-    and a single history record and the appropriate HistoryEvents are created"""
-    def setUpBeforeMigration(self, apps):
-        """Create a basic instance for a marketer on multiple events.
-           This should record only one contributor with details from the most recent
-           the combined history should reflect both instances.
-        """
-        self.events = [ EventData.objects.create( event_date = datetime.date(year=2025, month=6, day=20), use_from = datetime.date(year=2025, month=6, day=19)),
-                        EventData.objects.create( event_date = datetime.date(year=2024, month=6, day=20), use_from = datetime.date(year=2024, month=6, day=19)) ]
-
-        self.cms = [Marketer.objects.create(event = self.events[1], trading_name='B&M wood working',
-                                           email='bm.wood_working@marketer.com',
-                                           contact_name='Bary wood'),
-                    Marketer.objects.create(event=self.events[0], trading_name='B&M wood working',
-                                            email='bm.wood_working@marketer.com',
-                                            contact_name='Linda Wood') ]
-
-        self.cms[0].update_state(MarketerState.Invited, send_email=False)
-        self.cms[0].update_state(MarketerState.Rejected, send_email=False)
-
-        self.cms[1].update_state(MarketerState.Invited, send_email=False)
-        self.cms[1].update_state(MarketerState.Confirmed, send_email=False)
-
-        # Fix history for the marketer to be more realistic.
-        # For the sake of the migration, make the record so that the marketer is created 30 days before the event
-        # Invites are sent 25 days before the event, and Confirmation/Rejections are marked 25 days before.
-        self.fix_history()
+class CraftMarketMultipleEventMigration(BaseMigrationTests):
+    def seed_records(self):
+        self.marketers = [
+            self.create_marketer(self.create_event(2024), states=('IN', 'RE')),
+            self.create_marketer(self.create_event(2025), contact='Linda Wood'),
+        ]
 
     def test_single_contributor(self):
-        """Confirm that only one contributor is created with details from the most recent event"""
-        contributors = Contributor.objects.all()
-        self.assertEqual(len(contributors),1)
-        co = contributors[0]
-        latest = max(self.cms, key=lambda x: x.event.event_date)
-        earliest = min(self.cms, key=lambda x: x.event.event_date)
-
-        self.assertEqual(co.contributor_type, 'Marketer')
-        self.assertEqual(co.contributor_name, latest.trading_name)
-        self.assertEqual(co.email, latest.email)
-        self.assertEqual(co.contact_name, latest.contact_name)
+        self.assertEqual(self.Contributor.objects.count(), 1)
+        self.check_marketer(self.Contributor.objects.get(), self.marketers)
 
     def test_history_combined(self):
-        """Confirm that the combined history records the two events"""
-        co = Contributor.objects.all()[0]
-        history = ContributorHistory.objects.filter(contributor=co)
-        latest = max(self.cms, key=lambda x: x.event.event_date)
-        earliest = min(self.cms, key=lambda x: x.event.event_date)
+        self.assertEqual(self.ContributorHistory.objects.count(), 1)
+        self.assertEqual(self.ContributorEvent.objects.count(), 4)
+        self.check_marketer(self.Contributor.objects.get(), self.marketers)
 
-        # Only one history event - the creation of this contributor
-        self.assertEqual(history.count(), 1)
-        self.assertEqual(history[0].event_type, 'Create')
-        self.assertEqual(history[0].timestamp,
-                        earliest.history.filter(state=MarketerState.New).first().timestamp)
 
-        # Check event history - there should be 4 events - 2 invites, 1 Reject and 1 confirm
-        event_history = ContributorEvent.objects.filter(contributor=co)
-        self.assertEqual(event_history.count(), 4)
-
-        # For every fundraising event, there check that the history records the same status and timestamp
-        self.check_history( co )
-
-class CraftMarketMultiContributorMigration(MarketerMigrationsBase):
-    """Test two different CraftMarket Instances for different traders
-     on different events are migrated correctly - ie
-     Multiple contributors are created with the correct details
-     The correct history records are created, and the appropriate HistoryEvents are created"""
-    def setUpBeforeMigration(self, apps):
-        """Create a set of instances for multiple marketers on multiple events.
-           This should record only one contributor with details from the most recent
-           the combined history should reflect both instances.
-        """
-        self.events = [ EventData.objects.create( event_date = datetime.date(year=2025, month=6, day=20),
-                                                  use_from = datetime.date(year=2025, month=6, day=19)),
-                        EventData.objects.create( event_date = datetime.date(year=2024, month=6, day=20),
-                                                  use_from = datetime.date(year=2024, month=6, day=19)) ]
-
-        self.cms = [Marketer.objects.create(event = self.events[0], trading_name='B&M wood working',
-                                           email='bm.wood_working@marketer.com',
-                                           contact_name='Bary wood'),
-                    Marketer.objects.create(event=self.events[1], trading_name='B&M wood working',
-                                            email='bm.wood_working@marketer.com',
-                                            contact_name='Linda Wood'),
-                    Marketer.objects.create(event=self.events[0], trading_name='Art by John',
-                                            email='art@marketer.com',
-                                            contact_name='John Smith')]
-
-        # Invite the first Marketer to the relevant, with a rejection event.
-        self.cms[0].update_state(MarketerState.Invited, send_email=False)
-        self.cms[0].update_state(MarketerState.Rejected, send_email=False)
-
-        # Invite and confirm the second Marketer to the relevant, with a confirmation event.
-        self.cms[1].update_state(MarketerState.Invited, send_email=False)
-        self.cms[1].update_state(MarketerState.Confirmed, send_email=False)
-
-        # Invite and confirm the third Marketer to the relevant, with a confirmation event.
-        self.cms[2].update_state(MarketerState.Invited, send_email=False)
-        self.cms[2].update_state(MarketerState.Confirmed, send_email=False)
-
-        # Fix history for the marketer to be more realistic.
-        self.fix_history()
+class CraftMarketMultiContributorMigration(BaseMigrationTests):
+    def seed_records(self):
+        older, newer = self.create_event(2024), self.create_event(2025)
+        # Deliberately create the newer record first: timestamp determines recency.
+        self.marketers = [self.create_marketer(newer, states=('IN', 'RE')),
+                          self.create_marketer(older, contact='Linda Wood'),
+                          self.create_marketer(newer, name='Art by John', contact='John Smith')]
 
     def test_multiple_contributors(self):
-        """Confirm that only one contributor is created with details from the most recent event"""
-        contributors = Contributor.objects.all()
-        self.assertEqual(len(contributors), 2)
+        self.assertEqual(self.Contributor.objects.count(), 2)
+        for contributor in self.Contributor.objects.all():
+            with self.subTest(name=contributor.contributor_name):
+                self.check_marketer(contributor, self.marketers)
 
-        # Of the two contributors - the data for the first should be that for 2nd Marketer - as it
-        # more recent than the first entry for the same trader.
-        # Should test this in case the migrations are out of order
-        for contributor in contributors:
-            with self.subTest(contributor=contributor, msg=f'Checking history for all contributors for {contributor}'):
-                # find the latest original marketer from the test data
-                all = [item for item in self.cms if item.trading_name==contributor.contributor_name]
-                latest = max(all, key=lambda x: x.event.event_date)
-                earliest = min(all, key=lambda x: x.event.event_date)
 
-                self.assertEqual(contributor.contributor_type, 'Marketer')
-                self.assertEqual(contributor.contributor_name, latest.trading_name)
-                self.assertEqual(contributor.email, latest.email)
-                self.assertEqual(contributor.contact_name, latest.contact_name)
-
-                # Check the creation date is correctly recorded
-                creation = ContributorHistory.objects.filter(contributor=contributor, event_type='Create')
-                self.assertEqual(creation.count(), 1)
-                self.assertEqual(creation[0].timestamp, earliest.history.filter(state=MarketerState.New).first().timestamp)
-
-                self.check_history(contributor)
-
-class SponsorMigrationsBase(BaseMigrationTests):
-    """Base class for migration tests"""
-
-    def __init__(self, *args, **kwargs):
-        self.logo=[]
-        self.sponsors=[]
-        self.events=[]
-        self.upload_files=[]
-        super().__init__(*args, **kwargs)
-
-    def check_history(self, contributor):
-        """Check the migrated history is the same as the original"""
-
-        if contributor.contributor_type == 'Sponsor':
-            earliest = min([sponsor for sponsor in self.sponsors if sponsor.company_name == contributor.contributor_name],
-                           key=lambda x: x.creation_date)
-            co_history = ContributorHistory.objects.filter(contributor=contributor, event_category='Data',
-                                                               event_type='Create', timestamp=earliest.creation_date)
-            self.assertEqual(co_history.count(), 1)
-            for sponsor_history, con_history in zip(
-                    Sponsor.objects.filter(company_name=contributor.contributor_name).order_by('creation_date'),
-                    ContributorEvent.objects.filter(contributor=contributor, status='Confirm').order_by('timestamp')):
-                self.assertEqual(sponsor_history.creation_date, con_history.timestamp)
-                self.assertEqual(sponsor_history.event, con_history.event)
-
-        super().check_history(contributor)
-
-    def check_icon(self,contributor):
-        """Check the icon is created and has the correct name and location"""
-        latest = [sponsor for sponsor in self.sponsors if sponsor.company_name == contributor.contributor_name][-1]
-        self.assertEqual(Path(contributor.icon.path).name,
-                         f'{Path(latest.logo.path).name}')
-        self.assertEqual(Path(contributor.icon.path).parent, Path(settings.MEDIA_ROOT).absolute()/'contributors')
-
-        with open(contributor.icon.path, 'rb') as f:
-            self.assertEqual(f.read(), latest.logo.read())
-
-class SponsorSingleMigration(SponsorMigrationsBase):
-    """Test a single Spoonsor Instance is migrated correctly - ie
-    a single contributor is created with the correct details
-    and a single history record and HistoryEvent is created"""
-    def setUpBeforeMigration(self, apps):
-        """Create a basic instance for a sponsor"""
-        self.logo = [tempfile.NamedTemporaryFile(suffix=".jpg")]
-        for index, l in enumerate(self.logo):
-            with open(l.name, 'wb') as f:
-                f.write(f'logo {index}'.encode(encoding='utf-8'))
-        self.upload_files = [UploadedFile(open(self.logo[0].name, 'rb'), self.logo[0].name, content_type='image/jpeg')]
-        self.event = [EventData.objects.create( event_date = datetime.date(year=2025, month=6, day=20), use_from = datetime.date(year=2025, month=6, day=19))]
-        self.sponsors = [Sponsor.objects.create( event=self.event[0], company_name='Sponsor1', logo=self.upload_files[0],
-                                                description='Sponsor for event 0',
-                                               email='sponsor1@sponsors.com')]
+class SponsorSingleMigration(BaseMigrationTests):
+    def seed_records(self):
+        self.sponsors = [self.create_sponsor(self.create_event(2025), confirmed=True, gift='A hamper')]
 
     def test_simple_case_migration(self):
-        contributors = Contributor.objects.all()
-        self.assertEqual(contributors.count(), 1)
-        co = contributors[0]
-        sp = self.sponsors[0]
-        self.assertEqual((co.contributor_type, co.contributor_name, co.email, co.description, co.contact_name),
-                         ('Sponsor', sp.company_name, sp.email, sp.description, '') )
+        self.assertEqual(self.Contributor.objects.count(), 1)
+        self.check_sponsor(self.Contributor.objects.get(), self.sponsors)
 
-        #Check history
-        self.check_history(co)
-        self.check_icon(co)
 
-class SponsorMultipleEventMigration(SponsorMigrationsBase):
-    """Test a Multiple Spoonsor Instance on the different event are migrated correctly - ie
-    a single contributor is created with the correct details
-    and a single history record and HistoryEvent is created"""
-    def setUpBeforeMigration(self, apps):
-        """Create a basic instance for a sponsor"""
-
-        self.logo = [tempfile.NamedTemporaryFile(suffix=".jpg"), tempfile.NamedTemporaryFile(suffix=".jpg")]
-        for index, l in enumerate(self.logo):
-            with open(l.name, 'wb') as f:
-                f.write(f'logo {index}'.encode(encoding='utf-8'))
-        self.upload_files = [UploadedFile(open(logo.name, 'rb'), logo.name, content_type='image/jpeg') for logo in self.logo]
-        self.event = [EventData.objects.create( event_date = datetime.date(year=2024, month=6, day=20),
-                                                use_from = datetime.date(year=2024, month=6, day=19)),
-                      EventData.objects.create(event_date=datetime.date(year=2025, month=6, day=20),
-                                               use_from=datetime.date(year=2025, month=6, day=19)),
-                      ]
-
-        self.sponsors = [Sponsor.objects.create( event=self.event[0], company_name='Sponsor1', logo=self.upload_files[0],
-                                               description='Sponsor for event 1',
-                                               email='sponsor1@sponsors.com'),
-                         Sponsor.objects.create(event=self.event[1], company_name='Sponsor1', logo=self.upload_files[1],
-                                                description='Sponsor for event 2',
-                                                email='sponsor1@sponsors.com')
-                         ]
+class SponsorMultipleEventMigration(BaseMigrationTests):
+    def seed_records(self):
+        self.sponsors = [self.create_sponsor(self.create_event(2024), confirmed=True, gift='A voucher', logo=b'old logo'),
+                         self.create_sponsor(self.create_event(2025), confirmed=True, gift='A hamper', logo=b'new logo')]
 
     def test_simple_case_migration(self):
-        contributors = Contributor.objects.all()
-        self.assertEqual(contributors.count(), 1)
-        co = contributors[0]
+        self.assertEqual(self.Contributor.objects.count(), 1)
+        self.check_sponsor(self.Contributor.objects.get(), self.sponsors)
 
-        # latest entry for this sponsor is the last entry
-        sp = [sponsor for sponsor in self.sponsors if sponsor.company_name == co.contributor_name][-1]
-        self.assertEqual((co.contributor_type, co.contributor_name, co.email, co.description, co.contact_name),
-                         ('Sponsor', sp.company_name, sp.email, sp.description, '') )
 
-        #Check history
-        self.check_history(co)
-        self.check_icon(co)
-
-class SponsorMultipleContributorMigration(SponsorMigrationsBase):
-    """Test a Multiple Spoonsor Instance on the different event are migrated correctly - ie
-    a single contributor is created with the correct details
-    and a single history record and HistoryEvent is created"""
-    def setUpBeforeMigration(self, apps):
-        """Create a basic instance for a sponsor"""
-
-        self.logo = [tempfile.NamedTemporaryFile(suffix=".jpg"), tempfile.NamedTemporaryFile(suffix=".jpg"), tempfile.NamedTemporaryFile(suffix=".jpg")]
-        for index, l in enumerate(self.logo):
-            with open(l.name, 'wb') as f:
-                f.write(f'logo {index}'.encode(encoding='utf-8'))
-        self.upload_files = [UploadedFile(open(logo.name, 'rb'), logo.name, content_type='image/jpeg') for logo in self.logo]
-        self.event = [EventData.objects.create( event_date = datetime.date(year=2024, month=6, day=20),
-                                                use_from = datetime.date(year=2024, month=6, day=19)),
-                      EventData.objects.create(event_date=datetime.date(year=2025, month=6, day=20),
-                                               use_from=datetime.date(year=2025, month=6, day=19)),
-                      ]
-
-        self.sponsors = [Sponsor.objects.create( event=self.event[0], company_name='Sponsor1', logo=self.upload_files[0],
-                                               description='Sponsor for event 1',
-                                               email='sponsor1@sponsors.com'),
-                         Sponsor.objects.create(event=self.event[1], company_name='Sponsor1', logo=self.upload_files[1],
-                                                description='Sponsor for event 2',
-                                                email='sponsor1@sponsors.com'),
-                         Sponsor.objects.create(event=self.event[1], company_name='Sponsor2', logo=self.upload_files[2],
-                                                description='Sponsor for event 2',
-                                                email='sponsor2@sponsors.com')
-                         ]
+class SponsorMultipleContributorMigration(BaseMigrationTests):
+    def seed_records(self):
+        older, newer = self.create_event(2024), self.create_event(2025)
+        self.sponsors = [self.create_sponsor(older), self.create_sponsor(newer, confirmed=True, gift='A hamper'),
+                         self.create_sponsor(newer, name='Sponsor2', confirmed=True, gift='A voucher')]
 
     def test_simple_case_migration(self):
-        contributors = Contributor.objects.all()
-        self.assertEqual(contributors.count(), len(set([sponsor.company_name for sponsor in self.sponsors])))
-        for co in contributors:
-            # latest entry for this sponsor is the last entry
-            sp = [sponsor for sponsor in self.sponsors if sponsor.company_name == co.contributor_name][-1]
-            self.assertEqual((co.contributor_type, co.contributor_name, co.email, co.description, co.contact_name),
-                             ('Sponsor', sp.company_name, sp.email, sp.description, '') )
+        self.assertEqual(self.Contributor.objects.count(), 2)
+        for contributor in self.Contributor.objects.all():
+            with self.subTest(name=contributor.contributor_name):
+                self.check_sponsor(contributor, self.sponsors)
 
-            #Check history
-            self.check_history(co)
-            self.check_icon(co)
 
-class CombinedSponsorMarketerMigration(SponsorMigrationsBase, MarketerMigrationsBase):
-    """Test a Multiple Spoonsor Instance on the different event are migrated correctly - ie
-    a single contributor is created with the correct details
-    and a single history record and HistoryEvent is created"""
-    def setUpBeforeMigration(self, apps):
-
-        self.logo = [tempfile.NamedTemporaryFile(suffix=".jpg"), tempfile.NamedTemporaryFile(suffix=".jpg"), tempfile.NamedTemporaryFile(suffix=".jpg")]
-        self.upload_files = [UploadedFile(open(logo.name, 'rb'), logo.name, content_type='image/jpeg') for logo in self.logo]
-        self.events = [EventData.objects.create( event_date = datetime.date(year=2024, month=6, day=20),
-                                                  use_from = datetime.date(year=2024, month=6, day=19)),
-                        EventData.objects.create(event_date=datetime.date(year=2025, month=6, day=20),
-                                                 use_from=datetime.date(year=2025, month=6, day=19)),
-                        ]
-        self.cms = [Marketer.objects.create(event=self.events[0], trading_name='B&M wood working',
-                                            email='bm.wood_working@marketer.com',
-                                            contact_name='Bary wood'),
-                    Marketer.objects.create(event=self.events[1], trading_name='B&M wood working',
-                                            email='bm.wood_working@marketer.com',
-                                            contact_name='Linda Wood'),
-                    Marketer.objects.create(event=self.events[0], trading_name='Art by John',
-                                            email='art@marketer.com',
-                                            contact_name='John Smith')]
-
-        # Invite the first Marketer to the relevant, with a rejection event.
-        self.cms[0].update_state(MarketerState.Invited, send_email=False)
-        self.cms[0].update_state(MarketerState.Rejected, send_email=False)
-
-        # Invite and confirm the second Marketer to the relevant, with a confirmation event.
-        self.cms[1].update_state(MarketerState.Invited, send_email=False)
-        self.cms[1].update_state(MarketerState.Confirmed, send_email=False)
-
-        # Invite and confirm the third Marketer to the relevant, with a confirmation event.
-        self.cms[2].update_state(MarketerState.Invited, send_email=False)
-        self.cms[2].update_state(MarketerState.Confirmed, send_email=False)
-
-        self.fix_history()
-        self.sponsors = [Sponsor.objects.create( event=self.events[0], company_name='Sponsor1', logo=self.upload_files[0],
-                                                 description='Sponsor for event 0',),
-                         Sponsor.objects.create(event=self.events[1], company_name='Sponsor1', logo=self.upload_files[1],
-                                                description='Sponsor for event 1',),
-                         Sponsor.objects.create(event=self.events[0], company_name='Sponsor2', logo=self.upload_files[2],
-                                                description='Sponsor for event 2',)]
+class CombinedSponsorMarketerMigration(BaseMigrationTests):
+    def seed_records(self):
+        older, newer = self.create_event(2024), self.create_event(2025)
+        self.marketers = [self.create_marketer(older, states=('IN', 'RE')),
+                          self.create_marketer(newer, contact='Linda Wood'),
+                          self.create_marketer(newer, name='Art by John', contact='John Smith')]
+        self.sponsors = [self.create_sponsor(older), self.create_sponsor(newer, confirmed=True, gift='A hamper'),
+                         self.create_sponsor(older, name='Sponsor2')]
 
     def test_multi_contributor_migrations(self):
+        self.assertEqual(self.Contributor.objects.count(), 4)
+        for contributor in self.Contributor.objects.all():
+            with self.subTest(name=contributor.contributor_name):
+                if contributor.contributor_type == 'Marketer':
+                    self.check_marketer(contributor, self.marketers)
+                else:
+                    self.check_sponsor(contributor, self.sponsors)
 
-        # Based on the data we will have 4 contributors
-        contributors = Contributor.objects.all()
-        self.assertEqual(contributors.count(), len(set(sponsor.company_name for sponsor in self.sponsors)) +
-                                                 len(set(cms.trading_name for cms in self.cms)))
-        for co in contributors:
-            match co.contributor_type:
-                case 'Marketer':
-                    with self.subTest(f'Checking marketer {co.contributor_name}'):
-                        entry = [cms for cms in self.cms if cms.trading_name == co.contributor_name][-1]
-                        self.assertEqual((co.contributor_type, co.contributor_name, co.email, co.contact_name, co.description, ),
-                                 ('Marketer', entry.trading_name, entry.email, entry.contact_name, ''))
-                        self.check_history(co)
-                case 'Sponsor':
-                    with self.subTest(f'Checking Sponsor {co.contributor_name}'):
-                        # latest entry for this sponsor is the last entry
-                        sp = [sponsor for sponsor in self.sponsors if sponsor.company_name == co.contributor_name][-1]
-                        self.assertEqual((co.contributor_type, co.contributor_name, co.email, co.description, co.contact_name),
-                                 ('Sponsor', sp.company_name, sp.email, sp.description, '') )
-                        self.check_history(co)
-                        self.check_icon(co)
+
+class UnconfirmedSponsorMigration(BaseMigrationTests):
+    def seed_records(self):
+        self.sponsors = [self.create_sponsor(self.create_event(2025), gift='Not confirmed', logo=None)]
+
+    def test_unconfirmed_sponsor_has_no_confirmations_or_contributions(self):
+        self.check_sponsor(self.Contributor.objects.get(), self.sponsors)
+        self.assertFalse(self.ContributorEvent.objects.exists())
+        self.assertFalse(self.Contributions.objects.exists())
+
+
+class EarlierSponsorLogoMigration(BaseMigrationTests):
+    def seed_records(self):
+        self.sponsors = [self.create_sponsor(self.create_event(2024), logo=b'earlier logo'),
+                         self.create_sponsor(self.create_event(2025), logo=None)]
+
+    def test_earlier_logo_is_preserved_when_latest_record_has_none(self):
+        self.check_sponsor(self.Contributor.objects.get(), self.sponsors)

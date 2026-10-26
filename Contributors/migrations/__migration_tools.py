@@ -8,8 +8,6 @@ from django.db import models
 from django.db.models import Model
 from django.utils.text import slugify
 
-from Contributors.models import Contributor
-
 """
 A set of helper functions to migrate from Sponsors and Marketers to the new Contributor model
 
@@ -78,7 +76,7 @@ class MigrationHelper :
                 'socials' : json.dumps(socials_dict)
                 }
 
-    def migrate_history(self, contributor: Contributor):
+    def migrate_history(self, contributor: Model):
             match self.app:
                 case 'CraftMarket':
                     self._construct_marketer_history( contributor)
@@ -87,7 +85,7 @@ class MigrationHelper :
                 case _:
                     raise ValueError(f'Unknown app {self.app}')
 
-    def _construct_marketer_history(self, contributor: Contributor):
+    def _construct_marketer_history(self, contributor: Model):
         """Construct the Event history based on the history data for this Marketer """
         self.history_model = self.apps.get_model(self.app, 'History')
 
@@ -105,7 +103,7 @@ class MigrationHelper :
                                                            timestamp=each_history.timestamp)
 
 
-    def _construct_sponsor_history(self, contributor: Contributor):
+    def _construct_sponsor_history(self, contributor: Model):
         """There is no history in this case, so we recreate a pseudo history based on the low level data
            for example : confirmation date is not recorded at all, so we pretend that the contribution is confirmed on the
            creation date.
@@ -147,7 +145,7 @@ class MigrationHelper :
         return creation_date, most_recent_info
 
 
-    def migrate_logo(self, contributor: Contributor):
+    def migrate_logo(self, contributor: Model):
         logo_field = self.field_map.get('logo', 'logo')
         if self.app == 'CraftMarket':
             order_by = 'event__event_date'

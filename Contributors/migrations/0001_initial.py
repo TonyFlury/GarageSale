@@ -42,8 +42,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('CraftMarket', '__latest__'),
-        ('Sponsors', '__latest__')
+        ('CraftMarket', '0011_alter_marketer_options'),
+        ('Sponsors', '0002_alter_sponsor_options')
     ]
 
     operations = [
