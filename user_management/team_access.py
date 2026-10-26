@@ -1,5 +1,6 @@
 """Officer-facing membership management; only the listed groups are editable."""
 from datetime import timedelta
+import logging
 from smtplib import SMTPException
 from uuid import uuid4
 
@@ -27,6 +28,7 @@ from TeamPageFramework.entry_point import EntryPointMixin
 from .models import TeamAccessChange, TeamInvitation, TeamMember
 
 PERMISSION = 'user_management.manage_team_access'
+email_logger = logging.getLogger('GarageSale.middleware.email')
 SALT = 'user_management.team_access.review'
 ROLE_DESCRIPTIONS = {
     'SponsorshipManager': ('Sponsorship', 'Manage sponsors and record their contributions.'),
@@ -115,11 +117,15 @@ def audit(actor, user, action, before):
 def send_invitation(request, invitation):
     url = request.build_absolute_uri(reverse('user_management:team_invitation', args=[invitation.token]))
     sender = settings.APPS_SETTINGS.get('user_management', {}).get('EMAIL_SENDER') or settings.DEFAULT_FROM_EMAIL
+    email_logger.info('Invitation email requested: backend=%s debug=%s sender=%r',
+                      settings.EMAIL_BACKEND, settings.DEBUG, sender)
     sent = send_mail('Your Brantham Garage Sale team invitation',
                     f'Hello {invitation.user.first_name},\n\nYou have been invited to the Brantham Garage Sale website. '
                     f'Set your own password using this link:\n{url}\n\nThis link expires in 7 days. '
                     'If you were not expecting this invitation, you can ignore it.',
                     sender, [invitation.user.email])
+    email_logger.info('Invitation email backend returned: backend=%s message_count=%s',
+                      settings.EMAIL_BACKEND, sent)
     if sent != 1:
         raise OSError('Invitation email was not sent.')
 

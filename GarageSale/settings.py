@@ -103,6 +103,22 @@ else:
         },
     }
 
+# Email diagnostics go to the server log in both production and trial settings.
+# Do not propagate them to Django's administrator-email handler.
+LOGGING.setdefault('formatters', {})['email_submission'] = {
+    'format': '%(asctime)s %(levelname)s %(name)s %(message)s',
+}
+LOGGING['handlers']['email_submission'] = {
+    'class': 'logging.StreamHandler',
+    'level': 'INFO',
+    'formatter': 'email_submission',
+}
+LOGGING['loggers']['GarageSale.middleware.email'] = {
+    'handlers': ['email_submission'],
+    'level': 'INFO',
+    'propagate': False,
+}
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 

@@ -338,6 +338,21 @@ class TeamAccessTests(TestCase):
 
 
 class InvitationSMTPTests(SimpleTestCase):
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend', DEBUG=False)
+    def test_invitation_logs_effective_backend_without_private_message_content(self):
+        from types import SimpleNamespace
+        from django.test import RequestFactory
+        from user_management.team_access import send_invitation
+        invitation = SimpleNamespace(token='00000000-0000-4000-8000-000000000001', user=SimpleNamespace(
+            first_name='Test', email='private-recipient@example.com'))
+        with self.assertLogs('GarageSale.middleware.email', level='INFO') as logs:
+            send_invitation(RequestFactory().get('/'), invitation)
+        output = '\n'.join(logs.output)
+        self.assertIn('backend=django.core.mail.backends.locmem.EmailBackend debug=False', output)
+        self.assertIn('message_count=1', output)
+        self.assertNotIn(invitation.token, output)
+        self.assertNotIn('private-recipient@example.com', output)
+
     @override_settings(EMAIL_CREDENTIALS={'website@example.com': {'host': 'smtp.example.com'}})
     def test_custom_smtp_backend_returns_successful_send_count(self):
         from GarageSale.middleware.email import EmailExtended
