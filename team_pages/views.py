@@ -25,6 +25,7 @@ from .forms import NewsForm, MotdForm, EventForm, SponsorForm
 from Sponsors.views import social_media_items
 from abc import abstractmethod
 from Location.models import Location
+from user_management.profile_access import can_access_team_pages
 import logging
 
 logger = logging.getLogger(__name__)
@@ -494,9 +495,12 @@ class EventCreate(EventBase):
         self._supporting = None
         return instance
 
-class TeamPage(LoginRequiredMixin, View):
+class TeamPage(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = "/user/login"
     redirect_field_name = "/team_page"
+
+    def has_permission(self):
+        return can_access_team_pages(self.request.user)
 
     def get(self, request, event_id=None):
         context = {'event_id': event_id}
@@ -635,4 +639,3 @@ class SponsorDelete(SponsorView):
     def do_post_success(self, request, context=None, model_instance:Sponsor=None, form_instance=None, **kwargs):
         model_instance.delete()
         return False
-

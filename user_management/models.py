@@ -10,10 +10,14 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.db import transaction
 from uuid import uuid1
+from uuid import uuid4
 from django.shortcuts import reverse
 from django.utils.html import escape
 
 class UserExtended(AbstractUser):
+    class Meta(AbstractUser.Meta):
+        permissions = [('manage_team_access', 'Can manage team membership and responsibilities')]
+
     username = None
     email = models.EmailField(_("email address"), unique=True)
 
@@ -34,12 +38,37 @@ class UserExtended(AbstractUser):
     def full_name(self):
         return self.first_name + " " + self.last_name
 
+
+class TeamAccessChange(models.Model):
+    actor = models.ForeignKey('UserExtended', on_delete=models.SET_NULL, null=True, related_name='team_access_actions')
+    subject = models.ForeignKey('UserExtended', on_delete=models.SET_NULL, null=True, related_name='team_access_changes')
+    actor_email = models.EmailField()
+    subject_email = models.EmailField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=30, choices=[
+        ('access_changed', 'Access updated'), ('invited', 'Invited to the team'),
+        ('invitation_resent', 'Invitation sent again'), ('invitation_accepted', 'Invitation accepted'),
+    ])
+    before_groups = models.JSONField(default=list)
+    after_groups = models.JSONField(default=list)
+
+    class Meta:
+        ordering = ['-created_at', '-pk']
+        default_permissions = ('view',)
+
+
+class TeamInvitation(models.Model):
+    user = models.OneToOneField('UserExtended', on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid4, unique=True, editable=False)
+    expires_at = models.DateTimeField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
 def user_image_save_to(instance, filename):
     return f'user_images/{instance.user.id}/{filename}'
 
 class TeamMember(models.Model):
     user = ForeignKey(UserExtended, on_delete=models.CASCADE)
-    role = models.CharField(choices=[(i,i) for i in {'Chairperson', 'Treasurer', 'Secretary', 'Committee Member', 'Volunteer'}])
+    role = models.CharField(choices=[(i, i) for i in ('Committee Member', 'Treasurer', 'Chairperson', 'Secretary', 'Volunteer')])
     bio = models.TextField(blank=True)
     picture = models.ImageField(upload_to=user_image_save_to, blank=True)
     team_member_id = models.SlugField(primary_key=False, unique=True, editable=False)
@@ -47,7 +76,8 @@ class TeamMember(models.Model):
 
     class Meta:
         indexes = [Index(fields=['team_member_id'], name='ByMemberId')]
-        permissions = [("generate_id_card", "Can generate ID cards")]
+        permissions = [("generate_id_card", "Can generate ID cards"),
+                       ("manage_own_profile", "Can view and edit own team profile")]
 
     def get_absolute_url(self):
         return reverse('user_management:profile', kwargs={'team_member_id': self.team_member_id})

@@ -1,0 +1,60 @@
+.team-access { width: min(100%, 980px); box-sizing: border-box; flex-shrink: 0; margin: 1.5rem auto 6rem; padding: 0 1.25rem; }
+.team-access h1, .team-access h2, .team-access h3 { text-align: left; }
+.team-access h1 { margin-bottom: .5rem; }
+.team-access h2 { font-size: 1.2rem; margin: 0 0 .5rem; }
+.team-access h3 { font-size: 1rem; }
+.access-intro { max-width: 65ch; line-height: 1.6; }
+.access-toolbar, .access-actions, .access-person { display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.access-toolbar { margin: 2rem 0; }
+.team-access form label { text-align: left; margin-right: 0; }
+.access-search label { display: block; margin-bottom: .5rem; }
+.access-search-options { display: flex; align-items: center; gap: .5rem; }
+.access-search-options label { margin-bottom: 0; font-weight: normal; cursor: pointer; }
+.access-search-options input { width: 1.1rem; height: 1.1rem; accent-color: #285e73; }
+.team-access input:not([type=checkbox]):not([type=radio]):not([type=hidden]) { font: inherit; padding: .7rem; border: 1px solid #687d89; border-radius: 5px; max-width: 100%; box-sizing: border-box; }
+.team-access button, .team-access .access-button { display: inline-block; font: inherit; font-weight: bold; cursor: pointer; text-decoration: none; color: #183947; border: 1px solid #85b5c8; border-radius: 10px; padding: .8rem 1.2rem; background: linear-gradient(135deg, #c7e5f0, #fff); box-shadow: 2px 2px 4px #c7dce5; }
+.team-access button:hover, .team-access .access-button:hover { background: #d8edf5; box-shadow: inset 1px 1px 3px #85b5c8; }
+.team-access .access-secondary { background: white; box-shadow: none; }
+.team-access :focus-visible { outline: 3px solid #246d8a; outline-offset: 3px; }
+.access-people { padding: 0; list-style: none; }
+.access-person { border-bottom: 1px solid #cad9e0; padding: 1.25rem 0; }
+.access-person p { margin: .4rem 0; overflow-wrap: anywhere; }
+.access-badge { display: inline-block; background: #e7f1f6; color: #234b5d; border-radius: 5px; padding: .25rem .5rem; margin: .25rem .3rem .25rem 0; font-size: .9rem; }
+.access-muted, .access-help { color: #4d6069; font-size: .95rem; }
+.access-panel { border: 1px solid #bdcfd8; border-radius: 10px; padding: 1.5rem; margin: 1.5rem 0; background: linear-gradient(135deg, #f3f9fc, #fff 65%); min-width: 0; }
+.access-panel legend { font-size: 1.2rem; font-weight: bold; padding: 0 .5rem; }
+.access-choice { display: flex; gap: .8rem; padding: .85rem 0; align-items: flex-start; }
+.access-choice input { margin-top: .3rem; width: 1.2rem; height: 1.2rem; flex-shrink: 0; accent-color: #285e73; }
+.access-choice label { cursor: pointer; font-weight: normal; line-height: 1.5; }
+.access-choice label strong, .access-choice label span { display: block; }
+.access-choice label span { color: #405a68; }
+.access-field { margin-bottom: 1.25rem; }
+.access-field label { display: block; margin-bottom: .5rem; }
+.access-field input { width: 100%; max-width: 30rem !important; }
+.access-steps { list-style: none; display: flex; gap: .5rem; flex-wrap: wrap; padding: 0; margin: 1.5rem 0; }
+.access-steps li { border-radius: 6px; padding: .6rem .8rem; background: #edf2f5; }
+.access-steps [aria-current=step] { background: #285e73; color: white; font-weight: bold; }
+.access-message { background: #edf6fa; border-left: 4px solid #285e73; padding: 1rem; line-height: 1.5; }
+.access-message.error, .team-access .errorlist { color: #8a2020; }
+.access-message.error { background: #fff3f1; border-color: #a52b2b; }
+.access-message.success { border-color: #34764a; background: #eef8f0; }
+.access-actions { justify-content: flex-start; margin: 1rem 0; }
+.access-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.access-history { padding-left: 1.2rem; }
+.access-history li { padding: .6rem 0; }
+.team-access dt { font-weight: bold; margin-top: .8rem; }
+.team-access dd { margin: .3rem 0; }
+@media (max-width: 600px) {
+    body:has(.team-access) { overflow-x: hidden; }
+    .body:has(.team-access) #SidebarContainer { display: none !important; }
+    .body:has(.team-access) #Container { width: 100%; }
+    .body:has(.team-access) #Content { width: 100%; min-width: 0; margin: 0; }
+    .body:has(.team-access) .page-header { margin-left: 0; }
+    .body:has(.team-access) .breadcrumb { margin-left: .8rem; }
+    .team-access { padding: 0 .8rem; }
+    .team-access p { overflow-wrap: anywhere; }
+    .access-panel { padding: 1rem; }
+    .access-comparison { grid-template-columns: 1fr; }
+    .access-search { width: 100%; }
+    .access-person { align-items: flex-start; }
+}

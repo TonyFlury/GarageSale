@@ -1,0 +1,11 @@
+{% extends 'team_pages_base.html' %}
+{% load static %}
+{% block Title %}Manage team access · Brantham Garage Sale{% endblock %}
+{% block PageStyles %}{{ block.super }}<link rel="stylesheet" href="{% static 'user_management/styles/team_access.css' %}">{% endblock %}
+{% block breadcrumb %}<a href="{% url 'TeamPages:Root' %}">Team Page</a> / <a href="{% url 'user_management:team_access' %}">Manage team access</a>{% endblock %}
+{% block SnappableSections %}
+<main class="team-access">
+    {% for message in messages %}<p class="access-message {{ message.tags }}" role="status">{{ message }}</p>{% endfor %}
+    {% block access_content %}{% endblock %}
+</main>
+{% endblock %}

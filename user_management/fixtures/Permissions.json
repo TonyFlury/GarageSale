@@ -1549,5 +1549,27 @@
       ],
       "codename": "view_drivefile"
     }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can manage team membership and responsibilities",
+      "content_type": [
+        "user_management",
+        "userextended"
+      ],
+      "codename": "manage_team_access"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can view and edit own team profile",
+      "content_type": [
+        "user_management",
+        "teammember"
+      ],
+      "codename": "manage_own_profile"
+    }
   }
 ]

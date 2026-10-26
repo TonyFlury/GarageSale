@@ -68,7 +68,7 @@ Brantham Garage Sale - Nominate organisation
         <span class="tooltiptext arrow right">Contact Us</span>
     </div>
 
-    {% if perms.GarageSale.is_team_member %}
+    {% if perms.GarageSale.access_team_pages or perms.GarageSale.is_team_member %}
         <div class="sidebar entry direct tooltip" item="{% url 'TeamPages:Root' %}" xmlns="http://www.w3.org/1999/html">
             <a href="{% url 'TeamPages:Root' %}">
                 <img class="sidebar icon" alt="Team Pages" id='id_team'

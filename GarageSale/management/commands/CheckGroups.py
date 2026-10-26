@@ -241,7 +241,7 @@ class Command( BaseCommand ):
             if model_option and model_name != model_option:
                 continue
 
-            self.found_perms[app_name][model_name] = set(f'{perm}_{model_name}' for perm in default_permissions)
+            self.found_perms[app_name][model_name] = set(f'{perm}_{model_name}' for perm in models._meta.default_permissions)
 
             if special_perms:
                 for p in special_perms:
@@ -256,3 +256,6 @@ class Command( BaseCommand ):
                             self.found_perms[app_name][model_name].remove(f'{p[1:]}_{model_name}')
                     else:
                         self.found_perms[app_name][model_name].add(f'{p}_{model_name}')
+
+            # Keep permissions declared by models, including team access management.
+            self.found_perms[app_name][model_name].update(code for code, _ in models._meta.permissions)

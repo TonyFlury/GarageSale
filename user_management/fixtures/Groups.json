@@ -712,6 +712,11 @@
           "view_userextended",
           "user_management",
           "userextended"
+        ],
+        [
+          "manage_team_access",
+          "user_management",
+          "userextended"
         ]
       ]
     }
@@ -770,6 +775,11 @@
           "view_sponsor",
           "Sponsors",
           "sponsor"
+        ],
+        [
+          "manage_team_access",
+          "user_management",
+          "userextended"
         ]
       ]
     }
@@ -843,6 +853,19 @@
           "view_sponsor",
           "Sponsors",
           "sponsor"
+        ]
+      ]
+    }
+  },
+  {
+    "model": "auth.group",
+    "fields": {
+      "name": "Volunteer",
+      "permissions": [
+        [
+          "manage_own_profile",
+          "user_management",
+          "teammember"
         ]
       ]
     }

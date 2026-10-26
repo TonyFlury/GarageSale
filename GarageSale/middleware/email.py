@@ -6,6 +6,7 @@ from django.core.mail.backends import smtp
 
 class EmailExtended(BaseEmailBackend):
     def send_messages(self, email_messages):
+        sent = 0
         for message in email_messages:
             # Strip out any 'fake users' - ie anyone with fakeuser in their email address
             message.to = [email for email in message.to if not 'fakeuser' in email.replace('.','')]
@@ -15,4 +16,5 @@ class EmailExtended(BaseEmailBackend):
                 raise ImproperlyConfigured(f'No credentials for the email sender {sender}')
             else:
                 with smtp.EmailBackend(**connection_details) as sender:
-                    sender.send_messages([message])
+                    sent += sender.send_messages([message]) or 0
+        return sent

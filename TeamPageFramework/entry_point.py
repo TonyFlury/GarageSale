@@ -31,5 +31,7 @@ def get_entry_points( user=None, nav_page='TeamPage'):
     for key, value in sorted(entry_points.items()):
         if nav_page != value.nav_page:
             continue
-        if not value.permission or (user and user.has_perm(value.permission)):
+        # A tuple allows either the current capability or its legacy equivalent.
+        permissions = value.permission if isinstance(value.permission, tuple) else (value.permission,)
+        if not value.permission or (user and any(user.has_perm(permission) for permission in permissions)):
             yield {'name':key} |  value._asdict()

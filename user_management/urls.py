@@ -4,10 +4,16 @@
 from django.urls import path, include
 from django.views.generic import TemplateView
 from . import views
+from . import team_access
 
 app_name = 'user_management'
 
 urlpatterns = [
+    path('team-access/', team_access.TeamAccessList.as_view(), name='team_access'),
+    path('team-access/invite/', team_access.TeamAccessEdit.as_view(), name='team_access_invite'),
+    path('team-access/<int:user_id>/', team_access.TeamAccessEdit.as_view(), name='team_access_edit'),
+    path('team-access/<int:user_id>/resend/', team_access.TeamInvitationResend.as_view(), name='team_invitation_resend'),
+    path('team-invitation/<uuid:token>/', team_access.TeamInvitationAccept.as_view(), name='team_invitation'),
     path("register", views.UserRegistration.as_view(), name="register"),
     path("verify/<uuid:uuid>/", views.user_verify, name='verify'),
     path('resendregistation/<uuid:uuid>/', views.resend_registration_link,
