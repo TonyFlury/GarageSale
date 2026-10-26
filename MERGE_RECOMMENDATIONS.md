@@ -1,7 +1,31 @@
 # ContributorOverhaul and UserManagementUpdate merge recommendations
 
-Prepared 26 October 2026 for review. These are proposed resolutions, not completed
-integration work.
+Prepared 26 October 2026 for review. The recommendations below record the original
+plan; their current implementation status is summarised here.
+
+## Implementation status
+
+Implemented on `integration/contributors-user-management`, integration merge
+commit `5fc2858`. Both feature histories are included and their branch tips are
+unchanged. The branch is local; it has not been pushed or merged into master.
+
+Items 1–7 are implemented: migration graph joins and final model state, historical
+migration reconciliation, Officer membership access, canonical Volunteer access,
+nomination permissions, state-only CraftMarket retirement with source tables and
+permissions retained, and application/fixture/deployment integration.
+
+Item 8's branch construction and preservation of source changes are complete.
+Production-data rehearsal and deployment/recovery verification remain outstanding.
+
+Validation completed: 132 regression tests, 10 desktop/mobile and nomination
+browser tests, Django system checks, and a no-changes migration-state check. The
+regression tests include a synthetic upgrade from master's migration state; this
+does not replace a rehearsal on a restored live database and matching media.
+
+Before release, review the final policy in the GitHub pull request, particularly
+Officer/WebAdmin nomination-review access, and complete the restored-data upgrade
+and recovery rehearsal. See `INTEGRATION_REVIEW.md` for implementation details and
+the scope of validation.
 
 ## Review baseline
 
