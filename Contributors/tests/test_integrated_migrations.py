@@ -14,7 +14,7 @@ class IntegratedMasterUpgradeTests(TestMigrations):
     ]
     migrate_to = [
         ('GarageSale', '0025_retire_general'),
-        ('user_management', '0007_integrated_access'),
+        ('user_management', '0008_exec_nomination_view'),
         ('CraftMarket', '0012_retire_runtime_model_state'),
         ('Contributors', '0007_prize_allocation_permissions'),
     ]
@@ -66,3 +66,6 @@ class IntegratedMasterUpgradeTests(TestMigrations):
         self.assertIn('CraftMarket_marketer', connection.introspection.table_names())
         self.assertTrue(self.apps.get_model('auth', 'Permission').objects.filter(
             content_type__app_label='CraftMarket', codename='view_marketer').exists())
+        executive = self.apps.get_model('auth', 'Group').objects.get(name='ExecMember')
+        self.assertTrue(executive.permissions.filter(codename='view_nomination').exists())
+        self.assertFalse(executive.permissions.filter(codename='change_nomination').exists())

@@ -141,7 +141,7 @@ and own-profile access plus `Contributors.view_prize_allocation` and
 do not receive those allocation capabilities automatically; assign the additional
 group when appropriate.
 
-Officers additionally receive `user_management.manage_team_access` and nomination
-view/change capabilities. Volunteers use `GarageSale.manage_own_team_profile`;
+All ExecMembers receive nomination view access. Officers additionally receive
+`user_management.manage_team_access` and nomination change access. Volunteers use `GarageSale.manage_own_team_profile`;
 `user_management.manage_own_profile` is a transitional alias. See
 INTEGRATION_REVIEW.md for validation and deployment requirements.

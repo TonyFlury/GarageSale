@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -55,16 +55,32 @@ class IntegratedAccessTests(TestCase):
         self.sync()
         nomination = Nomination.objects.create(nominee='Community Fund', contact_email='fund@example.com')
         url = reverse('NominationView', args=[nomination.pk])
-        viewer = self.user('viewer')
-        viewer.user_permissions.add(Permission.objects.get(
-            content_type__app_label='GarageSale', codename='view_nomination'))
+        viewer = self.user('viewer', 'ExecMember')
+        self.sync()
+        self.sync()
+        viewer = get_user_model().objects.get(pk=viewer.pk)
+        self.assertTrue(viewer.has_perm('GarageSale.view_nomination'))
+        self.assertFalse(viewer.has_perm('GarageSale.change_nomination'))
         self.client.force_login(viewer)
-        self.assertEqual(self.client.get(url).status_code, 200)
-        self.assertEqual(self.client.post(url, {'accept': 'yes'}).status_code, 403)
+        self.assertContains(self.client.get(reverse('NominationsList')), nomination.nominee)
+        for status in Nomination.Status.values:
+            nomination.status = status
+            nomination.save(update_fields=['status'])
+            response = self.client.get(url)
+            self.assertContains(response, nomination.nominee)
+            self.assertNotContains(response, 'type="submit"')
+            self.assertNotContains(response, 'rejection_reason_dialog')
+            for action in ('accept', 'reject', 'reconsider', 'complete'):
+                self.assertEqual(self.client.post(url, {action: 'yes'}).status_code, 403)
+            nomination.refresh_from_db()
+            self.assertEqual(nomination.status, status)
+        nomination.status = Nomination.Status.NEW
+        nomination.save(update_fields=['status'])
         nomination.refresh_from_db()
         self.assertEqual(nomination.status, Nomination.Status.NEW)
         officer = self.user('reviewer', 'Officer')
         self.client.force_login(officer)
+        self.assertContains(self.client.get(url), 'Accept Nomination')
         self.assertEqual(self.client.post(url, {'accept': 'yes'}).status_code, 302)
         nomination.refresh_from_db()
         self.assertEqual(nomination.status, Nomination.Status.ACCEPTED)

@@ -22,10 +22,10 @@ browser tests, Django system checks, and a no-changes migration-state check. The
 regression tests include a synthetic upgrade from master's migration state; this
 does not replace a rehearsal on a restored live database and matching media.
 
-Before release, review the final policy in the GitHub pull request, particularly
-Officer/WebAdmin nomination-review access, and complete the restored-data upgrade
-and recovery rehearsal. See `INTEGRATION_REVIEW.md` for implementation details and
-the scope of validation.
+Before release, review the final policy in the GitHub pull request, with
+ExecMembers able to view nominations and Officers able to change them, and
+complete the restored-data upgrade and recovery rehearsal. See
+`INTEGRATION_REVIEW.md` for implementation details and the scope of validation.
 
 ## Review baseline
 
@@ -117,10 +117,10 @@ profile, cannot access team management, and cannot view or edit another profile.
 Retain master's Nomination model, migration, public submission pages, review
 pages and admin registration.
 
-Replace old `is_trustee` checks with explicit nomination permissions. The proposed
-starting policy is nomination viewing/changing for Officers, with WebAdmin
-retaining access. This reviewer assignment needs confirmation against the
-intended organisational responsibilities.
+Replace old `is_trustee` checks with explicit nomination permissions. The agreed
+role policy gives all ExecMembers nomination view access and reserves change
+access for Officers. WebAdmin retains its existing administrative access. Hide
+status-change controls from read-only viewers and reject their direct POSTs.
 
 Add review routes to the middleware's explicit route policy. Keep public
 submission accessible under its existing rules.

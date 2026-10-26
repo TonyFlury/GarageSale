@@ -12,8 +12,8 @@ preserved. No remote fetch, push or deployment was performed during construction
   Market template library stays deleted; its upload callback remains available
   to historical migrations.
 - Master's nomination model, public pages, admin registration and review workflow
-  remain. Officers receive explicit nomination view/change capabilities; WebAdmin
-  retains project-wide access. A read-only reviewer cannot submit status changes.
+  remain. ExecMembers receive nomination view access; Officers additionally
+  receive change access. WebAdmin retains project-wide administrative access. A read-only reviewer cannot submit status changes.
 - Officers retain membership management after repeated policy syncs. Officer
   membership also entails ExecMember membership.
 - Volunteer access uses `GarageSale.manage_own_team_profile`. Existing profile
@@ -41,6 +41,8 @@ migrations. The shared numeric prefix is valid.
 - user_management `0007_integrated_access` transfers legacy own-profile and
   explicit trustee reviewer grants to the new capabilities. Reverse migration
   does not revoke these additive compatibility grants.
+- user_management `0008_exec_nomination_view` grants ExecMember read access without
+  changing historical migrations.
 - CraftMarket `0012_retire_runtime_model_state` runs after contributor conversion,
   explicitly preserves the CraftMarket permission identities, and removes the
   old ORM state without dropping source tables.
@@ -62,6 +64,9 @@ transaction/browser tests; that cleanup is confined to test databases.
   trader RSVP HTTP workflows.
 - 10 browser tests pass: membership assignment on desktop/mobile and nomination
   submission, review and status transitions.
+- After confirming the ExecMember/Officer nomination split, 22 targeted access
+  and upgrade tests pass. These check read-only access for every nomination
+  status, rejection of direct change requests, and access after repeated syncs.
 - Disposable PostgreSQL databases and temporary test media were used. No real
   account permissions or production records were changed.
 
@@ -70,8 +75,8 @@ has been run. The synthetic upgrade is not a restored production database.
 
 ## Before release
 
-Review the Officer/WebAdmin nomination-review assignment and the final access
-policy in the pull request. Rehearse the upgrade on a restored live database and
+Review the final access policy in the pull request. The agreed role split is
+ExecMember nomination viewing and Officer decision-making. Rehearse the upgrade on a restored live database and
 matching media, checking representative sponsor/trader histories, logos, gifts,
 estimated values, and ordinary role-based accounts.
 

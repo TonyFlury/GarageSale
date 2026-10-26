@@ -49,7 +49,7 @@ EXEC = TEAM | SPONSOR_WORK | MARKET_WORK | TEMPLATE_WORK | PRIZES | crud("Garage
     crud("News", "newsarticle") | crud("News", "newslettermailinglist") | crud("GarageSale", "motd") | \
     crud("GarageSale", "supporting") | {"News.publish_news", "Accounts.report_transaction", "Location.view_location",
     "Location.change_location", "Location.add_location", "user_management.view_teammember", "user_management.generate_id_card",
-    "GarageSale.delete_communicationtemplate", "GarageSale.delete_templateattachment"} | {
+    "GarageSale.delete_communicationtemplate", "GarageSale.delete_templateattachment", "GarageSale.view_nomination"} | {
         custom(code) for code in ("view_all_template_categories", "manage_all_template_categories", "export_location",
                                   "view_newsletter", "add_newsletter", "change_newsletter", "delete_newsletter", "send_newsletter")}
 GROUP_PERMISSIONS = {

@@ -170,6 +170,7 @@
             <div class="buttons">
                 <input type="button" class='button cancel' value="Back"
                        onclick='window.location="{% url 'NominationsList' %}" '>
+                {% if perms.GarageSale.change_nomination %}
                 {% if nomination.status == 'New' %}
                     <input type="submit" class='button confirm' name='accept' value="Accept Nomination">
                     <input type="button" class='button reject' name="reject" value="Reject Nomination"
@@ -184,10 +185,12 @@
                 {% if nomination.status == 'Rejected' %}
                     <input type="submit" class='button confirm' name='reconsider' value="Reconsider Nomination">
                 {% endif %}
+                {% endif %}
             </div>
         </div>
     </form>
 
+    {% if perms.GarageSale.change_nomination %}
     <dialog id="rejection_reason_dialog">
         <h3>Reason for rejection</h3>
         <form method="POST">
@@ -226,4 +229,5 @@
 
 
     </script>
+    {% endif %}
 {% endblock %}

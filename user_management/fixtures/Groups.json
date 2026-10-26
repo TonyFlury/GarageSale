@@ -1565,6 +1565,11 @@
           "applicationaccess"
         ],
         [
+          "view_nomination",
+          "GarageSale",
+          "nomination"
+        ],
+        [
           "view_prizedrawwinner",
           "GarageSale",
           "prizedrawwinner"
