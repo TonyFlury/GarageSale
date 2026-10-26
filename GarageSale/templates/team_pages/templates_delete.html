@@ -1,6 +1,5 @@
 {% extends "team_pages/templates.html" %}
 {% load static %}
-{% load craftmarket_framework %}
 
 {% block PageStyles %}
     {{ block.super }}
@@ -31,13 +30,13 @@
         element.style.left = (window.innerWidth - element.offsetWidth)/ 2 + 'px'
         element.style.top = (window.innerHeight - element.offsetHeight)/ 2 + 'px'
 
-        let transition = document.getElementById('id_transition_0')
-        document.getElementById('id_transition_1').disabled = !(transition.value === 'Other');
+        let sub_category = document.getElementById('id_sub_category_0')
+        document.getElementById('id_sub_category_1').disabled = !(sub_category.value === 'Other');
 
-        transition.addEventListener('change', function() {
-            let transition = document.getElementById('id_transition_0')
-            let value = transition.value
-            document.getElementById('id_transition_1').disabled = !(value === 'Other');
+        sub_category.addEventListener('change', function() {
+            let sub_category = document.getElementById('id_sub_category_0')
+            let value = sub_category.value
+            document.getElementById('id_sub_category_1').disabled = !(value === 'Other');
         })
 
         let uploads = document.querySelectorAll('span.upload input[type="checkbox"]');

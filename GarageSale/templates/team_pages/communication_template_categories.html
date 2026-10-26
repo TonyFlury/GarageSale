@@ -1,0 +1,117 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+
+{% block Title %}Communication Templates{% endblock %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'GarageSale/styles/communication_templates.css' %}?v=actions-3">
+    <style>
+        #communication-template-list {
+            border-collapse: collapse;
+            margin-left: 0;
+            margin-right: 0;
+            text-align: left;
+        }
+        #communication-template-list th,
+        #communication-template-list td {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-bottom: thin dashed black;
+        }
+        #communication-template-list th {
+            border-bottom: double black;
+        }
+        #communication-template-list tbody tr:nth-child(odd) {
+            background: #f0f7fa;
+        }
+        #communication-template-list tbody tr:nth-child(even) {
+            background: white;
+        }
+        #communication-template-list td:nth-child(3) {
+            white-space: nowrap;
+        }
+        #communication-template-list tbody tr,
+        #communication-template-list td a:not(.communication-template-button) {
+            cursor: pointer;
+        }
+        #communication-template-list tbody tr:hover,
+        #communication-template-list tbody tr:focus-within {
+            background: lightgray;
+        }
+        #communication-template-list td {
+            padding: 0;
+        }
+        #communication-template-list td a:not(.communication-template-button) {
+            display: block;
+            min-height: 1.25rem;
+            padding: 0.5rem 1rem;
+            color: inherit;
+            text-decoration: none;
+            border: none;
+        }
+        #communication-template-list td a:focus-visible {
+            outline: 2px solid darkslategray;
+            outline-offset: -2px;
+        }
+        #communication-template-list td a.communication-template-button {
+            display: inline-block;
+            margin: 0.25rem 0.5rem;
+            padding: 0.35rem 0.75rem;
+        }
+    </style>
+{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'TeamPages:Root' %}">Team Page</a> / Communication Templates
+{% endblock %}
+
+{% block SnappableSections %}
+    <section>
+        <h1>Communication Templates</h1>
+        {% if template_categories %}
+            <form method="get">
+                <label for="template-category">Category</label>
+                <select id="template-category" name="category" onchange="this.form.requestSubmit()">
+                    <option value="" disabled {% if not selected_category %}selected{% endif %}>Choose a category</option>
+                    {% for category in template_categories %}
+                        <option value="{{ category.name }}" {% if category.name == selected_category %}selected{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        {% else %}
+            <p>No communication templates have been recorded.</p>
+        {% endif %}
+        {% if selected_category %}
+            <h2>{{ selected_category }}</h2>
+            <table id="communication-template-list">
+                <thead><tr><th scope="col">Sub-category</th><th scope="col">Summary</th><th scope="col">Use from</th>{% if perms.GarageSale.delete_communicationtemplate %}<th scope="col">Actions</th>{% endif %}</tr></thead>
+                <tbody>
+                    {% for template in templates %}
+                        <tr>
+                            <td><a href="{% url 'TeamPages:CommunicationTemplateEdit' template.pk %}" aria-label="Edit {{ template.summary }}">{{ template.sub_category }}</a></td>
+                            <td><a href="{% url 'TeamPages:CommunicationTemplateEdit' template.pk %}" aria-label="Edit {{ template.summary }}">
+                                {% if template.attachment_warning %}
+                                    <img class="communication-template-warning" src="{% static 'GarageSale/images/icons/warning-svgrepo-com.svg' %}"
+                                         width="20" height="20" alt="{{ template.attachment_warning }}" title="{{ template.attachment_warning }}">
+                                {% endif %}
+                                {{ template.summary }}
+                            </a></td>
+                            <td><a href="{% url 'TeamPages:CommunicationTemplateEdit' template.pk %}" aria-label="Edit {{ template.summary }}, use from {{ template.use_from|date:'d/m/Y' }}">{{ template.use_from|date:"d/m/Y" }}</a></td>
+                            {% if perms.GarageSale.delete_communicationtemplate %}
+                                <td><a class="communication-template-button communication-template-cancel" href="{% url 'TeamPages:CommunicationTemplateDelete' template.pk %}" aria-label="Delete {{ template.summary }}">Delete</a></td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% elif template_categories %}
+            <p>Choose a category to see its templates.</p>
+        {% endif %}
+        {% if selected_category and perms.GarageSale.add_communicationtemplate %}
+            <div class="buttons">
+                <a class="communication-template-button" href="{% url 'TeamPages:CommunicationTemplateCreate' %}{% if selected_category %}?category={{ selected_category|urlencode }}{% endif %}">Create new template</a>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

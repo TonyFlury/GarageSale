@@ -42,7 +42,7 @@ if debug and TEST_SERVER:
     LOGGING = {
         "version": 1,
         'formatters': { 'standard': {
-            'format': '%(asctime)s: %(levelname)s: %(name)s %(module)s %(filename)s -> %(funcName)s: %(message)s',
+            'format': '%(asctime)s: %(levelname)s: "%(name)s" %(module)s %(filename)s -> %(funcName)s: %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'    }
         },
         "disable_existing_loggers": False,
@@ -54,12 +54,15 @@ if debug and TEST_SERVER:
         },
         "root": {
             "handlers": ["console"],
-            "level": "WARNING",
+            "level": "WARNING" if not debug else "DEBUG",
         },
         "loggers": {
+            'psycopg.pq' : {'level': 'ERROR'},
             "fontTools.ttLib.ttFont" : {"level": "ERROR"},
             "fontTools.subset" : {"level": "ERROR"},
             "fontTools.subset.timer" : {"level": "ERROR"},
+            'matplotlib': {'level': 'ERROR'},
+            'matplotlib.font_manager': {'level': 'ERROR'},
             "django.request": {
                 "handlers": ["console"],
                 "level": os.getenv("DJANGO_LOG_LEVEL", "ERROR"),
@@ -107,6 +110,7 @@ INSTALLED_APPS = [
     'Sponsors.apps.SponsorsConfig',
     'CraftMarket.apps.CraftmarketConfig',
     'Accounts.apps.AccountsConfig',
+     'Contributors.apps.ContributorsConfig',
     'user_management.apps.user_managementConfig',
     'News.apps.NewsConfig',
     'django.forms',
@@ -127,7 +131,9 @@ AUTH_USER_MODEL = "user_management.UserExtended"
 if DEBUG:
     INSTALLED_APPS.extend(
         ['debug_toolbar',
-         'mail_panel', ]
+         'mail_panel',
+         'django_lumen',
+         'data_browser']
     )
 
 MIDDLEWARE = [
@@ -136,6 +142,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'GarageSale.middleware.access_policy.AccessPolicyMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'GarageSale.middleware.event.CurrentEvent',
@@ -159,7 +166,6 @@ TEMPLATES = [
                 'user_management_tags': "user_management.templatetags.user_extras",
                 'newsletter_tags': "News.templatetags.enrol",
                 'sponsor_tags': 'Sponsors.templatetags.social_media',
-                'craftmarket': 'CraftMarket.templatetags.craftmarket_framework',
             },
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -219,8 +225,13 @@ APPS_SETTINGS = {
     "CraftMarket" : {'EmailTemplateCategory': 'CraftMarket',
                      'EmailFrom': 'craftmarket@branthamgaragesale.org.uk'},
     "Location": {'EmailTemplateCategory': 'Location',
-                    'EmailFrom': 'website@branthamgaragesale.org.uk'}
+                    'EmailFrom': 'website@branthamgaragesale.org.uk'},
+    "Sponsors": {'EmailTemplateCategory': 'Sponsors',
+                    'EmailFrom': 'sponsorship@branthamgaragesale.org.uk'}
 }
 APPS_SETTINGS |= google_drive_info.uploads
 
 GOOGLE_MAP_SETTINGS = GoogleMap_credentials.GOOGLE_MAP_SETTINGS
+
+if DEBUG:
+    LOGIN_URL = '/user/login'

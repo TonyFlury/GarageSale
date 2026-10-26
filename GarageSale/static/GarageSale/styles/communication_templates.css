@@ -1,0 +1,91 @@
+.communication-template-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.communication-template-primary-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+.communication-template-button {
+    display: inline-block;
+    box-sizing: border-box;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.25;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.communication-template-cancel {
+    --background: orange;
+    color: #111;
+}
+
+.communication-template-attachment {
+    position: relative;
+    margin: 0.5rem 0;
+    padding: 0.35rem 0.5rem;
+    border: thin solid lightgray;
+    border-radius: 6px;
+}
+
+.communication-template-attachment-fields {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding-right: 1.75rem;
+}
+
+.communication-template-attachment-upload,
+.communication-template-attachment-value {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.communication-template-attachment label {
+    width: auto;
+    margin: 0;
+}
+
+.communication-template-attachment .errorlist {
+    margin: 0;
+}
+
+.communication-template-warning {
+    vertical-align: middle;
+    margin-right: 0.5rem;
+}
+
+.communication-template-attachment-remove {
+    position: absolute;
+    top: 0;
+    right: 0.5rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.communication-template-attachment-remove:hover,
+.communication-template-attachment-remove:focus-visible {
+    color: darkred;
+}
+
+.communication-template-attachment [hidden] {
+    display: none;
+}

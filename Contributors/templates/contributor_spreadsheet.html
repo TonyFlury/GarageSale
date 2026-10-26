@@ -1,0 +1,419 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+
+<!--
+TODO - Add in 'Type' field to all inputs
+TODO - Allow multiselect
+TODO Hide or remove 'Type' field
+TODO Add in 'Details' dialog to allow for editing of logo and other info
+TODO convert table to flex stuff
+TODO Line up filter boxes
+TODO Convert to official theme and layout
+-->
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}?v=clear-search-1">
+{% endblock %}
+
+{% block Title %}
+       {{ data_label|default:"Contributor" }} Spreadsheet Editor
+{% endblock %}
+
+{% block PageScripts %}
+    {{ block.super }}
+    <script type='text/javascript' src="{% static 'Contributors/js/contributor_spreadsheet.js' %}?v=clear-search-1" ></script>
+    <script defer src="{% static 'Contributors/js/contributor_details.js' %}?v=access-policy-1"></script>
+    <script defer src="{% static 'Contributors/js/contributor_contributions.js' %}?v=amount-value-1"></script>
+    <script defer src="{% static 'Contributors/js/contributor_filters.js' %}"></script>
+    <script defer src="{% static 'Contributors/js/contributor_modal.js' %}"></script>
+    <script defer src="{% static 'Contributors/js/contributor_toolbar.js' %}?v=new-row-1"></script>
+
+{% endblock %}
+
+{% block SnappableSections %}
+<main class="spreadsheet-page">
+    <h1>{% if title %}{{ title }}{% else %}{{ data_label|default:"Contributor" }}s{% endif %}</h1>
+
+    <section id="toolbar">
+        {% if can_add %}<button type="button" class="toolbar-action" id="spreadsheet-new-button"
+                aria-controls="contributor-sheet"
+                aria-label="New {% firstof contributor_type data_label 'Contributor' %}"
+                title="New {% firstof contributor_type data_label 'Contributor' %}">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                <path d="M12 8v8M8 12h8"></path>
+            </svg>
+        </button>
+        {% endif %}<span class="toolbar-separator" aria-hidden="true"></span>
+        {% if can_import %}<a class="csv-icon" href="{% url 'contributors:upload' %}?contributor_type={{ contributor_type|urlencode }}" aria-label="Upload CSV" title="Upload CSV">
+            <img src="{% static 'Contributors/images/icons/upload-svgrepo-com.svg' %}" alt="" width="24" height="24">
+        </a>
+        {% endif %}{% if can_export %}<a class="csv-icon" href="{% url 'contributors:download' %}?contributor_type={{ contributor_type|urlencode }}" aria-label="Download CSV" title="Download CSV">
+            <img src="{% static 'Contributors/images/icons/download-svgrepo-com.svg' %}" alt="" width="24" height="24">
+        </a>
+        {% endif %}<span class="toolbar-separator" aria-hidden="true"></span>
+        <button type="button" class="search-icon" aria-label="Search {{ data_label|default:"Contributor"|lower }} records" title="Search {{ data_label|default:"Contributor"|lower }} records"
+                aria-controls="search-bar" aria-expanded="false"></button>
+        {% if filter_options %}
+            <button class="toolbar-action" id="spreadsheet-filter-button" type="button"
+                    aria-label="Filter {{ data_label|default:"Contributor"|lower }} records" title="Filter {{ data_label|default:"Contributor"|lower }} records"
+                    aria-haspopup="dialog" aria-controls="spreadsheet-filter-dialog">
+                <img src="{% static 'GarageSale/images/icons/funnel-svgrepo-com.svg' %}" alt="" width="24" height="24">
+            </button>
+            <span class="toolbar-separator" aria-hidden="true"></span>
+        {% endif %}
+        {% if extra_toolbar_actions %}
+            <form method="post" class="extra-toolbar-actions">
+                {% csrf_token %}
+                {% for name in selected_filters %}
+                    <input type="hidden" name="selected_filters" value="{{ name }}">
+                {% endfor %}
+                {% if not filter_options %}
+                    <span class="toolbar-separator" aria-hidden="true"></span>
+                {% endif %}
+                {% for action in extra_toolbar_actions %}
+                    {% if action %}
+                        <button class="toolbar-action" type="submit" name="toolbar_action" value="{{ action.name }}"
+                                {% if action.requires_selection %}data-requires-selection="true" disabled{% endif %}
+                                aria-label="{{ action.label }}" title="{{ action.label }}">
+                            {% if action.icon %}
+                                <img src="{% static action.icon %}" alt="" width="24" height="24">
+                            {% else %}
+                                {{ action.label }}
+                            {% endif %}
+                        </button>
+                    {% else %}
+                        <span class="toolbar-separator" aria-hidden="true"></span>
+                    {% endif %}
+                {% endfor %}
+            </form>
+        {% endif %}
+    </section>
+    <section id='section-search' class="search" aria-label="{{ data_label|default:"Contributor" }} search">
+        <div id="search-bar">
+        <label>
+            Company name
+            <input type="search" data-filter-field="contributor_name" placeholder="Search company name">
+        </label>
+
+        <label>
+            Contact name
+            <input type="search" data-filter-field="contact_name" placeholder="Search contact name">
+        </label>
+
+        <label>
+            Email
+            <input type="search" data-filter-field="email" placeholder="Search email">
+        </label>
+        <button type="button" id="spreadsheet-clear-search">Clear search</button>
+        </div>
+    </section>
+
+    <div class="spreadsheet-grid-scroll" role="region" aria-label="{{ data_label|default:'Contributor' }} spreadsheet" tabindex="0">
+    <table class="contributor-sheet"
+           id="contributor-sheet"
+           data-label="{{ data_label|default:'Contributor' }}"
+           data-show-contributions="{{ show_contributions|yesno:'true,false' }}"
+           data-historic-event-date="{{ historic_event_date|date:'Y-m-d' }}"
+            data-create-url="{% url 'contributors:spreadsheet_create' %}">
+        <thead>
+        <tr>
+            <th class="select"><input id='select-all' type="checkbox" name="selected_contributor" value="all" /></th>
+            <th class="row-status"></th>
+            <th>Company name</th>
+            <th>Contact name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Last contact date</th>
+            {% for column in extra_columns %}
+                <th class="extra-column">{{ column.label }}</th>
+            {% endfor %}
+            <th>Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% for contributor in contributors %}
+            <tr
+                class="locked"
+                data-contributor-id="{{ contributor.pk }}"
+                data-can-edit="{{ contributor.can_edit|yesno:'true,false' }}"
+                data-save-url="{% url 'contributors:spreadsheet_save' contributor.pk %}"
+                data-filter-contributor_name="{{ contributor.contributor_name|default_if_none:''|lower }}"
+                data-filter-contact_name="{{ contributor.contact_name|default_if_none:''|lower }}"
+                data-filter-email="{{ contributor.email|default_if_none:''|lower }}"
+            >
+
+                <td class="select"><input type="checkbox" name="selected_contributor" value="{{ contributor.pk }}" /></td>
+                <td class="row-status">
+                    <span class="status" > </span>
+                    <span class="undo" > </span>
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="contributor_name"
+                        value="{{ contributor.contributor_name }}"
+                        maxlength="120"
+                        required
+                        disabled
+                    >
+                    <span class="field-error" data-error-for="contributor_name"></span>
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="contact_name"
+                        value="{{ contributor.contact_name }}"
+                        maxlength="120"
+                        disabled
+                    >
+                    <span class="field-error" data-error-for="contact_name"></span>
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="phone"
+                        value="{{ contributor.phone }}"
+                        maxlength="12"
+                        disabled
+                    >
+                    <span class="field-error" data-error-for="phone"></span>
+                </td>
+
+                <td>
+                    <input
+                        name="email"
+                        type="email"
+                        value="{{ contributor.email|default_if_none:'' }}"
+                        maxlength="254"
+                        disabled
+                    >
+                    <span class="field-error" data-error-for="email"></span>
+                </td>
+
+                <td>
+                    <input class="last-contact-date" type="text" readonly
+                           aria-label="Last contact date for {{ contributor.contributor_name }}"
+                           data-date="{{ contributor.last_contact_date|date:'Y-m-d' }}"
+                           value="{{ contributor.last_contact_date|date:'d/m/Y' }}">
+                </td>
+
+                {% for column in extra_columns %}
+                    <td class="extra-column">{% include column.template with contributor=contributor column=column %}</td>
+                {% endfor %}
+
+                <td>
+                    <div class="actions">
+                        <button type="button" class="contributor-details-button"
+                                data-details-url="{% url 'contributors:details' contributor.pk %}"
+                                aria-label="Details for {{ contributor.contributor_name }}" title="{{ data_label|default:"Contributor" }} details"
+                                aria-haspopup="dialog" aria-controls="contributor-details-dialog">
+                            <img src="{% static 'GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg' %}" alt="" width="24" height="24">
+                        </button>
+                        {% if contributor.can_contact %}<button type="button" class="add-contact-history"
+                                data-contact-history-url="{% url 'contributors:contact_history' contributor.pk %}"
+                                aria-label="Record contact with {{ contributor.contributor_name }}"
+                                title="Record contact" aria-haspopup="dialog" aria-controls="contact-history-dialog">
+                            <img src="{% static 'GarageSale/images/icons/menu/contact-us-svgrepo-com.svg' %}" alt="" width="24" height="24">
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+      {% if can_add %}<tr
+                class="unlocked new-row"
+                data-is-new="true"
+                data-filter-contributor_name=""
+                data-filter-contact_name=""
+                data-filter-email=""
+            >
+                <td class="select">
+                    {% if contributor_type %}
+                        <input type="hidden" name="contributor_type" value="{{ contributor_type }}">
+                    {% else %}
+                        <select name="contributor_type" aria-label="Contributor type" required>
+                            {% for kind in addable_contributor_types %}<option value="{{ kind }}">{{ kind }}</option>{% endfor %}
+                        </select>
+                    {% endif %}
+                    <span class="field-error" data-error-for="contributor_type"></span>
+                </td>
+
+                <td class="row-status unlocked">
+                    <span class="status"></span>
+                    <span class="undo"></span>
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="contributor_name"
+                        value=""
+                        maxlength="120"
+                        required
+                    >
+                    <span class="field-error" data-error-for="contributor_name"></span>
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="contact_name"
+                        value=""
+                        maxlength="120"
+                    >
+                    <span class="field-error" data-error-for="contact_name"></span>
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="phone"
+                        value=""
+                        maxlength="12"
+                    >
+                    <span class="field-error" data-error-for="phone"></span>
+                </td>
+
+                <td>
+                    <input
+                        name="email"
+                        type="email"
+                        value=""
+                        maxlength="254"
+                    >
+                    <span class="field-error" data-error-for="email"></span>
+                </td>
+
+                <td><input class="last-contact-date" type="text" readonly aria-label="Last contact date" data-date="" value=""></td>
+
+                {% for column in extra_columns %}
+                    <td class="extra-column"></td>
+                {% endfor %}
+
+                <td>
+                    <div class="actions">
+                    </div>
+                </td>
+            </tr>
+            {% endif %}</tbody>
+    </table>
+    </div>
+</main>
+{# Trusted HTML from the view; fragment supplies its own form, method, action, and CSRF token. #}
+{# See Contributors/SPREADSHEET_VIEW_GUIDE.md: View-provided modal dialogs. #}
+{% if modal_html %}
+<dialog id="spreadsheet-modal-dialog" aria-label="{{ data_label|default:'Contributor' }} dialog">
+    <button type="button" class="spreadsheet-modal-close" aria-label="Close dialog" title="Close dialog">×</button>
+    <div class="spreadsheet-modal-content">{{ modal_html|safe }}</div>
+</dialog>
+{% endif %}
+{% if filter_options %}
+<dialog id="spreadsheet-filter-dialog" aria-labelledby="spreadsheet-filter-title">
+    <form method="get" action="{{ request.path }}" id="spreadsheet-filter-form">
+        <h2 id="spreadsheet-filter-title">Filter {{ data_label|default:"Contributor"|lower }} records</h2>
+        <div class="spreadsheet-filter-options">
+            {% for option in filter_options %}
+                {% if option %}
+                    <label>
+                        <input type="checkbox" name="selected_filters" value="{{ option.name }}"
+                               {% if option.group %}data-filter-group="{{ option.group }}"{% endif %}
+                               {% if option.name in selected_filters %}checked{% endif %}>
+                        {{ option.label }}
+                    </label>
+                {% else %}
+                    <hr>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <div class="buttons">
+            <input type="button" id="spreadsheet-filter-cancel" value="Cancel">
+            <input type="button" id="spreadsheet-filter-clear" value="Clear">
+            <input type="submit" value="Filter">
+        </div>
+    </form>
+</dialog>
+{% endif %}
+<template id="contributor-details-button-template">
+    <button type="button" class="contributor-details-button" aria-label="{{ data_label|default:"Contributor" }} details" title="{{ data_label|default:"Contributor" }} details"
+            aria-haspopup="dialog" aria-controls="contributor-details-dialog">
+        <img src="{% static 'GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg' %}" alt="" width="24" height="24">
+    </button>
+</template>
+<dialog id="contributor-details-dialog" aria-labelledby="contributor-details-title">
+    <form id="contributor-details-form" method="post" enctype="multipart/form-data">
+        <h2 id="contributor-details-title">{{ data_label|default:"Contributor" }} details</h2>
+        {# Loaded by contributor_details.js from the contributors:details endpoint. #}
+        {# Fields come from contributor_details_form.html and widgets/contributor_detail_field.html. #}
+        {# Construction, editing, and related scripts: Contributors/DETAILS_POPUP_GUIDE.md. #}
+        <div id="contributor-details-fields"></div>
+        <section class="details-history" aria-labelledby="contributor-history-title">
+            <div class="history-toolbar">
+                <h3 id="contributor-history-title">Confirmation and contribution history</h3>
+                <button id="details-add-contact-history" type="button" class="add-contact-history"
+                        aria-label="Record contact" title="Record contact" hidden
+                        aria-haspopup="dialog" aria-controls="contact-history-dialog">
+                    <img src="{% static 'GarageSale/images/icons/menu/contact-us-svgrepo-com.svg' %}" alt="" width="24" height="24">
+                </button>
+            </div>
+            <div id="contributor-details-history" class="history-scroll" tabindex="0" role="region" aria-label="{{ data_label|default:"Contributor" }} history"></div>
+        </section>
+        <p id="contributor-details-error" class="field-error" role="alert"></p>
+        <div class="buttons">
+            <input id="contributor-details-edit" type="button" value="Edit" hidden>
+            <input id="contributor-details-cancel" type="button" value="Cancel" hidden>
+            <input id="contributor-details-save" type="submit" value="Save" hidden>
+            <input id="contributor-details-close" type="button" value="Close">
+        </div>
+    </form>
+</dialog>
+<template id="contact-history-button-template">
+    <button type="button" class="add-contact-history" aria-label="Record contact" title="Record contact"
+            aria-haspopup="dialog" aria-controls="contact-history-dialog">
+        <img src="{% static 'GarageSale/images/icons/menu/contact-us-svgrepo-com.svg' %}" alt="" width="24" height="24">
+    </button>
+</template>
+<dialog id="contact-history-dialog" aria-labelledby="contact-history-title">
+    <form id="contact-history-form" method="post">
+        {% csrf_token %}
+        <h2 id="contact-history-title">Record contact</h2>
+        <p id="contact-history-contributor"></p>
+        <label for="contact-history-note">Note</label>
+        <textarea id="contact-history-note" name="note" rows="3" maxlength="1000" required></textarea>
+        <label for="contact-history-date">Date</label>
+        <input id="contact-history-date" name="date" type="date" required>
+        <p id="contact-history-error" class="field-error" role="alert"></p>
+        <div class="buttons">
+            <input id="contact-history-cancel" type="button" value="Cancel">
+            <input id="contact-history-save" type="submit" value="Save">
+        </div>
+    </form>
+</dialog>
+<dialog id="contribution-dialog" aria-labelledby="contribution-title">
+    <form id="contribution-form" method="post">
+        {% csrf_token %}
+        <h2 id="contribution-title">Record contribution</h2>
+        <h3 id="contribution-contributor"></h3>
+        <input id="contribution-event" type="hidden" name="event_id">
+        <label for="contribution-cash"><input id="contribution-cash" type="checkbox" name="cash"> Cash contribution</label>
+        <label for="contribution-amount">Amount/value (£)</label>
+        <input id="contribution-amount" name="amount" type="number" min="0" max="9999999999.99" step="0.01"
+               inputmode="decimal" aria-describedby="contribution-amount-help">
+        <p id="contribution-amount-help">Optional estimated value for a non-cash gift.</p>
+        <label for="contribution-gift">Description</label>
+        <textarea id="contribution-gift" name="gift" rows="3" maxlength="1000" required></textarea>
+        <p id="contribution-error" class="field-error" role="alert"></p>
+        <p id="contribution-status" role="status"></p>
+        <div class="buttons">
+            <input id="contribution-cancel" type="button" value="Cancel">
+            <input type="submit" name="action" value="Save">
+            <input type="submit" name="action" value="Save and Add another">
+        </div>
+    </form>
+</dialog>
+{% endblock %}

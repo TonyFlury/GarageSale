@@ -1,7 +1,7 @@
 div.introduction {
     font-size: 100%;
     width: 80%;
-    padding-bottom: 1rem;
+    padding-bottom: 0.5rem;
     margin: auto;
     background: var(--BackGroundColor);
 }
@@ -288,4 +288,46 @@ div.card.sponsor {
             text-align: left;
         }
     }
+}
+/* The sponsor wall stays within one card in the existing snap-slider frame. */
+div.card.sponsor-wall-card {
+    box-sizing: border-box;
+    padding: clamp(1rem, 3vw, 2.5rem);
+    padding-top: 0.5rem;
+    width: 100%;
+    min-width: 0;
+}
+.sponsor-wall-heading { margin: 0 auto 1.5rem; max-width: 48rem; }
+.sponsor-wall-eyebrow { text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.75rem; }
+.sponsor-wall-heading h2 { font: normal clamp(1.5rem, 3vw, 2.75rem)/1.1 Georgia, serif; margin: 0 0 1rem; }
+.sponsor-wall-heading > p:last-child, .sponsor-wall-hint { font-size: 0.9rem; }
+.sponsor-logo-wall { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); grid-auto-rows: 6rem; gap: 3px 6px; max-width: 72rem; margin: auto; }
+.sponsor-wall-tile { display: flex; justify-content: center; align-items: center; min-width: 0; min-height: 5rem; padding: 6px; border: 1px solid transparent; border-radius: 8px; text-decoration: none; color: inherit; box-sizing: border-box; }
+.sponsor-logo-wall.is-laid-out .sponsor-wall-tile { min-height: 0; }
+.sponsor-logo-wall .sponsor-wall-tile img { display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
+.sponsor-logo-wall .sponsor-wall-tile img[hidden], .sponsor-wall-name[hidden] { display: none; }
+.sponsor-wall-name { font-size: clamp(0.7rem, 1.8vw, 1.15rem); font-weight: bold; overflow-wrap: anywhere; }
+.sponsor-wall-headline { padding: 14px; }
+.sponsor-wall-headline .sponsor-wall-name { font-size: clamp(1rem, 3vw, 1.8rem); }
+.sponsor-wall-tile:hover { border-color: lightgray; background: rgb(128 128 128 / 0.05); }
+.sponsor-wall-tile:focus-visible, .sponsor-details-close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.sponsor-wall-empty { grid-column: 1 / -1; padding: 2rem 0; }
+.sponsor-wall-hint { margin-top: 1.5rem; }
+.sponsor-public-details { width: min(28rem, calc(100vw - 2rem)); max-height: 85vh; overflow-y: auto; box-sizing: border-box; padding: 1.5rem; border: thin solid gray; border-radius: 10px; color: var(--fontColor, #222); background: var(--BackGroundColor, white); text-align: left; }
+.sponsor-public-details::backdrop { background: rgb(0 0 0 / 0.4); }
+.sponsor-details-close { position: absolute; top: 0.5rem; right: 0.75rem; display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; padding: 0; border: none; background: transparent; color: inherit; font-size: 1.75rem; cursor: pointer; }
+.sponsor-details-close:hover { color: darkred; }
+.sponsor-details-logo { display: block; width: min(100%, 14rem); height: 128px; object-fit: contain; margin: 1.5rem auto 0.75rem; }
+.sponsor-public-details > h2 { margin-top: 1.5rem; }
+.sponsor-details-description { overflow-wrap: anywhere; line-height: 1.6; }
+.sponsor-public-details .icons { margin-left: 0; }
+.sponsor-public-details .icons .social { width: 24px; height: 24px; padding: 0; margin-right: 0.75rem; }
+.sponsor-public-details .icons .social a { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
+.sponsor-public-details .icons .social img,
+.sponsor-public-details .icons .social svg { display: block; width: 24px; height: 24px; object-fit: contain; }
+@media (max-width: 600px) {
+    div.card.sponsor-wall-card { padding: 0.5rem; }
+    .sponsor-wall-tile { padding: 6px; }
+    .sponsor-wall-headline { padding: 10px; }
+    .sponsor-public-details { padding: 1rem; }
 }

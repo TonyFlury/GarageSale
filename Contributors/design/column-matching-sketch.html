@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contributor import · Column matching sketch</title>
+  <link rel="stylesheet" href="../../team_pages/static/team_pages/styles/team_page.css">
+  <link rel="stylesheet" href="../static/Contributors/styles/column_matching.css">
+
+</head>
+<body>
+<main class="contributor-import">
+<form id="column-matching-form" method="post">
+<input type="hidden" name="column_mapping" id="column-mapping-value">
+  <div class="eyebrow">Contributors / CSV import</div>
+  <h1>Match your columns</h1>
+  <p class="muted">Choose where each CSV column goes. Only contributor name is required.</p>
+  <ol class="steps" aria-label="Import progress">
+    <li>✓ 1. Select file</li><li aria-current="step"><strong>2. Match columns</strong></li>
+  </ol>
+  <section class="card file" aria-label="Selected file">
+    <div class="file-info"><strong>contributors.csv</strong><span class="muted">3 contributors · 7 columns</span></div>
+    <div class="badge">Contributor type: Sponsor</div>
+  </section>
+  <div class="workspace">
+  <section class="card" aria-labelledby="mapping-title">
+    <div class="heading"><h2 id="mapping-title">Your CSV columns</h2><p class="muted">Choose a destination. Selecting an occupied field clears its previous mapping.</p><div class="mapping-legend"><span class="model">Contributor field</span><span class="details">Additional details selected</span><span>Neutral: not mapped</span></div></div>
+    <div class="mapping">
+      <div class="row column-head" aria-hidden="true"><span>CSV column</span><span>First row sample</span><span>Save to</span></div>
+      <div id="mappings"></div>
+    </div>
+    <div class="extras">
+      <h2>Additional details <span id="extra-count" class="badge"></span></h2>
+      <p class="muted">Only columns assigned to Additional details are saved in <code>socials</code>. Unmapped and ignored columns are not uploaded.</p>
+      <div id="extras" class="chips"></div>
+    </div>
+  </section>
+  <details class="card preview-panel" id="preview-panel">
+    <summary>Import preview <span id="preview-count" class="badge"></span></summary>
+    <p class="muted">All CSV rows with the current mapping. Missing optional values are blank; ignored columns are excluded.</p>
+    <div class="preview-scroll" role="region" aria-label="Mapped contributor rows" tabindex="0">
+      <table class="preview-table">
+        <caption>Contributors as they would be imported</caption>
+        <thead id="preview-head"></thead>
+        <tbody id="preview-body"></tbody>
+      </table>
+    </div>
+  </details>
+  </div>
+  <div id="message" role="status" aria-live="polite"></div>
+  <footer>
+    <span class="muted" id="summary"></span>
+    <input type="hidden" name="action" value="review">
+    <div class="buttons"><input id="review" type="submit" value="Import"></div>
+  </footer>
+  <p class="note muted">Design sketch using example data. Import submits mappings via POST; a Django view must receive the form to process the import.</p>
+</form>
+</main>
+<script>
+  const columns = ['Business', 'Contact', 'Telephone', 'Email address', 'Instagram', 'Website', 'Area'];
+  const sample = ['Oak & Co.', 'Sam Taylor', '07700900123', 'sam@example.com', '@oakandco', 'https://example.com', 'North London'];
+  const fields = [
+    { key: 'contributor_name', label: 'Contributor name (required)' },
+    { key: 'contact_name', label: 'Contact name' },
+    { key: 'phone', label: 'Phone' },
+    { key: 'email', label: 'Email' }
+  ];
+  const IGNORE = '__ignore__';
+  const SOCIALS = '__socials__';
+  const aliases = {
+    contributor_name: ['contributor name', 'business', 'business name', 'company', 'company name', 'organisation', 'organization'],
+    contact_name: ['contact name', 'contact', 'contact person', 'primary contact'],
+    phone: ['phone', 'telephone', 'phone number', 'telephone number', 'mobile', 'mobile number'],
+    email: ['email', 'email address', 'e mail', 'e mail address']
+  };
+  function normalizeHeader(header) {
+    return header.trim().toLowerCase().replace(/[_\-]+/g, ' ').replace(/\s+/g, ' ');
+  }
+  function suggestDestinations(headers) {
+    // Exact model names take priority over aliases. Ambiguous aliases stay in socials.
+    const result = headers.map(() => '');
+    const claimed = new Set();
+    fields.forEach(field => {
+      const exact = headers.map((header, index) => normalizeHeader(header) === normalizeHeader(field.key) ? index : -1).filter(index => index !== -1);
+      if (exact.length === 1) { result[exact[0]] = field.key; claimed.add(field.key); }
+    });
+    fields.forEach(field => {
+      if (claimed.has(field.key)) return;
+      const candidates = headers.map((header, index) => !result[index] && aliases[field.key].includes(normalizeHeader(header)) ? index : -1).filter(index => index !== -1);
+      if (candidates.length === 1) result[candidates[0]] = field.key;
+    });
+    return result;
+  }
+  const suggestions = suggestDestinations(columns);
+  // Example CSV rows for the standalone sketch.
+  const rows = [sample,
+    ['River Studio', 'Alex Green', '', 'alex@example.com', '@riverstudio', '', 'South London'],
+    ['Meadow Crafts', '', '', '', '@meadowcrafts', '', 'East London']
+  ];
+  const selects = new Map();
+  const assignments = new Map(columns.map((column, index) => [column, suggestions[index]]));
+  const statuses = new Map();
+  function changeAssignment(mapping, column, destination) {
+    const owner = destination && destination !== IGNORE && destination !== SOCIALS
+      ? Array.from(mapping.keys()).find(key => key !== column && mapping.get(key) === destination)
+      : undefined;
+    if (owner !== undefined) mapping.set(owner, '');
+    mapping.set(column, destination);
+    return owner;
+  }
+  const container = document.getElementById('mappings');
+  columns.forEach((column, index) => {
+    const row = document.createElement('div'); row.className = 'row';
+    const label = document.createElement('label'); label.htmlFor = 'column-' + index;
+    label.textContent = column;
+    const controls = document.createElement('div');
+    const select = document.createElement('select'); select.id = 'column-' + index;
+    select.setAttribute('aria-label', 'Save CSV column ' + column + ' to');
+    select.add(new Option('Choose where to save…', ''));
+    select.add(new Option('Additional details (socials)', SOCIALS));
+    select.add(new Option('Ignore — don’t upload', IGNORE));
+    fields.forEach(field => select.add(new Option(field.label, field.key)));
+    select.value = suggestions[index];
+    const status = document.createElement('span'); status.className = 'status';
+    status.id = select.id + '-status'; select.setAttribute('aria-describedby', status.id);
+    controls.append(select, status);
+    const sampleCell = document.createElement('div'); sampleCell.className = 'sample';
+    sampleCell.textContent = sample[index] || 'Blank';
+    row.append(label, sampleCell, controls); container.append(row);
+    selects.set(column, select); statuses.set(column, status);
+    select.addEventListener('change', () => {
+      const destination = select.value;
+      const owner = changeAssignment(assignments, column, destination);
+      selects.forEach((control, key) => { control.value = assignments.get(key); });
+      update();
+      if (owner !== undefined) {
+        const labelFor = key => fields.find(field => field.key === key)?.label || (key === IGNORE ? 'Ignore' : 'Additional details');
+        const announcement = column + ' → ' + labelFor(destination) + '; ' + owner + ' is now not mapped and will not be uploaded.';
+        const message = document.getElementById('message');
+        message.textContent = announcement + (message.textContent ? ' ' + message.textContent : '');
+      }
+    });
+  });
+  function sourceFor(key) {
+    return columns.find(column => selects.get(column).value === key);
+  }
+  function update() {
+    document.getElementById('column-mapping-value').value = JSON.stringify(Object.fromEntries(assignments));
+    const selected = columns.map(column => selects.get(column).value).filter(value => value && value !== IGNORE && value !== SOCIALS);
+    const ignored = columns.filter(column => selects.get(column).value === IGNORE);
+    const unused = columns.filter(column => !selects.get(column).value);
+    columns.forEach((column, index) => {
+      const select = selects.get(column);
+      Array.from(select.options).forEach(option => {
+        const field = fields.find(field => field.key === option.value);
+        if (!field) return;
+        const owner = sourceFor(field.key);
+        const occupied = owner !== undefined && owner !== column;
+        option.disabled = false;
+        option.className = occupied ? 'occupied' : owner === column ? 'current' : '';
+        option.textContent = field.label + (occupied ? ' — currently: ' + owner : '');
+      });
+      const status = statuses.get(column);
+      status.textContent = select.value === IGNORE ? 'Excluded from upload' : !select.value ? 'Not mapped — not uploaded' : select.value === SOCIALS ? 'Saved as ' + column : select.value === suggestions[index] ? 'Suggested from CSV header' : 'Matched';
+      select.parentElement.parentElement.classList.toggle('ignored', select.value === IGNORE);
+      select.parentElement.parentElement.classList.toggle('mapped', Boolean(select.value && select.value !== IGNORE && select.value !== SOCIALS));
+      select.parentElement.parentElement.classList.toggle('additional', select.value === SOCIALS);
+    });
+    const extras = columns.filter(column => selects.get(column).value === SOCIALS);
+    document.getElementById('extra-count').textContent = extras.length + ' columns';
+    const chips = document.getElementById('extras'); chips.replaceChildren();
+    extras.forEach(column => { const chip = document.createElement('span'); chip.className = 'chip'; chip.textContent = column; chips.append(chip); });
+    if (!extras.length) chips.textContent = 'No additional details to upload.';
+    const head = document.getElementById('preview-head'); head.replaceChildren();
+    const headingRow = document.createElement('tr');
+    ['Row', ...fields.map(field => field.label), 'Additional details (socials)'].forEach(label => {
+      const cell = document.createElement('th'); cell.scope = 'col'; cell.textContent = label; headingRow.append(cell);
+    });
+    head.append(headingRow);
+    const body = document.getElementById('preview-body'); body.replaceChildren();
+    rows.forEach((values, index) => {
+      const row = document.createElement('tr');
+      const number = document.createElement('th'); number.scope = 'row'; number.textContent = String(index + 1); row.append(number);
+      fields.forEach(field => {
+        const cell = document.createElement('td');
+        const source = sourceFor(field.key);
+        const value = source === undefined ? '' : values[columns.indexOf(source)];
+        cell.textContent = value;
+        if (field.key === 'contributor_name' && !value.trim()) {
+          cell.textContent = source === undefined ? 'Name not mapped' : 'Missing name';
+          cell.className = 'missing-name';
+        }
+        row.append(cell);
+      });
+      const details = document.createElement('td');
+      const json = document.createElement('pre');
+      json.textContent = JSON.stringify(Object.fromEntries(extras.map(column => [column, values[columns.indexOf(column)]])), null, 2);
+      details.append(json); row.append(details); body.append(row);
+    });
+    document.getElementById('preview-count').textContent = rows.length + ' rows';
+    const hasName = selected.includes('contributor_name');
+    document.getElementById('review').disabled = !hasName;
+    document.getElementById('summary').textContent = (hasName ? 'Name matched' : 'Name match needed') + ' · ' + extras.length + ' additional details · ' + unused.length + ' unused · ' + ignored.length + ' ignored';
+    document.getElementById('message').textContent = hasName ? '' : 'Match one CSV column to Contributor name to continue. Contact name, phone and email are optional.';
+  }
+  document.getElementById('column-matching-form').addEventListener('submit', event => {
+    if (!sourceFor('contributor_name') || !rows.length) event.preventDefault();
+  });
+  update();
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{% extends 'team_access/base.html' %}
+{% block access_content %}
+<h1>Manage team access</h1>
+<p class="access-intro">Accounts with assigned permission groups are listed by default. Tick “Include all users” to search for someone without assigned groups.</p>
+<div class="access-toolbar">
+    <form method="get" class="access-search">
+        <label for="access-query">Find a person</label>
+        <div class="access-actions"><input id="access-query" name="q" value="{{ query }}" placeholder="Name or email address" type="search"><button type="submit">Search</button>{% if query or search_all %}<a href="{% url 'user_management:team_access' %}">Clear</a>{% endif %}</div>
+        <div class="access-search-options"><input id="access-include-all" type="checkbox" name="scope" value="all"{% if search_all %} checked{% endif %}><label for="access-include-all">Include all users</label></div>
+    </form>
+    <a class="access-button" href="{% url 'user_management:team_access_invite' %}">Invite a new person</a>
+</div>
+{% if not search_all or query %}<p>{{ page.paginator.count }} account{{ page.paginator.count|pluralize }}{% if not search_all %} with assigned groups{% endif %}{% if query %} matching “{{ query }}”{% endif %}</p>{% endif %}
+<ul class="access-people">
+{% for row in rows %}
+    <li class="access-person">
+        <div><h2>{{ row.person.get_full_name|default:row.person.email }}</h2><p>{{ row.person.email }}</p>
+        <p>{% if not row.person.is_active %}<span class="access-badge">Inactive</span>{% elif row.person.is_guest %}<span class="access-badge">Guest account</span>{% elif not row.person.is_verified %}<span class="access-badge">Awaiting verification</span>{% endif %}
+        {% for group in row.groups %}<span class="access-badge">{{ group }}</span>{% empty %}<span class="access-muted">Ordinary user · no responsibilities assigned</span>{% endfor %}</p></div>
+        {% if row.protected %}<p class="access-muted">Administrator account<br>Managed in Django admin</p>{% else %}<a class="access-button" href="{% url 'user_management:team_access_edit' row.person.pk %}" aria-label="Manage access for {{ row.person.email }}">Manage access</a>{% endif %}
+    </li>
+{% empty %}<li class="access-panel">{% if search_all and not query %}<h2>Find the person you want to give access to</h2><p>Enter their name or email address above. Matching accounts will appear here.</p>{% else %}<h2>No matching accounts</h2><p>{% if not search_all %}Tick “Include all users” to search people without assigned groups, or invite a new person.{% else %}Try another name or email address, or invite a new person.{% endif %}</p>{% endif %}</li>{% endfor %}
+</ul>
+{% if page.has_other_pages %}<nav class="access-actions" aria-label="Account pages">{% if page.has_previous %}<a href="?q={{ query|urlencode }}{% if search_all %}&amp;scope=all{% endif %}&amp;page={{ page.previous_page_number }}">Previous</a>{% endif %}<span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span>{% if page.has_next %}<a href="?q={{ query|urlencode }}{% if search_all %}&amp;scope=all{% endif %}&amp;page={{ page.next_page_number }}">Next</a>{% endif %}</nav>{% endif %}
+{% endblock %}

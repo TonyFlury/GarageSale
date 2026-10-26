@@ -14,17 +14,16 @@ from django.template.response import TemplateResponse
 from django.views import View
 from django.http import HttpResponseServerError, HttpResponse
 from django.contrib.admin.widgets import AdminDateWidget
-from django.views.generic import DetailView
+from django.views.generic import CreateView, DetailView, UpdateView
 
 from News.models import NewsArticle
 from News.views import publish_news
-from Sponsors.models import Sponsor
 from GarageSale.models import MOTD, EventData
-from TeamPageFramework.entry_point import EntryPointMixin, register
-from .forms import NewsForm, MotdForm, EventForm, SponsorForm
-from Sponsors.views import social_media_items
+from TeamPageFramework.entry_point import register
+from .forms import NewsForm, MotdForm, EventForm
 from abc import abstractmethod
 from Location.models import Location
+from user_management.profile_access import can_access_team_pages
 import logging
 
 logger = logging.getLogger(__name__)
@@ -33,7 +32,7 @@ logger.setLevel(logging.DEBUG)
 
 register('Google Drive', 'TeamPages:GoogleDriveEntryPoint',
                        static('GarageSale/images/icons/navigation/network-drive-svgrepo-com.svg'),
-         permission='GarageSale.is_team_member', needs_event=False)
+         permission='GarageSale.access_drive', needs_event=False)
 def GoogleDriveEntryPoint(request):
     return TemplateResponse(request, template='GoogleDrive.html')
 
@@ -243,7 +242,7 @@ class CombinedView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 
 class NewsRoot(CombinedView):
-    permission_required = ["News.can_manage_news"]
+    permission_required = ["News.view_newsarticle"]
     template_name = 'news/tp_manage_news.html'
     form_class = NewsForm
     model_class = NewsArticle
@@ -275,7 +274,7 @@ class NewsRoot(CombinedView):
 
 
 class NewsEdit(NewsRoot):
-    permission_required = ["News.change_news"]
+    permission_required = ["News.change_newsarticle"]
     form_class = NewsForm
     template_name = 'news/tp_edit_news.html'
 
@@ -295,7 +294,7 @@ class NewsEdit(NewsRoot):
 
 class NewsView(NewsEdit):
     """get_object is the same in both cases"""
-    permission_required = ["News.view_news"]
+    permission_required = ["News.view_newsarticle"]
     template_name = 'news/tp_view_news.html'
 
     def get_context_data(self, request, **request_kwargs):
@@ -305,7 +304,7 @@ class NewsView(NewsEdit):
 
 
 class NewsCreate(NewsRoot):
-    permission_required = ["News.can_create_news"]
+    permission_required = ["News.add_newsarticle"]
     template_name = 'news/tp_create_news.html'
 
     def get_context_data(self, request, **request_kwargs):
@@ -319,7 +318,7 @@ class NewsCreate(NewsRoot):
 
 class NewsDelete(NewsView):
     template_name = 'news/tp_delete_news.html'
-    permission_required = ["News.delete_news"]
+    permission_required = ["News.delete_newsarticle"]
     form_class = None
 
     def get_context_data(self, request, **kwargs):
@@ -386,7 +385,7 @@ class MotDEdit(MotDView):
 
 
 class MotDCreate(MotDBase):
-    permission_required = ["GarageSale.can_create_motd"]
+    permission_required = ["GarageSale.add_motd"]
     template_name = 'motd/tp_create_motd.html'
 
     def get_context_data(self, request, **kwargs):
@@ -415,7 +414,7 @@ def event_list(request):
     return render(request, 'event/event_list.html', context={'event_list': EventData.objects.all().order_by('-event_date'), 'data_type': 'event', 'action': 'list'})
 
 class EventBase(CombinedView):
-    permission_required = ["GarageSale.view_event"]
+    permission_required = ["GarageSale.view_eventdata"]
     template_name = 'motd/tp_view_event.html'
     form_class = EventForm
     model = EventData
@@ -448,7 +447,7 @@ class EventBase(CombinedView):
 
 
 class EventView(EventBase):
-    permission_required = ["GarageSale.view_event"]
+    permission_required = ["GarageSale.view_eventdata"]
     template_name = 'event/tp_view_event.html'
 
     def get_context_data(self, request, **kwargs):
@@ -457,182 +456,30 @@ class EventView(EventBase):
         return context
 
 
-class EventEdit(EventView):
-    permission_required = ["GarageSale.change_event"]
-    template_name = 'event/tp_edit_event.html'
-    success_url = reverse_lazy( 'TeamPages:Event')
-
-    def get_context_data(self, request, **kwargs):
-        context = super().get_context_data(request, **kwargs)
-        context['action'] = 'edit'
-        return context
-
-
-class EventCreate(EventBase):
-    permission_required = ["GarageSale.can_create_event"]
+class EventFormView(LoginRequiredMixin, PermissionRequiredMixin):
+    model = EventData
+    form_class = EventForm
     template_name = 'event/tp_create_event.html'
-    success_url = reverse_lazy( 'TeamPages:Event')
-    _supporting = None
+    success_url = reverse_lazy('TeamPages:EventList')
 
-    def get_context_data(self, request, **kwargs):
-        context = super().get_context_data(request, **kwargs)
-        context['action'] = 'create'
-        return context
 
-    def get_object(self, request, **kwargs):
-        return None
+class EventEdit(EventFormView, UpdateView):
+    permission_required = "GarageSale.change_eventdata"
+    pk_url_kwarg = "event_id"
+    template_name = 'event/tp_edit_event.html'
 
-    def get_new_instance(self, request, form, **kwargs):
-        supporting = form.cleaned_data['supporting_organisations']
-        self._supporting = form.cleaned_data.pop('supporting_organisations')
-        inst = self.model(**form.cleaned_data)
-        return inst
 
-    def post_save(self, request, instance, form, **kwargs):
-        for item in self._supporting:
-            instance.supporting_organisations.add( item.id )
-        self._supporting = None
-        return instance
+class EventCreate(EventFormView, CreateView):
+    permission_required = "GarageSale.add_eventdata"
 
-class TeamPage(LoginRequiredMixin, View):
+
+class TeamPage(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = "/user/login"
     redirect_field_name = "/team_page"
+
+    def has_permission(self):
+        return can_access_team_pages(self.request.user)
 
     def get(self, request, event_id=None):
         context = {'event_id': event_id}
         return TemplateResponse(request, 'navigation.html', context=context)
-
-
-class SponsorsRoot(CombinedView):
-    login_url = "/user/login"
-    redirect_field_name = "/team_page"
-    permission_required = ["Sponsors.view_sponsor"]
-    model_class = Sponsor
-    form_class = SponsorForm
-    template_name = 'sponsors/tp_event_sponsor.html'
-
-    def get_success_url(self, request, context=None, **kwargs):
-        event_id = context.get('event_id')
-        return reverse('TeamPages:Sponsor', kwargs={'event_id':event_id})
-
-    def get_context_data(self, request, **kwargs):
-        context = super().get_context_data(request, **kwargs)
-
-        event_id = kwargs.get('event_id', None)
-        sponsor_id = kwargs.get('sponsor_id', None)
-
-        if sponsor_id:
-            sponsor_obj = self.get_object(request, **kwargs)
-            event_id = sponsor_obj.event.id
-        else:
-            sponsor_obj = None
-
-        context |= {'sub_list_data': Sponsor.objects.filter(event__id=event_id).
-                    values("id", "company_name", "confirmed").order_by("creation_date").all(),
-                    'data_type': 'sponsor',
-                    'event_id': event_id,
-                    'event_list': EventData.objects.all().order_by('-event_date'),
-                    'sponsor_id': sponsor_obj.id if sponsor_obj else None,
-                    'action': None,
-                    'socials': social_media_items(),
-                    'patterns': [
-                        {'action': 'create', 'regex': 'sponsor/<int:event_id>/create/'},
-                        {'action': 'edit', 'regex': 'sponsor/<int:sponsor_id>/edit/'},
-                        {'action': 'view', 'regex': 'sponsor/<int:sponsor_id>/view/'},
-                        {'action': 'confirm', 'regex': 'sponsor/<int:sponsor_id>/confirm/'},
-                        {'action': 'delete', 'regex': 'sponsor/<int:sponsor_id>/delete/'},
-                        {'action': 'cancel', 'regex': 'sponsor/<int:event_id>/'}]
-                    }
-        return context
-
-    def get_object(self, request, **kwargs):
-        return None
-
-class SponsorEntryPoint(EntryPointMixin, SponsorsRoot):
-    entry_point_url = 'TeamPages:SponsorEntryPoint'
-    entry_point_label = 'Sponsors'
-    entry_point_permission = 'Sponsors.view_sponsor'
-    entry_point_icon = static('GarageSale/images/icons/navigation/sponsors-svgrepo-com.svg')
-
-    def get(self, request, event_id=None):
-        event_id = event_id or (request.current_event.id if request.current_event else None)
-        return super().get(request, event_id=event_id)
-
-class SponsorCreate(SponsorsRoot):
-    template_name = 'sponsors/tp_create_sponsor.html'
-    permission_required = ["Sponsors.can_create_sponsor"]
-
-    def get_context_data(self, request, **kwargs):
-        return super().get_context_data(request, **kwargs) | {'action':'create'}
-
-    def get_object(self, request, **kwargs):
-        return None
-
-    def get_new_instance(self, request, form, **kwargs):
-        try:
-            event = EventData.objects.get(id = kwargs.get('event_id'))
-        except EventData.DoesNotExist:
-            raise BadRequest(f'Cannot create a sponsorship record without a valid event {kwargs.get("event_id")}')
-
-        inst = self.model_class(event=event, **(form.cleaned_data | {'lead_provider':request.user}))
-        return inst
-
-class SponsorView(SponsorsRoot):
-    template_name = 'sponsors/tp_view_sponsor.html'
-    permission_required = ["Sponsors.view_sponsor"]
-
-    def get_context_data(self, request, **kwargs):
-        context = super().get_context_data(request, **kwargs)
-        obj = self.get_object(request, **kwargs)
-
-        context |= {'action': 'view',
-                    'event_id': obj.event.id,
-                    'sponsor_id': kwargs.get('sponsor_id', None)}
-        return context
-
-    def get_object(self, request, **kwargs):
-        sponsor_id = kwargs.get('sponsor_id', None)
-        try:
-            return Sponsor.objects.get(id=sponsor_id)
-        except Sponsor.DoesNotExist:
-            raise BadRequest(f'Unknown/invalid sponsor_id {sponsor_id}')
-
-
-class SponsorEdit(SponsorView):
-    template_name = 'sponsors/tp_edit_sponsor.html'
-    permission_required = ["Sponsors.change_sponsor"]
-
-    def get_context_data(self, request, **kwargs):
-        return super().get_context_data(request,**kwargs) | {'action':'edit'}
-
-
-class SponsorConfirm(SponsorView):
-    template_name = 'sponsors/tp_confirm_sponsor.html'
-    permission_required = ["Sponsors.can_confirm_sponsor"]
-    form_class = None
-
-    def get_context_data(self, request, **kwargs):
-        context = super().get_context_data(request,**kwargs)
-        obj:Sponsor = self.get_object( request, **kwargs)
-        return context| {'action':'confirm', 'company_name':obj.company_name}
-
-    def do_post_success(self, request, context=None, model_instance:Sponsor=None, form_instance=None, **kwargs):
-        model_instance.confirmed = True
-        model_instance.save()
-        return False
-
-
-class SponsorDelete(SponsorView):
-    template_name = 'sponsors/tp_delete_sponsor.html'
-    permission_required = ["Sponsors.delete_sponsor"]
-    form_class = None
-
-    def get_context_data(self, request, **kwargs):
-        context = super().get_context_data(request,**kwargs)
-        obj:Sponsor = self.get_object( request, **kwargs)
-        return context| {'action':'delete', 'company_name':obj.company_name}
-
-    def do_post_success(self, request, context=None, model_instance:Sponsor=None, form_instance=None, **kwargs):
-        model_instance.delete()
-        return False
-

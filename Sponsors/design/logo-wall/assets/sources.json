@@ -1,0 +1,82 @@
+[
+  {
+    "name": "google",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/google.svg"
+  },
+  {
+    "name": "microsoft",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/microsoft.svg"
+  },
+  {
+    "name": "ibm",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/ibm.svg"
+  },
+  {
+    "name": "airbnb",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/airbnb.svg"
+  },
+  {
+    "name": "spotify",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/spotify.svg"
+  },
+  {
+    "name": "github",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/github.svg"
+  },
+  {
+    "name": "adobe",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/adobe.svg"
+  },
+  {
+    "name": "paypal",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/paypal.svg"
+  },
+  {
+    "name": "slack",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/slack.svg"
+  },
+  {
+    "name": "zoom",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/zoom.svg"
+  },
+  {
+    "name": "dropbox",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/dropbox.svg"
+  },
+  {
+    "name": "atlassian",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/atlassian.svg"
+  },
+  {
+    "name": "docker",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/docker.svg"
+  },
+  {
+    "name": "firefox",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/firefox.svg"
+  },
+  {
+    "name": "opera",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/opera.svg"
+  },
+  {
+    "name": "safari",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/safari.svg"
+  },
+  {
+    "name": "chrome",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/chrome.svg"
+  },
+  {
+    "name": "mailchimp",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/mailchimp.svg"
+  },
+  {
+    "name": "wordpress",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/wordpress.svg"
+  },
+  {
+    "name": "apple",
+    "url": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/apple.svg"
+  }
+]

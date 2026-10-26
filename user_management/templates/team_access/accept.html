@@ -1,0 +1,7 @@
+{% extends 'team_access/base.html' %}
+{% block breadcrumb %}Team invitation{% endblock %}
+{% block access_content %}
+{% if expired %}<h1>This invitation is no longer available</h1><p>The link has expired or has already been used. Ask an Officer to send a fresh invitation if you still need to set up your account.</p><a class="access-button" href="{% url 'user_management:login' %}">Go to login</a>
+{% elif complete %}<h1>Your account is ready</h1><p>Your password has been saved. Log in with your email address and your new password.</p><a class="access-button" href="{% url 'user_management:login' %}?next={% url 'TeamPages:Root' %}">Log in</a>
+{% else %}<h1>Welcome to the team</h1><p>Set a password for <strong>{{ invited_user.email }}</strong>. Your team access has already been arranged.</p><form method="post" class="access-panel">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}<div class="access-field">{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<div class="access-help">{{ field.help_text|safe }}</div>{% endif %}</div>{% endfor %}<button type="submit">Set password and activate account</button></form>{% endif %}
+{% endblock %}

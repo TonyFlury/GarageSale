@@ -1,0 +1,42 @@
+{% extends 'team_access/base.html' %}
+{% load static %}
+{% block PageScripts %}{{ block.super }}<script defer src="{% static 'user_management/js/team_access.js' %}"></script>{% endblock %}
+{% block access_content %}
+<a href="{% url 'user_management:team_access' %}">← All people</a>
+<h1>{% if reviewing %}Review access{% elif person %}Manage access{% else %}Invite a new person{% endif %}</h1>
+<ol class="access-steps" aria-label="Steps"><li>1. Choose a person</li><li {% if not reviewing %}aria-current="step"{% endif %}>2. Choose access</li><li {% if reviewing %}aria-current="step"{% endif %}>3. Review and save</li></ol>
+{% if person %}<div class="access-identity"><h2>{{ person.get_full_name|default:person.email }}</h2><p>{{ person.email }}</p></div>{% endif %}
+{% if reviewing %}
+<form method="post">{% csrf_token %}<input type="hidden" name="review_token" value="{{ review_token }}">
+    <section class="access-panel"><h2>{% if person %}Their access after saving{% else %}Invitation for {{ form.cleaned_data.first_name }} {{ form.cleaned_data.last_name }}{% endif %}</h2>
+        {% if not person %}<p>{{ form.cleaned_data.email }}</p><p>They will receive a link to set their own password. The invitation lasts 7 days.</p>{% endif %}
+        <dl><dt>Membership</dt><dd>{{ resulting_membership }}{% if form.cleaned_data.membership == 'officer' %} (includes Exec membership and managing team access){% endif %}</dd>
+        <dt>Responsibilities</dt><dd>{% for role in resulting_roles %}{{ role }}{% if not forloop.last %}, {% endif %}{% empty %}None assigned{% endfor %}</dd></dl>
+        <div class="access-comparison"><div><h3>Adding</h3><ul>{% for group in added %}<li>{{ group }}</li>{% empty %}<li>No groups added</li>{% endfor %}</ul></div><div><h3>Removing</h3><ul>{% for group in removed %}<li>{{ group }}</li>{% empty %}<li>No groups removed</li>{% endfor %}</ul></div></div>
+        {% if unchanged %}<p>Other groups kept: {{ unchanged|join:', ' }}.</p>{% endif %}
+        {% if direct_permissions %}<p class="access-message">This account also has individually assigned permissions. Those remain in place and may provide additional access.</p>{% endif %}
+        {% if person and not person.is_active %}<p class="access-message">This account is inactive. Saving access does not reactivate it.</p>{% endif %}
+    </section>
+    <div class="access-actions"><button type="submit" name="action" value="save">{% if person %}Save access{% else %}Send invitation{% endif %}</button><button class="access-secondary" type="submit" name="action" value="back">Back to choices</button><a href="{% url 'user_management:team_access' %}">Cancel</a></div>
+</form>
+{% else %}
+<p class="access-intro">Choose their place in the team, then add the jobs they will do. You’ll review everything before saving.</p>
+<form method="post">{% csrf_token %}
+    {% if form.errors %}<div class="access-message error" role="alert"><h2>Check the following</h2>{{ form.non_field_errors }}{% for field in form %}{% for error in field.errors %}<p><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></p>{% endfor %}{% endfor %}</div>{% endif %}
+    {% if not person %}<fieldset class="access-panel"><legend>Person to invite</legend><p>Use their own email address. They will choose their password.</p>{% for field in form %}{% if field.name != 'membership' and field.name != 'roles' %}<div class="access-field">{{ field.label_tag }}{{ field }}</div>{% endif %}{% endfor %}</fieldset>{% endif %}
+    <fieldset class="access-panel"><legend>Team membership</legend>
+        <p>Choose one. Responsibilities are selected separately below.</p>
+        {% for option in form.membership %}<div class="access-choice">{{ option.tag }}<label for="{{ option.id_for_label }}"><strong>{{ option.choice_label }}</strong><span>{% if option.data.value == 'ordinary' %}No Exec or Officer membership. They can still have a specific responsibility.{% elif option.data.value == 'volunteer' %}A personal profile for ID cards. No website responsibilities or Team Page access.{% elif option.data.value == 'exec' %}A member of the executive team. Does not grant access to manage team membership.{% else %}Includes Exec membership and permission to manage other people’s team access.{% endif %}</span></label></div>{% endfor %}
+        {% if person.pk == request.user.pk %}<p>You need another Officer to change your own Officer membership.</p>{% endif %}
+    </fieldset>
+    <p id="volunteer-profile-only" class="access-message" hidden>Volunteers have a personal profile for ID cards. Website responsibilities are not assigned to this membership.</p>
+    <fieldset class="access-panel" id="access-responsibilities"><legend>Responsibilities</legend><p>Choose any that apply. Leave all unticked if no specific responsibilities are needed.</p>
+        {% for option in role_options %}<div class="access-choice">{{ option.field.tag }}<label for="{{ option.field.id_for_label }}"><strong>{{ option.field.choice_label }}</strong><span>{{ option.description }}</span></label></div>{% empty %}<p>No responsibility groups have been configured yet.</p>{% endfor %}
+        {% if unavailable %}<p class="access-muted">Not yet configured on this site: {{ unavailable|join:', ' }}.</p>{% endif %}
+    </fieldset>
+    <div class="access-actions"><button type="submit">Review access</button><a href="{% url 'user_management:team_access' %}">Cancel</a></div>
+</form>
+{% if person.teaminvitation and not person.teaminvitation.accepted_at %}<section class="access-panel"><h2>Invitation awaiting acceptance</h2><p>Invitation expires {{ person.teaminvitation.expires_at|date:'j M Y, H:i' }}. A fresh invitation replaces the previous link.</p><form method="post" action="{% url 'user_management:team_invitation_resend' person.pk %}">{% csrf_token %}<button type="submit" class="access-secondary">Send a fresh invitation</button></form></section>{% elif person.is_guest or not person.is_verified %}{% if person %}<p class="access-message">This person must complete registration and verification before using their account.</p>{% endif %}{% endif %}
+{% if history %}<section class="access-panel"><h2>Recent access changes</h2><ul class="access-history">{% for change in history %}<li><strong>{{ change.created_at|date:'j M Y, H:i' }}</strong> · {{ change.actor_email }} · {{ change.get_action_display }}<p>Before: {{ change.before_groups|join:', '|default:'No groups' }}<br>After: {{ change.after_groups|join:', '|default:'No groups' }}</p></li>{% endfor %}</ul></section>{% endif %}
+{% endif %}
+{% endblock %}

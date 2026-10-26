@@ -1,0 +1,71 @@
+.contributor-import * { box-sizing: border-box; }
+.contributor-import { max-width: 1020px; margin: 16px auto; padding: 0 20px; }
+.contributor-import .eyebrow { color: #61756a; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.contributor-import p { line-height: 1.45; margin: 4px 0; font-size: 14px; }
+.contributor-import .muted, .contributor-import small { color: #66756e; }
+.contributor-import .steps { display: flex; gap: 24px; padding: 0; margin: 16px 0; list-style: none; font-size: 13px; color: #66756e; }
+.contributor-import .steps strong { color: #247454; }
+.contributor-import .card { background: white; border: 1px solid lightgray; border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+.contributor-import .file { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.contributor-import .file-info { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; font-size: 14px; min-width: 0; }
+.contributor-import .file-path { min-width: 0; overflow-wrap: anywhere; }
+.contributor-import .badge { background: #edf5f0; color: #286a4f; border-radius: 6px; padding: 4px 8px; font-size: 12px; white-space: nowrap; }
+.contributor-import .workspace { display: block; }
+.contributor-import .heading { padding: 10px 14px; border-bottom: 1px solid lightgray; }
+.contributor-import .mapping { padding: 0 16px; }
+.contributor-import .row { display: grid; grid-template-columns: minmax(100px, .75fr) minmax(0, .9fr) minmax(180px, 1.2fr); align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid lightgray; }
+.contributor-import .row:last-child { border-bottom: 0; }
+.contributor-import .row.mapped { background: #edf7f0; }
+.contributor-import .row.additional { background: #edf4fb; }
+.contributor-import .row.ignored { background: #f1f2f1; }
+.contributor-import #mappings .row { margin: 0 -8px; padding-left: 8px; padding-right: 8px; border-radius: 4px; transition: background-color .15s ease; }
+.contributor-import .mapping-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; font-size: 11px; color: #66756e; }
+.contributor-import .mapping-legend span::before { content: ''; display: inline-block; width: 9px; height: 9px; border: 1px solid #c4d1c9; border-radius: 2px; margin-right: 4px; }
+.contributor-import .mapping-legend .model::before { background: #edf7f0; }
+.contributor-import .mapping-legend .details::before { background: #edf4fb; }
+.contributor-import .column-head { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #6d7a73; padding: 10px 0 6px; }
+.contributor-import select { width: 100%; min-height: 36px; font: inherit; }
+.contributor-import option.occupied { background: #fff0d5; color: #704b13; }
+.contributor-import option.current { background: #e4f2e9; color: #245e42; }
+.contributor-import .sample { font-size: 13px; overflow-wrap: anywhere; }
+.contributor-import .status { display: none; }
+.contributor-import .ignored { opacity: .65; }
+.contributor-import .pending { color: #9a6419; }
+.contributor-import .extras { padding: 8px 14px; background: #fafcfb; border-top: 1px solid lightgray; }
+.contributor-import .extras h2 { font-size: 14px; }
+.contributor-import .extras p { font-size: 12px; }
+.contributor-import .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 0; }
+.contributor-import .chip { padding: 4px 8px; border: 1px solid lightgray; border-radius: 5px; background: white; font-size: 12px; }
+.contributor-import summary { cursor: pointer; font-size: 14px; color: #286a4f; }
+.contributor-import pre { background: #f5f7f6; padding: 10px; border-radius: 6px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+.contributor-import footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 0 0 12px; font-size: 13px; }
+.contributor-import #message { margin-bottom: 10px; color: #8a5715; font-size: 13px; }
+.contributor-import #message:empty { display: none; }
+.contributor-import .note { font-size: 11px; border-top: 1px solid lightgray; padding-top: 10px; }
+.contributor-import .row label { overflow-wrap: anywhere; text-align: left; margin-right: 0; }
+    @media (max-width: 900px) {.contributor-import .workspace { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 650px) {.contributor-import { margin: 24px auto; padding: 0 16px; }
+.contributor-import .steps { gap: 14px; font-size: 12px; }
+.contributor-import .file, .contributor-import footer { align-items: flex-start; flex-direction: column; }
+.contributor-import .column-head { display: none; }
+.contributor-import .row { grid-template-columns: minmax(110px, .8fr) minmax(0, 1fr); gap: 6px 12px; }
+.contributor-import .sample { grid-column: 1; grid-row: 2; font-size: 12px; }
+.contributor-import .row > div:last-child { grid-column: 2; grid-row: 1 / span 2; }
+    }
+.contributor-import .workspace { display: block; }
+.contributor-import .preview-panel > summary { padding: 12px 16px; font-weight: 650; }
+.contributor-import .preview-panel > p { padding: 0 16px; }
+.contributor-import .preview-scroll { max-height: 340px; overflow: auto; margin: 10px 16px 16px; border: 1px solid lightgray; border-radius: 6px; }
+.contributor-import .preview-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; text-align: left; }
+.contributor-import .preview-table caption { text-align: left; padding: 8px; color: #66756e; }
+.contributor-import .preview-table th { position: sticky; top: 0; z-index: 1; background: #edf5f0; white-space: nowrap; }
+.contributor-import .preview-table th, .contributor-import .preview-table td { padding: 9px 12px; border-bottom: 1px solid lightgray; vertical-align: top; }
+.contributor-import .preview-table td { min-width: 120px; max-width: 340px; overflow-wrap: anywhere; }
+.contributor-import .preview-table td:first-child { min-width: 40px; }
+.contributor-import .preview-table tbody tr:nth-child(even) { background: #fafcfb; }
+.contributor-import .preview-table .missing-name { background: #fff0d5; }
+.contributor-import .preview-table pre { margin: 0; padding: 0; background: transparent; font-size: 12px; min-width: 200px; }
+
+/* Position the shared team-page action group within this page’s footer. */
+.contributor-import footer .buttons { width: auto; margin: 0; }

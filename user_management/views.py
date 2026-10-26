@@ -21,6 +21,7 @@ from django.shortcuts import resolve_url
 from django.views.generic import View, UpdateView
 from django.core.exceptions import ObjectDoesNotExist, ValidationError, PermissionDenied
 from django.contrib.auth import authenticate
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 from TeamPageFramework.entry_point import EntryPointMixin
 from . import forms
@@ -31,6 +32,7 @@ from .apps import appsettings, settings
 from django.contrib.auth import get_user_model, login, logout, update_session_auth_hash
 
 from .models import RegistrationVerifier
+from .profile_access import can_manage_own_profile, require_profile_access
 import logging
 
 logger = logging.getLogger(__name__)
@@ -782,10 +784,11 @@ class UserProfile(View):
                 member_data = TeamMember.objects.get(team_member_id=team_member_id)
             except TeamMember.DoesNotExist:
                 return HttpResponseServerError('Team member does not exist')
+            require_profile_access(request.user, member_data)
         else:
-            if request.user.has_perm('GarageSale.is_team_member'):
+            if can_manage_own_profile(request.user):
                 member_data = TeamMember.objects.get_or_create(user=request.user,
-                                                           defaults={'user' : request.user})[0]
+                                                           defaults={'role': 'Volunteer'})[0]
             else:
                 raise PermissionDenied('You do not have permission to view this page')
 
@@ -797,6 +800,13 @@ class UserProfileEdit(UpdateView):
     template_name = 'user_profile/user_profile_edit.html'
     context_object_name = 'member_data'
     fields = ['role', 'picture', 'bio']
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        if self.object.user.groups.filter(name='Volunteer').exists() and not self.request.user.has_perm('user_management.change_teammember'):
+            form.fields['role'].disabled = True
+        return form
+
     def get(self, request, *args, **kwargs):
         self.object = self.get_object( *args, **kwargs)
         return super().get(request, *args, **kwargs)
@@ -805,6 +815,7 @@ class UserProfileEdit(UpdateView):
         member_id = self.kwargs.get('team_member_id', None)
         try:
             self.object = self.model.objects.get(team_member_id=member_id)
+            require_profile_access(self.request.user, self.object, editing=True)
         except self.model.DoesNotExist:
             raise Http404(f"User does not exist, {member_id}")
         return self.object
@@ -824,12 +835,16 @@ def make_pdf( template_file:str, context:dict, header:str, request):
     return pdf, content
 
 
-class TeamMemberIDCard(EntryPointMixin, View):
+class TeamMemberIDCard(EntryPointMixin, LoginRequiredMixin, PermissionRequiredMixin, View):
     entry_point_url = 'user_management:team_member_id_cards'
     entry_point_label = 'Id Cards'
     entry_point_icon = static('user_management/images/icons/id-cards-with-profile-images-variant-svgrepo-com.svg')
-    entry_point_permission ='GarageSale.is_manager'
+    entry_point_permission = 'user_management.generate_id_card'
+    login_url = 'user_management:login'
     template_name = 'id_cards/request_id_cards.html'
+
+    def has_permission(self):
+        return self.request.user.has_perm(self.entry_point_permission)
 
     def get(self, request):
 
@@ -858,6 +873,11 @@ def display_id_card( request, team_member_id=None):
         except TeamMember.DoesNotExist:
             return HttpResponseServerError('Team member does not exist')
     else:
-        member_data = TeamMember.objects.filter()
+        if request.user.has_perm('user_management.generate_id_card') or request.user.has_perm('GarageSale.is_manager'):
+            member_data = TeamMember.objects.all()
+        elif can_manage_own_profile(request.user):
+            member_data = TeamMember.objects.filter(user=request.user)
+        else:
+            raise PermissionDenied('You do not have permission to view ID cards.')
 
     return TemplateResponse(request, 'id_cards/ID_cards.html', context={'member_data': member_data})

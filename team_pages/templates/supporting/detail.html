@@ -1,0 +1,12 @@
+{% extends "team_pages_base.html" %}
+{% block SnappableSections %}
+<main class="form">
+    <h1>{{ object.name }}</h1>
+    {% if object.logo %}<img src="{{ object.logo.url }}" alt="{{ object.name }} logo" style="max-width: 20rem; max-height: 12rem; object-fit: contain;">{% endif %}
+    <p><a href="{{ object.website }}">{{ object.website }}</a></p>
+    <div class="buttons">
+        <a href="{% url 'TeamPages:SupportingList' %}">All supported charities</a>
+        {% if perms.GarageSale.change_supporting %}<a href="{% url 'TeamPages:SupportingEdit' object.pk %}">Edit charity</a>{% endif %}
+    </div>
+</main>
+{% endblock %}

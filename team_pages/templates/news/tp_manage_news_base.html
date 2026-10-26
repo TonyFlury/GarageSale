@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block SnappableSections %}
+<form hidden>{% csrf_token %}</form>
 <script>
     const patterns = new Map([
     {% for path in patterns %}
@@ -79,13 +80,13 @@
                         {% if not item.is_live %}
                             <span tp_row_id="{{item.id}}" tp_action="edit">&#x270E;</span>
                         {% endif %}
-                        {% if perms.News.can_publish_news and item.can_be_published %}
+                        {% if perms.News.publish_news and item.can_be_published %}
                             <span tp_row_id="{{item.id}}" tp_action="publish">&#128424;</span>
                         {% endif %}
-                        {% if perms.News.can_publish_news and item.published %}
+                        {% if perms.News.publish_news and item.published %}
                             <span tp_row_id="{{item.id}}" tp_action="publish">&#128721;</span>
                         {% endif %}
-                        {% if perms.News.delete_news and not item.is_live %}
+                        {% if perms.News.delete_newsarticle and not item.is_live %}
                             <span tp_row_id="{{item.id}}" tp_action="delete">&#128465;</span>
                         {% endif %}
                     </td>

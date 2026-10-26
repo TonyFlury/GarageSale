@@ -1,0 +1,10 @@
+<h2>Sponsorship confirmed</h2>
+<p>Contributions for {{ current_event }}</p>
+{% for sponsor in sponsors %}
+    <section>
+        <h3>{{ sponsor.contributor_name }}</h3>
+        <div data-sponsor-contributions>
+            {% include "Sponsors/widgets/contributions.html" with contributor=sponsor contributions=sponsor.event_contributions %}
+        </div>
+    </section>
+{% endfor %}

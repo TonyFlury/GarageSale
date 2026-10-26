@@ -1,0 +1,28 @@
+.prize-winners-page { max-width: 1200px; width: 100%; min-width: 0; padding: 1rem; box-sizing: border-box; margin: auto; text-align: left; }
+.winner-event-form { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin: 1rem 0; }
+.winner-event-form label { margin: 0; }
+.winner-event-form select { max-width: 100%; }
+.winner-event-form .buttons { width: auto; margin: 0; }
+.prize-winner { border: 1px solid #c4d4dc; border-radius: 8px; padding: 1rem; margin: 1.25rem 0; background: white; }
+.prize-winner-heading { display: flex; gap: 0.75rem; align-items: start; border-bottom: 1px solid #d9e4e9; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+.prize-winner-heading h3 { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.prize-winner-heading p { margin: 0.4rem 0; font-size: 0.9rem; }
+.winner-prize-number { background: #285e73; color: white; border-radius: 4px; padding: 0.25rem 0.5rem; }
+.prize-winner-forms { display: grid; grid-template-columns: minmax(10rem,1fr) minmax(0,2fr); gap: 1.5rem; }
+.prize-winner fieldset { margin: 0; padding: 0; min-width: 0; border: none; }
+.prize-winner legend { font-weight: bold; margin-bottom: 0.75rem; }
+.prize-winner form label { display: block; text-align: left; margin: 0 0 0.35rem; }
+.prize-winner .winner-field { margin-bottom: 0.75rem; }
+.prize-winner label span { font-size: 0.8rem; font-weight: normal; }
+.prize-winner input, .prize-winner textarea { box-sizing: border-box; width: 100%; padding: 0.4rem; font: inherit; border: 1px solid #b5c7cf; border-radius: 5px; background: white; color: inherit; }
+.prize-winner textarea { resize: vertical; }
+.prize-winner fieldset:disabled input, .prize-winner fieldset:disabled textarea { background: #f2f4f5; color: #657079; }
+.prize-winner fieldset:disabled legend, .prize-winner fieldset:disabled label { color: #657079; }
+.prize-winner .buttons { width: auto; margin: 0.75rem 0 0; }
+.prize-winner .buttons button:disabled { opacity: 0.5; cursor: default; }
+.winner-unlock-hint, .winner-readonly { font-size: 0.85rem; color: #566b76; }
+.winner-status { font-size: 0.9rem; margin-bottom: 0; }
+.winner-error { color: #a32525; }
+.prize-winners-page [hidden] { display: none !important; }
+.prize-winner input:focus-visible, .prize-winner textarea:focus-visible, .prize-winner button:focus-visible { outline: 2px solid #285e73; outline-offset: 2px; }
+@media(max-width: 850px) { .prize-winner-forms { grid-template-columns: 1fr; gap: 1.25rem; } .prize-winners-page { padding: 0.5rem; } }

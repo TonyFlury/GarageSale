@@ -1,0 +1,37 @@
+<h2>{% if status == "Invited" %}Invite market traders{% elif status == "Confirmed" %}Confirm attendance{% elif status == "Rejected" %}Decline invitations{% else %}Send email{% endif %}</h2>
+<div class="form craft-market-popup">
+<p>Event: {{ market_event }}</p>
+<ul>{% for marketer in marketers %}<li>{{ marketer.contributor_name }}</li>{% endfor %}</ul>
+{% if selection_error %}<p role="alert">{{ selection_error }}</p>{% endif %}
+<form method="post" action="{{ request.path }}">
+    {% csrf_token %}
+    <input type="hidden" name="toolbar_action" value="{{ toolbar_action }}">
+    <input type="hidden" name="market_event_id" value="{{ market_event.pk }}">
+    {% for marketer in marketers %}<input type="hidden" name="selected_contributor" value="{{ marketer.pk }}">{% endfor %}
+    {% for filter in selected_filters %}<input type="hidden" name="selected_filters" value="{{ filter }}">{% endfor %}
+    {% if status and status != "Rejected" %}
+        <label class="market-send-email">
+            <input type="checkbox" name="delivery" value="send_email" {% if email_templates %}checked{% else %}disabled{% endif %}>
+            Send email
+        </label>
+    {% endif %}
+    {% if email_templates %}
+        <div class="market-email-options">
+            <label for="market-email-template">Email template</label>
+            <select id="market-email-template" name="email_template_id">
+                <option value="" disabled selected>Choose a template</option>
+                {% for template in email_templates %}<option value="{{ template.pk }}">{{ template.summary|default:template.subject }}</option>{% endfor %}
+            </select>
+        </div>
+    {% elif status != "Rejected" %}
+        <p role="alert">No email templates are currently available.</p>
+    {% endif %}
+    <div class="buttons">
+        {% if status %}
+            <button class="communication-template-button" type="submit" name="confirm_action" value="1">{% if status == "Invited" %}Invite{% elif status == "Confirmed" %}Confirm attendance{% else %}Decline invitation{% endif %}</button>
+        {% elif email_templates %}
+            <button class="communication-template-button" type="submit" name="delivery" value="send_email">Send email</button>
+        {% endif %}
+    </div>
+</form>
+</div>

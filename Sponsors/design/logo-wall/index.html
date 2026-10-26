@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sponsor wall · Brantham Garage Sale prototype</title>
+<link rel="stylesheet" href="wall.css">
+</head>
+<body>
+<header class="prototype-bar"><span>BRANTHAM GARAGE SALE <span class="bar-divider">/</span> DESIGN STUDY</span><span class="demo-tag">Prototype · example brands</span></header>
+<main>
+<section class="intro"><p class="eyebrow">A COMMUNITY MADE POSSIBLE TOGETHER</p><h1>A little generosity.<br>A big difference.</h1><p>Exploring a sponsor wall with a generous centre, a mix of logo shapes,<br class="desktop-break"> and room for every business that lends a hand.</p></section>
+<section class="controls" aria-label="Prototype controls">
+<label>Sponsors <select id="count"><option>16</option><option>17</option><option selected>18</option><option>19</option><option>20</option></select></label>
+<label>Headliners <select id="headliners"><option>3</option><option selected>4</option></select></label>
+<label>Preview <select id="viewport"><option value="desktop">Desktop</option><option value="mobile">Mobile</option></select></label>
+<label class="check"><input type="checkbox" id="outlines"> Show allocated space</label>
+<button id="shuffle" type="button">↻ &nbsp; Reshuffle wall</button>
+</section>
+<section class="wall-shell" id="preview" aria-labelledby="wall-title">
+<div class="wall-heading"><div><p class="eyebrow">THANK YOU TO OUR SUPPORTERS</p><h2 id="wall-title">Our generous sponsors</h2></div><span class="event-label">Event preview <span>2027</span></span></div>
+<p class="wall-description">Their support helps us bring the community together and raise funds for local good causes.</p>
+<div id="wall" class="logo-wall" aria-label="Example sponsor logos"></div>
+<div class="wall-footer"><span class="legend"><i></i> Larger, central logos recognise our headline supporters.</span><span id="summary" aria-live="polite"></span></div>
+</section>
+<section class="notes"><div><p class="eyebrow">THE IDEA</p><h3>Room for different shapes.</h3><p>Wide wordmarks and taller symbols keep their original proportions. Four headline supporters receive roughly four times the allocated space. Other logos fill the surrounding gaps.</p></div><div><p class="eyebrow">TRY IT</p><h3>A wall that can grow.</h3><p>Change the sponsor count, choose three or four headliners, or reshuffle. Turn on “Show allocated space” to see the rectangles used by the layout. Tap a logo for its sample details.</p></div></section>
+<p class="source-note">Illustrative brands only; these are not actual event sponsors. SVGs downloaded from <a href="https://github.com/gilbarbara/logos">gilbarbara/logos</a>. All marks belong to their respective owners.</p>
+</main>
+<dialog id="sponsor-dialog"><button type="button" id="close-dialog" aria-label="Close sponsor details">×</button><p class="eyebrow" id="dialog-tier"></p><img id="dialog-logo" alt=""><h2 id="dialog-name"></h2><p>This is an example logo used to explore the layout, rather than an actual sponsor of the event.</p><a id="dialog-source" target="_blank" rel="noopener">View logo source ↗</a></dialog>
+<script src="layout.js"></script><script src="wall.js"></script>
+</body></html>

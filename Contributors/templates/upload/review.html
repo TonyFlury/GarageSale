@@ -1,0 +1,65 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{% block Title %}Review contributor changes{% endblock %}
+{% block PageStyles %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'Contributors/styles/column_matching.css' %}">
+{% endblock %}
+{% block SnappableSections %}
+<main class="contributor-import">
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="stage" value="review_changes">
+    <input type="hidden" name="csv_path" value="{{ csv_path }}">
+    <input type="hidden" name="contributor_type" value="{{ contributor_type|default_if_none:'' }}">
+    <input type="hidden" name="csv_data" value="{{ csv_data_json }}">
+    <input type="hidden" name="column_mapping" value="{{ column_mapping_json }}">
+
+    <div class="eyebrow">Contributors / CSV import</div>
+    <h1>Review changes</h1>
+    <p class="muted">Check the new contributors and proposed updates before saving. No contributors will be deleted.</p>
+    <p class="muted">Existing contributors are matched by name. Non-blank CSV values replace existing values; blanks leave them unchanged.</p>
+    <p class="muted">Additional details are merged into existing socials data. Other keys are preserved.</p>
+    <p class="muted">Each contact shown below will be appended using its supplied date, not the upload date. Existing history will not be changed. Matching contributor names, dates and notes are skipped as duplicates.</p>
+    <p class="muted">{{ duplicate_history_count }} duplicate contact{{ duplicate_history_count|pluralize }} skipped.</p>
+    <ol class="steps" aria-label="Import progress">
+      <li>✓ 1. Select file</li><li>✓ 2. Match columns</li><li aria-current="step"><strong>3. Review changes</strong></li>
+    </ol>
+    <section class="card file" aria-label="Imported file">
+      <div class="file-info"><strong>{{ csv_path|default:"Uploaded CSV" }}</strong></div>
+      {% if contributor_type %}<div class="badge">Contributor type: {{ contributor_type }}</div>{% endif %}
+    </section>
+
+    {% include "upload/_review_instances.html" with instances=new_instances heading="New contributors" section_id="new-contributors" empty_message="No new contributors." only %}
+    {% include "upload/_review_instances.html" with instances=modified_instances heading="Modified contributors" section_id="modified-contributors" empty_message="No contributors will be modified." only %}
+
+    <section class="card" aria-labelledby="contact-history-title">
+      <div class="heading">
+        <h2 id="contact-history-title">New Contact History entries <span class="badge">{{ new_history_instances|length }}</span></h2>
+        {% if not new_history_instances %}<p class="muted">No history comments to add.</p>{% endif %}
+      </div>
+      {% if new_history_instances %}
+      <div class="preview-scroll">
+        <table class="preview-table">
+          <caption>Comments to add after confirmation</caption>
+          <thead><tr><th scope="col">Contributor name</th><th scope="col">Contact date</th><th scope="col">Comment</th></tr></thead>
+          <tbody>{% for history in new_history_instances %}
+            <tr><td>{{ history.contributor.contributor_name }}</td><td>{{ history.timestamp|date:"Y-m-d" }}</td><td><pre>{{ history.details }}</pre></td></tr>
+          {% endfor %}</tbody>
+        </table>
+      </div>
+      {% endif %}
+    </section>
+
+    {% if error %}<div id="message" role="alert">{{ error }}</div>{% endif %}
+    <footer>
+      <span class="muted">{{ new_instances|length }} new · {{ modified_instances|length }} modified · {{ new_history_instances|length }} history entries</span>
+      <div class="buttons">
+        <a href="{% url 'contributors:upload' %}{% if contributor_type %}?contributor_type={{ contributor_type|urlencode }}{% endif %}">Start again</a>
+        <input id="confirm-import" type="submit" value="Confirm import"{% if not new_instances and not modified_instances and not new_history_instances or not csv_data_json or not column_mapping_json or error %} disabled{% endif %}>
+      </div>
+    </footer>
+    <p class="note muted">Confirming saves the reviewed changes.</p>
+  </form>
+</main>
+{% endblock %}

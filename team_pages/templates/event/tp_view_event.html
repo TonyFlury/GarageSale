@@ -25,9 +25,9 @@
             </div>
         </div>
         <div class="buttons">
-            {% if not form.instance.event_date|is_past %}
+            {% if perms.GarageSale.change_eventdata and not form.instance.event_date|is_past %}
             <input type="button" id="id_EventEdit" onclick="edit_event()" value="Edit">
-                {% else %}
+                {% elif form.instance.event_date|is_past %}
                 This is a historic event and cannot be edited.
             {% endif %}
         </div>

@@ -1,12 +1,15 @@
-from django.contrib.auth.base_user import BaseUserManager
+from django.contrib.auth.models import UserManager
 from django.utils.translation import gettext_lazy as _
 
 
-class ExtendUserManager(BaseUserManager):
+class ExtendUserManager(UserManager):
     """
     Custom user model manager where email is the unique identifiers
     for authentication instead of usernames.
     """
+    # Preserve the existing migration behaviour while inheriting Django's permission lookups.
+    use_in_migrations = False
+
     def create_guest_user(self, email, **extra_fields):
         """
         Create and save a user with restricted features (ie no password)

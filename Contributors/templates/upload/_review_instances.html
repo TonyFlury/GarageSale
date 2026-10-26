@@ -1,0 +1,26 @@
+<section class="card" aria-labelledby="{{ section_id }}">
+  <div class="heading">
+    <h2 id="{{ section_id }}">{{ heading }} <span class="badge">{{ instances|length }}</span></h2>
+    <p class="muted">{% if instances %}Values after import.{% else %}{{ empty_message }}{% endif %}</p>
+  </div>
+  {% if instances %}
+  <div class="preview-scroll" role="region" aria-labelledby="{{ section_id }}" tabindex="0">
+    <table class="preview-table">
+      <caption>{{ heading }}</caption>
+      <thead><tr><th scope="col">Contributor name</th><th scope="col">Contact name</th><th scope="col">Phone</th><th scope="col">Email</th><th scope="col">Description</th><th scope="col">Additional details</th></tr></thead>
+      <tbody>
+        {% for instance in instances %}
+        <tr>
+          <td>{{ instance.contributor_name }}</td>
+          <td>{{ instance.contact_name|default_if_none:"" }}</td>
+          <td>{{ instance.phone|default_if_none:"" }}</td>
+          <td>{{ instance.email|default_if_none:"" }}</td>
+          <td>{{ instance.description|default_if_none:"" }}</td>
+          <td><pre>{{ instance.socials|default_if_none:"" }}</pre></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>

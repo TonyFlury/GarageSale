@@ -1,3 +1,7 @@
+Integration release notes and validation: INTEGRATION_REVIEW.md.
+Before live deployment, rehearse against a restored database and matching media.
+Retained CraftMarket permission content types must not be removed as stale.
+
 1) Make sure all changed files are committed and pushed.
     Ensure this includes :
         Migration files
@@ -23,11 +27,71 @@
         python manage.py migrate
 
 if you have a new databse :
-    python manage.py loaddata ContentTypes.json
-    python manage.py loaddata Permissions.json
-    python manage.py loaddata Groups.json
+    Content types and permissions are created by migrate; initialise the approved
+    groups with sync_access_policy below rather than loading legacy role fixtures.
     python manage.py loaddata transaction_categories.json
     python manage.py loaddata TemplateData.json
+
+2a) Approved access policy - LIVE SITE AND ALL TRIAL SITES:
+        After migrate, and before reloading the web app, use the target site's
+        virtual environment and credentials. Preview then apply the reviewed
+        permissions/groups with a NEW private backup filename on each run:
+
+        python manage.py sync_access_policy --dry-run
+        python manage.py sync_access_policy --apply --backup permissions-before.json
+        python manage.py sync_access_policy --dry-run
+
+        Keep the backup outside public/media/static directories. Direct old role
+        flags or flags on unrecognised groups require review before application;
+        the command will explain these and stop without making changes.
+        Third-party permissions and staff/superuser flags remain unchanged.
+        Officers also become ExecMembers. Check WebAdmin staff access separately
+        for admin-only deletion. Collect static files and reload after applying.
+        Full verification and rollback instructions: GarageSale/PERMISSION_DEPLOYMENT.md
+
+2b) Template transfer - LIVE SITE AND ALL TRIAL SITES (new or existing databases):
+        Deploy the transfer_templates command before importing. Use the target
+        site's project directory, virtual environment and credentials/database.
+        On the development system, export the communication templates and their
+        uploaded attachments to a new bundle file:
+
+        python manage.py transfer_templates export deployment-templates.json
+
+        Copy deployment-templates.json to each live/trial server using the
+        PythonAnywhere Files app or the normal file-transfer process. After
+        migrations, validate and import it on EACH target site:
+
+        python manage.py transfer_templates import deployment-templates.json --dry-run
+        python manage.py transfer_templates import deployment-templates.json
+
+        Identical versions are skipped. Conflicting versions stop the import;
+        review the differences before explicitly replacing those versions:
+
+        python manage.py transfer_templates import deployment-templates.json --replace --dry-run
+        python manage.py transfer_templates import deployment-templates.json --replace
+
+        Use from dates are preserved. Uploaded attachments are included, but
+        images/assets linked from template HTML must be accessible separately.
+        This is required on the live site as well as the trial sites; it does
+        not transfer contributors, event configuration or credentials.
+        Full instructions: GarageSale/TEMPLATE_TRANSFER.md
+
+2c) Demonstration data - TRIAL SITES ONLY. DO NOT RUN ON THE LIVE SITE:
+        After migrations, ensure the trial site's current event is configured:
+        its Use from date must be before today and its event date must not have
+        passed. From the TRIAL project directory and virtual environment, with
+        the TRIAL database credentials, inspect and then build the sample data:
+
+        python manage.py seed_team_demo --dry-run
+        python manage.py seed_team_demo
+
+        Creates 8 sponsors with logos (4 contacted, 4 without contact history),
+        2 confirmed donors (GBP 250 cash and a GBP 50 gift hamper), and 4 market
+        traders (2 invited). All names begin [TEAM DEMO]. No emails are sent.
+        Reruns avoid duplicates and preserve changes made during demonstrations;
+        they do not reset the data. Ensure trial media files are served so the
+        generated logos appear. Transfer templates first for PDF/email demos.
+        Full instructions: Contributors/TEAM_DEMO.md
 
 3) Credentials files :
     Using the files app on the python anywhere website

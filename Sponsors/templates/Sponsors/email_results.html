@@ -1,0 +1,7 @@
+<h2>Sponsor email results</h2>
+<p>Selected template: <strong>{{ selected_template.summary|default:selected_template.subject }}</strong></p>
+<ul>
+    {% for result in results %}
+        <li><strong>{{ result.sponsor.contributor_name }}</strong>: {{ result.message }}</li>
+    {% endfor %}
+</ul>
