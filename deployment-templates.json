@@ -1,0 +1,112 @@
+{
+  "format": "garagesale-templates",
+  "version": 1,
+  "templates": [
+    {
+      "fields": {
+        "category": "CraftMarket",
+        "sub_category": "Invited",
+        "summary": "Basic invite Email",
+        "subject": "Invitation to the Brantham Garage Sale {{event_date}}",
+        "html_content": "<p style=\"text-align: center; \"><img src=\"http://127.0.0.1:8000/media/event_logo_2026-6/horse-Logo-01.png\" style=\"width: 73.9219px; height: 73.9219px;\"><span style=\"font-size: 24px;\">&nbsp;</span><span style=\"font-size: 24px;\">Brantham Garage Sale Craft Market -&nbsp;</span><span style=\"font-size: 24px;\">{{event_date}}</span></p><p style=\"text-align: center;\"><span style=\"font-size: 18px;\">{{contact_name}},</span></p><p style=\"text-align: left;\"><span style=\"font-size: 18px;\">We would like to invite {{trading_name}} to participate in the Craft Market in Brantham Suffolk on {{event_date}}. This year the event is supporting {{supporting_list}}.</span></p><p style=\"text-align: left;\"><span style=\"font-size: 18px;\">The Craft Market will be held at Acacia Court, Brantham, and a pitch fee of £16.00 applies.</span></p><div style=\"text-align:center;margin:auto;width:35%;background-color: rgb(0, 255, 255); padding=1rem 1rem;border-radius:15px;box-shadow 2px 2px 3px black;\"><a href=\"{{url}}\" target=\"_blank\" style=\"\">Click to Respond to this invite</a></div>",
+        "signature": "Tony Flury\r\nCraft Market Co-ordinator - Brantham GarageSale\r\nemail : CraftMarket@branthamGarageSale.org.uk\r\nwebsite : https://www.BranthamGarageSale.org.uk/",
+        "use_from": "2025-10-16"
+      },
+      "attachments": []
+    },
+    {
+      "fields": {
+        "category": "CraftMarket",
+        "sub_category": "Confirmed",
+        "summary": "Email sent when a Invitee confirms attendance",
+        "subject": "Details of Craft Market on {{event_date}} for {{trading_name}}",
+        "html_content": "<p style=\"text-align: center; \"><span style=\"font-size: 24px;\">Brantham Garage Sale Craft Market - {{event_date}}</span><span style=\"font-size: 18px;\">﻿</span></p><p style=\"text-align: center; \"><span style=\"font-size: 14px;\"><span style=\"font-size: 18px;\">﻿</span><span style=\"font-size: 18px;\">Details for {{trading_name}}</span><br></span></p><p style=\"text-align: center; \"><span style=\"font-size: 14px;\">﻿</span><br><div style=\"text-align: left;\"><span style=\"font-size: 18px;\">Thank you for confirming that you will be attending the Craft Market.<br><br>We attach a full set of Craft Market Terms and Conditions, including payment details of the pitch fees, timings on the day and other important information.</span></div><div style=\"text-align: left;\"><span style=\"font-size: 18px;\"><br></span></div><div style=\"text-align: left;\"><span style=\"font-size: 18px;\">We greatly look forward to seeing you there.</span></div><span style=\"font-size: 18px;\"><br></span></p>",
+        "signature": "Craft Market Coordinator : CraftMarket@BranthamGarageSale.org.uk<br>\r\nPart of the Brantham Garage Sale Foundation : https://www.BranthamGarageSale.org.uk/",
+        "use_from": "2025-10-22"
+      },
+      "attachments": [
+        {
+          "upload": false,
+          "template_name": "TermsAndConditions"
+        }
+      ]
+    },
+    {
+      "fields": {
+        "category": "CraftMarket",
+        "sub_category": "TermsAndConditions",
+        "summary": "Terms and Conditions for the Craft Market",
+        "subject": "Brantham Garage Sale - Craft Market Terms And Conditions",
+        "html_content": "<h3 class=\"\" style=\"text-align:center\">Craft Market Terms and Conditions - {{event_date}}</h3><p style=\"text-align: center;\"><span style=\"font-size: 14px;\">The Garage Sale and Associated Craft Market on {{event_date}} is raising funds for {{supporting}}.</span></p><h4 class=\"\"><u style=\"font-weight: normal;\">Location</u></h4><p style=\"text-align: left; margin-left: 25px;\">The Craft Market is being held at Acacia Court in Brantham: CO11 1TR. Specifically ﻿the Paved Area outside the East of England Co-op store.</p><p style=\"text-align: left; margin-left: 25px;\">The Craft Market is held close to the East of England Co-op store, and Chloe's Cafe, both of which are open all day of the Craft Market. There is an accessible Toilet within the Cafe which is available to stall holders.</p><h4 style=\"text-align: left; margin-left: 0px;\" class=\"\"><u style=\"font-weight: normal;\">Timing</u></h4><p style=\"text-align: left; margin-left: 25px;\">The Garage Sale formally starts at 9am and closes at 3pm, and we request that Craft Market sellers are open within that time-frame if at all possible.<br><br>The Craft Market location is available from 8:00am on the day for setting up your tables and displays, and we ask that all Stalls are cleared away from 4:00pm on the day.</p><h4 style=\"text-align: left;\" class=\"\"><u style=\"font-weight: normal;\">Pitch Sizes</u></h4><p style=\"text-align: left; margin-left: 25px;\">A single pitch is sized as a 3m by 3m square, which should be sufficient for two standard sized tables (120cm by 80cm each) placed side by side and a gazebo/awning covering the tables.</p><p style=\"text-align: left; margin-left: 25px;\">If you need a larger area please contact the Craft Market Coordinator (see Contacts Section) and agree the details. Larger pitches may attract extra fees.</p><h4 style=\"text-align: left; margin-left: 0px;\" class=\"\"><u style=\"font-weight: normal;\">Pitch Fees &amp; Payment</u></h4><p style=\"text-align: left; margin-left: 25px;\">A Standard pitch (3m by 3m area) is charged at £16.00.<br>Payments must be made by 1st May or before. Payment via BACS is preferred :&nbsp;</p><div align=\"left\"><ul style=\"list-style-type: none; font-size: 15.8667px; margin: 1rem; color: rgb(0, 0, 0); font-family: sans-serif;\"><li><b><span style=\"font-size: 14px;\">Account Type&nbsp;</span></b><span style=\"font-size: 14px;\">: Business</span></li><li><b><span style=\"font-size: 14px;\">Name&nbsp;</span></b><span style=\"font-size: 14px;\">: Brantham Garage Sale Foundation</span></li><li><b><span style=\"font-size: 14px;\">Acc #&nbsp;</span></b><span style=\"font-size: 14px;\">: 26992063</span></li><li><b><span style=\"font-size: 14px;\">Sort Code&nbsp;</span></b><span style=\"font-size: 14px;\">: 30 99 50</span></li></ul></div><h4 style=\"text-align: left; margin-left: 0px;\" class=\"\"><u style=\"font-weight: normal;\">Cancellation</u></h4><p style=\"text-align: left; margin-left: 25px;\">Cancellations should be communicated as soon as possible to the Craft Market Coordinator - see Contacts Section.</p><p style=\"text-align: left; margin-left: 25px;\">It will not be possible to refund Pitch fees in the case of cancellations.</p><h4 style=\"text-align: left; margin-left: 0px;\" class=\"\"><u style=\"font-weight: normal;\">Contact and Further Inquiries</u></h4><ul><li style=\"text-align: left; margin-left: 0px;\"><b><span style=\"font-weight: 400;\">Craft Market Coordinator:&nbsp;&nbsp;</span><a href=\"mailto:CraftMarket@BranthamGarageSale.org.uk\" target=\"_blank\" style=\"text-decoration-line: underline; background-color: rgb(255, 255, 255); font-weight: 400;\">CraftMarket@BranthamGarageSale.org.uk</a><span style=\"text-decoration-line: underline; font-weight: 400;\">.</span></b></li><li style=\"text-align: left; margin-left: 0px;\">General Inquiries:&nbsp;<a href=\"mailto:Trustees@BranthamGarageSale.org.uk\" target=\"_blank\">Trustees@BranthamGarageSale.org.uk</a></li><li style=\"text-align: left; margin-left: 0px;\">Foundation Website:&nbsp;<a href=\"https://www.BranthamGarageSale.org.uk/\" target=\"_blank\">Brantham Garage Sale</a></li><li style=\"text-align: left; margin-left: 0px;\">Facebook :&nbsp;<a href=\"https://www.facebook.com/BranthamGarageSale/\" target=\"_blank\">https://www.facebook.com/BranthamGarageSale/</a></li></ul>",
+        "signature": "",
+        "use_from": "2025-10-22"
+      },
+      "attachments": []
+    },
+    {
+      "fields": {
+        "category": "Location",
+        "sub_category": "edited",
+        "summary": "Email sent when a Location is modified",
+        "subject": "Location changed for {{event_date}}",
+        "html_content": "<p><h2 class=\"\">Location edited for {{event_date}}</h2></p><p>The location at&nbsp;<br></p><p>{{address}}</p><p>{{change description}}</p>",
+        "signature": "Brantham Garage Sale Website\r\nDo not reply directly to this email.",
+        "use_from": "2026-02-26"
+      },
+      "attachments": []
+    },
+    {
+      "fields": {
+        "category": "Location",
+        "sub_category": "created",
+        "summary": "Email sent when a new Location is recorded.",
+        "subject": "Location recorded for {{event_date}}",
+        "html_content": "<h2 class=\"\">Location recorded for {{event_date}}</h2><p>{{address}}</p><p>is</p><p>{{location_description}}</p>",
+        "signature": "-- \r\nBrantham Garage Sale Website \r\nDo not reply directly to this email.",
+        "use_from": "2026-02-26"
+      },
+      "attachments": []
+    },
+    {
+      "fields": {
+        "category": "Sponsors",
+        "sub_category": "invite",
+        "summary": "An Email to request sponsorship",
+        "subject": "Can {{contributor_name}} help the Brantham Garage Sale in {{year}}",
+        "html_content": "<p align=\"center\"><img src=\"http://127.0.0.1:8000/media/event_logo_2026-6/horse-Logo-01.png\" style=\"width: 73.9219px; height: 73.9219px;\"><span style=\"font-size: 24px;\">&nbsp;</span><span style=\"font-size: 24px;\">Brantham Garage Sale</span></p><p><span style=\"font-size: 24px;\"></span>Dear {{contact_name}},</p><p>{% if previously_confirmed %}</p><p>Firstly&nbsp; - thank you for your previous sponsorship of the Garage Sale - your continued support is really appreciated.</p><p>{% endif %}</p><p>As you might know the Brantham Garage Sale this year is supporting {{supporting}}, and we are asking for sponsorship. The event itself is on {{event_date}}</p><p><br>This might be a cash gift which will help us cover our running costs, or a voucher or other gift that we will include in either our Prize draw or our raffle.<br><br>All sponsors no matter how large or small will be acknowledged on our social media channels, and their logo will be featured on our banners that are displayed in Brantham, Tattingstone and Manningtree, and will also be part&nbsp; of our printed paper maps we produce for the event on the day.<br><br>Since 2004 the Brantham Garage Sale Foundation has raised nearly £5000 divided between the Hospice and local good causes, and we hope you will be able to support us on this years fund-raising campaign.<br><br>Please reply to us at Sponsorship@BranthamGarageSale.org.uk or call 07743 282707 to discuss how you can help us.</p>",
+        "signature": "Tony Flury - Chairperson Brantham Garage Sale Foundation<br>\r\nemail : Sponsorship@BranthamGarageSale.org.uk<br>\r\nwebsite : https://www.BranthamGarageSale.org.uk/<br>\r\nFacebook : https://www.facebook.com/BranthamGarageSale<br>",
+        "use_from": "2026-10-12"
+      },
+      "attachments": []
+    },
+    {
+      "fields": {
+        "category": "Sponsors",
+        "sub_category": "confirmed",
+        "summary": "Thank you certificate",
+        "subject": "Thank you for your donation",
+        "html_content": "<div style=\"width:100; margin-top:20px; display:flex; justify-content:center\">\r\n    <span style=\"white-space:pre; font-size:18pt; font-family: 'Calibri'; \r\n        color:#000000;\">The </span>\r\n\t\t<span style=\"white-space:pre; font-size:20pt; font-family: 'Aptos Bold'; color:#000000; font-weight:bold;\">Brantham Garage Sale Foundation</span></div>\r\n<div style=\"width:100; margin-top:10px; display:flex; justify-content:center\">\r\n       <span style=\" white-space:pre;font-size:18pt;font-family:'calibri'; color:#000000; left:0pt;\">acknowledges and thanks</span>\r\n       </div>\r\n\r\n<div style=\"width:100; margin-top:10px; display:flex; justify-content:center\">\r\n\t\t<span style=\"white-space:pre; font-size:20pt; font-family: 'Aptos Bold'; color:#000000; font-weight:bold;\">{{contributor_name}}</span></div>\r\n\r\n<div style=\"width:100; margin-top:10px; display:flex; justify-content:center\">\r\n<div><span style=\"font-size: 18px;\">For their generous donation of</span></div></div>\r\n\r\n<div style=\"width:100; margin-top:10px; display:flex; justify-content:center\">\r\n<div><span style=\"font-size: 24px;\">{{donation}}</span></div><div><br></div>\r\n</div>\r\n\r\n<div style=\"width:100; margin-top:20px; display:flex; justify-content:center\">\r\n</div><div style=\"width:100; margin-top:20px; display:flex; justify-content:center\"><span style=\"font-size: 18px;\">In Support of the {{year}} fund raising campaign.</span></div><div style=\"width:100; margin-top:20px; display:flex; justify-content:center\"><span style=\"font-size: 18px;\">The {{year}} campaign is raising funds for {{supporting}}\r\n</span></div><span style=\"font-size: 18px;\">\r\n\r\n</span><div style=\"width:100; margin-top:10px; display:flex; justify-content:center\"><span style=\"font-size: 18px;\">\r\n{{supporting_icons}}\r\n</span></div><span style=\"font-size: 18px;\">\r\n\r\n</span><div style=\"width:100; margin-top:15px; display:flex; justify-content:center\"><span style=\"font-size: 18px;\">Your donation will help cover the various costs involved in running, and\r\nadvertising the Garage Sale and the associated events.</span>\r\n</div>\r\n\r\n<div style=\"width:100; margin-top:30px; display:flex; justify-content:center;font-size:20px\">\r\n<span>Signed:</span><span><img style=\"height:60px;\" src=\"{{base_url}}media/django-summernote/2026-10-13/aa1ed544-7f2a-4d48-9c13-8dac3062e9fc.png\"></span> <span>Date:</span><span>{{current_date|date:'jS M Y'}}</span></div>\r\n<div style=\"width:100; margin-top:20px; display:flex; flex-direction:column; justify-content:center\">\r\nTony Flury : Chairperson Brantham Garage Sale Foundation Trustees.\r\nhttps://www.BranthamGarageSale.org.uk/\r\n</div>",
+        "signature": "",
+        "use_from": "2026-10-13"
+      },
+      "attachments": []
+    },
+    {
+      "fields": {
+        "category": "Sponsors",
+        "sub_category": "confirmed",
+        "summary": "Thank you email with certificate",
+        "subject": "{{company_name}} Thank you for your donation to the Brantham Garage Sale - {{attn}}",
+        "html_content": "<p>Dear {{contact_name}},</p><p>We would like to pass on our sincere thank you for your donation in support of the {{year}} fund-raising campaign by the Brantham Garage Sale.<br><br>Please find attached a formal certificate for your records, acknowledging your generous donation.</p>",
+        "signature": "Tony Flury<br>\r\nEmail : sponsorship@BranthamGarageSale.org.uk\r\nWebsite : https://www.BranthamGarageSale.org.uk/",
+        "use_from": "2026-10-13"
+      },
+      "attachments": [
+        {
+          "upload": false,
+          "template_name": "Thank you certificate"
+        }
+      ]
+    }
+  ]
+}

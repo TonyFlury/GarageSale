@@ -2,6 +2,11 @@ Integration release notes and validation: INTEGRATION_REVIEW.md.
 Before live deployment, rehearse against a restored database and matching media.
 Retained CraftMarket permission content types must not be removed as stale.
 
+PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
+    Make the distinction between the event date and activation (Use from) date
+    clear, show which event is currently active, and review the activation-date
+    selection logic so an activation date of today takes effect today.
+
 1) Make sure all changed files are committed and pushed.
     Ensure this includes :
         Migration files
@@ -22,15 +27,32 @@ Retained CraftMarket permission content types must not be removed as stale.
         git pull origin master
         catalog check
 
-        python manage.py collectstatic
+        python manage.py collectstatic --clear --noinput
+
+        Confirm PythonAnywhere's /static/ mapping points to THIS project's
+        collected STATIC_ROOT, not a previous checkout's static directory:
+
+        python manage.py shell -c 'from django.conf import settings; from pathlib import Path; print(Path(settings.STATIC_ROOT).resolve())'
+
+        If pages load but icons/layout are wrong, inspect the source selected
+        by Django before collecting again:
+
+        python manage.py findstatic GarageSale/styles/style.css GarageSale/styles/smallscreen.css team_pages/styles/team_page.css --verbosity 2
+
+        The served style.css must contain div#Buttons img.Button; team_page.css
+        must contain div.category-list. A successful CSS response alone does not
+        prove the file matches the deployed templates. After collection, reload
+        the web app and hard-refresh the browser.
 
         python manage.py migrate
 
-if you have a new databse :
+if you have a new database :
     Content types and permissions are created by migrate; initialise the approved
     groups with sync_access_policy below rather than loading legacy role fixtures.
     python manage.py loaddata transaction_categories.json
-    python manage.py loaddata TemplateData.json
+    Initialise communication templates using the current export/import bundle
+    in step 2b below. Do not load TemplateData.json: it is a historical fixture
+    and does not contain the current template set or uploaded attachment files.
 
 2a) Approved access policy - LIVE SITE AND ALL TRIAL SITES:
         After migrate, and before reloading the web app, use the target site's
@@ -52,10 +74,15 @@ if you have a new databse :
 2b) Template transfer - LIVE SITE AND ALL TRIAL SITES (new or existing databases):
         Deploy the transfer_templates command before importing. Use the target
         site's project directory, virtual environment and credentials/database.
-        On the development system, export the communication templates and their
-        uploaded attachments to a new bundle file:
+        On the installation containing the approved current templates, export
+        the communication templates and their uploaded attachments to a new
+        bundle file. Use development only if its templates are the approved set:
 
         python manage.py transfer_templates export deployment-templates.json
+
+        Export a fresh bundle for this deployment; the repository's historical
+        TemplateData.json fixture is not a substitute. With no --category filter,
+        the bundle includes every category and all dated template versions.
 
         Copy deployment-templates.json to each live/trial server using the
         PythonAnywhere Files app or the normal file-transfer process. After
@@ -79,7 +106,14 @@ if you have a new databse :
 2c) Demonstration data - TRIAL SITES ONLY. DO NOT RUN ON THE LIVE SITE:
         After migrations, ensure the trial site's current event is configured:
         its Use from date must be before today and its event date must not have
-        passed. From the TRIAL project directory and virtual environment, with
+        passed. Creating a future event does not automatically make it current:
+        the current event is the one with the latest Use from date strictly
+        before today. A Use from date of today is not eligible until tomorrow.
+        For example, to demonstrate the 27 June 2027 event now, edit that event
+        and set Use from to yesterday (later than other eligible Use from dates).
+        Leave the event date as 27 June 2027.
+
+        From the TRIAL project directory and virtual environment, with
         the TRIAL database credentials, inspect and then build the sample data:
 
         python manage.py seed_team_demo --dry-run

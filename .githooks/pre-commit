@@ -1,0 +1,21 @@
+#!/bin/sh
+# Refresh the repository catalogue and include it in the pending commit.
+set -eu
+
+# Git hooks may be launched by an IDE; always resolve the repository root.
+cd "$(git rev-parse --show-toplevel)"
+
+# A local executable override supports IDE commits without activating a venv.
+catalog_command=$(git config --get catalog.command || printf '%s' catalog)
+
+# An unavailable generator must stop the commit rather than stage stale output.
+if ! command -v "$catalog_command" >/dev/null 2>&1; then
+    printf '%s\n' 'pre-commit: catalog was not found; set PATH or configure git config catalog.command /path/to/catalog.' >&2
+    exit 1
+fi
+
+# Keep these exclusions aligned with the command used for this repository.
+"$catalog_command" +d credentials +d credentials_deployment +d credentials_test +d credentials_development +d training +d test_screenshots create
+
+# Stage only the generated catalogue, preserving all other staging choices.
+git add -- catalog.cat

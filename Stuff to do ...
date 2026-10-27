@@ -1,3 +1,308 @@
-Identification pages
+# Stuff to do ...
 
+Updated: 26 October 2026.
+Scope: outstanding work from the current integration/trial work, the original
+entry in this file, and TODO/FIXME comments in the repository's application
+source. This is a backlog review, not a fresh test run. Items marked "verify"
+need confirmation before more implementation is assumed necessary.
 
+## Immediate trial issues
+
+- [ ] Diagnose invitations reported as sent but not received after the email fixes.
+  Trial DEBUG=False has been confirmed by the user. Inspect the running worker's
+  effective EMAIL_BACKEND and SMTP submission outcome rather than assuming
+  messages are captured. New local diagnostics log the effective backend, send
+  count, SMTP acceptance/failure and a message ID without credentials or tokens;
+  deploy/reload these diagnostics and retry an intended trial invitation.
+  Distinguish the mailbox Sent folder from provider SMTP submission/delivery logs:
+  SMTP sending does not itself save a copy to the mailbox Sent folder. DEBUG=True
+  selects mail_panel.backend.MailToolbarBackend, which captures emails and returns
+  success without SMTP delivery. If capture mode is active, either inspect its
+  outbox or deliberately switch to SMTP for the trial delivery test. If the SMTP
+  backend is active, distinguish server acceptance from eventual inbox delivery
+  using the sender provider's queue/bounce evidence. Do not assume the previous
+  fail_silently fix suppressed invitation failures: invitation sends remain
+  non-silent and require a send count of one. Consider making capture-only
+  invitation feedback explicit after confirming the deployed backend.
+- [ ] Diagnose the original request failure that led to the administrator-email
+  error. The supplied traceback is the failure of Django's mail_admins logging
+  handler, not the original request traceback. Deploy/reload the logging fix in
+  commit 6a6d2cc, reproduce the action, and inspect the original exception now
+  written to the error log.
+- [ ] Resolve the trial worker's missing SMTP credentials. Check the loaded
+  settings, credentials-module path and email-backend path, settings.SERVER_EMAIL,
+  and whether its normalised address has a nonempty credentials entry. Do not
+  print passwords. Explain why the worker reported a mixed-case SERVER_EMAIL
+  while the inspected files contained lowercase values. Case alone cannot
+  explain the failure with the original sender.casefold() lookup and lowercase
+  credential keys.
+- [ ] Verify invitation and resend delivery on trial using an intended test
+  recipient, including sender, invitation link, password setup and single-use
+  acceptance. Separately verify administrator error notifications once SMTP
+  configuration is corrected. Earlier backend tests used mocks and sent no mail.
+- [ ] Confirm that the latest collected CSS is served by the trial static-file
+  mapping. The deployed page was observed using new markup with old CSS: shared
+  button sizing, mobile burger/sidebar rules and team tile rules were missing.
+  Rebuild static files from the correct checkout, verify STATIC_ROOT and the
+  PythonAnywhere /static/ mapping, and retest desktop/mobile pages. Do not treat
+  this as an outstanding source-CSS defect without further evidence.
+
+## Events: behaviour and UI
+
+- [ ] Refresh the event creation and editing UI, as explicitly requested. Clearly
+  distinguish the sale/event date from activation (Use from), explain when each
+  takes effect, show the currently selected event, and make validation and save
+  feedback easy to understand using the team-page styling.
+- [ ] Make an activation date of today effective today for contributor workflows
+  and seed_team_demo. Contributors/views/general_views.py currently uses
+  use_from__lt rather than use_from__lte. GarageSale/models.py's fallback in
+  CommunicationTemplate.default_context has the same strict comparison.
+- [ ] Reconcile the different definitions of "current event". EventData.get_current
+  already includes activation today, excludes expired events and selects the
+  earliest upcoming event; contributor selection chooses the latest activation
+  date and can select an expired event. Define shared selection/tie-breaking
+  rules for the website, contributor spreadsheets, templates and seed command,
+  preserving deliberate historical-event workflows.
+- [ ] Add coverage for activation yesterday/today/tomorrow, multiple eligible
+  events, equal activation dates, expired events and no current event. Update
+  tests that currently assert today's activation is ineligible.
+- [ ] Update General Deployment Instructions, Contributors/TEAM_DEMO.md, help
+  text and command errors after correcting activation semantics. The current
+  documentation explains the existing yesterday workaround, not the intended
+  final behaviour. Include the selected event/date in seed errors so an older
+  selected event is distinguishable from the newly created future event.
+- [ ] Re-run seed_team_demo on the intended trial event after activation is
+  correct; inspect the dry run first and verify sponsors, traders, histories,
+  donations and logo files. No live-site demonstration seeding.
+- [] Better Stats page and graphs - current page is very slow - some sort of nice dashboard
+  would be good - need to decide what to display.
+
+## Integration and release
+
+- [ ] Review and commit the pending documentation edits in Contributors/TEAM_DEMO.md,
+  GarageSale/TEMPLATE_TRANSFER.md and General Deployment Instructions.
+- [ ] Push/review the intended integration revision through GitHub and complete
+  the agreed integration-to-master pull request workflow. Preserve merge ancestry
+  and keep the independent feature/archive branches. No GitHub push or PR was
+  performed by the agent; check the current remote state before acting.
+- [ ] Check that trial is running the final migration/policy revision, including
+  user_management/0008_exec_nomination_view and the email/logging fix. Reload
+  workers after code/settings changes. Trial migrations and policy deployment
+  have been reported complete, but later fixes still need version verification.
+- [ ] Complete an upgrade rehearsal from a restored live database with matching
+  media. The synthetic master-state upgrade test is already implemented; it is
+  not a substitute for restored production data. Check contributor counts,
+  consolidated records, sponsor/trader history, event mapping, logos, donations,
+  estimated values, prize classifications and ordering.
+- [ ] Rehearse database/media recovery before live cutover. Contributor conversion
+  has no reverse data copy; reverting code does not move subsequent Contributor
+  writes back to old Sponsor/CraftMarket records. The source archive is not a
+  database rollback.
+- [ ] Verify the final role matrix with ordinary accounts on trial: ExecMember
+  nomination viewing, Officer nomination changes and membership management,
+  Volunteer own-profile/ID-card-only access, independent prize allocation,
+  sponsor/trader responsibilities, finance, and WebAdmin administrative access.
+  Repeated policy-sync behaviour is tested locally; confirm deployed behaviour.
+- [ ] Review old direct role flags and compatibility grants before applying the
+  final policy to live. Migration 0007 preserves explicit former trustee grants;
+  review any grandfathered nomination change access against the agreed Officer
+  role policy. Review existing staff/superuser settings separately.
+- [ ] Run the remaining relevant regression/browser checks before release. Local
+  evidence already recorded: 132 integration regressions, 10 browser tests,
+  22 nomination-policy/upgrade tests, and 5 email-backend tests passed at their
+  respective revisions. The entire repository suite has not been certified.
+- [ ] Validate clean-install and trial/live dependency installation, including
+  DEBUG-only Lumen/Data Browser packages, on the actual target environments.
+
+## Templates and trial data
+
+- [ ] Verify that trial has the approved current communication templates and
+  uploaded attachment files. Export a fresh transfer_templates bundle from the
+  authoritative installation, validate/import it, and check versions, categories,
+  named attachments, uploaded PDFs and externally linked assets. The historical
+  TemplateData.json fixture is not the current set; its loading instruction has
+  been removed from the deployment documentation.
+- [ ] Decide whether to retain TemplateData.json as an explicitly labelled
+  historical/example fixture, refresh it for a separate agreed purpose, or
+  remove it after checking all consumers. Do not confuse it with a portable
+  template-transfer bundle containing attachment bytes.
+- [ ] Decide how to handle the local deployment-templates.json export. It is
+  currently untracked; inspect its intended use/content before deliberately
+  retaining, transferring or excluding it. Do not add it incidentally to a PR.
+- [ ] Optional, if still required: provide selective live-to-trial account transfer
+  keyed by email rather than database ID. Decide whether to preserve password
+  hashes or invite separate trial accounts. If implemented, transfer selected
+  identity fields, assign reviewed trial groups by name, report existing-account
+  conflicts, and treat biographies/ID-card pictures as a separate transfer.
+  No transfer command has been implemented or accounts copied by the agent.
+
+## Legacy retirement after cutover
+
+- [ ] Review remaining runtime Sponsor model use, especially Sponsors/admin.py,
+  GarageSale/admin.py's legacy Sponsor inline, and Sponsor breadcrumb lookups in
+  team_pages/templatetags/team_page_tags.py. Remove or redirect obsolete admin
+  editing so it cannot create legacy rows invisible to Contributor workflows.
+- [ ] Remove obsolete Sponsor breadcrumb paths/helpers after confirming active
+  template use. Retain Sponsors/templatetags/social_media.py: it is actively used
+  by the contributor-backed public sponsor page. The unused sponsor_tags load in
+  team_pages/templates/news/tp_delete_news.html can be removed separately.
+- [ ] Plan physical source-table retirement only after conversion/recovery checks
+  are complete. Inspect foreign keys and historic migration dependencies first;
+  use new explicit migrations and retain historic upload callable paths. The
+  CraftMarket state-only retirement already preserves its source tables.
+- [ ] Preserve CraftMarket permission identities while current policy still uses
+  them. Do not blindly run stale-content-type cleanup; design any eventual move
+  of these capabilities and compatibility aliases as a separate migration.
+- [ ] Remove transitional own-profile permission aliases only after all applicable
+  databases, direct grants, groups, menus and middleware have been migrated.
+
+## Existing project work and source TODOs
+
+- [ ] Identification pages: preserve the original item from this file. Clarify
+  the intended scope before implementation; no further requirements were recorded.
+- [ ] Registration UI: show password help and consistently validate password
+  requirements. Sources: user_management/views.py:41 and user_management/forms.py.
+- [ ] Refactor shared user forms to avoid repeated generic-template configuration;
+  clean up confusing view names and retire unused templates after regression
+  checks. Sources: user_management/forms.py:32-33; user_management/views.py:43-44.
+- [ ] Decide whether to defer registration data for all users until verification,
+  rather than only guest accounts. Source: user_management/models.py:177.
+- [ ] Review/refactor anonymous-user application editing.
+  Source: common/application.py:40.
+- [ ] Add/verify rejection of too-short guest verification codes.
+  Source: user_management/tests/common.py:220.
+- [ ] Audit password-reset coverage and add missing expiry/timeout checks. Guest
+  and unverified-user reset tests already exist, so remove their old TODO comments
+  after confirming coverage. Sources: user_management/views.py:42;
+  user_management/tests/test_user.py:477-479, 617 and 657.
+- [ ] Add/verify password-change tests for an incorrect current password and
+  mismatching new passwords. Source: user_management/tests/test_user.py:750.
+- [ ] Normalise house-number whitespace/punctuation and postcode formatting using
+  appropriate UK postcode rules; define duplicate-location detection and user
+  feedback. Source: Location/models.py:38-40. Do not implement the narrow example
+  postcode pattern in the comment as a complete UK postcode validator.
+- [ ] Resolve the small-screen location layout issue noted beside the left margin.
+  Source: Location/static/Location/styles/locations.css:3.
+- [ ] Add location-within-boundary validation if this remains a product requirement.
+  Source: DjangoGoogleMap/forms/fields.py:7.
+- [ ] Finish or verify consistent map configuration propagation, including API key,
+  boundaries, centre and zoom. Some configuration is already passed through;
+  audit gaps rather than duplicating it. Source: DjangoGoogleMap/forms/widgets.py:5.
+- [ ] Implement automatic CSV column-name suggestions: UploadCSV._match_names()
+  currently returns an empty mapping. Preserve the manual matching/review flow.
+  Source: Contributors/views/upload.py:142.
+- [ ] Review moving reusable contributor data validation into model/domain code
+  while keeping request permissions in the views. Consider class-based REST
+  actions only if they simplify the current implementation.
+  Source: Contributors/views/rest_api.py:15-18 and 60.
+- [ ] Review the remaining contributor spreadsheet layout proposals: table versus
+  flex layout, filter alignment, contributor-type visibility/propagation and theme
+  consistency. Multi-selection and a details dialog already exist; verify and
+  retire those stale comments instead of implementing them again.
+  Source: Contributors/templates/contributor_spreadsheet.html:5-11.
+- [ ] Generalise paired filter checkboxes to groups requiring at least one checked
+  option, if still needed by active screens.
+  Source: team_pages/static/team_pages/js/framework.js:156.
+- [ ] Correct the span/div markup noted in the older event framework template, if
+  that template is still used. Source: team_pages/templates/tp_framework/tp_by_event.html:66.
+- [ ] Optional architectural review: consolidate Accounts REST actions if useful.
+  This is a suggestion in the code, not an agreed feature requirement.
+  Source: Accounts/urls.py:30.
+- [ ] Optional migration-helper refactor: consider separate Sponsor/Marketer
+  helpers with composition. Preserve historic migration behaviour and avoid
+  unnecessary changes to deployed migration helpers.
+  Source: Contributors/migrations/__migration_tools.py:24.
+
+## TODO comments that appear stale: verify, then remove/update
+
+These remain tracked work because the comments are misleading; they are not
+assumed missing implementations.
+
+- [ ] Location multi-user creation test TODO: a corresponding test follows it.
+  Source: Location/tests/test_location.py:161-163.
+- [ ] MOTD Quill-to-Summernote TODO: MOTD.content is already a TextField and the
+  admin uses Summernote. News still uses Quill; any News editor migration would
+  need a separate decision and plan. Source: GarageSale/models.py:84.
+- [ ] Template-deletion rules TODO: deletion_errors() and submission-time checks
+  are implemented. Verify tests and remove/update the old comment.
+  Source: GarageSale/views/template_views.py:200-204.
+- [ ] Old template-deletion popup TODO: the active deletion view uses
+  communication_template_delete.html, not templates_delete.html. Verify whether
+  the old template can be deleted. Source: GarageSale/templates/team_pages/templates_delete.html:56.
+- [ ] Contributor details-view TODO: the details dialog/API exists; verify socials
+  and logo editing coverage before removing the comment.
+  Source: Contributors/views/rest_api.py:15.
+- [ ] Eight-ID-cards-per-page TODO: the template already chunks member_data into
+  groups of eight with front/reverse sections. Verify actual PDF pagination and
+  duplex alignment, then retire the comment.
+  Source: user_management/templates/id_cards/ID_cards.html:11.
+- [ ] User-profile menu-link TODO: user_menu.html already contains a permission-
+  gated profile link. Verify all intended flows before retiring the comment.
+  Source: user_management/templatetags/user_extras.py:50.
+- [ ] Blind-auction email/Facebook links TODO: the page inherits a toolbar with
+  both links. Verify rendered output and remove/update the stale comment.
+  Source: GarageSale/templates/blind_auction.html:10.
+
+## Already implemented or resolved: do not duplicate
+
+- Integration conflict resolutions, migration graph joins, forward state fixes
+  and historical-model migration test decoupling.
+- Runtime CraftMarket model imports, retired template-tag library and disabled
+  legacy URL references removed; historic upload callback retained.
+- Officer membership-management capability, Volunteer profile-only workflow,
+  grouped-account search, review/confirm/list return, and invitation safeguards.
+- Agreed nomination role split: ExecMembers can view; Officers can change.
+  WebAdmin retains existing administrative access.
+- Missing management icon diagnosed as the test user having ExecMember without
+  Officer membership; the user reported resolving it. This is not an open bug.
+- SMTP key normalisation, fail_silently handling and production request-error
+  logging implemented and tested locally in 6a6d2cc. Trial deployment and the
+  original runtime credential/request failure remain open above.
+- Deployment instructions updated to replace historical template-fixture loading
+  with current export/import and to diagnose stale collected static files.
+
+## Source-comment inventory
+
+The following inventory preserves the exact source TODO/FIXME locations reviewed
+for this backlog. It excludes generated/collected static files, media, credentials
+and test artefacts; the historical migration-helper TODO is included separately.
+./Location/models.py:38:# TODO - sanitise house_number (remove trailing spaces and punctuation).
+./Location/models.py:39:# TODO - sanitise postcode - format to Incode/Outcode - CO[0-9]{2} [0-9][A-Z]{2}
+./Location/models.py:40:# ToDO - How to spot duplicates ?
+./Location/static/Location/styles/locations.css:3:/*    left: 1rem;  *//* TODO - 1rem doesn't work on small screen style */
+./Location/tests/test_location.py:161:# ToDO - test locations creation with multiple users
+./common/application.py:40:    # Todo Refactor how this deals with editing of 'anonymous' users applications.
+./GarageSale/models.py:84:# ToDo - convert QuillField to Summernote
+./GarageSale/views/template_views.py:200:#ToDo Ensure that Template deletion depends on :
+./GarageSale/templates/blind_auction.html:10:{# TODO - Add links on email and facebook icons - why didn't i do this before! #}
+./user_management/views.py:41:# ToDo - show password Help on registration, and validate password format
+./user_management/views.py:42:# ToDo - test password Reset stuff
+./user_management/views.py:43:# ToDo - Remove old templates - retest first
+./user_management/views.py:44:# ToDo - Rename the views - they are confusing
+./user_management/models.py:177:            # Todo - should we defer setting data in all cases ???
+./DjangoGoogleMap/forms/fields.py:7:#TODO Validate location is within boundary ????
+./DjangoGoogleMap/forms/widgets.py:5:# ToDo - expand this to pass in things like API keys, boundaries etc
+./GarageSale/templates/team_pages/templates_delete.html:56:#ToDo - complete the deletion popup.
+./Contributors/views/upload.py:142:        # TODO: Match CSV column names to Contributor fields.
+./user_management/tests/test_user.py:477:        #ToDo - Test password reset when use is not verfied
+./user_management/tests/test_user.py:478:        #ToDo - Test Password reset on guest user
+./user_management/tests/test_user.py:479:        #ToDo - test password reset timeout
+./user_management/tests/test_user.py:750:    #ToDo Also Test - incorrect current password, mismatching new passwrords.
+./Contributors/views/rest_api.py:15:# TODO Add support for 'details view' - ie socials, company icons etc
+./Contributors/views/rest_api.py:60:# TODO - move this to the model (separate data vs access).
+./user_management/templates/id_cards/ID_cards.html:11: #TODO - need to find a way to limit cards to 8 per page - so we need to do 8 fronts and 8 reverses
+./Contributors/templates/contributor_spreadsheet.html:5:TODO - Add in 'Type' field to all inputs
+./Contributors/templates/contributor_spreadsheet.html:6:TODO - Allow multiselect
+./Contributors/templates/contributor_spreadsheet.html:7:TODO Hide or remove 'Type' field
+./Contributors/templates/contributor_spreadsheet.html:8:TODO Add in 'Details' dialog to allow for editing of logo and other info
+./Contributors/templates/contributor_spreadsheet.html:9:TODO convert table to flex stuff
+./Contributors/templates/contributor_spreadsheet.html:10:TODO Line up filter boxes
+./Contributors/templates/contributor_spreadsheet.html:11:TODO Convert to official theme and layout
+./user_management/templatetags/user_extras.py:50:# TODO - add data for team member profile links.
+./user_management/forms.py:32:# TODO - refactor the forms that use the generic templates - a mixin class that extracts data from class variables
+./user_management/forms.py:33:# TODO - Benefit of refector - views don't need to keep repeating the template names etc
+./Accounts/urls.py:30:    #ToDo - a single REST API with actions - maybe ?
+./user_management/tests/common.py:220:        # ToDo - need to test that codes which are too short also get rejected correctly
+./team_pages/static/team_pages/js/framework.js:156:/* ToDo - Extend pair system to a more generalised group idea - where at least one in the group remains checked */
+./team_pages/templates/tp_framework/tp_by_event.html:66:    <!--ToDo - this span should be a div -->
+./Contributors/migrations/__migration_tools.py:24:#TODO : should we have two 'helper' classes - one for Marketers and one for Sponsors - and use composition ?

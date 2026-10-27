@@ -5,6 +5,13 @@ exactly the same current event as the spreadsheets: the latest `use_from` before
 today, then event date and primary key to break ties. That event must not have
 passed. The command never creates or changes event configuration.
 
+Creating an upcoming event does not automatically activate it. Set its **Use
+from** date to yesterday, later than other eligible activation dates, when you
+want it to become current for today's demonstration. A Use from date of today
+is excluded until tomorrow. The actual event date should remain its scheduled
+date. If an older, expired event is still selected, the command reports that the
+current event has passed even when a future event exists.
+
 Run from the project root using the configured Python interpreter:
 
 ```sh

@@ -4,7 +4,14 @@ Use the same application revision on development and trial servers. Run these
 commands from the project root with the Python interpreter for that installation.
 Django uses that server's configured database and media storage automatically.
 
-On development, export the desired categories:
+Use a fresh export from the installation containing the approved current
+templates for both new and existing destination databases. The repository's
+`TemplateData.json` is a historical fixture, not the current template set; do not
+load it as part of this deployment workflow. Uploaded attachments are carried by
+the transfer bundle, including their file contents.
+
+On the source installation (development if it holds the approved set), export
+the desired categories:
 
 ```sh
 python manage.py transfer_templates export trial-templates.json --category Sponsors --category CraftMarket
