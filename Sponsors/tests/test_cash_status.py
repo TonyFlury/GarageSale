@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
-from Contributors.models import Contributor, Contributions
+from Contributors.models import Contributor, ContributorEvent, Contributions
 from GarageSale.models import EventData
 from Sponsors.views import SponsorSpreadsheetView
 
@@ -65,8 +65,50 @@ class SponsorCashStatusTests(TestCase):
         for status in ("Confirmed", None):
             for donated in (True, False):
                 with self.subTest(status=status, donated=donated):
-                    html = render_to_string("Sponsors/widgets/confirmed_status.html", {
+                    context = {
                         "contributor": SimpleNamespace(sponsor_status=status, sponsor_cash_donated=donated),
-                    })
-                    self.assertEqual("Cash Donated" in html, donated)
-                    self.assertEqual('aria-label="Confirmed"' in html, status == "Confirmed")
+                    }
+                    confirmed = render_to_string("Sponsors/widgets/confirmed_status.html", context)
+                    self.assertEqual('Cash Donation' in confirmed, status == 'Confirmed' and donated)
+                    self.assertEqual('Confirmed' in confirmed, status == 'Confirmed')
+
+    def test_confirmed_cash_and_non_cash_sponsors_share_the_same_confirmation(self):
+        gift_donor = Contributor.objects.create(contributor_type='Sponsor', contributor_name='Gift donor')
+        Contributions.objects.create(contributor=self.sponsor,event=self.event,cash=True,amount=50)
+        Contributions.objects.create(contributor=gift_donor,event=self.event,cash=False,gift='Hamper')
+        ContributorEvent.objects.bulk_create([
+            ContributorEvent(contributor=contributor,event=self.event,status='Confirmed')
+            for contributor in (self.sponsor,gift_donor)])
+        rows = {row.pk:row for row in self.view.get_queryset()}
+        for contributor in (self.sponsor,gift_donor):
+            row = rows[contributor.pk]
+            html = render_to_string('Sponsors/widgets/confirmed_status.html',{'contributor':row})
+            self.assertIn('Confirmed',html)
+            self.assertIn('<svg',html)
+            self.assertNotIn('Cash Donated',html)
+        self.assertTrue(rows[self.sponsor.pk].sponsor_cash_donated)
+        self.assertFalse(rows[gift_donor.pk].sponsor_cash_donated)
+        cash_html = render_to_string('Sponsors/widgets/confirmed_status.html',{'contributor':rows[self.sponsor.pk]})
+        gift_html = render_to_string('Sponsors/widgets/confirmed_status.html',{'contributor':rows[gift_donor.pk]})
+        self.assertIn('Cash Donation',cash_html)
+        self.assertIn('non-cash Donation',gift_html)
+
+    def test_mixed_donations_show_cash_and_previous_event_cash_is_ignored(self):
+        ContributorEvent.objects.create(contributor=self.sponsor,event=self.event,status='Confirmed')
+        previous = EventData.objects.create(event_date=self.event.event_date-timedelta(days=365),
+                                            use_from=self.event.use_from-timedelta(days=365))
+        Contributions.objects.create(contributor=self.sponsor,event=previous,cash=True,amount=50)
+        Contributions.objects.create(contributor=self.sponsor,event=self.event,cash=False,gift='Hamper')
+        row = self.view.get_queryset().get(pk=self.sponsor.pk)
+        html = render_to_string('Sponsors/widgets/confirmed_status.html',{'contributor':row})
+        self.assertIn('non-cash Donation',html)
+        self.assertNotIn('Cash Donation',html)
+        Contributions.objects.create(contributor=self.sponsor,event=self.event,cash=True,amount=25)
+        row = self.view.get_queryset().get(pk=self.sponsor.pk)
+        html = render_to_string('Sponsors/widgets/confirmed_status.html',{'contributor':row})
+        self.assertIn('Cash Donation',html)
+        self.assertNotIn('non-cash Donation',html)
+
+    def test_only_confirmation_adds_a_spreadsheet_column(self):
+        columns = self.view.get_extra_columns()
+        self.assertEqual([column['label'] for column in columns],['Confirmed'])

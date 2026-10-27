@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <title>Dashboard</title>
+  <g stroke="#244b47" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="26" height="26" rx="4" fill="#edf5f0"/>
+    <rect x="35" y="3" width="26" height="20" rx="4" fill="#edf5f0"/>
+    <rect x="3" y="35" width="26" height="26" rx="4" fill="#edf5f0"/>
+    <rect x="35" y="29" width="26" height="32" rx="4" fill="#edf5f0"/>
+    <path d="M9 22a7 7 0 0 1 14 0M16 22l4-7"/>
+    <path d="M42 16v-3m6 3V9m6 7v-5"/>
+    <path d="M10 43h12m-12 6h12m-12 6h7"/>
+    <path d="m41 52 6-8 5 3 4-10"/>
+  </g>
+</svg>

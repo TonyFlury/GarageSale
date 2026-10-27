@@ -637,12 +637,53 @@
                 font-size: 0.9rem;
                 width: min(42rem, 90vw);
                 max-height: 85vh;
-                overflow-y: auto;
+                overflow: hidden;
                 box-sizing: border-box;
                 padding: 1.25rem;
                 border: thin solid grey;
                 border-radius: 10px;
                 box-shadow: 2px 2px 5px grey;
+            }
+
+            /* Only the body scrolls; the title and Close/Edit actions remain visible. */
+            #contributor-details-form {
+                display: flex;
+                flex-direction: column;
+                max-height: calc(85vh - 2.5rem - 2px);
+                max-height: calc(85dvh - 2.5rem - 2px);
+                min-height: 0;
+                margin: 0;
+            }
+
+            #contributor-details-dialog {
+                max-height: 85dvh;
+            }
+
+            #contributor-details-scroll {
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-wrap: anywhere;
+                scrollbar-gutter: stable;
+            }
+
+            #contributor-details-form > .history-toolbar,
+            #contributor-details-form > .buttons {
+                flex: 0 0 auto;
+            }
+
+            #contributor-details-title { margin: 0 0 0.75rem; }
+
+            #contributor-history-panel > summary {
+                cursor: pointer;
+                font-weight: bold;
+                padding: 0.75rem 0;
+            }
+
+            /* Expanded history joins the same body scroller rather than nesting one. */
+            #contributor-details-history {
+                max-height: none;
+                overflow: visible;
             }
 
             #contributor-details-dialog::backdrop {

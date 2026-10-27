@@ -74,12 +74,16 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
         return queryset.filter(sponsor_cash_donated="cash_donated" in selected)
 
     def _annotate_cash_contribution(self, queryset):
-        """Test for a current-event cash record without duplicating sponsor rows."""
+        """Identify current-event donation types without duplicating sponsor rows."""
         event = getattr(self.request, "current_event", None) or get_current_contribution_event()
-        cash_contributions = Contributions.objects.filter(
-            contributor_id=OuterRef("pk"), event_id=event.pk, cash=True,
+        contributions = Contributions.objects.filter(
+            contributor_id=OuterRef("pk"), event_id=event.pk,
         ) if event is not None else Contributions.objects.none()
-        return queryset.annotate(sponsor_cash_donated=Exists(cash_contributions))
+        # Separate existence checks distinguish gifts from no recorded donations.
+        return queryset.annotate(
+            sponsor_cash_donated=Exists(contributions.filter(cash=True)),
+            sponsor_noncash_donated=Exists(contributions.filter(cash=False)),
+        )
 
     def _annotate_confirmation_status(self, queryset):
         """Use the latest current-event status for sponsor confirmation."""

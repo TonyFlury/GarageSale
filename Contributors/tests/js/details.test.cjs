@@ -32,11 +32,15 @@ function setup() {
     const names = ['edit', 'save', 'cancel', 'close', 'error', 'history'];
     const nodes = {'#contributor-sheet': sheet, '#contributor-details-dialog': dialog,
         '#contributor-details-form': form, '#contributor-details-fields': fields,
+        '#contributor-history-panel': element({open:false,
+            getBoundingClientRect:()=>({top:380,bottom:580,height:200})}),
+        '#contributor-details-scroll': element({scrollTop:0,clientTop:0,clientHeight:400,
+            getBoundingClientRect:()=>({top:100,bottom:500,height:400})}),
         '#details-add-contact-history': element()};
     for (const name of names) nodes[`#contributor-details-${name}`] = element();
     const document = element({readyState: 'loading', querySelector: selector => nodes[selector]});
     const requests = [];
-    const context = {document, console, Array, Object,
+    const context = {document, console, Array, Object, requestAnimationFrame:callback=>callback(),
         CustomEvent: class {constructor(type, options) {this.type = type; this.detail = options.detail;}},
         FormData: class {constructor() {this.name = input.value;}},
         fetch: async (url, options) => {
@@ -80,6 +84,55 @@ test('Cancel restores original details and returns to read-only without posting'
     assert.equal(ui.input.value, 'Oak');
     assert.equal(ui.input.disabled, true);
     assert.equal(ui.requests.length, 1);
+});
+
+test('each opening collapses history and resets the scroll position', async () => {
+    const ui = setup();
+    await ui.open();
+    const panel = ui.nodes['#contributor-history-panel'];
+    const scroll = ui.nodes['#contributor-details-scroll'];
+    panel.open = true;
+    scroll.scrollTop = 500;
+    ui.nodes['#contributor-details-close'].listeners.click();
+    await ui.open();
+    assert.equal(panel.open,false);
+    assert.equal(scroll.scrollTop,0);
+    assert.equal(ui.nodes['#contributor-details-close'].hidden,false);
+});
+
+test('expanding history brings its entire panel into the content viewport', async () => {
+    const ui = setup();
+    await ui.open();
+    const panel = ui.nodes['#contributor-history-panel'];
+    const body = ui.nodes['#contributor-details-scroll'];
+    panel.open=true;
+    panel.listeners.toggle();
+    assert.equal(body.scrollTop,80);
+    panel.open=false;
+    panel.listeners.toggle();
+    assert.equal(body.scrollTop,80);
+    assert.equal(ui.dialog.open,true);
+});
+
+test('oversized history aligns its summary at the top without scrolling the dialog', async () => {
+    const ui = setup();
+    await ui.open();
+    const panel = ui.nodes['#contributor-history-panel'];
+    panel.getBoundingClientRect=()=>({top:380,bottom:1180,height:800});
+    panel.open=true;
+    panel.listeners.toggle();
+    assert.equal(ui.nodes['#contributor-details-scroll'].scrollTop,280);
+    assert.equal(ui.dialog.scrollTop,0);
+});
+
+test('expanding fully visible history leaves the viewport in place', async () => {
+    const ui = setup();
+    await ui.open();
+    const panel = ui.nodes['#contributor-history-panel'];
+    panel.getBoundingClientRect=()=>({top:200,bottom:400,height:200});
+    panel.open=true;
+    panel.listeners.toggle();
+    assert.equal(ui.nodes['#contributor-details-scroll'].scrollTop,0);
 });
 
 test('Save posts form data with CSRF and sends updated contributor to the spreadsheet', async () => {

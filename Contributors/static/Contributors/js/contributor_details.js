@@ -6,6 +6,7 @@
     let editing = false;
     let busy = false;
     let canEdit = false;
+    let historyPanel, scrollBody;
 
     /** Resolve controls only after the DOM has supplied the shared details dialog. */
     function findControls() {
@@ -20,6 +21,8 @@
         cancel = document.querySelector('#contributor-details-cancel');
         close = document.querySelector('#contributor-details-close');
         history = document.querySelector('#contributor-details-history');
+        historyPanel = document.querySelector('#contributor-history-panel');
+        scrollBody = document.querySelector('#contributor-details-scroll');
         contact = document.querySelector('#details-add-contact-history');
     }
 
@@ -114,6 +117,40 @@
         return true;
     }
 
+    /** Every opening starts compact, even after another contributor's long history. */
+    function resetDetailsLayout() {
+        historyPanel.open = false;
+        scrollBody.scrollTop = 0;
+        history.scrollTop = 0;
+        dialog.scrollTop = 0;
+    }
+
+    /** Wait for the native disclosure to expand before measuring its new geometry. */
+    function revealHistory() {
+        // Closing history or resetting another contributor must not move the viewport.
+        if (!historyPanel.open || !dialog.open) return;
+        requestAnimationFrame(positionHistoryPanel);
+    }
+
+    /** Reveal the whole panel when it fits, or its heading when history is longer. */
+    function positionHistoryPanel() {
+        // A quick collapse/close may happen before the scheduled layout frame.
+        if (!historyPanel.open || !dialog.open) return;
+        const panel = historyPanel.getBoundingClientRect();
+        const viewport = scrollBody.getBoundingClientRect();
+        const top = viewport.top + scrollBody.clientTop;
+        const bottom = top + scrollBody.clientHeight;
+        let movement = 0;
+
+        // Oversized history starts at its summary; shorter panels should fit entirely.
+        if (panel.height > scrollBody.clientHeight || panel.top < top) {
+            movement = panel.top - top;
+        } else if (panel.bottom > bottom) {
+            movement = panel.bottom - bottom;
+        }
+        scrollBody.scrollTop += movement;
+    }
+
     /** Clear stale contributor data before a new details request becomes visible. */
     function prepareDetails(button) {
         row = button.closest('tr');
@@ -127,6 +164,7 @@
         setMode(false);
         setBusy(true);
         dialog.showModal();
+        resetDetailsLayout();
         error.textContent = `Loading ${dataLabel} details…`;
     }
 
@@ -149,6 +187,7 @@
         contact.dataset.contributorId = data.contributor_id;
         contact.hidden = data.can_contact !== true;
         clearErrors();
+        resetDetailsLayout();
     }
 
     /** Open saved contributors only and leave failed loads in a recoverable dialog. */
@@ -300,6 +339,7 @@
         dialog.addEventListener('cancel', cancelWhileBusy);
         sheet.addEventListener('contact-history-saved', contactSaved);
         dialog.addEventListener('contributions-changed', refreshHistory);
+        historyPanel.addEventListener('toggle', revealHistory);
         form.addEventListener('submit', submitDetails);
     }
 
