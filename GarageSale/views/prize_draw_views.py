@@ -79,7 +79,8 @@ class PrizeDrawWinners(EntryPointMixin, LoginRequiredMixin, PermissionRequiredMi
     entry_point_label = "Prize Draw Winners"
     entry_point_icon = static("GarageSale/images/icons/prize-draw-winners.svg")
     entry_point_permission = permission_required
-    entry_point_nav_page = "TeamPagesData"
+    entry_point_nav_page = 'Prizes'
+    entry_point_order = 20
     entry_point_needs_event = True
 
     def event_options(self, request):

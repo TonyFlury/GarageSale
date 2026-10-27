@@ -4,6 +4,8 @@
 {% load team_page_tags %}
 {% load breadcrumb from location_data_tags %}
 
+{% block Title %}Dashboard · Brantham Garage Sale{% endblock %}
+
 {% block PageStyles %}
     {{ block.super }}
     <style>
@@ -34,7 +36,7 @@
         });
     </script>
     <div class="bordered" style="padding-left:1rem;padding-right:1rem;padding-bottom:1rem;">
-        <h2>Basic event statistics</h2>
+        <h2>Dashboard</h2>
         <label for="id_event">Event:</label>
         <select name="event" id="id_event">
             {% for event in event_list %}

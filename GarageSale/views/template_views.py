@@ -37,7 +37,8 @@ class CommunicationTemplateCategories(EntryPointMixin, LoginRequiredMixin, Permi
     entry_point_icon = static("GarageSale/images/icons/folder-templates-svgrepo-com.svg")
     entry_point_permission = permission_required
     entry_point_needs_event = False
-    entry_point_nav_page = "TeamPagesData"
+    entry_point_nav_page = 'Communications'
+    entry_point_order = 20
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

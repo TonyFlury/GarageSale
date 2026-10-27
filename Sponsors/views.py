@@ -428,6 +428,8 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
 class SponsorEntryPoint( EntryPointMixin, SponsorSpreadsheetView):
     entry_point_url = 'TeamPages:SponsorEntryPoint'
     entry_point_label = 'Sponsors'
+    entry_point_nav_page = 'Event participation'
+    entry_point_order = 10
     entry_point_permission = 'Sponsors.view_sponsor'
     entry_point_icon = static('GarageSale/images/icons/navigation/sponsors-svgrepo-com.svg')
 

@@ -289,9 +289,17 @@ def choose_motd(context):
 
 
 @register.simple_tag(takes_context=True)
-def categoryList(context, nav_page='TeamPage'):
-    p = get_entry_points( user=context.request.user, nav_page=nav_page)
-
-    return render_to_string('__category_list.html',
-                            context={'category_list': get_entry_points(user=context.request.user, nav_page=nav_page),
-                                     'event_id': context.get('event_id', context.request.current_event.id if context.request.current_event else None) } )
+def categoryList(context, nav_page='TeamPage', heading=False):
+    """Render framework entries, optionally including a non-empty group heading."""
+    entries = list(get_entry_points(user=context.request.user, nav_page=nav_page))
+    # Permissions may remove the entire category for this user.
+    if not entries:
+        return ''
+    current = getattr(context.request, 'current_event', None)
+    content = render_to_string('__category_list.html', context={
+        'category_list': entries, 'event_id': context.get('event_id', current.pk if current else None)})
+    # Existing submenu callers retain the original unheaded tile-list format.
+    if not heading:
+        return content
+    label = nav_page if heading is True else heading
+    return format_html('<div aria-label="{}"><h4>{}</h4>{}</div>', label, label, content)

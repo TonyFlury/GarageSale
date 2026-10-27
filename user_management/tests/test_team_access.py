@@ -44,7 +44,8 @@ class TeamAccessTests(TestCase):
 
     def test_officers_have_the_new_permission_and_navigation(self):
         self.assertTrue(self.officer.has_perm('user_management.manage_team_access'))
-        self.assertTrue(any(entry['name'] == 'Manage team access' for entry in get_entry_points(self.officer)))
+        self.assertTrue(any(entry['name'] == 'Manage team access' for entry in
+                            get_entry_points(self.officer, 'Setup and administration')))
         response = self.client.get(reverse('user_management:team_access'))
         self.assertContains(response, 'Invite a new person')
         self.assertContains(self.client.get(reverse('TeamPages:Root')), 'Manage team access')
@@ -216,14 +217,14 @@ class TeamAccessTests(TestCase):
         self.assertFalse(TeamAccessChange.objects.exists())
 
     def test_search_and_pagination_and_missing_prize_app(self):
-        Group.objects.filter(name='PrizeAllocationManager').delete()
+        Group.objects.filter(name='PrizeDrawManager').delete()
         response = self.client.get(reverse('user_management:team_access'), {'scope': 'all', 'q': 'Pat'})
         self.assertContains(response, 'person@example.com')
         self.assertNotContains(response, 'other@example.com')
         response = self.client.get(self.url)
         self.assertContains(response, 'Not yet configured on this site:')
-        self.assertContains(response, 'Prize allocation')
-        self.assertNotContains(response, 'value="PrizeAllocationManager"')
+        self.assertContains(response, 'Prize draw manager')
+        self.assertNotContains(response, 'value="PrizeDrawManager"')
 
     def test_default_list_only_shows_accounts_with_groups_once(self):
         self.officer.groups.add(Group.objects.get(name='Financier'))

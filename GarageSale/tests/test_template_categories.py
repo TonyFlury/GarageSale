@@ -61,9 +61,9 @@ class CommunicationTemplateCategoryTests(SimpleTestCase):
         with self.assertRaises(PermissionDenied):
             CommunicationTemplateCategories.as_view()(self.request(allowed=False))
 
-    def test_navigation_entry_is_in_data_section_and_requires_no_event(self):
+    def test_navigation_entry_is_in_communications_and_requires_no_event(self):
         user = SimpleNamespace(has_perm=lambda permission: permission == "GarageSale.view_communicationtemplate")
-        entry = next(item for item in get_entry_points(user=user, nav_page="TeamPagesData")
+        entry = next(item for item in get_entry_points(user=user, nav_page="Communications")
                      if item["name"] == "Communication Templates")
         self.assertEqual(entry["url_path"], "TeamPages:CommunicationTemplates")
         self.assertFalse(entry["needs_event"])

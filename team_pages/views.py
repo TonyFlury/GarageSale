@@ -32,7 +32,7 @@ logger.setLevel(logging.DEBUG)
 
 register('Google Drive', 'TeamPages:GoogleDriveEntryPoint',
                        static('GarageSale/images/icons/navigation/network-drive-svgrepo-com.svg'),
-         permission='GarageSale.access_drive', needs_event=False)
+         permission='GarageSale.access_drive', needs_event=False, nav_page='Setup and administration', order=40)
 def GoogleDriveEntryPoint(request):
     return TemplateResponse(request, template='GoogleDrive.html')
 
@@ -346,7 +346,7 @@ class MotDBase(CombinedView):
 
 
 register('Message of the Day', 'TeamPages:MOTDList', icon_path=static('GarageSale/images/icons/navigation/motd-svgrepo-com.svg'),
-            permission='GarageSale.view_motd', needs_event=False)
+            permission='GarageSale.view_motd', needs_event=False, nav_page='Communications', order=10)
 def MOTD_list(request):
     return render( request,
                    'motd/motd_list.html',
@@ -409,7 +409,7 @@ def delete_motd(request, motd_id=None):
 
 register('Events', 'TeamPages:EventList',
          icon_path=static('GarageSale/images/icons/navigation/calendar-date-event-svgrepo-com.svg'),
-         needs_event=False, permission='GarageSale.view_eventdata')
+         needs_event=False, permission='GarageSale.view_eventdata', nav_page='Setup and administration', order=10)
 def event_list(request):
     return render(request, 'event/event_list.html', context={'event_list': EventData.objects.all().order_by('-event_date'), 'data_type': 'event', 'action': 'list'})
 

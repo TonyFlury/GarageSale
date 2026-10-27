@@ -73,32 +73,80 @@ class AccessPolicyTests(TestCase):
         self.assertFalse(self.users["ExecMember"].has_perm("Accounts.view_transaction"))
         self.assertTrue(officer.has_perm("Sponsors.change_sponsor"))
 
-    def test_prize_allocation_manager_has_only_allocation_and_team_access(self):
-        manager = self.users["PrizeAllocationManager"]
+    def test_prize_draw_manager_can_allocate_and_record_winners(self):
+        manager = self.users["PrizeDrawManager"]
         self.assertEqual(manager.get_all_permissions(), {
             custom("access_team_pages"), custom("manage_own_team_profile"),
             "Contributors.view_prize_allocation", "Contributors.change_prize_allocation",
+            "GarageSale.view_prizedrawwinner", "GarageSale.add_prizedrawwinner", "GarageSale.change_prizedrawwinner",
         })
-        self.login("PrizeAllocationManager")
-        self.assertEqual(self.client.get(reverse("TeamPages:Root")).status_code, 200)
-        url = reverse("TeamPages:ContributionBoard", args=[self.event.pk])
-        response = self.client.get(url)
+        self.login("PrizeDrawManager")
+        response = self.client.get(reverse("TeamPages:ContributionBoard", args=[self.event.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["can_edit"])
         self.assertEqual(self.client.get(reverse("contributors:spreadsheet")).status_code, 403)
-        from TeamPageFramework.entry_point import get_entry_points
-        self.assertTrue(any(entry["name"] == "Prize Allocation" for entry in
-                            get_entry_points(manager, nav_page="TeamPagesData")))
+        self.assertEqual(self.client.get(reverse("TeamPages:PrizeDrawWinners", args=[self.event.pk])).status_code, 200)
+
+    def test_executives_and_officers_view_allocation_but_cannot_edit_or_record_winners(self):
+        from GarageSale.models import PrizeDrawWinner
+        prize = Contributions.objects.create(contributor=self.sponsor,event=self.event,cash=False,
+                                             gift="Voucher",classification="prize_draw")
+        allocation = reverse("TeamPages:ContributionBoard", args=[self.event.pk])
+        winners = reverse("TeamPages:PrizeDrawWinners", args=[self.event.pk])
+        for role in ("ExecMember", "Officer"):
+            self.login(role)
+            user = self.users[role]
+            self.assertTrue(user.has_perm("Contributors.view_prize_allocation"))
+            self.assertFalse(user.has_perm("Contributors.change_prize_allocation"))
+            self.assertFalse(user.has_perm('GarageSale.add_prizedrawwinner'))
+            self.assertFalse(user.has_perm('GarageSale.change_prizedrawwinner'))
+            response = self.client.get(allocation)
+            self.assertEqual(response.status_code,200)
+            self.assertFalse(response.context['can_edit'])
+            self.assertEqual(self.client.post(allocation).status_code,403)
+            self.assertEqual(self.client.post(winners, json.dumps({"action":"ticket","contribution_id":prize.pk,
+                "revision":"new","ticket_number":"123"}),content_type="application/json").status_code,403)
+        self.assertFalse(PrizeDrawWinner.objects.exists())
+
+    def test_prize_draw_manager_can_save_allocation_and_two_stage_winner(self):
+        from GarageSale.models import PrizeDrawWinner
+        prize = Contributions.objects.create(contributor=self.sponsor,event=self.event,cash=False,gift='Voucher')
+        self.login('PrizeDrawManager')
+        board = reverse('TeamPages:ContributionBoard',args=[self.event.pk])
+        revision = self.client.get(board).context['revision']
+        result = self.client.post(board,json.dumps({'revision':revision,
+            'columns':{'unclassified':[],'prize_draw':[prize.pk],'tombola':[]}}),content_type='application/json')
+        self.assertEqual(result.status_code,200)
+        winner_url = reverse('TeamPages:PrizeDrawWinners',args=[self.event.pk])
+        ticket = self.client.post(winner_url,json.dumps({'action':'ticket','revision':'new',
+            'contribution_id':prize.pk,'ticket_number':'00012'}),content_type='application/json')
+        self.assertEqual(ticket.status_code,200)
+        details = self.client.post(winner_url,json.dumps({'action':'details','revision':ticket.json()['winner']['revision'],
+            'contribution_id':prize.pk,'name':'Sample Winner','phone':'','address':''}),content_type='application/json')
+        self.assertEqual(details.status_code,200)
+        self.assertEqual(PrizeDrawWinner.objects.get(contribution=prize).name,'Sample Winner')
 
     def test_other_operational_groups_do_not_gain_prize_allocation(self):
         url = reverse("TeamPages:ContributionBoard", args=[self.event.pk])
-        for name in ("SponsorshipManager", "CraftMarketManager", "ExecMember", "Officer", "Financier", "Volunteer"):
+        for name in ("SponsorshipManager", "CraftMarketManager", "Financier", "Volunteer"):
             with self.subTest(group=name):
                 user = self.users[name]
                 self.assertFalse(user.has_perm("Contributors.view_prize_allocation"))
                 self.assertFalse(user.has_perm("Contributors.change_prize_allocation"))
                 self.login(name)
                 self.assertEqual(self.client.get(url).status_code, 403)
+
+    def test_sync_renames_old_prize_role_and_retains_membership(self):
+        legacy = Group.objects.create(name='PrizeAllocationManager')
+        member = get_user_model().objects.create_user('legacy-draw@example.com', 'password')
+        member.groups.add(legacy)
+        with TemporaryDirectory() as directory:
+            call_command('sync_access_policy', apply=True, backup=Path(directory)/'rename.json', stdout=StringIO())
+        member = get_user_model().objects.get(pk=member.pk)
+        self.assertFalse(Group.objects.filter(name='PrizeAllocationManager').exists())
+        self.assertTrue(member.groups.filter(name='PrizeDrawManager').exists())
+        self.assertTrue(member.has_perm('GarageSale.add_prizedrawwinner'))
+        self.assertFalse(member.groups.filter(name='ExecMember').exists())
 
     def test_domain_managers_cannot_read_or_edit_other_contributor_type(self):
         self.login("SponsorshipManager")

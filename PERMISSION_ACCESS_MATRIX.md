@@ -135,11 +135,12 @@ See GarageSale/PERMISSION_DEPLOYMENT.md for preview, apply, verification and rol
 
 ## Integration additions for review
 
-PrizeAllocationManager is a separate responsibility group. It grants team-page
-and own-profile access plus `Contributors.view_prize_allocation` and
-`Contributors.change_prize_allocation`. ExecMember, Officer and SponsorshipManager
-do not receive those allocation capabilities automatically; assign the additional
-group when appropriate.
+PrizeDrawManager is the operational Prize Draw responsibility. It grants team-page
+and own-profile access, allocation view/change, and winner view/add/change.
+ExecMember and Officer can view allocation and winners, but cannot change allocation
+or record winners without PrizeDrawManager. SponsorshipManager retains contribution
+recording and winner viewing, without allocation or winner-editing privileges.
+WebAdmin retains administrative access. Existing direct grants remain effective.
 
 All ExecMembers receive nomination view access. Officers additionally receive
 `user_management.manage_team_access` and nomination change access. Volunteers use `GarageSale.manage_own_team_profile`;

@@ -37,7 +37,7 @@ class PrizeDrawWinnerEntryTests(TestCase):
         self.assertContains(response, "Voucher &lt;one&gt;")
         self.assertLess(response.content.index(b"Voucher &lt;one&gt;"), response.content.index(b"Voucher two"))
         self.assertNotContains(response, 'id="winner-event"')
-        entries = list(get_entry_points(self.user, nav_page="TeamPagesData"))
+        entries = list(get_entry_points(self.user, nav_page="Prizes"))
         self.assertTrue(any(entry["name"] == "Prize Draw Winners" for entry in entries))
 
     def test_recording_ticket_persists_before_unlocking_details(self):

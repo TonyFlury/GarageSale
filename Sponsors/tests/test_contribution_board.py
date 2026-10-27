@@ -110,7 +110,7 @@ class ContributionBoardTests(TestCase):
         self.client.force_login(recorder)
         self.assertEqual(self.client.get(self.url).status_code, 403)
         self.assertFalse(any(entry["name"] == "Prize Allocation" for entry in
-                             get_entry_points(recorder, nav_page="TeamPagesData")))
+                             get_entry_points(recorder, nav_page="Prizes")))
 
         from django.contrib import admin
         from Contributors.admin import ContributionsAdmin
@@ -143,14 +143,14 @@ class ContributionBoardTests(TestCase):
         self.assertFalse(self.request(user=viewer).context_data["can_edit"])
         self.assertEqual(self.request("post", self.payload(), user=viewer).status_code, 403)
 
-    def test_page_renders_and_entry_point_is_in_data_section(self):
+    def test_page_renders_and_entry_point_is_in_prizes_section(self):
         self.client.force_login(self.user)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Voucher &lt;one&gt;")
         self.assertContains(response, "Prize Draw")
         self.assertContains(response, 'class="contribution-move"')
-        entries = list(get_entry_points(self.user, nav_page="TeamPagesData"))
+        entries = list(get_entry_points(self.user, nav_page="Prizes"))
         entry = next(entry for entry in entries if entry["name"] == "Prize Allocation")
         self.assertEqual(entry["url_path"], "TeamPages:ContributionBoard")
         self.assertIn("contribution-board.svg", entry["icon_path"])

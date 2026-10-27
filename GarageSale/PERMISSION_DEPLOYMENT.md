@@ -55,7 +55,7 @@ Check with ordinary accounts, rather than only a superuser:
 - Financier without ExecMember: Team Pages and Accounts only; no transaction deletion.
 - Officer: automatically also ExecMember, with underlying financial visibility.
 - SponsorshipManager: Sponsor data/templates only; no trader IDs or categories.
-- PrizeAllocationManager: Team Pages and prize categorisation/ordering; no contribution recording or winner recording.
+- PrizeDrawManager: Team Pages, prize categorisation/ordering and winner recording; no sponsor contribution recording.
 - CraftMarketManager: trader data/templates only; no Sponsor IDs or categories.
 - ExecMember: reports without underlying transactions, own-profile edits only.
 - WebAdmin: full project capabilities, including admin-only deletions when staff.
@@ -63,20 +63,19 @@ Check with ordinary accounts, rather than only a superuser:
 Check template category URLs and contributor CSV exports as well as menu links.
 The policy tests live in GarageSale/tests/test_access_policy.py.
 
-## Prize allocation group
+## Prize Draw responsibilities
 
-After applying migration `Contributors/0007_prize_allocation_permissions`, use
-the preview/apply commands above to create `PrizeAllocationManager` with
-`Contributors.view_prize_allocation` and `Contributors.change_prize_allocation`,
-plus Team Page access and own-profile access. Assign membership explicitly to
-the people responsible for categorisation and prize ordering. No existing users
-are automatically added. Users who also record sponsor contributions can belong
-to both `SponsorshipManager` and `PrizeAllocationManager`.
+ExecMember includes allocation viewing only. Officers inherit that through their
+ExecMember membership. Neither membership grants allocation editing or winner
+recording. PrizeDrawManager grants allocation view/change and winner view/add/change,
+plus Team Page and own-profile access. Assign it explicitly through Manage team
+access to the people responsible for running the draw. It grants no general
+contribution-recording permissions. WebAdmin retains administrative capabilities.
 
-Other operational groups do not receive allocation permissions. WebAdmin retains
-all project permissions. Direct grants remain effective; review those separately
-when checking responsibility boundaries. The policy sync manages the new group's
-grants on each run, just like the existing groups.
+Run the normal preview/apply steps above to deploy this policy. Sync renames the
+older PrizeAllocationManager group, preserving its memberships and third-party
+grants, then reconciles the new role's project permissions. Existing direct
+permission grants are retained and should be reviewed separately.
 
 The event charity picker uses the existing Supporting view permission for its
 search endpoint. Available organisations are searched in pages of 20; only

@@ -19,8 +19,8 @@ preserved. No remote fetch, push or deployment was performed during construction
 - Volunteer access uses `GarageSale.manage_own_team_profile`. Existing profile
   permission grants are transferred and recognised during transition. Volunteers
   retain own-profile and ID-card access without management responsibilities.
-- Prize allocation remains a separate responsibility, assigned through
-  PrizeAllocationManager, rather than sponsor contribution recording.
+- ExecMembers and Officers can view prize allocation. Editing allocation and
+  recording winners belong to PrizeDrawManager, separately from sponsor recording.
 - The membership UI preserves grouped-account listing, optional broader search,
   review/confirmation and return to the list, and invitation safeguards.
 - Master's mobile/sidebar layout is retained. Home-page sponsor cards now use

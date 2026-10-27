@@ -32,7 +32,7 @@ email_logger = logging.getLogger('GarageSale.middleware.email')
 SALT = 'user_management.team_access.review'
 ROLE_DESCRIPTIONS = {
     'SponsorshipManager': ('Sponsorship', 'Manage sponsors and record their contributions.'),
-    'PrizeAllocationManager': ('Prize allocation', 'Categorise contributions and set the prize order.'),
+    'PrizeDrawManager': ('Prize draw manager', 'Categorise and order prizes, and record winning tickets and winner details.'),
     'CraftMarketManager': ('Craft market', 'Manage market traders and their participation.'),
     'Financier': ('Finance', 'Work with the event accounts and financial records.'),
 }
@@ -137,6 +137,8 @@ class AccessMixin(LoginRequiredMixin, PermissionRequiredMixin):
 
 class TeamAccessList(EntryPointMixin, AccessMixin, View):
     entry_point_label = 'Manage team access'
+    entry_point_nav_page = 'Setup and administration'
+    entry_point_order = 20
     entry_point_url = 'user_management:team_access'
     entry_point_permission = PERMISSION
     entry_point_needs_event = False

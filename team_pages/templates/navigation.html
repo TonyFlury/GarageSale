@@ -8,12 +8,11 @@
     {{ block.super }}
 {% endblock %}
 {% block SnappableSections %}
-        <div>
-        <h4>Management</h4>
-            {% categoryList %}
-        </div>
-        <div>
-            <h4>Data and Statistics</h4>
-            {% categoryList 'TeamPagesData' %}
-        </div>
+    {% categoryList 'Overview' heading=True %}
+    {% categoryList 'Event participation' heading=True %}
+    {% categoryList 'Prizes' heading=True %}
+    {% categoryList 'Communications' heading=True %}
+    {% categoryList 'Finance and funding' heading=True %}
+    {% categoryList 'Setup and administration' heading=True %}
+    {% categoryList heading='Other tasks' %}
 {% endblock %}

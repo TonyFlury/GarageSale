@@ -1,6 +1,6 @@
 # Prize Allocation
 
-Open **Team Page → Data and Statistics → Prize Allocation**.
+Open **Team Page → Prizes → Prize Allocation**.
 The entry uses the three-column board icon and is visible to users with
 `Contributors.view_prize_allocation`. Its base URL is
 `/team_page/contributions/`; the named route is `TeamPages:ContributionBoard`.
@@ -80,13 +80,12 @@ python manage.py migrate Contributors
 
 Migrations: `Contributors/0005_contribution_classification_position` and
 `Contributors/0007_prize_allocation_permissions` (separate allocation permissions).
-After migrating, assign the new permissions to the users or groups responsible
-for prize allocation. Existing contribution permissions do not grant allocation
-access, and the migration does not copy existing grants.
-The `PrizeAllocationManager` group bundles both allocation permissions with
-Team Page and own-profile access. Create/update it using the documented
-`sync_access_policy` deployment process, then assign users explicitly. It does
-not grant contribution recording or winner recording permissions.
+After migrating, apply the access policy. ExecMember (including Officer) can view
+allocation without changing it. PrizeDrawManager can categorise and order prizes
+and record winning tickets and winner details. This role does not grant general
+sponsor contribution recording. The deployment sync renames the old allocation
+group, retaining memberships. Assign the new responsibility through Manage team
+access; WebAdmin retains administrative capabilities.
 The public `/PrizeDraw/` list reads current-event, non-cash contributions classified
 as Prize Draw, ordered by position then primary key. Allocation and ordering changes
 appear on the next page request. Once every listed prize has a recorded ticket,

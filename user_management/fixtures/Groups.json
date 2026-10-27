@@ -276,11 +276,6 @@
           "communicationtemplate"
         ],
         [
-          "add_prizedrawwinner",
-          "GarageSale",
-          "prizedrawwinner"
-        ],
-        [
           "add_templateattachment",
           "GarageSale",
           "templateattachment"
@@ -289,11 +284,6 @@
           "change_communicationtemplate",
           "GarageSale",
           "communicationtemplate"
-        ],
-        [
-          "change_prizedrawwinner",
-          "GarageSale",
-          "prizedrawwinner"
         ],
         [
           "change_templateattachment",
@@ -1380,11 +1370,6 @@
           "applicationaccess"
         ],
         [
-          "add_prizedrawwinner",
-          "GarageSale",
-          "prizedrawwinner"
-        ],
-        [
           "add_supporting",
           "GarageSale",
           "supporting"
@@ -1413,11 +1398,6 @@
           "change_newsletter",
           "GarageSale",
           "applicationaccess"
-        ],
-        [
-          "change_prizedrawwinner",
-          "GarageSale",
-          "prizedrawwinner"
         ],
         [
           "change_supporting",
@@ -1673,6 +1653,11 @@
           "view_teammember",
           "user_management",
           "teammember"
+        ],
+        [
+          "view_prize_allocation",
+          "Contributors",
+          "contributions"
         ]
       ]
     }
@@ -1693,7 +1678,7 @@
   {
     "model": "auth.group",
     "fields": {
-      "name": "PrizeAllocationManager",
+      "name": "PrizeDrawManager",
       "permissions": [
         [
           "change_prize_allocation",
@@ -1714,6 +1699,21 @@
           "manage_own_team_profile",
           "GarageSale",
           "applicationaccess"
+        ],
+        [
+          "view_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
+        ],
+        [
+          "add_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
+        ],
+        [
+          "change_prizedrawwinner",
+          "GarageSale",
+          "prizedrawwinner"
         ]
       ]
     }

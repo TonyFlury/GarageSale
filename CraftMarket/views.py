@@ -16,6 +16,8 @@ logger = logging.getLogger('CraftMarket.views')
 class MarketEntryPoint(EntryPointMixin, MarketerSpreadsheetView):
     entry_point_url = 'CraftMarket:EntryPoint'
     entry_point_label = 'Craft Market'
+    entry_point_nav_page = 'Event participation'
+    entry_point_order = 20
     entry_point_permission = 'CraftMarket.view_marketer'
     entry_point_icon = static('GarageSale/images/icons/navigation/market-stand-svgrepo-com.svg')
 

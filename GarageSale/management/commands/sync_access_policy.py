@@ -10,7 +10,7 @@ from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from GarageSale.access_policy import ALIASES, GROUP_NAMES, GROUP_PERMISSIONS, PROJECT_APPS, ROLE_FLAGS
+from GarageSale.access_policy import ALIASES, GROUP_NAMES, GROUP_PERMISSIONS, GROUP_RENAMES, PROJECT_APPS, ROLE_FLAGS
 
 
 def key(permission):
@@ -44,6 +44,9 @@ class Command(BaseCommand):
             self.stdout.write(f"REVIEW retired role flags on unmanaged group: {group.name}.")
         for user in get_user_model().objects.filter(groups__name="WebAdmin", is_staff=False):
             self.stdout.write(f"ADMIN ACCESS: {user.email} is not staff; explicitly enable staff access if Django admin is required.")
+        for previous, current in GROUP_RENAMES.items():
+            if Group.objects.filter(name=previous).exists():
+                self.stdout.write(f"Rename responsibility group: {previous} -> {current}; existing memberships retained.")
         for name in GROUP_NAMES:
             group = Group.objects.filter(name=name).first()
             current = {key(p) for p in group.permissions.filter(content_type__app_label__in=PROJECT_APPS).select_related("content_type")} if group else set()
@@ -61,6 +64,7 @@ class Command(BaseCommand):
             raise CommandError("Resolve the direct retired role flags listed above before applying; no changes made.")
         self.backup(options["backup"])
         with transaction.atomic():
+            self.rename_groups()
             for config in apps.get_app_configs():
                 if config.label in PROJECT_APPS:
                     create_permissions(config, verbosity=0)
@@ -83,6 +87,24 @@ class Command(BaseCommand):
             for user in get_user_model().objects.filter(groups__name="Officer"):
                 user.groups.add(executive)
         self.stdout.write(self.style.SUCCESS("Access policy applied. Third-party grants and staff/superuser flags unchanged."))
+
+    @staticmethod
+    def rename_groups():
+        """Retain memberships and third-party grants when a responsibility is renamed."""
+        for previous, current in GROUP_RENAMES.items():
+            old = Group.objects.filter(name=previous).first()
+            # Sites installed after the rename have nothing to transfer.
+            if old is None:
+                continue
+            target = Group.objects.filter(name=current).first()
+            # A straight rename preserves the original group's ID and memberships.
+            if target is None:
+                old.name = current
+                old.save(update_fields=['name'])
+            else:
+                target.permissions.add(*old.permissions.all())
+                target.user_set.add(*old.user_set.all())
+                old.delete()
 
     def backup(self, path):
         if path is None:

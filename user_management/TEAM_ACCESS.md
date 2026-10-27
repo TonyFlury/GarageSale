@@ -36,7 +36,7 @@ permissions, require administrator review before this assignment. Existing
 equivalent own-profile grants from the newer permission policy remain supported.
 
 Responsibilities use existing configured groups: SponsorshipManager,
-CraftMarketManager, Financier and, if installed, PrizeAllocationManager. Missing
+CraftMarketManager, Financier and, if installed, PrizeDrawManager. Missing
 groups are identified on the form and cannot be selected. This branch does not
 depend on the Contributors app, prize allocation code, or any of their migrations.
 Other groups and direct permission grants are preserved. The review explicitly

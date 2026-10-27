@@ -40,7 +40,7 @@ expected_fields = ['Transaction Date','Sort Code','Account Number','Transaction 
 
 entry_point = register( 'Finances', 'Account:EntryPoint',
             static('Accounts/images/icons/navigation/money-bag-pound-svgrepo-com.svg'),
-                        'Accounts.report_transaction', needs_event=False)
+                        'Accounts.report_transaction', needs_event=False, nav_page='Finance and funding', order=10)
 def EntryPoint(request):
     return TemplateResponse(request, 'entry_point.html')
 

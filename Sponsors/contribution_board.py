@@ -34,7 +34,8 @@ class ContributionBoard(EntryPointMixin, LoginRequiredMixin, PermissionRequiredM
     entry_point_url = "TeamPages:ContributionBoard"
     entry_point_label = "Prize Allocation"
     entry_point_icon = static("Sponsors/images/contribution-board.svg")
-    entry_point_nav_page = "TeamPagesData"
+    entry_point_nav_page = 'Prizes'
+    entry_point_order = 10
     entry_point_needs_event = True
 
     def selected_event(self, request, event_id=None):

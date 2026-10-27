@@ -279,9 +279,10 @@ class AddLocation(EntryPointMixin, LocationBase, PermissionRequiredMixin, View):
     login_url = reverse_lazy("user_management:identify")
     entry_point_permission = "Location.add_location"
     entry_point_url = "Location:AddLocation"
-    entry_point_label = "Add Location for user"
+    entry_point_label = 'Add a location'
     entry_point_icon = static("GarageSale/images/icons/menu/map-marker-svgrepo-com.svg")
-    entry_point_nav_page = 'TeamPage'
+    entry_point_nav_page = 'Event participation'
+    entry_point_order = 30
     entry_point_needs_event = False
 
     template_name = "teampages/on_behalf.html"

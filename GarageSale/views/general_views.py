@@ -68,7 +68,8 @@ class NominationsList(EntryPointMixin, LoginRequiredMixin, PermissionRequiredMix
     entry_point_label = 'Funding Nominations'
     entry_point_icon = static('GarageSale/images/icons/navigation/loving-charity-svgrepo-com.svg')
     entry_point_permission = 'GarageSale.view_nomination'
-    entry_point_nav_page = 'TeamPage'
+    entry_point_nav_page = 'Finance and funding'
+    entry_point_order = 20
     entry_point_needs_event = False
     model = Nomination
     template_name = 'team_pages/nominations/nomination_list.html'

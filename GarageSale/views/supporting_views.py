@@ -14,7 +14,7 @@ from team_pages.forms import SupportingForm
 
 register("Supported charities", "TeamPages:SupportingList",
          static("GarageSale/images/icons/supported-charities.svg"),
-         permission="GarageSale.view_supporting", needs_event=False, nav_page="TeamPagesData")
+         permission="GarageSale.view_supporting", needs_event=False, nav_page="Finance and funding", order=30)
 
 
 class SupportingList(LoginRequiredMixin, PermissionRequiredMixin, ListView):
