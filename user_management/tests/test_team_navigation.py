@@ -41,7 +41,7 @@ class TeamNavigationTests(TestCase):
                 self.client.force_login(user)
                 response = self.client.get(reverse('TeamPages:Root'))
                 self.assertContains(response, 'Data and Statistics')
-                self.assertContains(response, reverse('Location:EventStats'))
+                self.assertContains(response, reverse('EventDashboard'))
                 self.assertContains(response, reverse('Location:EventAdBoard'))
 
     def test_report_tiles_remain_hidden_without_report_permission(self):
