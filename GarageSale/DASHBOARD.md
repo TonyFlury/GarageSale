@@ -68,7 +68,8 @@ The initial payload includes daily cumulative comparisons and `weeklyToDate` row
 for every possible stopping day. The latter preserve correct historical maxima
 for partial weeks; subtracting cumulative maxima would be mathematically wrong.
 Final historical benchmarks stay fixed. The ordinary four grouped queries are
-unchanged; the extra payload is proportional to metric count times campaign days.
+unchanged; Craft Market adds two queries, independent of history size. The extra
+payload is proportional to metric count times campaign days.
 Replay reconstructs the timeline from retained dates and current records, subject
 to the data-retention limitations below; it is not an audit-history reconstruction.
 
@@ -82,9 +83,43 @@ These are views of currently retained records and statuses. Deleted or cancelled
 locations are excluded, and changing a contribution amount changes its confirmed
 value retrospectively. This dashboard is not an immutable transaction ledger.
 
+## Craft Market progress
+
+The Craft Market circle overlays blue Invited, amber Accepted and green Fees paid
+arcs clockwise from twelve o'clock. Each arc uses its cumulative count on one
+scale: max(current invitations, historical accepted-or-paid maximum). For 8/5/3
+against 9, the sweeps are 320°, 200° and 120°. Paid is drawn last and covers
+acceptance, which covers invitations. The legend retains all three cumulative
+counts; the centre counts confirmed places (fees paid). The explicitly labelled
+acceptance comparison percentage refers to accepted invitations.
+
+Each trader is counted once per event at each milestone. Repeated invitations,
+acceptance, payment and reinstatement do not multiply counts. Later rejection or
+cancellation does not erase an earlier milestone; separate rejection/cancellation
+reporting is not included. Hidden traders retain their historical activity.
+
+Fee Pending, Confirmed and explicit legacy paid statuses establish acceptance.
+Actual fee receipts use their payment date; an old acceptance alone never invents
+a payment. When earlier stages are missing or a receipt is backdated, the later
+stage implies the earlier milestones at that date and a data-quality note explains
+the inference. This preserves Invited ≥ Accepted ≥ Paid at every replay date.
+
+Historical average/maximum markers count each accepted-or-paid trader once at
+their latest retained acceptance/payment checkpoint. Events with no retained
+market history are excluded and flagged; an event with invitations but no
+acceptances supplies a valid zero. Invitation-only histories and historical
+acceptances without payment records remain useful without pretending fees were
+recorded. Campaigns start at the earlier of activation and the first retained
+milestone, so invitations to future events made before activation still count.
+Snapshots and event-day cutoffs apply to all stages.
+
+Selecting the circle shows all three run-rate lines, an exact-value table and the
+historical accepted/paid average and maximum. Weekly mode and historical replay
+use the already-loaded stage data and do not make additional requests.
+
 ## Verification
 
-Run `manage.py test GarageSale.tests.test_dashboard` with the configured project
+Run `manage.py test GarageSale.tests.test_dashboard GarageSale.tests.test_market_dashboard` with the configured project
 interpreter and PostgreSQL test database. Run the renderer checks with
 `node GarageSale/tests/js/event_dashboard.test.cjs`.
 

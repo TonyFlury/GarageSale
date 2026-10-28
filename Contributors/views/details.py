@@ -78,7 +78,7 @@ def event_history_context(contributor, current_event=None):
         "event", "user",
     ).order_by("-timestamp", "-pk"):
         group = _history_group(groups, confirmation.event, current_event)
-        if group['is_current']:
+        if group['is_current'] or getattr(contributor, 'contributor_type', None) == 'Marketer':
             group['confirmations'].append(confirmation)
         if confirmation.status == 'Confirmed' and group['contribution_date'] is None:
             group['contribution_date'] = confirmation.timestamp
@@ -91,7 +91,7 @@ def event_history_context(contributor, current_event=None):
 
 def _ordered_history_groups(groups):
     """Keep contributions newest-event first, followed by unassigned records."""
-    visible = [group for group in groups.values() if group['is_current'] or group['contributions']]
+    visible = [group for group in groups.values() if group['is_current'] or group['contributions'] or group['confirmations']]
     return sorted(visible, key=lambda group: (
         group["event"] is not None,
         group["event"].event_date.toordinal() if group["event"] else 0,

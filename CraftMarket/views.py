@@ -33,7 +33,7 @@ class MarketTemplates(TemplateManagement):
 class MarketTemplateCreate(TemplatesCreate):
     category = 'CraftMarket'
     permission_required =  ['CraftMarket.change_marketer', 'GarageSale.change_communicationtemplate']
-    sub_category_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    sub_category_list = [('Invite','Invite'), ('Confirm','Confirm'), ('Fee Pending','Fee Pending'), ('Cancellation','Cancellation')]
     url_base = 'CraftMarket/templates'
     template_help = """
         <p>The Template system allows consistent messages to be sent to all Craft Marketers.
@@ -82,14 +82,14 @@ class MarketTemplateCreate(TemplatesCreate):
 class MarketTemplateView(TemplatesView):
     category = 'CraftMarket'
     permission_required =  ['CraftMarket.change_marketer', 'GarageSale.view_communicationtemplate']
-    sub_category_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    sub_category_list = MarketTemplateCreate.sub_category_list
     url_base = 'CraftMarket/templates'
     template_help = ""
 
 class MarketTemplateEdit(TemplatesEdit):
     category = 'CraftMarket'
     permission_required =  ['CraftMarket.change_marketer', 'GarageSale.change_communicationtemplate']
-    sub_category_list = [('Invite','Invite'), ('Confirm','Confirm')]
+    sub_category_list = MarketTemplateCreate.sub_category_list
     url_base = 'CraftMarket/templates'
     template_help = MarketTemplateCreate.template_help
 

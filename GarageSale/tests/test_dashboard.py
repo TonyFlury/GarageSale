@@ -161,7 +161,7 @@ class DashboardQueryTests(TestCase):
         self.location(day=self.start - timedelta(days=1))
         self.location(board=False, sale=True, day=self.start + timedelta(days=1))
         self.location(day=self.today + timedelta(days=1))
-        board, sales = self.payload()['metrics'][2:]
+        board, sales = self.payload()['metrics'][2:4]
         self.assertEqual(board['total'], 1)
         self.assertEqual(sales['total'], 1)
         self.assertEqual(sales['start'], '2030-06-08')
@@ -169,17 +169,17 @@ class DashboardQueryTests(TestCase):
         self.assertEqual(sales['cumulative'][1]['current'], 1)
 
     def test_query_count_does_not_grow_per_previous_event(self):
-        # Query adapters aggregate all events in four queries, even with many histories.
+        # Four ordinary metrics plus two Craft Market queries, regardless of history size.
         for year in range(2020, 2029):
             EventData.objects.create(event_date=date(year, 7, 1), use_from=date(year, 6, 1),
                                      open_sales_bookings=date(year, 6, 1), open_billboard_bookings=date(year, 6, 1))
         events = list(EventData.objects.all())
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(6):
             result = dashboard_payload(self.current, events, self.today)
         self.assertEqual(result['previousEvents'], 10)
 
     def test_replay_payload_has_full_history_and_preserves_query_count(self):
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(6):
             result = dashboard_payload(self.past, [self.current,self.past], self.today)
         self.assertEqual(result['timeline'], {'start':'2029-06-01','end':'2029-06-10'})
         cash = result['metrics'][0]

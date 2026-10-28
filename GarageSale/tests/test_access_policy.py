@@ -23,6 +23,16 @@ from user_management.models import TeamMember
 
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
 class AccessPolicyTests(TestCase):
+    def test_market_booking_permissions_are_scoped_to_market_and_exec_roles(self):
+        permissions = ('CraftMarket.record_pitch_payment', 'CraftMarket.cancel_market_booking',
+                       'CraftMarket.reinstate_market_booking')
+        for group in ('CraftMarketManager', 'ExecMember', 'WebAdmin'):
+            for permission in permissions:
+                self.assertTrue(self.users[group].has_perm(permission), (group, permission))
+        for group in ('SponsorshipManager', 'PrizeDrawManager', 'Financier', 'Volunteer'):
+            for permission in permissions:
+                self.assertFalse(self.users[group].has_perm(permission), (group, permission))
+
     @classmethod
     def setUpTestData(cls):
         with TemporaryDirectory() as directory:

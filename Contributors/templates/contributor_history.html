@@ -1,7 +1,7 @@
 <ol class="contributor-history-list">
 {% for group in event_groups %}
     <li>
-        {% if group.is_current %}
+        {% if group.is_current or group.confirmations %}
         <h4>{{ group.event }}</h4>
         <h5>Confirmation history</h5>
         {% for confirmation in group.confirmations %}
@@ -10,6 +10,7 @@
                 <span>{{ confirmation.status|default:'No status recorded' }}</span>
             </div>
             <p class="history-meta">Recorded by {% if confirmation.user %}{{ confirmation.user.get_full_name|default:'Name not recorded' }}{% else %}Authorising user not recorded{% endif %}</p>
+            {% if confirmation.details %}<p class="history-note">{{ confirmation.details }}</p>{% endif %}
         {% empty %}
             <p>No confirmation recorded.</p>
         {% endfor %}

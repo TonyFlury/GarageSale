@@ -1,4 +1,4 @@
-<h2>{% if status == "Invited" %}Invite market traders{% elif status == "Confirmed" %}Confirm attendance{% elif status == "Rejected" %}Decline invitations{% else %}Send email{% endif %}</h2>
+<h2>{% if status == "Invited" %}Invite market traders{% elif status == "Fee Pending" %}Accept invitation — Fee Pending{% elif status == "Rejected" %}Decline invitations{% else %}Send email{% endif %}</h2>
 <div class="form craft-market-popup">
 <p>Event: {{ market_event }}</p>
 <ul>{% for marketer in marketers %}<li>{{ marketer.contributor_name }}</li>{% endfor %}</ul>
@@ -28,7 +28,7 @@
     {% endif %}
     <div class="buttons">
         {% if status %}
-            <button class="communication-template-button" type="submit" name="confirm_action" value="1">{% if status == "Invited" %}Invite{% elif status == "Confirmed" %}Confirm attendance{% else %}Decline invitation{% endif %}</button>
+            <button class="communication-template-button" type="submit" name="confirm_action" value="1">{% if status == "Invited" %}Invite{% elif status == "Fee Pending" %}Accept invitation{% else %}Decline invitation{% endif %}</button>
         {% elif email_templates %}
             <button class="communication-template-button" type="submit" name="delivery" value="send_email">Send email</button>
         {% endif %}

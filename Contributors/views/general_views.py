@@ -252,6 +252,8 @@ class ContributorSpreadsheetView(ContributorLifecycleMixin, LoginRequiredMixin, 
             "generate_pdf": custom("generate_sponsor_pdf" if kind == "Sponsor" else "generate_marketer_pdf"),
             "confirm_sponsorship": "Sponsors.confirm_sponsor", "invite": custom("invite_marketer"),
             "confirm": custom("confirm_marketer"), "reject": custom("reject_marketer"),
+            "record_fee": "CraftMarket.record_pitch_payment", "cancel_booking": "CraftMarket.cancel_market_booking",
+            "reinstate_booking": "CraftMarket.reinstate_market_booking",
         }
         for action in self.extra_toolbar_actions:
             if not action or action["name"] not in permissions or allowed(self.request.user, permissions[action["name"]]):
@@ -351,6 +353,7 @@ class ContributorSpreadsheetView(ContributorLifecycleMixin, LoginRequiredMixin, 
             contributor.can_edit = allowed(self.request.user, permissions.get("change", ""))
             contributor.can_contact = allowed(self.request.user, permissions.get("contact", ""))
             if getattr(contributor, 'is_hidden', False):
+                contributor.can_edit = False
                 contributor.can_contact = False
             for action, enabled in self.lifecycle_capabilities(contributor).items():
                 setattr(contributor, f'can_{action}', enabled)

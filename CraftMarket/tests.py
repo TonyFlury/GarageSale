@@ -62,7 +62,7 @@ class TestCraftMarketTeamPages(BrowserTestLabelMixin, IdentifyMixin, SmartHTMLTe
             contributor_type='Marketer', contributor_name=name, contact_name=f'Contact {index}',
             email=f'trader{index}@example.com', phone=f'0712345678{index}',
         ) for index, name in enumerate(['Willow Ceramics', 'Meadow Honey', 'Oak Woodcraft', 'Fern Textiles'])]
-        self.statuses = ['None', 'Invited', 'Confirmed', 'Rejected']
+        self.statuses = ['None', 'Invited', 'Fee Pending', 'Rejected']
         for marketer, status in zip(self.marketers, self.statuses):
             if status != 'None':
                 ContributorEvent.objects.create(contributor=marketer, event=self.event, status=status)
@@ -121,7 +121,8 @@ class TestCraftMarketTeamPages(BrowserTestLabelMixin, IdentifyMixin, SmartHTMLTe
         return self.visible('#spreadsheet-modal-dialog[open]')
 
     def assert_status(self, marketer, expected):
-        self.assertEqual(self.row(marketer).find_element(By.CSS_SELECTOR, 'td.extra-column').text, expected)
+        self.assertEqual(self.row(marketer).find_element(By.CSS_SELECTOR, 'td.extra-column').text,
+                         '' if expected == 'None' else expected)
         latest = ContributorEvent.objects.filter(contributor=marketer, event=self.event).order_by('-timestamp', '-pk').first()
         self.assertEqual(latest.status if latest else 'None', expected)
 
@@ -180,7 +181,7 @@ class TestCraftMarketTeamPages(BrowserTestLabelMixin, IdentifyMixin, SmartHTMLTe
         dialog = self.visible('#spreadsheet-filter-dialog[open]')
         checkboxes = dialog.find_elements(By.CSS_SELECTOR, 'input[name="selected_filters"]')
         self.assertEqual({checkbox.get_attribute('value') for checkbox in checkboxes},
-                         {'contacted', 'not_contacted', 'none', 'invited', 'confirmed', 'rejected'})
+                         {'contacted', 'not_contacted', 'none', 'invited', 'fee_pending', 'confirmed', 'rejected', 'cancelled', 'hidden', 'include_hidden'})
         self.assertTrue(all(checkbox.is_displayed() for checkbox in checkboxes))
         self.screenshot('filter-dialog')
         self.click('#spreadsheet-filter-cancel')
@@ -191,9 +192,10 @@ class TestCraftMarketTeamPages(BrowserTestLabelMixin, IdentifyMixin, SmartHTMLTe
             with self.subTest(status=status):
                 self.selenium.get(self.get_test_url())
                 self.click('#spreadsheet-filter-button')
-                self.click(f'#spreadsheet-filter-dialog input[value="{status.lower()}"]')
+                filter_name = status.lower().replace(' ', '_')
+                self.click(f'#spreadsheet-filter-dialog input[value="{filter_name}"]')
                 self.click('#spreadsheet-filter-dialog input[type="submit"]')
-                WebDriverWait(self.selenium, 10).until(EC.url_contains('selected_filters=' + status.lower()))
+                WebDriverWait(self.selenium, 10).until(EC.url_contains('selected_filters=' + filter_name))
                 rows = self.selenium.find_elements(By.CSS_SELECTOR, '#contributor-sheet tbody tr[data-contributor-id]')
                 self.assertEqual([row.get_attribute('data-contributor-id') for row in rows], [str(marketer.pk)])
                 self.assert_status(marketer, status)
@@ -279,14 +281,14 @@ class TestCraftMarketTeamPages(BrowserTestLabelMixin, IdentifyMixin, SmartHTMLTe
         marketer = self.marketers[1]
         self.open_action('confirm', marketer)
         self.submit_action('Confirmed', email=True)
-        self.assert_status(marketer, 'Confirmed')
+        self.assert_status(marketer, 'Fee Pending')
         self.assert_email(marketer, 'Confirmed')
 
     def test_confirm_attendance_without_email(self):
         marketer = self.marketers[1]
         self.open_action('confirm', marketer)
         self.submit_action('Confirmed')
-        self.assert_status(marketer, 'Confirmed')
+        self.assert_status(marketer, 'Fee Pending')
         self.assertFalse(mail.outbox)
 
     def test_reject_invitation_requires_confirmation_and_sends_no_email(self):
@@ -316,7 +318,7 @@ class TestCraftMarketTeamPages(BrowserTestLabelMixin, IdentifyMixin, SmartHTMLTe
         self.open_action('send_email', marketer)
         self.submit_action('Newsletter', email=True)
         self.assert_email(marketer, 'Newsletter')
-        self.assert_status(marketer, 'Confirmed')
+        self.assert_status(marketer, 'Fee Pending')
 
 
 class ContributorPortalFixtures:
@@ -448,7 +450,7 @@ class ContributorPortalHTTPTests(ContributorPortalFixtures, TestCase):
         response = self.respond()
         self.assertContains(response, 'thank you for accepting')
         self.assertEqual(response.context['form_section'], 'accept')
-        self.assertEqual(self.latest_status(), 'Confirmed')
+        self.assertEqual(self.latest_status(), 'Fee Pending')
         self.assertEqual(ContributorEvent.objects.count(), 2)
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
@@ -507,14 +509,14 @@ class ContributorPortalHTTPTests(ContributorPortalFixtures, TestCase):
     def test_posted_marketer_id_cannot_change_a_different_trader(self):
         self.login()
         self.respond(marketer_id=self.other_marketer.pk)
-        self.assertEqual(self.latest_status(), 'Confirmed')
+        self.assertEqual(self.latest_status(), 'Fee Pending')
         self.assertFalse(self.other_marketer.contributorevent_set.exists())
 
     def test_response_changes_invited_event_even_if_another_event_is_current(self):
         ContributorEvent.objects.create(contributor=self.marketer, event=self.other_event, status='Invited')
         self.login(url=self.invite_url(self.marketer, self.other_event))
         self.respond(url=self.invite_url(self.marketer, self.other_event))
-        self.assertEqual(self.latest_status(event=self.other_event), 'Confirmed')
+        self.assertEqual(self.latest_status(event=self.other_event), 'Fee Pending')
         self.assertEqual(self.latest_status(), 'Invited')
         self.assertIn(self.other_event.get_event_date_display(), mail.outbox[0].body)
 
@@ -646,7 +648,7 @@ class MarketeerRSVP(BrowserTestLabelMixin, ContributorPortalFixtures, SmartHTMLT
         intro = self.choose_response('RSVP_Yes')
         self.assertIn(self.marketer.contributor_name, intro.text)
         self.assertIn('thank you for accepting', intro.text)
-        self.assertEqual(self.latest_status(), 'Confirmed')
+        self.assertEqual(self.latest_status(), 'Fee Pending')
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [self.marketer.email])
         self.assertIn(self.marketer.contact_name, mail.outbox[0].body)
@@ -671,5 +673,5 @@ class MarketeerRSVP(BrowserTestLabelMixin, ContributorPortalFixtures, SmartHTMLT
         self.choose_response('RSVP_Yes')
         self.selenium.get(self.get_test_url())
         self.assertIn('This invitation is no longer active', self.visible('div.error').text)
-        self.assertEqual(self.latest_status(), 'Confirmed')
+        self.assertEqual(self.latest_status(), 'Fee Pending')
         self.assertEqual(len(mail.outbox), 1)

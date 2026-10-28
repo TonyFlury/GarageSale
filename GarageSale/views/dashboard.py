@@ -11,6 +11,7 @@ from django.views.decorators.http import require_safe
 from Contributors.models import Contributions, ContributorEvent
 from GarageSale.dashboard import QueryMetric, build_metric
 from GarageSale.models import EventData
+from GarageSale.market_dashboard import build_market_pipeline
 from Location.models import Location
 from TeamPageFramework.entry_point import register
 
@@ -71,7 +72,7 @@ def select_event(request, events, today):
 
 
 def dashboard_payload(selected, events, today):
-    """Load all completed historical campaigns using one query per metric."""
+    """Load campaigns and market milestones with a fixed number of queries."""
     metrics, previous = [], []
 
     # An empty installation renders a useful page without attempting queries.
@@ -82,6 +83,7 @@ def dashboard_payload(selected, events, today):
         for definition in dashboard_metrics():
             grouped = definition.load([selected, *previous])
             metrics.append(build_metric(definition, selected, previous, today, grouped))
+        metrics.append(build_market_pipeline(selected, previous, today))
     return {'metrics': metrics, 'previousEvents': len(previous),
             'timeline': replay_timeline(selected, metrics, today)}
 

@@ -11,9 +11,11 @@
     <ul>{% for row in rows %}<li>{{ row.contributor_name }}<input type="hidden" name="selected_contributor" value="{{ row.pk }}"></li>{% endfor %}</ul>
     {% if action == 'delete' %}<p>This permanently deletes the selected entries and their contact and confirmation records. This cannot be undone.</p>{% endif %}
     {% if action == 'hide' %}<label for="hide-reason">Reason for hiding</label>
-    <textarea id="hide-reason" name="hidden_reason" maxlength="1000" required>{{ reason }}</textarea>{% endif %}
+    <textarea id="hide-reason" name="hidden_reason" rows="4" maxlength="1000" required>{{ reason }}</textarea>{% endif %}
     {% if action == 'restore' %}<p>These entries will return to the active spreadsheet.</p>{% endif %}
-    <button type="submit">{% if action == 'delete' %}Delete permanently{% elif action == 'hide' %}Hide selected{% else %}Unhide selected{% endif %}</button>
-    <button type="button" onclick="this.closest('dialog').close()">Cancel</button>
+    <div class="buttons">
+        <input type="submit" value="{% if action == 'delete' %}Delete permanently{% elif action == 'hide' %}Hide selected{% else %}Unhide selected{% endif %}">
+        <input type="button" value="Cancel" onclick="this.closest('dialog').close()">
+    </div>
 </form>
 {% endif %}

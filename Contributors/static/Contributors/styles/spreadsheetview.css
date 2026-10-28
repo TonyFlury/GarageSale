@@ -88,14 +88,25 @@
        }
 
        .contributor-hidden-reason {
+           display: flex;
+           align-items: center;
+           justify-content: space-between;
+           gap: 1rem;
+           position: relative;
+           z-index: 1;
+           box-sizing: border-box;
            white-space: normal;
            overflow-wrap: anywhere;
-           max-width: 28rem;
-           padding: 0.5rem;
-           border-left: 3px solid #a16207;
-           background: #fef3c7;
+           margin: 0.25rem;
+           padding: 0.65rem 0.85rem;
+           border: 1px solid #d8c978;
+           border-radius: 2px;
+           background: #fff3a6;
+           box-shadow: 2px 3px 5px rgb(0 0 0 / 15%);
            color: #713f12;
        }
+       .contributor-hidden-reason > div { min-width: 0; flex: 1; }
+       .contributor-hidden-reason > button { flex-shrink: 0; }
        .contributor-hidden-reason small { display: block; }
 
        section#toolbar .toolbar-separator {
@@ -580,6 +591,45 @@
                 text-align: left;
             }
 
+            #hide-reason {
+                display: block;
+                margin-top: 0.5rem;
+            }
+
+            .market-booking-form label {
+                display: block;
+                text-align: left;
+                margin: 0 0 0.25rem;
+            }
+
+            .market-trader-payment {
+                min-width: 0;
+                margin: 1rem 0;
+                padding: 0.75rem;
+                border: 1px solid lightgray;
+                border-radius: 5px;
+            }
+            .market-trader-payment legend { font-weight: bold; padding: 0 0.25rem; }
+
+            .market-booking-form p:has(input[type="checkbox"]) label { display: inline; }
+
+            .market-booking-form input[type="text"],
+            .market-booking-form input[type="number"],
+            .market-booking-form input[type="date"],
+            .market-booking-form select {
+                box-sizing: border-box;
+                max-width: 100%;
+                font: inherit;
+                padding: 0.5rem;
+                border: thin solid lightgray;
+                border-radius: 5px;
+            }
+
+            .market-booking-form input[type="text"],
+            .market-booking-form select { width: 100%; }
+
+            #hide-reason,
+            .market-booking-form textarea,
             #contact-history-form textarea,
             #contribution-form textarea {
                 width: 100%;

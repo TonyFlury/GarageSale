@@ -5,12 +5,12 @@
 
 {% block PageStyles %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'GarageSale/styles/event_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'GarageSale/styles/event_dashboard.css' %}?v=market-pipeline-1">
 {% endblock %}
 
 {% block PageScripts %}
     {{ block.super }}
-    <script src="{% static 'GarageSale/js/event_dashboard.js' %}" defer></script>
+    <script src="{% static 'GarageSale/js/event_dashboard.js' %}?v=market-pipeline-1" defer></script>
 {% endblock %}
 
 {% block breadcrumb %}
@@ -20,7 +20,7 @@
 {% block SnappableSections %}
 <main id="event-dashboard" class="snappable-section">
     <div class="intro">
-        <div><div class="eyebrow">The event at a glance</div><h1>Event dashboard</h1><p class="muted">Contributions, locations and the pace of the campaign.</p></div>
+        <div><div class="eyebrow">The event at a glance</div><h1>Event dashboard</h1><p class="muted">Contributions, locations, Craft Market and the pace of the campaign.</p></div>
         <form method="get" class="event-picker">
             <label for="dashboard-event">Event</label>
             <select id="dashboard-event" name="event">
@@ -43,6 +43,7 @@
         <p id="dashboard-replay-help" class="foot">Drag or use the arrow keys to move through the campaign. All figures and graphs update locally from the loaded data. Each category compares the same elapsed day since its own opening date.</p>
     </section>
     <p class="foot">Full circle: the greater of the previous final maximum and this event’s total. Dashed tick: previous final average. Dark tick: previous maximum. Orange tick: average at the same number of days since opening. Select a circle to explore its run rate.</p>
+    <p class="foot">Craft Market: blue invitations are overlaid by amber acceptances, then green paid fees, all from twelve o’clock. Its scale is the greater of invitations and the historical accepted-or-paid maximum. Labels show cumulative counts; historical markers count each accepted-or-paid trader once.</p>
     <div id="dashboard-cards" class="cards" aria-label="Event statistics"></div>
     <section class="panel" aria-labelledby="dashboard-chart-title">
         <div class="panel-head"><div><div class="eyebrow">Explore the run rate</div><h2 id="dashboard-chart-title"></h2><p id="dashboard-chart-subtitle" class="muted"></p></div>

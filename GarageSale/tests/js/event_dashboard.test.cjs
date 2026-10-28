@@ -148,3 +148,66 @@ test('slider and day buttons update every category locally and retain metric sel
     assert.equal(document.nodes.get('dashboard-replay-previous').disabled,true);
     assert.equal(source.total,18);
 });
+
+function pipeline(totals=[8,5,3], extra={}) {
+    const stages=totals.map((total,index)=>metric({id:['market_invited','market_accepted','market_paid'][index],
+        label:['Invited','Accepted','Fees paid'][index],colour:['#2164b0','#a16207','#15803d'][index],
+        total,finalAverage:6,finalMaximum:9}));
+    return {...stages[1],id:'market',label:'Craft Market',countLabel:'confirmed places',kind:'pipeline',stages,...extra};
+}
+
+test('overlaid sectors share noon and draw 320, 200 and 120 degrees for 8, 5 and 3 of 9',()=>{
+    const svg=categoryChart(pipeline());
+    const sectors=[...svg.matchAll(/<circle data-stage="([^"]+)"[^>]*stroke-dasharray="([\d.e+-]+) [^"]+" transform="rotate\(-90 150 151\)"/g)];
+    assert.deepEqual(sectors.map(match=>match[1]),['market_invited','market_accepted','market_paid']);
+    sectors.forEach((sector,index)=>{
+        const degrees=Number(sector[2])/(2*Math.PI*82)*360;
+        assert.ok(Math.abs(degrees-[320,200,120][index])<1e-9);
+    });
+    assert.match(svg,/Full circle: 9/);
+    assert.match(svg,/class="gauge-value"[^>]*>3<\/text>/);
+    assert.match(svg,/>confirmed places<\/text>/);
+});
+
+test('pipeline expands beyond the historic maximum and all-paid progress overlays earlier colours',()=>{
+    const svg=categoryChart(pipeline([12,5,3]));
+    assert.match(svg,/Full circle: 12/);
+    assert.match(svg,/Maximum/);
+    const paid=categoryChart(pipeline([8,8,8]));
+    const lengths=[...paid.matchAll(/data-stage="[^"]+"[^>]*stroke-dasharray="([\d.e+-]+)/g)].map(match=>Number(match[1]));
+    assert.equal(new Set(lengths).size,1);
+    assert.ok(paid.indexOf('data-stage="market_paid"')>paid.indexOf('data-stage="market_accepted"'));
+    assert.doesNotMatch(categoryChart(pipeline([0,0,0],{finalAverage:null,finalMaximum:null,comparableAverage:null})),/NaN|Infinity/);
+});
+
+test('pipeline cards expose cumulative counts and select all three run-rate series',()=>{
+    const document=fakeDocument();
+    const source=pipeline();
+    mount(document,{metrics:[source,metric()]});
+    const card=document.nodes.get('dashboard-metric-0');
+    assert.match(card.innerHTML,/8 invited/);
+    assert.match(card.innerHTML,/5 accepted/);
+    assert.match(card.innerHTML,/3 fees paid/);
+    assert.match(document.nodes.get('dashboard-chart-data').innerHTML,/<th>Fees paid<\/th>/);
+    for (const colour of ['#2164b0','#a16207','#15803d']) {
+        assert.ok(document.nodes.get('dashboard-chart').innerHTML.includes(colour));
+    }
+    document.nodes.get('dashboard-weekly').handlers.click();
+    assert.match(document.nodes.get('dashboard-chart-data').innerHTML,/Historical maximum/);
+    document.nodes.get('dashboard-metric-1').handlers.click();
+    assert.equal(document.nodes.get('dashboard-current-legend').className,'');
+    assert.equal(document.nodes.get('dashboard-current-legend').textContent,'Selected event');
+});
+
+test('replay updates every pipeline sector from its own retained milestone dates',()=>{
+    const source=pipeline();
+    source.stages=source.stages.map((stage,index)=>{
+        const values=Array.from({length:10},(_,day)=>Math.min(stage.total,Math.max(0,day-index*2)));
+        return replayMetric({...stage,total:values.at(-1),cumulative:values.map((current,day)=>({day,current,average:1,maximum:2})),
+            weeklyToDate:values.map((current,day)=>({day,current,average:1,maximum:2,fromDay:0,partial:true}))});
+    });
+    const snapshot=metricAtDate(source,'2030-01-06');
+    assert.deepEqual(snapshot.stages.map(stage=>stage.total),[5,3,1]);
+    assert.deepEqual(source.stages.map(stage=>stage.total),[8,5,3]);
+    assert.doesNotMatch(categoryChart(snapshot),/NaN|Infinity/);
+});

@@ -10,11 +10,11 @@ from django.utils import timezone
 from Contributors.models import Contributor, ContributorEvent, ContributorHistory, Contributions
 from GarageSale.access_policy import allowed, contributor_types
 from GarageSale.models import EventData
+from CraftMarket.models import PitchPayment
 
 
 class ContributorLifecycleMixin:
-    # Trader rules are enabled by their spreadsheet once agreed.
-    lifecycle_types = ('Sponsor',)
+    lifecycle_types = ('Sponsor', 'Marketer')
 
     def lifecycle_permission(self, kind, action):
         suffix = {'Sponsor': 'sponsor', 'Marketer': 'marketer'}.get(kind)
@@ -31,13 +31,17 @@ class ContributorLifecycleMixin:
             if any(allowed(user, self.lifecycle_permission(kind, action)) for kind in kinds):
                 actions.append({'name': f'lifecycle_{action}', 'label': f'{label} selected',
                                 'handler': 'manage_lifecycle', 'requires_selection': True,
+                                'icon': f'Contributors/images/icons/{action}-contributor.svg',
                                 'eligibility': action, 'lifecycle': True})
         return actions
 
     def annotate_lifecycle(self, queryset):
         event = getattr(self.request, 'current_event', None)
-        if event is not None:
-            active_events = EventData.objects.filter(pk=event.pk, event_date__gte=timezone.localdate())
+        selected_event_id = getattr(self, 'kwargs', {}).get('event_id')
+        if self.contributor_type == 'Marketer' and selected_event_id is not None:
+            active_events = EventData.objects.filter(pk=selected_event_id)
+        elif event is not None:
+            active_events = EventData.objects.filter(pk=event.pk)
         else:
             active_events = EventData.objects.filter(use_from__lt=timezone.localdate()).order_by(
                 '-use_from', '-event_date', '-pk')[:1]
@@ -49,6 +53,12 @@ class ContributorLifecycleMixin:
                                                   event__event_date__gte=timezone.localdate()).order_by('-timestamp', '-pk')
         return queryset.annotate(
             lifecycle_has_contributions=Exists(Contributions.objects.filter(contributor_id=OuterRef('pk'))),
+            lifecycle_has_history=Exists(ContributorHistory.objects.filter(contributor_id=OuterRef('pk'))),
+            lifecycle_has_events=Exists(ContributorEvent.objects.filter(contributor_id=OuterRef('pk'))),
+            lifecycle_has_pitch_payment=Exists(PitchPayment.objects.filter(contributor_id=OuterRef('pk'))),
+            lifecycle_market_invited=Exists(ContributorEvent.objects.filter(
+                contributor_id=OuterRef('pk'), event_id=event_id,
+                status__in=['Invited', 'Fee Pending', 'Confirmed', 'Rejected', 'Fee paid', 'Cancelled'])),
             lifecycle_current_offer=Exists(current_gifts),
             lifecycle_current_status=Subquery(statuses.values('status')[:1]),
         )
@@ -58,9 +68,17 @@ class ContributorLifecycleMixin:
         if getattr(contributor, 'contributor_type', None) not in self.lifecycle_types:
             return False
         if action == 'delete':
-            return not getattr(contributor, 'lifecycle_has_contributions', True)
+            if getattr(contributor, 'lifecycle_has_contributions', True):
+                return False
+            if contributor.contributor_type == 'Marketer':
+                return (not getattr(contributor, 'lifecycle_has_history', True)
+                        and not getattr(contributor, 'lifecycle_has_events', True)
+                        and not getattr(contributor, 'lifecycle_has_pitch_payment', True))
+            return True
         if action == 'restore':
             return getattr(contributor, 'is_hidden', False)
+        if contributor.contributor_type == 'Marketer':
+            return not contributor.is_hidden and not getattr(contributor, 'lifecycle_market_invited', True)
         return (not getattr(contributor, 'is_hidden', False) and not getattr(contributor, 'lifecycle_current_offer', True)
                 and getattr(contributor, 'lifecycle_current_status', None) != 'Confirmed')
 
@@ -94,7 +112,10 @@ class ContributorLifecycleMixin:
                     if not allowed(self.request.user, self.lifecycle_permission(row.contributor_type, action)):
                         raise PermissionDenied('You do not have permission for this action.')
                 if not all(self.lifecycle_eligible(row, action) for row in rows):
-                    self.lifecycle_dialog(error='The entire selection must be eligible. Active sponsors cannot be hidden; entries with contribution history cannot be deleted.')
+                    explanation = ('Market traders with history cannot be deleted, or hidden if they have been invited, confirmed or rejected an invitation for this event.'
+                                   if any(row.contributor_type == 'Marketer' for row in rows) else
+                                   'Active sponsors cannot be hidden; entries with contribution history cannot be deleted.')
+                    self.lifecycle_dialog(error=f'The entire selection must be eligible. {explanation}')
                     return
                 error = ''
                 if committing and action == 'hide' and not (0 < len(reason) <= 1000):

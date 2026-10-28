@@ -46,6 +46,17 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
 
         python manage.py migrate
 
+        Craft Market pitch-fee workflow: deploy Contributors migration
+        0009_contributorevent_details and 0010_alter_contributorevent_status,
+        and CraftMarket migrations 0013_pitch_payment and 0014_fee_pending_status.
+        Run the permission sync in step 2a to grant record_pitch_payment,
+        cancel_market_booking and reinstate_market_booking to CraftMarketManager
+        and ExecMember. Existing unpaid Confirmed acceptances become Fee Pending;
+        old Fee paid statuses become Confirmed. Sponsor statuses and actual payment
+        records are preserved; no historical payments are inferred. Add an active Craft Market template
+        with subcategory Cancellation for cancellation emails (optional).
+        Workflow details: CraftMarket/BOOKING_WORKFLOW.md.
+
 if you have a new database :
     Content types and permissions are created by migrate; initialise the approved
     groups with sync_access_policy below rather than loading legacy role fixtures.

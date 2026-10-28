@@ -75,7 +75,7 @@ class ContributorRSVP(View):
                     if latest.pk != invitation.pk:
                         return self.render(request, error='This invitation has already been answered or changed.')
                     ContributorEvent.objects.create(contributor=trader, event=invitation.event,
-                                                    status='Confirmed' if accept else 'Rejected')
+                                                    status='Fee Pending' if accept else 'Rejected')
                 request.session.pop(session_key, None)
                 if accept:
 
@@ -83,7 +83,7 @@ class ContributorRSVP(View):
                     from CraftMarket.spreadsheet import MarketerSpreadsheetView
                     view = MarketerSpreadsheetView()
                     view.setup(request, event_id=invitation.event_id)
-                    templates = view._available_templates('Confirmed')
+                    templates = view._available_templates('Fee Pending')
                     if templates:
                         view._send_emails([trader], templates[0])
                 return self.render(request, form_section='accept' if accept else 'reject',

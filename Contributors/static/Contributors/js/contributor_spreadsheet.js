@@ -611,7 +611,7 @@
             updateFilterData(row);
             applyFilters();
             row.querySelector(".contributor-details-button").setAttribute("aria-label", `Details for ${contributor.contributor_name}`);
-            row.querySelector(".add-contact-history").setAttribute("aria-label", `Record contact with ${contributor.contributor_name}`);
+            row.querySelector(".add-contact-history")?.setAttribute("aria-label", `Record contact with ${contributor.contributor_name}`);
         });
 
     }

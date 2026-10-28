@@ -46,7 +46,8 @@ class Contributor(models.Model):
 class ContributorEvent(models.Model):
     contributor = models.ForeignKey(Contributor, on_delete=models.CASCADE)
     event = models.ForeignKey(EventData, on_delete=models.CASCADE)
-    status = models.CharField(max_length=10, null=True, blank=True) # status is dependent on the data type
+    status = models.CharField(max_length=20, null=True, blank=True) # status is dependent on the data type
+    details = models.TextField(max_length=1000, blank=True)
     timestamp = models.DateTimeField(default=django.utils.timezone.now)
     user = models.ForeignKey('user_management.UserExtended', on_delete=models.CASCADE, null=True, blank=True)
 
