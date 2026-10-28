@@ -1,0 +1,39 @@
+<h2>{% if booking_action == 'record_fee' %}Record pitch fee payment{% elif booking_action == 'cancel_booking' %}Cancel for non-payment{% else %}Reinstate booking{% endif %}</h2>
+<div class="form craft-market-popup">
+    <p>Event: {{ market_event }}</p>
+    {% if booking_action != 'record_fee' %}<ul>{% for marketer in marketers %}<li>{{ marketer.contributor_name }}</li>{% endfor %}</ul>{% endif %}
+    <form method="post" class="market-booking-form" action="{{ request.path }}">
+        {% csrf_token %}
+        <input type="hidden" name="toolbar_action" value="{{ booking_action }}">
+        <input type="hidden" name="booking_confirm" value="yes">
+        <input type="hidden" name="market_event_id" value="{{ market_event.pk }}">
+        {% for marketer in marketers %}<input type="hidden" name="selected_contributor" value="{{ marketer.pk }}">{% endfor %}
+        {% for filter in selected_filters %}<input type="hidden" name="selected_filters" value="{{ filter }}">{% endfor %}
+        {% if booking_action == 'record_fee' %}
+            <p>Enter the actual amount, payment date and reference separately for each trader. Recording their payment confirms their place.</p>
+            {% for payment in payment_forms %}
+                <fieldset class="market-trader-payment">
+                    <legend>{{ payment.trader.contributor_name }}</legend>
+                    {{ payment.form.as_p }}
+                </fieldset>
+            {% endfor %}
+        {% elif booking_action == 'cancel_booking' %}
+            <p>This withdraws each selected trader's place because the pitch fee has not been received.</p>
+            {{ form.non_field_errors }}
+            <p>{{ form.reason.label_tag }}{{ form.reason }}{{ form.reason.errors }}</p>
+            {% if email_templates %}
+                <p>{{ form.send_email }} {{ form.send_email.label_tag }}{{ form.send_email.errors }}</p>
+                <p>{{ form.email_template_id.label_tag }}{{ form.email_template_id }}{{ form.email_template_id.errors }}</p>
+            {% else %}
+                <p role="status">No cancellation template is available. The booking can be cancelled without sending an email.</p>
+                {{ form.send_email.errors }}{{ form.email_template_id.errors }}
+            {% endif %}
+        {% else %}
+            <p>Confirm that these traders should be reinstated. They will return to Fee Pending; their places are secured only when the pitch fee is recorded.</p>
+        {% endif %}
+        <div class="buttons">
+            <input type="submit" value="{% if booking_action == 'record_fee' %}Confirm fee paid{% elif booking_action == 'cancel_booking' %}Confirm cancellation{% else %}Confirm reinstatement{% endif %}">
+            <input type="button" value="Cancel" onclick="this.closest('dialog').close()">
+        </div>
+    </form>
+</div>

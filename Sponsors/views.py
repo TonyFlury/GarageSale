@@ -39,7 +39,8 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
         {"name": "not_confirmed", "label": "Not Confirmed", "group": "Confirmation"},
         {},
         {"name": "cash_donated", "label": "Cash Donated", "group": "Donation"},
-        {"name": "no_cash_donated", "label": "No Cash Donated", "group": "Donation"},
+        {"name": "no_cash_donated", "label": "Non-cash Donation", "group": "Donation"},
+        {"name": "no_offer", "label": "No offer", "group": "Donation"},
         {},
         {"name": "has_email", "label": "Has Email Address", "group": "Email"},
         {"name": "no_email", "label": "No Email Address", "group": "Email"},
@@ -54,6 +55,8 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
         queryset = self._annotate_cash_contribution(queryset)
         queryset = self._filter_confirmation_status(queryset, selected)
         queryset = self._filter_cash_contribution(queryset, selected)
+        if "no_offer" in selected:
+            queryset = queryset.filter(sponsor_cash_donated=False, sponsor_noncash_donated=False)
         return self._filter_email_address(queryset, selected)
 
     def _filter_email_address(self, queryset, selected):
@@ -71,7 +74,9 @@ class SponsorSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView
         # Cash availability must not restrict the list until the user requests it.
         if not {"cash_donated", "no_cash_donated"}.intersection(selected):
             return queryset
-        return queryset.filter(sponsor_cash_donated="cash_donated" in selected)
+        if "cash_donated" in selected:
+            return queryset.filter(sponsor_cash_donated=True)
+        return queryset.filter(sponsor_noncash_donated=True)
 
     def _annotate_cash_contribution(self, queryset):
         """Identify current-event donation types without duplicating sponsor rows."""

@@ -36,6 +36,9 @@
 #event-dashboard .event-picker button { cursor: pointer; }
 #event-dashboard .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 24px 0; }
 #event-dashboard .dashboard-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     min-width: 0;
     height: 100%;
     font: inherit;
@@ -53,13 +56,17 @@
 #event-dashboard .dashboard-metric .label { display: block; font-weight: 650; }
 #event-dashboard .dashboard-metric small { display: block; margin-top: 10px; }
 #event-dashboard .category-chart { display: block; width: 100%; max-width: 330px; margin: 10px auto 12px; overflow: visible; }
+#event-dashboard .pipeline-totals { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.75rem; font-size: 0.85rem; }
+#event-dashboard .pipeline-totals > span::before { content: ''; display: inline-block; width: 0.65rem; height: 0.65rem; border-radius: 50%; background: var(--c); margin-right: 0.4rem; }
+#event-dashboard .legend .stage-legend { display: inline-flex; flex-wrap: wrap; gap: 1rem; }
+#event-dashboard .legend .stage-legend::before { display: none; }
 #event-dashboard .gauge-value { font-size: 34px; font-weight: 750; letter-spacing: -1px; }
 #event-dashboard .gauge-label { font-size: 11px; fill: #506458; }
 #event-dashboard .gauge-benchmark { font-size: 15px; font-weight: 700; fill: #18372e; }
 #event-dashboard .gauge-scale { font-size: 11px; fill: #63746b; }
 #event-dashboard .delta { color: #276248; font-size: 0.8rem; display: block; margin-bottom: 10px; }
 #event-dashboard .card-note { display: block; font-size: 0.75rem; line-height: 1.5; color: #63746b; margin: 8px 0; }
-#event-dashboard .link { display: block; color: #28624f; font-size: 0.85rem; font-weight: 600; margin-top: 18px; }
+#event-dashboard .link { display: block; color: #28624f; font-size: 0.85rem; font-weight: 600; margin-top: auto; padding-top: 18px; }
 #event-dashboard .panel { background: white; border: 1px solid #dce3d9; border-radius: 14px; padding: 26px; margin-top: 22px; }
 #event-dashboard .panel p { margin-top: 8px; }
 #event-dashboard .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
@@ -87,11 +94,27 @@
 #event-dashboard .warning { border-left: 3px solid #b44d10; padding: 8px 12px; background: #fff8ee; font-size: 0.85rem; line-height: 1.6; }
 
 /* Respond to the content width remaining beside the shared team-page sidebar. */
+@container event-dashboard (min-width: 1001px) {
+    /* Five measures sit as three plus two centred cards, keeping circles readable. */
+    #event-dashboard .cards:has(> :nth-child(5):last-child) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    #event-dashboard .cards:has(> :nth-child(5):last-child) > * { grid-column: span 2; }
+    #event-dashboard .cards:has(> :nth-child(5):last-child) > :nth-child(4) { grid-column: 2 / span 2; }
+    #event-dashboard .cards:has(> :nth-child(5):last-child) > :nth-child(5) { grid-column: 4 / span 2; }
+}
+
 @container event-dashboard (max-width: 1000px) {
     #event-dashboard .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     #event-dashboard .bottom { grid-template-columns: 1fr; }
     #event-dashboard .panel-head,
     #event-dashboard .intro { flex-direction: column; align-items: stretch; }
+}
+
+@container event-dashboard (min-width: 541px) and (max-width: 1000px) {
+    #event-dashboard .cards > :nth-child(5):last-child {
+        grid-column: 1 / -1;
+        width: calc((100% - 16px) / 2);
+        justify-self: center;
+    }
 }
 
 @container event-dashboard (max-width: 540px) {

@@ -15,11 +15,14 @@ from Contributors.models import Contributor, ContributorEvent, ContributorHistor
 from Contributors.views.general_views import ContributorSpreadsheetView, get_current_contribution_event
 from GarageSale.models import CommunicationTemplate, EventData, TemplateAttachment
 from CraftMarket.rsvp import invitation_url
+from CraftMarket.booking_workflow import MarketBookingWorkflowMixin, BOOKING_PERMISSIONS
+from CraftMarket.models import PitchPayment
+from GarageSale.access_policy import allowed
 
 logger = logging.getLogger(__name__)
 
 
-class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetView):
+class MarketerSpreadsheetView(PermissionRequiredMixin, MarketBookingWorkflowMixin, ContributorSpreadsheetView):
     contributor_type = "Marketer"
     permission_required = "CraftMarket.view_marketer"
     show_contributions = False
@@ -29,24 +32,33 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
         {"name": "contacted", "label": "Contacted", "group": "Contact"},
         {"name": "not_contacted", "label": "Not Contacted", "group": "Contact"},
         {},
-        {"name": "none", "label": "None", "group": "Status"},
+        {"name": "none", "label": "No invitation status", "group": "Status"},
         {"name": "invited", "label": "Invited", "group": "Status"},
+        {"name": "fee_pending", "label": "Fee Pending", "group": "Status"},
         {"name": "confirmed", "label": "Confirmed", "group": "Status"},
         {"name": "rejected", "label": "Rejected", "group": "Status"},
+        {"name": "cancelled", "label": "Cancelled — non-payment", "group": "Status"},
     )
     extra_toolbar_actions = (
         {"name": "invite", "label": "Invite to Event", "requires_selection": True,
          "icon": "GarageSale/images/icons/invite-svgrepo-com.svg", "handler": "invite"},
-        {"name": "confirm", "label": "Confirm Attendance", "requires_selection": True,
+        {"name": "confirm", "label": "Accept invite — fee pending", "requires_selection": True,
          "icon": "GarageSale/images/icons/thumb-up-svgrepo-com.svg", "handler": "confirm"},
         {"name": "reject", "label": "Reject Invite", "requires_selection": True,
          "icon": "GarageSale/images/icons/thumb-down-svgrepo-com.svg", "handler": "reject"},
+        {},
+        {"name": "record_fee", "label": "Record pitch fee paid", "requires_selection": True,
+         "eligibility": "fee", "icon": "CraftMarket/images/icons/pitch-payment.svg", "handler": "record_fee"},
+        {"name": "cancel_booking", "label": "Cancel for non-payment", "requires_selection": True,
+         "eligibility": "cancel", "icon": "CraftMarket/images/icons/cancel-booking.svg", "handler": "cancel_booking"},
+        {"name": "reinstate_booking", "label": "Reinstate booking", "requires_selection": True,
+         "eligibility": "reinstate", "icon": "CraftMarket/images/icons/reinstate-booking.svg", "handler": "reinstate_booking"},
         {},
         {"name": "send_email", "label": "Send email", "requires_selection": True,
          "icon": "GarageSale/images/icons/email-open-svgrepo-com.svg", "handler": "send_email"},
         ContributorSpreadsheetView.pdf_toolbar_action,
     )
-    transitions = {"Invited": {None}, "Confirmed": {"Invited"}, "Rejected": {"Invited"}}
+    transitions = {"Invited": {None}, "Fee Pending": {"Invited"}, "Rejected": {"Invited"}}
 
     @cached_property
     def market_event(self):
@@ -72,8 +84,23 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
         """Expose the latest status for this event without duplicating traders."""
         statuses = ContributorEvent.objects.filter(
             contributor_id=OuterRef("pk"), event=self.market_event,
-        ).order_by("-timestamp", "-pk").values("status")[:1]
-        return queryset.annotate(marketer_status=Subquery(statuses))
+        ).order_by("-timestamp", "-pk")
+        payments = PitchPayment.objects.filter(contributor_id=OuterRef('pk'), event=self.market_event)
+        return queryset.annotate(marketer_status=Subquery(statuses.values('status')[:1]),
+            marketer_status_details=Subquery(statuses.values('details')[:1]),
+            marketer_has_payment=Exists(payments),
+            marketer_paid_amount=Subquery(payments.values('amount')[:1]),
+            marketer_paid_on=Subquery(payments.values('paid_on')[:1]))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        event = self.market_event
+        current = event is not None and event.event_date >= timezone.localdate()
+        for trader in context['contributors']:
+            for action, flag in (('record_fee', 'fee'), ('cancel_booking', 'cancel'), ('reinstate_booking', 'reinstate')):
+                setattr(trader, f'can_{flag}', current and allowed(self.request.user, BOOKING_PERMISSIONS[action])
+                        and self._booking_eligible(trader, action))
+        return context
 
     def filter_queryset(self, queryset):
         """Combine contact filters with the latest status for the selected event."""
@@ -85,10 +112,10 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
             return queryset.filter(Q(marketer_status__isnull=True) | Q(marketer_status__in=["", "None"]))
 
         # Status options are mutually exclusive, so one match fully determines the filter.
-        for status in ("Invited", "Confirmed", "Rejected"):
+        for status in ("Invited", "Fee Pending", "Confirmed", "Rejected", "Cancelled"):
 
             # Grouped status options permit only one matching status restriction.
-            if status.lower() in self.selected_filters:
+            if status.lower().replace(' ', '_') in self.selected_filters:
                 return queryset.filter(marketer_status=status)
         return queryset
 
@@ -129,7 +156,9 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
 
         # Review is read-only; confirmed imports need locks against competing updates.
         if lock:
-            queryset = queryset.select_for_update()
+            # Read child statuses only after acquiring locks; a waiting SELECT's
+            # original snapshot may predate the preceding writer's new status.
+            list(queryset.select_for_update().order_by('pk').values_list('pk', flat=True))
         marketers = list(self._annotate_status(queryset).order_by("pk"))
 
         # Deleted or reclassified records invalidate the batch rather than allow partial changes.
@@ -150,9 +179,14 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
 
         # Status-changing actions must use templates appropriate to their destination status.
         if status:
-            templates = templates.filter(sub_category__iexact=status)
+            # Existing Confirmed email templates acknowledge acceptance, not payment.
+            if status == 'Fee Pending':
+                templates = templates.filter(Q(sub_category__iexact='Fee Pending') | Q(sub_category__iexact='Confirmed'))
+            else:
+                templates = templates.filter(sub_category__iexact=status)
         else:
-            templates = templates.exclude(sub_category__iexact="Invited").exclude(sub_category__iexact="Confirmed")
+            templates = templates.exclude(sub_category__iexact="Invited").exclude(
+                sub_category__iexact="Confirmed").exclude(sub_category__iexact='Fee Pending').exclude(sub_category__iexact="Cancellation")
 
         # Named PDF attachment templates are not standalone emails.
         attachments = set(TemplateAttachment.objects.filter(
@@ -183,8 +217,8 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
         self._action(post_data, "Invited")
 
     def confirm(self, post_data):
-        """Start the attendance confirmation workflow for invited traders."""
-        self._action(post_data, "Confirmed")
+        """Record invite acceptance; the pitch fee is still outstanding."""
+        self._action(post_data, "Fee Pending")
 
     def reject(self, post_data):
         """Require explicit confirmation before rejecting selected invitations."""
@@ -248,7 +282,7 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
 
         # Keep the same selection visible while the user corrects a delivery choice.
         if error or not submitted:
-            action = {"Invited": "invite", "Confirmed": "confirm", "Rejected": "reject"}.get(status, "send_email")
+            action = {"Invited": "invite", "Fee Pending": "confirm", "Rejected": "reject"}.get(status, "send_email")
             self._dialog("CraftMarket/choose_action.html", marketers=marketers, status=status,
                          toolbar_action=action, email_templates=templates, selection_error=error,
                          selected_filters=self.selected_filters, market_event=self.market_event)
@@ -315,6 +349,7 @@ class MarketerSpreadsheetView(PermissionRequiredMixin, ContributorSpreadsheetVie
             "company_name": marketer.contributor_name, "contact_name": contact or "Sirs",
             "attn": f"For Attn of :{contact}" if contact else "",
             "url": invitation_url(self.request, marketer, self.market_event),
+            "cancellation_reason": getattr(self, 'cancellation_reason', ''),
         }
 
     def _deliver_email(self, marketer, template, defaults):

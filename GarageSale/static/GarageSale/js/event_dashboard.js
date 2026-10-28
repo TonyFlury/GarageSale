@@ -54,6 +54,10 @@
 
     /** Slice a loaded metric at a calendar date without touching its source rows. */
     function metricAtDate(m, snapshot) {
+        if (m.stages) {
+            const {stages,...base}=m;
+            return {...metricAtDate(base,snapshot),stages:stages.map(stage=>metricAtDate(stage,snapshot))};
+        }
         // Live views and categories without an opening date retain their data notes.
         if (!snapshot || !m.start) return m;
         const day = dayNumber(snapshot)-dayNumber(m.start);
@@ -124,15 +128,20 @@
 
     /** A full circle equals max(current total, historical final maximum). */
     function categoryChart(m) {
-        const scale = Math.max(m.total || 0,m.finalMaximum || 0);
+        const stages=m.stages || [m];
+        const scale = Math.max(...stages.map(stage=>stage.total || 0),m.finalMaximum || 0);
         const circumference = 2 * Math.PI * 82;
-        const proportion = scale > 0 && known(m.total) ? m.total / scale : 0;
-        const valueStyle = known(m.total) ? '' : 'font-size:18px;letter-spacing:0';
+        const sectors=stages.map(stage=>{
+            const proportion=scale>0 && known(stage.total) ? Math.max(0,stage.total/scale) : 0;
+            return `<circle data-stage="${escape(stage.id)}" cx="150" cy="151" r="82" fill="none" stroke="${colour(stage)}" stroke-width="24" stroke-dasharray="${circumference*proportion} ${circumference}" transform="rotate(-90 150 151)"/>`;
+        }).join('');
+        const headline=m.stages ? m.stages.at(-1) : m;
+        const valueStyle = known(headline.total) ? '' : 'font-size:18px;letter-spacing:0';
         return `<svg class="category-chart" viewBox="0 0 300 322" aria-hidden="true" focusable="false">
             <circle cx="150" cy="151" r="82" fill="none" stroke="#e9eee7" stroke-width="24"/>
-            <circle cx="150" cy="151" r="82" fill="none" stroke="${colour(m)}" stroke-width="24" stroke-dasharray="${circumference*proportion} ${circumference}" transform="rotate(-90 150 151)"/>
+            ${sectors}
             ${markersSvg(m,scale)}
-            <text x="150" y="151" text-anchor="middle" class="gauge-value" fill="${colour(m)}" style="${valueStyle}">${escape(fmt(m,m.total))}</text>
+            <text x="150" y="151" text-anchor="middle" class="gauge-value" fill="${colour(headline)}" style="${valueStyle}">${escape(fmt(headline,headline.total))}</text>
             <text x="150" y="174" text-anchor="middle" class="gauge-label">${escape(m.countLabel)}</text>
             <text x="150" y="318" text-anchor="middle" class="gauge-scale">Full circle: ${escape(fmt(m,scale))}</text>
         </svg>`;
@@ -171,17 +180,20 @@
         let svg = `<polyline points="${points.map(r=>`${scale.x(r.day)},${scale.y(r[key])}`).join(' ')}" fill="none" stroke="${ink}" stroke-width="3" stroke-dasharray="${dash}"/>`;
         const every = Math.max(1,Math.ceil(points.length/50));
         points.filter((row,index)=>index%every===0 || index===points.length-1).forEach(row=>{
-            svg += `<circle cx="${scale.x(row.day)}" cy="${scale.y(row[key])}" r="3" fill="${ink}"><title>Day ${row.day} · ${key}: ${escape(fmt(m,row[key]))}</title></circle>`;
+            svg += `<circle cx="${scale.x(row.day)}" cy="${scale.y(row[key])}" r="3" fill="${ink}"><title>Day ${row.day} · ${key==='current'?escape(m.label):key}: ${escape(fmt(m,row[key]))}</title></circle>`;
         });
         return svg;
     }
 
     /** Draw supplied rows without recalculating any historical comparisons. */
-    function graph(m, rows) {
-        const scale = graphScale(rows);
+    function graph(m, rows, mode='cumulative') {
+        const scale = graphScale(m.stages ? [...rows,...m.stages.flatMap(stage=>stage[mode])] : rows);
         const title = `<title id="dashboard-svg-title">${escape(m.label)} run rate</title><desc id="dashboard-svg-desc">Days since opening. Exact values are available in the chart data table below.</desc>`;
         const lines = [['maximum','#b2872f','5 5'],['average','#7c9382','5 5'],['current',colour(m),'']];
-        return title + axesSvg(m,scale) + lines.map(args=>lineSvg(m,rows,scale,...args)).join('') +
+        const curves=m.stages ? lines.slice(0,2).map(args=>lineSvg(m,rows,scale,...args)).join('') +
+            m.stages.map(stage=>lineSvg(stage,stage[mode],scale,'current',colour(stage),'')).join('') :
+            lines.map(args=>lineSvg(m,rows,scale,...args)).join('');
+        return title + axesSvg(m,scale) + curves +
             '<text x="520" y="314" text-anchor="middle" font-size="12" fill="#63746b">Days since opening</text>';
     }
 
@@ -194,6 +206,13 @@
 
     /** Accessible exact values supplement SVG geometry and mouse tooltips. */
     function tableHtml(m, rows, mode) {
+        if (m.stages) {
+            const stages=m.stages.map(stage=>new Map(stage[mode].map(row=>[row.day,row.current])));
+            return '<caption>Distinct trader milestones; historical benchmarks are accepted-or-paid traders.</caption>' +
+                '<thead><tr><th>Day / interval</th>'+m.stages.map(stage=>`<th>${escape(stage.label)}</th>`).join('')+
+                '<th>Historical average</th><th>Historical maximum</th></tr></thead><tbody>'+
+                rows.map(row=>`<tr><td>${intervalLabel(row,mode)}</td>${stages.map(stage=>`<td>${escape(fmt(m,stage.get(row.day)))}</td>`).join('')}<td>${escape(fmt(m,row.average))}</td><td>${escape(fmt(m,row.maximum))}</td></tr>`).join('')+'</tbody>';
+        }
         const caption = mode==='weekly' ? 'Additions in each interval; opening day is separate.' : 'Daily cumulative totals.';
         const body = rows.map(row=>`<tr><td>${intervalLabel(row,mode)}</td><td>${escape(fmt(m,row.current))}</td><td>${escape(fmt(m,row.average))}</td><td>${escape(fmt(m,row.maximum))}</td></tr>`).join('');
         return `<caption>${caption}</caption><thead><tr><th>Day / interval</th><th>Selected event</th><th>Previous average</th><th>Previous maximum</th></tr></thead><tbody>${body}</tbody>`;
@@ -204,18 +223,25 @@
         const last = rows.at(-1);
         // Keep the chart selectable even when its dates or amounts need repair.
         if (!last) return m.warnings.join(' ') || 'Run-rate data is unavailable.';
+        if (m.stages) {
+            const counts=m.stages.map(stage=>`${stage.label}: ${fmt(stage,stage[mode].find(row=>row.day===last.day)?.current)}`).join(' · ');
+            return `${mode==='weekly'?'Latest interval':'At day '+last.day}: ${counts}. Historical accepted/paid average: ${fmt(m,last.average)}; maximum: ${fmt(m,last.maximum)}.`;
+        }
         const weekly = last.partial ? 'Latest partial week' : last.day===0 ? 'Opening day' : 'Latest week';
         return `${mode==='weekly' ? weekly : 'At day '+last.day}: ${fmt(m,last.current)}. Previous average: ${fmt(m,last.average)}; maximum: ${fmt(m,last.maximum)}.`;
     }
 
     /** The enclosing button exposes text hidden from SVG screen-reader traversal. */
     function cardLabel(m) {
+        if (m.stages) return `${m.label}: ${m.stages.map(stage=>`${fmt(stage,stage.total)} ${stage.label}`).join(', ')}. Historical accepted/paid average: ${fmt(m,m.finalAverage)}; maximum: ${fmt(m,m.finalMaximum)}. Explore run rate.`;
         return `${m.label}: ${fmt(m,m.total)}. Average at day ${m.days}: ${fmt(m,m.comparableAverage)}. Final average: ${fmt(m,m.finalAverage)}; maximum: ${fmt(m,m.finalMaximum)}. ${percent(m.differencePercent)}. Explore run rate.`;
     }
 
     /** Percentages stay below the circle, leaving its centre uncluttered. */
     function cardHtml(m) {
-        return `<span class="label">${escape(m.label)}</span>${categoryChart(m)}<span class="delta">${escape(percent(m.differencePercent))}</span><span class="card-note">Final benchmarks: ${m.finalSample} events · Same-stage: ${m.comparableSample}</span>${m.warnings.length?'<small>Data notes below</small>':''}<span class="link">Explore run rate ↗</span>`;
+        const totals=m.stages ? `<span class="pipeline-totals">${m.stages.map(stage=>`<span style="--c:${colour(stage)}">${escape(fmt(stage,stage.total))} ${escape(stage.label.toLowerCase())}</span>`).join('')}</span>` : '';
+        const benchmark=m.stages?'Accepted/paid benchmarks':'Final benchmarks';
+        return `<span class="label">${escape(m.label)}</span>${categoryChart(m)}${totals}<span class="delta">${m.stages?'Accepted: ':''}${escape(percent(m.differencePercent))}</span><span class="card-note">${benchmark}: ${m.finalSample} events · Same-stage: ${m.comparableSample}</span>${m.warnings.length?'<small>Data notes below</small>':''}<span class="link">Explore run rate ↗</span>`;
     }
 
     /** Add every metric's description and data-quality notes from the payload. */
@@ -236,7 +262,7 @@
         button.innerHTML = cardHtml(m);
         button.addEventListener('click',()=>select(m));
         get('cards').appendChild(button);
-        get('finals').insertAdjacentHTML('beforeend',`<tr><td>${escape(m.label)}</td><td>${escape(fmt(m,m.total))}</td><td>${escape(fmt(m,m.finalAverage))}</td><td>${escape(fmt(m,m.finalMaximum))}</td><td>${m.finalSample}</td></tr>`);
+        get('finals').insertAdjacentHTML('beforeend',finalRow(m));
         appendNotes(get,m);
     }
 
@@ -248,7 +274,12 @@
             button.setAttribute('aria-label',cardLabel(snapshot));
             button.innerHTML=cardHtml(snapshot);
         });
-        get('finals').innerHTML=visible.map(m=>`<tr><td>${escape(m.label)}</td><td>${escape(fmt(m,m.total))}</td><td>${escape(fmt(m,m.finalAverage))}</td><td>${escape(fmt(m,m.finalMaximum))}</td><td>${m.finalSample}</td></tr>`).join('');
+        get('finals').innerHTML=visible.map(finalRow).join('');
+    }
+
+    function finalRow(m) {
+        const label=m.label+(m.stages?' — accepted':'');
+        return `<tr><td>${escape(label)}</td><td>${escape(fmt(m,m.total))}</td><td>${escape(fmt(m,m.finalAverage))}</td><td>${escape(fmt(m,m.finalMaximum))}</td><td>${m.finalSample}</td></tr>`;
     }
 
     /** Selection and replay changes only use the already-aggregated payload. */
@@ -259,8 +290,11 @@
         ['cumulative','weekly'].forEach(value=>get(value).setAttribute('aria-pressed',String(value===state.mode)));
         get('chart-title').textContent=m.label;
         get('current-legend').setAttribute('style','--c:'+colour(m));
-        get('chart-subtitle').textContent=`Opened ${date(m.start)} · Day ${m.days} · ${m.comparableSample} previous events with dated comparisons`;
-        get('chart').innerHTML=graph(m,rows);
+        get('current-legend').className=m.stages?'stage-legend':'';
+        if (m.stages) get('current-legend').innerHTML=m.stages.map(stage=>`<span style="--c:${colour(stage)}">${escape(stage.label)}</span>`).join('');
+        else get('current-legend').textContent='Selected event';
+        get('chart-subtitle').textContent=`Opened ${date(m.start)} · Day ${m.days} · ${m.comparableSample} previous events with dated comparisons${m.stages?' · Historical benchmarks: accepted-or-paid traders':''}`;
+        get('chart').innerHTML=graph(m,rows,state.mode);
         get('insight').textContent=insight(m,rows,state.mode);
         get('chart-data').innerHTML=tableHtml(m,rows,state.mode);
     }

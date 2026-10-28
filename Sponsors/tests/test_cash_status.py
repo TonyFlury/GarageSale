@@ -30,6 +30,91 @@ class SponsorCashStatusTests(TestCase):
     def cash_status(self):
         return self.view.get_queryset().get(pk=self.sponsor.pk).sponsor_cash_donated
 
+    def test_unconfirmed_offers_are_visible_without_a_confirmation_tick(self):
+        for status in (None, 'Declined', 'Unconfirmed'):
+            for cash, noncash, label in (
+                (True, False, 'Cash offer'),
+                (False, True, 'Non-cash offer'),
+                (True, True, 'Cash and non-cash offer'),
+            ):
+                with self.subTest(status=status, cash=cash, noncash=noncash):
+                    row = SimpleNamespace(sponsor_status=status, sponsor_cash_donated=cash,
+                                          sponsor_noncash_donated=noncash)
+                    html = render_to_string('Sponsors/widgets/confirmed_status.html', {'contributor': row})
+                    self.assertIn(label, html)
+                    self.assertIn('aria-label="Offer recorded; awaiting receipt"', html)
+                    self.assertIn('<circle', html)
+                    self.assertNotIn('(unconfirmed)', html)
+                    self.assertNotIn('<title>Confirmed</title>', html)
+
+    def test_no_offer_filter_matches_display_and_ignores_other_events(self):
+        previous = EventData.objects.create(
+            event_date=self.event.event_date-timedelta(days=365),
+            use_from=self.event.use_from-timedelta(days=365))
+        Contributions.objects.create(contributor=self.sponsor, event=previous, gift='Previous gift')
+        Contributions.objects.create(contributor=self.sponsor, gift='Unassigned gift')
+        for cash in (True, False):
+            donor = Contributor.objects.create(contributor_type='Sponsor', contributor_name=f'Donor {cash}')
+            # Multiple records must not duplicate rows or affect another sponsor.
+            for _ in range(2):
+                Contributions.objects.create(contributor=donor, event=self.event, cash=cash,
+                                             amount=25 if cash else None, gift='' if cash else 'Hamper')
+        self.view.selected_filters = ['no_offer']
+        rows = list(self.view.get_queryset())
+        self.assertEqual([row.pk for row in rows], [self.sponsor.pk])
+        html = render_to_string('Sponsors/widgets/confirmed_status.html', {'contributor': rows[0]})
+        self.assertEqual(html.strip(), '')
+
+    def test_no_offer_can_combine_with_confirmation_filters(self):
+        confirmed = Contributor.objects.create(contributor_type='Sponsor', contributor_name='Confirmed empty')
+        ContributorEvent.objects.create(contributor=confirmed, event=self.event, status='Confirmed')
+        for selection, expected in (
+            (['no_offer', 'not_confirmed'], self.sponsor.pk),
+            (['no_offer', 'confirmed'], confirmed.pk),
+        ):
+            with self.subTest(selection=selection):
+                self.view.selected_filters = selection
+                rows = list(self.view.get_queryset())
+                self.assertEqual([row.pk for row in rows], [expected])
+                html = render_to_string('Sponsors/widgets/confirmed_status.html', {'contributor': rows[0]})
+                self.assertEqual('<svg' in html, 'confirmed' in selection)
+                self.assertNotIn('No offer', html)
+                if 'confirmed' not in selection:
+                    self.assertEqual(html.strip(), '')
+
+    def test_adding_first_offer_removes_sponsor_from_no_offer_filter(self):
+        self.view.selected_filters = ['no_offer']
+        self.assertEqual(list(self.view.get_queryset().values_list('pk', flat=True)), [self.sponsor.pk])
+        Contributions.objects.create(contributor=self.sponsor, event=self.event, gift='Hamper')
+        self.assertFalse(self.view.get_queryset().exists())
+        self.view.selected_filters = ['not_confirmed']
+        row = self.view.get_queryset().get(pk=self.sponsor.pk)
+        html = render_to_string('Sponsors/widgets/confirmed_status.html', {'contributor': row})
+        self.assertIn('Non-cash offer', html)
+        self.assertIn('aria-label="Offer recorded; awaiting receipt"', html)
+
+    def test_missing_event_has_no_offers_even_with_unassigned_records(self):
+        Contributions.objects.create(contributor=self.sponsor, gift='Unassigned gift')
+        self.view.selected_filters = ['no_offer']
+        self.view.request.current_event = None
+        with patch('Sponsors.views.get_current_contribution_event', return_value=None):
+            self.assertEqual(list(self.view.get_queryset().values_list('pk', flat=True)), [self.sponsor.pk])
+
+    def test_non_cash_filter_requires_a_current_event_gift_and_includes_mixed_donors(self):
+        gift_donor = Contributor.objects.create(contributor_type='Sponsor', contributor_name='Gift donor')
+        mixed = Contributor.objects.create(contributor_type='Sponsor', contributor_name='Mixed donor')
+        cash_only = Contributor.objects.create(contributor_type='Sponsor', contributor_name='Cash only')
+        for donor in (gift_donor, mixed):
+            Contributions.objects.create(contributor=donor, event=self.event, gift='Hamper')
+        for donor in (mixed, cash_only):
+            Contributions.objects.create(contributor=donor, event=self.event, cash=True, amount=25)
+        previous = EventData.objects.create(
+            event_date=self.event.event_date-timedelta(days=365),
+            use_from=self.event.use_from-timedelta(days=365))
+        Contributions.objects.create(contributor=self.sponsor, event=previous, gift='Old gift')
+        self.view.selected_filters = ['no_cash_donated']
+        self.assertEqual(set(self.view.get_queryset().values_list('pk', flat=True)), {gift_donor.pk, mixed.pk})
+
     def test_only_current_event_cash_for_this_sponsor_counts(self):
         self.assertFalse(self.cash_status())
         Contributions.objects.create(contributor=self.sponsor, event=self.event, gift="Voucher")
@@ -93,7 +178,7 @@ class SponsorCashStatusTests(TestCase):
         self.assertIn('Cash Donation',cash_html)
         self.assertIn('non-cash Donation',gift_html)
 
-    def test_mixed_donations_show_cash_and_previous_event_cash_is_ignored(self):
+    def test_mixed_donations_show_both_types_and_previous_event_cash_is_ignored(self):
         ContributorEvent.objects.create(contributor=self.sponsor,event=self.event,status='Confirmed')
         previous = EventData.objects.create(event_date=self.event.event_date-timedelta(days=365),
                                             use_from=self.event.use_from-timedelta(days=365))
@@ -106,8 +191,9 @@ class SponsorCashStatusTests(TestCase):
         Contributions.objects.create(contributor=self.sponsor,event=self.event,cash=True,amount=25)
         row = self.view.get_queryset().get(pk=self.sponsor.pk)
         html = render_to_string('Sponsors/widgets/confirmed_status.html',{'contributor':row})
-        self.assertIn('Cash Donation',html)
-        self.assertNotIn('non-cash Donation',html)
+        self.assertIn('Cash and non-cash Donation',html)
+        self.assertIn('<title>Confirmed</title>',html)
+        self.assertNotIn('awaiting receipt',html)
 
     def test_only_confirmation_adds_a_spreadsheet_column(self):
         columns = self.view.get_extra_columns()

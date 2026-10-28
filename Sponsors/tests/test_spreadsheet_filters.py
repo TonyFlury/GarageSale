@@ -25,7 +25,16 @@ class SponsorSpreadsheetFilterTests(SimpleTestCase):
         self.assertEqual(view.selected_filters, ["contacted", "confirmed", "cash_donated", "has_email"])
         self.assertEqual(view.filter_options[2], {})
         self.assertEqual(view.filter_options[5], {})
-        self.assertEqual(view.filter_options[8], {})
+        self.assertEqual(view.filter_options[8]['name'], 'no_offer')
+        self.assertEqual(view.filter_options[9], {})
+
+    def test_no_offer_shares_the_donation_group_and_combines_with_confirmation(self):
+        view = self.view(['not_confirmed', 'no_offer'])
+        self.assertEqual(view.selected_filters, ['not_confirmed', 'no_offer'])
+        self.assertEqual(view.filter_options[8]['group'], 'Donation')
+        for other in ('cash_donated', 'no_cash_donated'):
+            with self.subTest(other=other):
+                self.assertEqual(self.view([other, 'no_offer']).selected_filters, [other])
 
     def test_email_filter_combines_with_other_groups_and_handles_null_and_blank(self):
         for email_filter in ("has_email", "no_email"):
@@ -48,8 +57,9 @@ class SponsorSpreadsheetFilterTests(SimpleTestCase):
                 self.assertIn("Contact", params)
                 self.assertIn("Confirmed", params)
                 lookup = queryset.query.where.children[-1]
-                self.assertEqual(lookup.lhs, queryset.query.annotations["sponsor_cash_donated"])
-                self.assertEqual(lookup.rhs, donation_filter == "cash_donated")
+                annotation = "sponsor_cash_donated" if donation_filter == "cash_donated" else "sponsor_noncash_donated"
+                self.assertEqual(lookup.lhs, queryset.query.annotations[annotation])
+                self.assertTrue(lookup.rhs)
 
     def test_contact_filters_use_history_since_last_event(self):
         for selected in ("contacted", "not_contacted"):

@@ -65,7 +65,9 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
     def test_default_queryset_includes_every_type(self):
         queryset = ContributorSpreadsheetView().get_queryset()
         self.assertIsNone(ContributorSpreadsheetView.contributor_type)
-        self.assertEqual(len(queryset.query.where.children), 0)
+        self.assertEqual(len(queryset.query.where.children), 1)
+        self.assertEqual(queryset.query.where.children[0].lhs.target.name, 'is_hidden')
+        self.assertFalse(queryset.query.where.children[0].rhs)
         self.assertIn("latest_contact_timestamp", queryset.query.annotations)
 
     def test_subclass_filters_by_configured_contributor_type(self):
@@ -124,7 +126,7 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
         get_response = ActionSpreadsheet.as_view()(self.request())
         self.assertEqual(calls, [])
         self.assertEqual(get_response.context_data["contributors"], [])
-        self.assertEqual(get_response.context_data["extra_toolbar_actions"], ActionSpreadsheet.extra_toolbar_actions)
+        self.assertEqual(get_response.context_data["extra_toolbar_actions"][:len(ActionSpreadsheet.extra_toolbar_actions)], ActionSpreadsheet.extra_toolbar_actions)
         request = RequestFactory().post(reverse("contributors:spreadsheet"), {
             "toolbar_action": "refresh", "selected_contributor": ["1", "2"],
         })
@@ -239,7 +241,7 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
             request.user = SimpleNamespace(is_authenticated=True, is_active=True, has_perm=lambda permission: True)
             response = FilterSpreadsheet.as_view()(request)
             self.assertEqual(response.context_data["selected_filters"], expected)
-            self.assertEqual(response.context_data["filter_options"], FilterSpreadsheet.filter_options)
+        self.assertEqual(response.context_data["filter_options"][:len(FilterSpreadsheet.filter_options)], FilterSpreadsheet.filter_options)
 
     def test_filter_groups_normalize_conflicts_in_get_and_post(self):
         options = (

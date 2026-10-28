@@ -12,7 +12,7 @@ TODO Convert to official theme and layout
 -->
 {% block PageStyles %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}?v=details-scroll-1">
+    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}?v=individual-pitch-fees-1">
 {% endblock %}
 
 {% block Title %}
@@ -21,12 +21,12 @@ TODO Convert to official theme and layout
 
 {% block PageScripts %}
     {{ block.super }}
-    <script type='text/javascript' src="{% static 'Contributors/js/contributor_spreadsheet.js' %}?v=clear-search-1" ></script>
+    <script type='text/javascript' src="{% static 'Contributors/js/contributor_spreadsheet.js' %}?v=hidden-note-1" ></script>
     <script defer src="{% static 'Contributors/js/contributor_details.js' %}?v=details-reveal-2"></script>
     <script defer src="{% static 'Contributors/js/contributor_contributions.js' %}?v=amount-value-1"></script>
     <script defer src="{% static 'Contributors/js/contributor_filters.js' %}"></script>
     <script defer src="{% static 'Contributors/js/contributor_modal.js' %}"></script>
-    <script defer src="{% static 'Contributors/js/contributor_toolbar.js' %}?v=new-row-1"></script>
+    <script defer src="{% static 'Contributors/js/contributor_toolbar.js' %}?v=lifecycle-1"></script>
 
 {% endblock %}
 
@@ -74,7 +74,8 @@ TODO Convert to official theme and layout
                 {% endif %}
                 {% for action in extra_toolbar_actions %}
                     {% if action %}
-                        <button class="toolbar-action" type="submit" name="toolbar_action" value="{{ action.name }}"
+                        <button class="toolbar-action{% if action.lifecycle %} lifecycle-action{% endif %}" type="submit" name="toolbar_action" value="{{ action.name }}"
+                                {% if action.eligibility %}data-requires-eligibility="{{ action.eligibility }}"{% endif %}
                                 {% if action.requires_selection %}data-requires-selection="true" disabled{% endif %}
                                 aria-label="{{ action.label }}" title="{{ action.label }}">
                             {% if action.icon %}
@@ -139,6 +140,13 @@ TODO Convert to official theme and layout
                 class="locked"
                 data-contributor-id="{{ contributor.pk }}"
                 data-can-edit="{{ contributor.can_edit|yesno:'true,false' }}"
+                data-can-hide="{{ contributor.can_hide|yesno:'true,false' }}"
+                data-can-restore="{{ contributor.can_restore|yesno:'true,false' }}"
+                data-can-delete="{{ contributor.can_delete|yesno:'true,false' }}"
+                data-can-active="{{ contributor.is_hidden|yesno:'false,true' }}"
+                data-can-fee="{{ contributor.can_fee|yesno:'true,false' }}"
+                data-can-cancel="{{ contributor.can_cancel|yesno:'true,false' }}"
+                data-can-reinstate="{{ contributor.can_reinstate|yesno:'true,false' }}"
                 data-save-url="{% url 'contributors:spreadsheet_save' contributor.pk %}"
                 data-filter-contributor_name="{{ contributor.contributor_name|default_if_none:''|lower }}"
                 data-filter-contact_name="{{ contributor.contact_name|default_if_none:''|lower }}"
@@ -163,6 +171,29 @@ TODO Convert to official theme and layout
                     <span class="field-error" data-error-for="contributor_name"></span>
                 </td>
 
+                {% if contributor.is_hidden %}
+                <td colspan="{{ extra_columns|length|add:'4' }}" class="contributor-hidden-cell">
+                    <input type="hidden" name="contact_name" value="{{ contributor.contact_name }}" disabled>
+                    <input type="hidden" name="phone" value="{{ contributor.phone }}" disabled>
+                    <input type="hidden" name="email" value="{{ contributor.email|default_if_none:'' }}" disabled>
+                    <input type="hidden" class="last-contact-date" data-date="{{ contributor.last_contact_date|date:'Y-m-d' }}" value="{{ contributor.last_contact_date|date:'d/m/Y' }}">
+                    <div class="contributor-hidden-reason">
+                        <div><strong>Hidden:</strong> {{ contributor.hidden_reason }}
+                        <small>{{ contributor.hidden_at|date:'d/m/Y H:i' }}{% if contributor.hidden_by %} — {{ contributor.hidden_by.get_full_name|default:contributor.hidden_by.email }}{% endif %}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="actions">
+                        <button type="button" class="contributor-details-button"
+                                data-details-url="{% url 'contributors:details' contributor.pk %}"
+                                aria-label="Details for {{ contributor.contributor_name }}" title="{{ data_label|default:'Contributor' }} details"
+                                aria-haspopup="dialog" aria-controls="contributor-details-dialog">
+                            <img src="{% static 'GarageSale/images/icons/pencil-edit-office-2-svgrepo-com.svg' %}" alt="" width="24" height="24">
+                        </button>
+                    </div>
+                </td>
+                {% else %}
                 <td>
                     <input
                         type="text"
@@ -224,6 +255,7 @@ TODO Convert to official theme and layout
                         {% endif %}
                     </div>
                 </td>
+                {% endif %}
             </tr>
         {% endfor %}
       {% if can_add %}<tr

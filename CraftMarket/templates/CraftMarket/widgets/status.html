@@ -1,1 +1,9 @@
-{{ contributor.marketer_status|default:"None" }}
+{% if contributor.marketer_status == 'Fee Pending' %}
+    Fee Pending
+{% elif contributor.marketer_status == 'Confirmed' %}
+    <span title="Pitch fee received; place secured">Confirmed{% if contributor.marketer_paid_amount %} — £{{ contributor.marketer_paid_amount|floatformat:2 }}{% endif %}{% if contributor.marketer_paid_on %} ({{ contributor.marketer_paid_on|date:'d/m/Y' }}){% endif %}</span>
+{% elif contributor.marketer_status == 'Cancelled' %}
+    <span title="{{ contributor.marketer_status_details }}">Cancelled — non-payment</span>
+{% elif contributor.marketer_status and contributor.marketer_status != 'None' %}
+    {{ contributor.marketer_status }}
+{% endif %}

@@ -1,0 +1,21 @@
+{% if action %}
+<h2>{% if action == 'delete' %}Delete{% elif action == 'hide' %}Hide{% else %}Unhide{% endif %} selected {{ data_label|lower }} entries</h2>
+{% endif %}
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if rows %}
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="toolbar_action" value="lifecycle_{{ action }}">
+    <input type="hidden" name="lifecycle_confirm" value="yes">
+    {% for name in selected_filters %}<input type="hidden" name="selected_filters" value="{{ name }}">{% endfor %}
+    <ul>{% for row in rows %}<li>{{ row.contributor_name }}<input type="hidden" name="selected_contributor" value="{{ row.pk }}"></li>{% endfor %}</ul>
+    {% if action == 'delete' %}<p>This permanently deletes the selected entries and their contact and confirmation records. This cannot be undone.</p>{% endif %}
+    {% if action == 'hide' %}<label for="hide-reason">Reason for hiding</label>
+    <textarea id="hide-reason" name="hidden_reason" rows="4" maxlength="1000" required>{{ reason }}</textarea>{% endif %}
+    {% if action == 'restore' %}<p>These entries will return to the active spreadsheet.</p>{% endif %}
+    <div class="buttons">
+        <input type="submit" value="{% if action == 'delete' %}Delete permanently{% elif action == 'hide' %}Hide selected{% else %}Unhide selected{% endif %}">
+        <input type="button" value="Cancel" onclick="this.closest('dialog').close()">
+    </div>
+</form>
+{% endif %}
