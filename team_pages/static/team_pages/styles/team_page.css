@@ -55,6 +55,75 @@ div.category-list {
         }
     }
 }
+/* The grouped team menu uses the available width instead of stacking every group. */
+.team-navigation {
+    display: grid;
+    box-sizing: border-box;
+    width: fit-content;
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem 1.5rem;
+    padding: 0.5rem 0.5rem 1rem;
+}
+
+.team-navigation > div { min-width: 0; }
+
+.team-navigation .team-overview .category-list {
+    justify-content: center;
+}
+
+.team-navigation h4 {
+    margin: 0 0 0.5rem;
+}
+
+.team-navigation div.category-list {
+    margin: 0;
+    gap: 0.5rem;
+}
+
+/* Visual growth uses the surrounding gap without changing either grid column. */
+.team-navigation div.category-list div.tile {
+    box-sizing: border-box;
+    width: 82px;
+    height: 96px;
+    padding-top: 0.5rem;
+    transition: transform 0.2s ease;
+}
+
+.team-navigation div.category-list div.tile:hover,
+.team-navigation div.category-list div.tile:focus-within {
+    width: 82px;
+    height: 96px;
+    margin: 0;
+    transform: scale(1.24);
+    z-index: 1;
+}
+
+.team-navigation div.category-list div.tile:hover + div.tile,
+.team-navigation div.category-list div.tile:has(+ .tile:hover),
+.team-navigation div.category-list div.tile:focus-within + div.tile,
+.team-navigation div.category-list div.tile:has(+ .tile:focus-within) {
+    width: 82px;
+    height: 96px;
+    margin: 0;
+}
+
+@media (min-width: 1000px) {
+    .team-navigation {
+        grid-template-columns: repeat(2, minmax(0, max-content));
+        column-gap: clamp(1.5rem, 5vw, 6rem);
+    }
+
+    .team-navigation > [aria-label="Overview"] {
+        grid-column: 1 / -1;
+    }
+
+    /* Add breathing room after the first category row, keeping Dashboard's gap. */
+    .team-navigation > div:nth-child(n + 4) {
+        margin-top: clamp(0px, calc((100dvh - 720px) / 6), 1rem);
+    }
+}
+
 div.breadcrumb {
     position: relative;
     padding-bottom: 10px;
