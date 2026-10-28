@@ -31,7 +31,8 @@ def crud(app, model, actions="view add change delete"):
 
 
 SPONSOR_VIEW = {"Sponsors.view_sponsor", "Contributors.view_contributions"}
-SPONSOR_WORK = SPONSOR_VIEW | crud("Sponsors", "sponsor", "add change") | {"Sponsors.confirm_sponsor"} | {
+SPONSOR_WORK = SPONSOR_VIEW | crud("Sponsors", "sponsor", "add change") | {
+    "Sponsors.confirm_sponsor", "Contributors.hide_sponsor", "Contributors.delete_sponsor"} | {
     custom(code) for code in ("contact_sponsor", "email_sponsor", "generate_sponsor_pdf", "import_sponsors", "export_sponsors")}
 MARKET_WORK = {"CraftMarket.view_marketer", "CraftMarket.change_marketer"} | {
     custom(code) for code in ("add_marketer", "contact_marketer", "invite_marketer", "confirm_marketer", "reject_marketer",

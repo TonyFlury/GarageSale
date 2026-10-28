@@ -1,17 +1,36 @@
 {% if contributor.sponsor_status == "Confirmed" %}
-    <span title="Sponsorship confirmed for this event">
+    <span class="sponsorship-status" title="Sponsorship confirmed for this event">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d"
          stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
          aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
         <title>Confirmed</title>
         <path d="M5 12l4 4L19 6" />
     </svg>
-    {% if contributor.sponsor_cash_donated %}
+    {% if contributor.sponsor_cash_donated and contributor.sponsor_noncash_donated %}
+        Cash and non-cash Donation
+    {% elif contributor.sponsor_cash_donated %}
         Cash Donation
     {% elif contributor.sponsor_noncash_donated %}
         non-cash Donation
     {% else %}
         Confirmed
     {% endif %}
+    </span>
+{% elif contributor.sponsor_cash_donated or contributor.sponsor_noncash_donated %}
+    <span class="sponsorship-status" title="Offer recorded; awaiting receipt">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a16207"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             role="img" aria-label="Offer recorded; awaiting receipt" focusable="false"
+             xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+        </svg>
+        {% if contributor.sponsor_cash_donated and contributor.sponsor_noncash_donated %}
+            Cash and non-cash offer
+        {% elif contributor.sponsor_cash_donated %}
+            Cash offer
+        {% else %}
+            Non-cash offer
+        {% endif %}
     </span>
 {% endif %}

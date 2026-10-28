@@ -1,7 +1,7 @@
 <div class="contribution-list">
     {% for contribution in contributions %}
         <p class="contribution-gift"><strong>{% if contribution.cash %}Cash{% else %}Gift{% endif %}:</strong> {% include 'widgets/contribution_value.html' %}
-            {% if perms.Contributors.delete_contributions %}<button type="button" class="delete-contribution" aria-label="Delete contribution" title="Delete contribution" data-delete-url="{% url 'contributors:delete_contribution' contributor.pk contribution.pk %}" data-event-id="{{ current_event.pk }}"><span aria-hidden="true">×</span></button>{% endif %}
+            {% if perms.Contributors.delete_contributions %}<button type="button" class="delete-contribution" aria-label="Delete contribution" title="Delete contribution" data-delete-url="{% url 'contributors:delete_contribution' contributor.pk contribution.pk %}" data-event-id="{{ current_event.pk }}">{% include 'widgets/contribution_delete_icon.html' %}</button>{% endif %}
         </p>
     {% empty %}
         <p>No contributions recorded for this event.</p>

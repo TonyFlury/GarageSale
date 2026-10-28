@@ -73,6 +73,7 @@
        }
 
        section#toolbar .extra-toolbar-actions {
+           flex: 1;
            display: inline-flex;
            flex-wrap: wrap;
            min-width: 0;
@@ -81,6 +82,22 @@
            gap: 0.25rem;
            vertical-align: middle;
        }
+
+       section#toolbar .lifecycle-action:first-of-type,
+       section#toolbar .toolbar-action:not(.lifecycle-action) + .toolbar-separator:has(+ .lifecycle-action) {
+           margin-left: auto;
+       }
+
+       .contributor-hidden-reason {
+           white-space: normal;
+           overflow-wrap: anywhere;
+           max-width: 28rem;
+           padding: 0.5rem;
+           border-left: 3px solid #a16207;
+           background: #fef3c7;
+           color: #713f12;
+       }
+       .contributor-hidden-reason small { display: block; }
 
        section#toolbar .toolbar-separator {
            display: inline-block;
@@ -380,6 +397,15 @@
                 font-size: 1.5rem;
                 cursor: pointer;
             }
+
+            .sponsorship-status {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.25rem;
+                white-space: nowrap;
+            }
+
+            .sponsorship-status svg { flex-shrink: 0; }
 
             :is(#details-contributions, [data-sponsor-contributions]) .delete-contribution:hover {
                 color: darkred;

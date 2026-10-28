@@ -9,10 +9,15 @@
 
     /** Disable selection-dependent actions without affecting unrestricted actions. */
     function updateActions() {
-        const disabled = selectedRows().length === 0;
+        const selected = selectedRows();
 
         // Each action declares its own selection requirement in the rendered configuration.
-        for (const button of form.querySelectorAll('[data-requires-selection]')) button.disabled = disabled;
+        for (const button of form.querySelectorAll('[data-requires-selection]')) {
+            const eligibility = button.dataset?.requiresEligibility;
+            button.disabled = selected.length === 0 || (!!eligibility && !Array.from(selected).every(
+                checkbox => checkbox.closest('tr').dataset[`can${eligibility[0].toUpperCase()}${eligibility.slice(1)}`] === 'true'
+            ));
+        }
     }
 
     /** Scroll within the grid and focus the first editable field of the entry row. */
@@ -34,9 +39,11 @@
     /** Snapshot visible selections into the standalone toolbar form at submission. */
     function submitAction(event) {
         const selected = selectedRows();
+        updateActions();
 
         // Recheck at submission because browser state restoration can stale button states.
-        if (event.submitter?.hasAttribute('data-requires-selection') && selected.length === 0) {
+        if (event.submitter?.hasAttribute('data-requires-selection') &&
+            (selected.length === 0 || event.submitter.disabled)) {
             event.preventDefault();
             updateActions();
             return;

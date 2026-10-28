@@ -13,6 +13,7 @@ from django.views.generic import ListView
 
 from GarageSale.access_policy import allowed, custom, contributor_types, require_contributor
 from Contributors.models import Contributor
+from Contributors.lifecycle import ContributorLifecycleMixin
 from GarageSale.models import CommunicationTemplate, EventData
 
 
@@ -37,7 +38,7 @@ def get_current_contribution_event():
     ).first()
 
 
-class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
+class ContributorSpreadsheetView(ContributorLifecycleMixin, LoginRequiredMixin, ListView):
     """Subclass to customize the contributor queryset and details display."""
 
     model = Contributor
@@ -196,7 +197,9 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
 
     def get_filter_options(self):
         """Override to define the filter checkboxes available for this request."""
-        return self.filter_options
+        return (*self.filter_options, {},
+                {'name': 'hidden', 'label': 'Hidden entries', 'group': 'Visibility'},
+                {'name': 'include_hidden', 'label': 'Active and hidden entries', 'group': 'Visibility'})
 
     @cached_property
     def selected_filters(self):
@@ -230,7 +233,9 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
 
     def filter_queryset(self, queryset):
         """Override to filter queryset using self.selected_filters."""
-        return queryset
+        if 'hidden' in self.selected_filters:
+            return queryset.filter(is_hidden=True)
+        return queryset if 'include_hidden' in self.selected_filters else queryset.filter(is_hidden=False)
 
     def get_extra_columns(self):
         """Override to define extra columns for the current request."""
@@ -250,7 +255,12 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
         }
         for action in self.extra_toolbar_actions:
             if not action or action["name"] not in permissions or allowed(self.request.user, permissions[action["name"]]):
+                if action and action['name'] in {'send_email', 'confirm_sponsorship', 'invite', 'confirm', 'reject'}:
+                    action = {**action, 'eligibility': 'active'}
                 actions.append(action)
+        lifecycle = self.get_lifecycle_actions()
+        if lifecycle:
+            actions.extend([{}, *lifecycle])
         if not any(actions):
             return ()
         return tuple(actions)
@@ -261,6 +271,8 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
 
         # Treat the advertised actions as an allowlist, never as arbitrary method names.
         if action is None:
+            if request.POST.get('toolbar_action', '').startswith('lifecycle_'):
+                return HttpResponseForbidden('You do not have permission for this toolbar action.')
             if any(item and item["name"] == request.POST.get("toolbar_action") for item in self.extra_toolbar_actions):
                 return HttpResponseForbidden("You do not have permission for this toolbar action.")
             return HttpResponseBadRequest("Unknown toolbar action.")
@@ -287,6 +299,10 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
 
     def _run_toolbar_action(self, action, post_data):
         """Support named methods and callable extension hooks consistently."""
+        if action['name'] in {'send_email', 'confirm_sponsorship', 'invite', 'confirm', 'reject'}:
+            ids = [pk for pk in post_data.getlist('selected_contributor') if pk.isdecimal()]
+            if Contributor.objects.filter(pk__in=ids, is_hidden=True).exists():
+                return HttpResponseBadRequest('Hidden entries must be restored before this action.')
         handler = action["handler"]
 
         # Named handlers bind self automatically; standalone hooks need it explicitly.
@@ -315,6 +331,8 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
                 raise PermissionDenied("You do not have permission to view contributors.")
             contributors = contributors.filter(contributor_type__in=kinds)
         contributors = self.filter_queryset(contributors)
+        if hasattr(self, 'request'):
+            contributors = self.annotate_lifecycle(contributors).select_related('hidden_by')
         return contributors.annotate(
             latest_contact_timestamp=Max(
                 "contributorhistory__timestamp",
@@ -332,6 +350,10 @@ class ContributorSpreadsheetView(LoginRequiredMixin, ListView):
             permissions = TYPE_PERMISSIONS.get(getattr(contributor, "contributor_type", None), {})
             contributor.can_edit = allowed(self.request.user, permissions.get("change", ""))
             contributor.can_contact = allowed(self.request.user, permissions.get("contact", ""))
+            if getattr(contributor, 'is_hidden', False):
+                contributor.can_contact = False
+            for action, enabled in self.lifecycle_capabilities(contributor).items():
+                setattr(contributor, f'can_{action}', enabled)
             contributor.last_contact_date = visible_last_contact_date(
                 contributor.latest_contact_timestamp, self.historic_event_date,
             )

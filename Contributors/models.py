@@ -25,6 +25,19 @@ class Contributor(models.Model):
     icon: str = models.ImageField(upload_to=save_logo_to, null=True, blank=True)
     email: str = models.EmailField(max_length=254, null=True, blank=True)
     socials: str = models.JSONField(null=True, blank=True)
+    is_hidden = models.BooleanField(default=False, db_index=True)
+    hidden_reason = models.TextField(max_length=1000, blank=True)
+    hidden_at = models.DateTimeField(null=True, blank=True)
+    hidden_by = models.ForeignKey('user_management.UserExtended', on_delete=models.SET_NULL,
+                                  null=True, blank=True, related_name='hidden_contributors')
+
+    class Meta:
+        permissions = [
+            ('hide_sponsor', 'Can hide and restore sponsors'),
+            ('delete_sponsor', 'Can delete unused sponsors'),
+            ('hide_marketer', 'Can hide and restore market traders'),
+            ('delete_marketer', 'Can delete unused market traders'),
+        ]
     def __str__(self):
         return self.contributor_name
 
@@ -60,7 +73,7 @@ class Contributions(models.Model):
         PRIZE_DRAW = "prize_draw", "Prize Draw"
         TOMBOLA = "tombola", "Tombola"
 
-    contributor = models.ForeignKey(Contributor, on_delete=models.CASCADE)
+    contributor = models.ForeignKey(Contributor, on_delete=models.PROTECT)
     event = models.ForeignKey(EventData, on_delete=models.CASCADE, null=True, blank=True)
     gift = models.TextField(max_length=1000, null=True, blank=True)
     cash = models.BooleanField(default=False)

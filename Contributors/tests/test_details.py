@@ -180,7 +180,8 @@ class ContributorDetailsTests(SimpleTestCase):
         self.assertIn('<p class="contribution-gift"><strong>Gift:</strong> Prize voucher', html)
         self.assertIn('value="Add contribution"', html)
         self.assertIn('aria-label="Delete contribution" title="Delete contribution"', html)
-        self.assertIn('<span aria-hidden="true">×</span>', html)
+        self.assertIn('class="contribution-delete-icon"', html)
+        self.assertNotIn('<span aria-hidden="true">×</span>', html)
         self.assertNotIn('>Delete contribution</button>', html)
 
     @patch("Contributors.views.contributions.Contributions.objects.filter")

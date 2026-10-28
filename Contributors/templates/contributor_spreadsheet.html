@@ -12,7 +12,7 @@ TODO Convert to official theme and layout
 -->
 {% block PageStyles %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}?v=details-scroll-1">
+    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}?v=offer-status-icons-1">
 {% endblock %}
 
 {% block Title %}
@@ -26,7 +26,7 @@ TODO Convert to official theme and layout
     <script defer src="{% static 'Contributors/js/contributor_contributions.js' %}?v=amount-value-1"></script>
     <script defer src="{% static 'Contributors/js/contributor_filters.js' %}"></script>
     <script defer src="{% static 'Contributors/js/contributor_modal.js' %}"></script>
-    <script defer src="{% static 'Contributors/js/contributor_toolbar.js' %}?v=new-row-1"></script>
+    <script defer src="{% static 'Contributors/js/contributor_toolbar.js' %}?v=lifecycle-1"></script>
 
 {% endblock %}
 
@@ -74,7 +74,8 @@ TODO Convert to official theme and layout
                 {% endif %}
                 {% for action in extra_toolbar_actions %}
                     {% if action %}
-                        <button class="toolbar-action" type="submit" name="toolbar_action" value="{{ action.name }}"
+                        <button class="toolbar-action{% if action.lifecycle %} lifecycle-action{% endif %}" type="submit" name="toolbar_action" value="{{ action.name }}"
+                                {% if action.eligibility %}data-requires-eligibility="{{ action.eligibility }}"{% endif %}
                                 {% if action.requires_selection %}data-requires-selection="true" disabled{% endif %}
                                 aria-label="{{ action.label }}" title="{{ action.label }}">
                             {% if action.icon %}
@@ -139,6 +140,10 @@ TODO Convert to official theme and layout
                 class="locked"
                 data-contributor-id="{{ contributor.pk }}"
                 data-can-edit="{{ contributor.can_edit|yesno:'true,false' }}"
+                data-can-hide="{{ contributor.can_hide|yesno:'true,false' }}"
+                data-can-restore="{{ contributor.can_restore|yesno:'true,false' }}"
+                data-can-delete="{{ contributor.can_delete|yesno:'true,false' }}"
+                data-can-active="{{ contributor.is_hidden|yesno:'false,true' }}"
                 data-save-url="{% url 'contributors:spreadsheet_save' contributor.pk %}"
                 data-filter-contributor_name="{{ contributor.contributor_name|default_if_none:''|lower }}"
                 data-filter-contact_name="{{ contributor.contact_name|default_if_none:''|lower }}"
@@ -161,6 +166,11 @@ TODO Convert to official theme and layout
                         disabled
                     >
                     <span class="field-error" data-error-for="contributor_name"></span>
+                    {% if contributor.is_hidden %}
+                    <div class="contributor-hidden-reason"><strong>Hidden:</strong> {{ contributor.hidden_reason }}
+                        <small>{{ contributor.hidden_at|date:'d/m/Y H:i' }}{% if contributor.hidden_by %} — {{ contributor.hidden_by.get_full_name|default:contributor.hidden_by.email }}{% endif %}</small>
+                    </div>
+                    {% endif %}
                 </td>
 
                 <td>
