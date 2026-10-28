@@ -8,11 +8,15 @@
     {{ block.super }}
 {% endblock %}
 {% block SnappableSections %}
-    {% categoryList 'Overview' heading=True %}
+<div class="team-navigation">
+    <div class="team-overview" aria-label="Overview">
+        {% categoryList 'Overview' %}
+    </div>
     {% categoryList 'Event participation' heading=True %}
     {% categoryList 'Prizes' heading=True %}
     {% categoryList 'Communications' heading=True %}
     {% categoryList 'Finance and funding' heading=True %}
     {% categoryList 'Setup and administration' heading=True %}
     {% categoryList heading='Other tasks' %}
+</div>
 {% endblock %}
