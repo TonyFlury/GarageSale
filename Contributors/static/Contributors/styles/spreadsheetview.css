@@ -83,8 +83,7 @@
            vertical-align: middle;
        }
 
-       section#toolbar .lifecycle-action:first-of-type,
-       section#toolbar .toolbar-action:not(.lifecycle-action) + .toolbar-separator:has(+ .lifecycle-action) {
+       section#toolbar .toolbar-separator:has(+ .lifecycle-action) {
            margin-left: auto;
        }
 

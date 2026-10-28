@@ -55,7 +55,7 @@ class ContributorLifecycleMixin:
 
     def lifecycle_eligible(self, contributor, action):
         """Subclasses may impose different rules for another contributor type."""
-        if contributor.contributor_type not in self.lifecycle_types:
+        if getattr(contributor, 'contributor_type', None) not in self.lifecycle_types:
             return False
         if action == 'delete':
             return not getattr(contributor, 'lifecycle_has_contributions', True)
@@ -65,7 +65,7 @@ class ContributorLifecycleMixin:
                 and getattr(contributor, 'lifecycle_current_status', None) != 'Confirmed')
 
     def lifecycle_capabilities(self, contributor):
-        return {action: allowed(self.request.user, self.lifecycle_permission(contributor.contributor_type, action))
+        return {action: allowed(self.request.user, self.lifecycle_permission(getattr(contributor, 'contributor_type', None), action))
                 and self.lifecycle_eligible(contributor, action) for action in ('hide', 'restore', 'delete')}
 
     def lifecycle_dialog(self, **context):

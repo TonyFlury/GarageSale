@@ -49,3 +49,34 @@ test('selection updates required actions and submits current selected IDs', () =
     assert.equal(prevented, true);
     assert.equal(always.disabled, false);
 });
+
+test('lifecycle actions require every selected visible row to be eligible', () => {
+    const buttons = ['hide', 'restore', 'delete'].map(action => ({dataset: {requiresEligibility: action}}));
+    const events = {};
+    let selected = [];
+    const form = {querySelectorAll: selector => selector === '[data-requires-selection]' ? buttons : [],
+        addEventListener: (name, callback) => events[name] = callback};
+    const sheet = {querySelectorAll: () => selected, addEventListener: (name, callback) => events[name] = callback};
+    const row = (hide, restore, remove) => ({closest: () => ({dataset: {
+        canHide: String(hide), canRestore: String(restore), canDelete: String(remove)}})});
+    vm.runInNewContext(script, {window: {addEventListener() {}}, document: {
+        readyState: 'complete', querySelector: selector => selector === '#contributor-sheet' ? sheet :
+            selector === '#toolbar .extra-toolbar-actions' ? form : null,
+        querySelectorAll: () => [],
+    }});
+    assert.deepEqual(buttons.map(b => b.disabled), [true, true, true]);
+    selected = [row(true, false, true)];
+    events.change();
+    assert.deepEqual(buttons.map(b => b.disabled), [false, true, false]);
+    selected.push(row(false, false, false));
+    events.change();
+    assert.deepEqual(buttons.map(b => b.disabled), [true, true, true]);
+    selected = [row(false, true, false), row(false, true, true)];
+    events.change();
+    assert.deepEqual(buttons.map(b => b.disabled), [true, false, true]);
+    // A previously enabled control cannot submit a newly ineligible selection.
+    buttons[2].hasAttribute = () => true;
+    let prevented = false;
+    events.submit({submitter: buttons[2], preventDefault: () => prevented = true});
+    assert.equal(prevented, true);
+});
