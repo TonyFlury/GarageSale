@@ -20,11 +20,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 from .views import general_views
 from .views.prize_draw_views import prize_draw
+from .views.dashboard import event_dashboard
 
 from django.views.generic import TemplateView
 from django.views.generic.base import RedirectView
 
 urlpatterns = [
+    path('dashboard/', event_dashboard, name='EventDashboard'),
     path('admin/', admin.site.urls),
     path("", general_views.home, name="home"),
     path("home", general_views.home, name="home"),

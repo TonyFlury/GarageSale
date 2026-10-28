@@ -66,6 +66,10 @@ class TeamNavigationTests(TestCase):
         self.assertEqual(setup[-1]['url_path'], 'TeamPages:GoogleDriveEntryPoint')
         self.assertEqual(participation[-1]['name'], 'Ad-board CSV download')
         self.assertEqual([entry['order'] for entry in participation], [10, 20, 30, 40])
+        overview = list(get_entry_points(user, 'Overview'))
+        self.assertEqual([entry['url_path'] for entry in overview], ['EventDashboard'])
+        self.assertEqual(overview[0]['name'], 'Dashboard')
+        self.assertTrue(overview[0]['icon_path'].endswith('/dashboard.svg'))
 
     def test_navigation_supports_team_access_capability(self):
         for model, codename in [('applicationaccess', 'access_team_pages')]:
@@ -110,7 +114,8 @@ class TeamNavigationTests(TestCase):
                 self.client.force_login(user)
                 response = self.client.get(reverse('TeamPages:Root'))
                 self.assertContains(response, 'Event participation')
-                self.assertContains(response, reverse('Location:EventStats'))
+                self.assertContains(response, reverse('EventDashboard'))
+                self.assertContains(response, '<h4>Overview</h4>')
                 self.assertContains(response, reverse('Location:EventAdBoard'))
 
     def test_report_tiles_remain_hidden_without_report_permission(self):

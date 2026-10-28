@@ -1,0 +1,65 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+
+{% block Title %}Event dashboard · Brantham Garage Sale{% endblock %}
+
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'GarageSale/styles/event_dashboard.css' %}">
+{% endblock %}
+
+{% block PageScripts %}
+    {{ block.super }}
+    <script src="{% static 'GarageSale/js/event_dashboard.js' %}" defer></script>
+{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'TeamPages:Root' %}">Team page</a> &gt; Event dashboard
+{% endblock %}
+
+{% block SnappableSections %}
+<main id="event-dashboard" class="snappable-section">
+    <div class="intro">
+        <div><div class="eyebrow">The event at a glance</div><h1>Event dashboard</h1><p class="muted">Contributions, locations and the pace of the campaign.</p></div>
+        <form method="get" class="event-picker">
+            <label for="dashboard-event">Event</label>
+            <select id="dashboard-event" name="event">
+                {% for event in event_list %}<option value="{{ event.pk }}" {% if event.pk == selected_event.pk %}selected{% endif %}>{{ event.event_date|date:"j F Y" }}</option>{% endfor %}
+            </select>
+            <button type="submit" {% if not event_list %}disabled{% endif %}>Show event</button>
+        </form>
+    </div>
+    {% if selected_event %}
+    <p id="dashboard-snapshot" class="muted">Snapshot: {{ snapshot|date:"j F Y" }} · {% if days_to_go > 0 %}{{ days_to_go }} days to go{% elif days_to_go == 0 %}Event day{% else %}Completed event · totals through {{ selected_event.event_date|date:"j F Y" }}{% endif %}</p>
+    <section id="dashboard-timeline" class="timeline" hidden aria-labelledby="dashboard-timeline-title">
+        <h2 id="dashboard-timeline-title">Replay this event</h2>
+        <label for="dashboard-replay-day">Viewing date: <output id="dashboard-replay-date" for="dashboard-replay-day"></output></label>
+        <div class="timeline-controls">
+            <button id="dashboard-replay-previous" type="button" aria-label="Previous day">← Day</button>
+            <input id="dashboard-replay-day" type="range" min="0" step="1" aria-describedby="dashboard-replay-help">
+            <button id="dashboard-replay-next" type="button" aria-label="Next day">Day →</button>
+            <button id="dashboard-replay-end" type="button">Event day</button>
+        </div>
+        <p id="dashboard-replay-help" class="foot">Drag or use the arrow keys to move through the campaign. All figures and graphs update locally from the loaded data. Each category compares the same elapsed day since its own opening date.</p>
+    </section>
+    <p class="foot">Full circle: the greater of the previous final maximum and this event’s total. Dashed tick: previous final average. Dark tick: previous maximum. Orange tick: average at the same number of days since opening. Select a circle to explore its run rate.</p>
+    <div id="dashboard-cards" class="cards" aria-label="Event statistics"></div>
+    <section class="panel" aria-labelledby="dashboard-chart-title">
+        <div class="panel-head"><div><div class="eyebrow">Explore the run rate</div><h2 id="dashboard-chart-title"></h2><p id="dashboard-chart-subtitle" class="muted"></p></div>
+            <div class="controls" aria-label="Chart measure"><button id="dashboard-cumulative" type="button" aria-pressed="true">Cumulative total</button><button id="dashboard-weekly" type="button" aria-pressed="false">Weekly additions</button></div>
+        </div>
+        <div class="legend"><span id="dashboard-current-legend" style="--c:#28624f">Selected event</span><span style="--c:#7c9382">Previous average</span><span style="--c:#b2872f">Previous maximum</span></div>
+        <svg id="dashboard-chart" class="chart" viewBox="0 0 1000 320" role="img" aria-labelledby="dashboard-svg-title dashboard-svg-desc"></svg>
+        <div id="dashboard-insight" class="insight" aria-live="polite"></div>
+        <p class="foot">Days since the relevant opening date, including day 0. Shorter completed campaigns retain their final totals on later days and contribute zero further additions. The previous maximum at each point can come from different events.</p>
+        <details><summary>View chart data</summary><div class="scroll"><table id="dashboard-chart-data"></table></div></details>
+    </section>
+    <div class="bottom">
+        <section class="panel"><h2>Previous events, at the finish</h2><p class="muted">Final totals give context for the weeks ahead.</p><div class="scroll"><table><thead><tr><th>Measure</th><th>Selected event</th><th>Previous average</th><th>Previous maximum</th><th>Events</th></tr></thead><tbody id="dashboard-finals"></tbody></table></div><p class="foot">Only completed events before the selected event are compared. Each metric shows its own comparison sample size.</p></section>
+        <section class="panel"><h2>What’s being counted?</h2><div id="dashboard-definitions"></div><details><summary>Timing &amp; data quality</summary><p class="foot">Application counts start at each event’s own booking opening date and use the specific application timestamp, rather than when the location was created. Currently inactive or deleted applications are excluded. Dates after the snapshot or event day are excluded.</p><p class="foot">Contributions start at the event’s “use from” date and are dated by the contributor’s latest event-specific Confirmed status. Unconfirmed contributions are excluded. Confirmation measures a commitment, not a payment received.</p><p class="foot">Unknown dates or amounts are flagged. A campaign with incomplete history is excluded from dated comparisons, not extended as a fabricated curve. A genuinely completed, shorter campaign stays in the comparisons at its final total. Final comparisons still include totals whose dates are unknown, when amounts are known.</p><p class="foot">Weekly additions include day 0 separately, complete seven-day intervals and a labelled partial final interval. Averages and maxima are calculated from each event’s additions for the same interval.</p></details><div id="dashboard-warnings"></div></section>
+    </div>
+    <noscript><p>JavaScript is required to display the dashboard charts and tables.</p></noscript>
+    {% else %}<p class="panel">No events have been configured yet.</p>{% endif %}
+    {{ dashboard_data|json_script:"event-dashboard-data" }}
+</main>
+{% endblock %}

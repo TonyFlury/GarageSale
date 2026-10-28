@@ -107,7 +107,7 @@ class TeamAccessTests(TestCase):
         self.assertEqual(self.client.get(reverse('TeamPages:Root')).status_code, 403)
         self.assertEqual(self.client.get(reverse('user_management:team_access')).status_code, 403)
         self.assertEqual(self.client.get(reverse('user_management:team_member_id_cards')).status_code, 403)
-        for name in ('Location:EventStats', 'Location:EventAdBoard'):
+        for name in ('EventDashboard', 'Location:EventAdBoard'):
             self.assertEqual(self.client.get(reverse(name)).status_code, 403)
         self.assertNotContains(self.client.get(reverse('home')), "id='id_team'")
         other_profile = TeamMember.objects.create(user=self.other, role='Secretary')
