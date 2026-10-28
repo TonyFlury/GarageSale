@@ -130,9 +130,11 @@ class ContributorDetailsTests(SimpleTestCase):
         lookup.return_value = self.contributor
         old = SimpleNamespace(pk=1, event_date=date(2025, 6, 1))
         recent = SimpleNamespace(pk=2, event_date=date(2026, 6, 1))
+        self.current_event.return_value = recent
         confirmations = self.confirmation_lookup.return_value.select_related.return_value
         confirmations.order_by.return_value = [
-            SimpleNamespace(event=recent, status="Declined", timestamp=datetime(2026, 5, 2, tzinfo=timezone.utc), user="Alex"),
+            SimpleNamespace(event=recent, status="Declined", timestamp=datetime(2026, 5, 2, tzinfo=timezone.utc),
+                            user=SimpleNamespace(get_full_name=lambda: "Alex")),
             SimpleNamespace(event=recent, status="Confirmed", timestamp=datetime(2026, 5, 1, tzinfo=timezone.utc), user=None),
             SimpleNamespace(event=old, status="Confirmed", timestamp=datetime(2025, 5, 1, tzinfo=timezone.utc), user=None),
         ]
@@ -183,6 +185,34 @@ class ContributorDetailsTests(SimpleTestCase):
 
     @patch("Contributors.views.contributions.Contributions.objects.filter")
     @patch("Contributors.views.details.get_object_or_404")
+    def test_empty_current_event_still_offers_first_contribution(self, lookup, contributions):
+        lookup.return_value = self.contributor
+        event = SimpleNamespace(pk=23)
+        self.current_event.return_value = event
+        contributions.return_value.select_related.return_value.order_by.return_value = []
+        contributions.return_value.order_by.return_value = []
+        html = json.loads(contributor_details(self.request(), pk=7).content)["html"]
+        self.assertIn("Current event contributions", html)
+        self.assertIn("No contributions recorded for this event.", html)
+        self.assertIn('value="Add contribution"', html)
+        self.assertIn('data-event-id="23"', html)
+        self.assertIn(f'data-contribution-url="{reverse("contributors:add_contribution", args=[7])}"', html)
+
+    @patch("Contributors.views.contributions.Contributions.objects.filter")
+    @patch("Contributors.views.details.get_object_or_404")
+    def test_empty_contributions_respect_add_permission(self, lookup, contributions):
+        lookup.return_value = self.contributor
+        self.current_event.return_value = SimpleNamespace(pk=23)
+        contributions.return_value.select_related.return_value.order_by.return_value = []
+        contributions.return_value.order_by.return_value = []
+        request = self.request()
+        request.user.has_perm = lambda permission: permission != "Contributors.add_contributions"
+        html = json.loads(contributor_details(request, pk=7).content)["html"]
+        self.assertIn("No contributions recorded for this event.", html)
+        self.assertNotIn('value="Add contribution"', html)
+
+    @patch("Contributors.views.contributions.Contributions.objects.filter")
+    @patch("Contributors.views.details.get_object_or_404")
     def test_no_current_event_hides_contributions(self, lookup, contributions):
         contributions.return_value.select_related.return_value.order_by.return_value = []
         lookup.return_value = self.contributor
@@ -213,7 +243,9 @@ class ContributorDetailsTests(SimpleTestCase):
         request = self.request(data={"show_contributions": "0"})
         html = json.loads(contributor_details(request, pk=7).content)["html"]
         self.assertNotIn("Current event contributions", html)
-        self.current_event.assert_not_called()
+        # History still needs the current event even when editing is disabled.
+        self.current_event.assert_called_once_with()
+        contributions.assert_not_called()
         self.assertNotIn({"contributor": self.contributor, "event": None}, [call.kwargs for call in contributions.call_args_list])
 
     @patch("Contributors.views.details.get_object_or_404")

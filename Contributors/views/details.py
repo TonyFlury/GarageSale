@@ -58,30 +58,45 @@ class ContributorDetailsForm(forms.ModelForm):
         return value
 
 
-def event_history_context(contributor):
-    """Group recorded statuses and contributions by event, newest event first."""
+def _history_group(groups, event, current_event):
+    """Keep the current audit trail distinct from concise earlier-event summaries."""
+    key = event.pk if event else None
+    current = event is not None and current_event is not None and key == getattr(current_event, 'pk', None)
+    return groups.setdefault(key, {'event': event, 'is_current': current, 'contribution_date': None,
+                                   'confirmations': [], 'contributions': []})
+
+
+def event_history_context(contributor, current_event=None):
+    """Show the current status trail; summarise other events by confirmed date/gift.
+
+    Contributions have no individual timestamp. Use the most recent recorded
+    Confirmed date for their event, and leave genuinely unknown dates explicit.
+    """
     groups = {}
-
-    def group_for(event):
-        """Share one history group between statuses and gifts for the same event."""
-        key = event.pk if event else None
-        return groups.setdefault(key, {"event": event, "confirmations": [], "contributions": []})
-
-    # Merge all status changes into event groups without losing their audit order.
+    # Retain all current-event changes and derive dates without inventing them.
     for confirmation in ContributorEvent.objects.filter(contributor=contributor).select_related(
         "event", "user",
     ).order_by("-timestamp", "-pk"):
-        group_for(confirmation.event)["confirmations"].append(confirmation)
+        group = _history_group(groups, confirmation.event, current_event)
+        if group['is_current']:
+            group['confirmations'].append(confirmation)
+        if confirmation.status == 'Confirmed' and group['contribution_date'] is None:
+            group['contribution_date'] = confirmation.timestamp
 
-    # Gifts and statuses share event groups even when only one kind was recorded.
+    # Old status-only events add no contribution substance and are omitted below.
     for contribution in Contributions.objects.filter(contributor=contributor).select_related("event").order_by("-pk"):
-        group_for(contribution.event)["contributions"].append(contribution)
-    event_groups = sorted(groups.values(), key=lambda group: (
+        _history_group(groups, contribution.event, current_event)['contributions'].append(contribution)
+    return {'event_groups': _ordered_history_groups(groups)}
+
+
+def _ordered_history_groups(groups):
+    """Keep contributions newest-event first, followed by unassigned records."""
+    visible = [group for group in groups.values() if group['is_current'] or group['contributions']]
+    return sorted(visible, key=lambda group: (
         group["event"] is not None,
         group["event"].event_date.toordinal() if group["event"] else 0,
         group["event"].pk if group["event"] else 0,
     ), reverse=True)
-    return {"event_groups": event_groups}
 
 
 def _details_contributions(request, contributor):
@@ -99,7 +114,8 @@ def _details_contributions(request, contributor):
 def _details_response(request, contributor):
     """Render details and history independently for lightweight history refreshes."""
     require_contributor(request.user, contributor)
-    history_html = render_to_string("contributor_history.html", event_history_context(contributor), request=request)
+    event = getattr(request, 'current_event', None) or get_current_contribution_event()
+    history_html = render_to_string("contributor_history.html", event_history_context(contributor, event), request=request)
 
     # A saved contact note needs only fresh history, not a replacement edit form.
     if request.GET.get("history") == "1":

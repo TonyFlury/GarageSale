@@ -12,7 +12,7 @@ TODO Convert to official theme and layout
 -->
 {% block PageStyles %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}?v=clear-search-1">
+    <link rel="stylesheet" href="{% static 'Contributors/styles/spreadsheetview.css' %}?v=details-scroll-1">
 {% endblock %}
 
 {% block Title %}
@@ -22,7 +22,7 @@ TODO Convert to official theme and layout
 {% block PageScripts %}
     {{ block.super }}
     <script type='text/javascript' src="{% static 'Contributors/js/contributor_spreadsheet.js' %}?v=clear-search-1" ></script>
-    <script defer src="{% static 'Contributors/js/contributor_details.js' %}?v=access-policy-1"></script>
+    <script defer src="{% static 'Contributors/js/contributor_details.js' %}?v=details-reveal-2"></script>
     <script defer src="{% static 'Contributors/js/contributor_contributions.js' %}?v=amount-value-1"></script>
     <script defer src="{% static 'Contributors/js/contributor_filters.js' %}"></script>
     <script defer src="{% static 'Contributors/js/contributor_modal.js' %}"></script>
@@ -347,23 +347,25 @@ TODO Convert to official theme and layout
 </template>
 <dialog id="contributor-details-dialog" aria-labelledby="contributor-details-title">
     <form id="contributor-details-form" method="post" enctype="multipart/form-data">
-        <h2 id="contributor-details-title">{{ data_label|default:"Contributor" }} details</h2>
+        <div class="history-toolbar">
+            <h2 id="contributor-details-title">{{ data_label|default:"Contributor" }} details</h2>
+            <button id="details-add-contact-history" type="button" class="add-contact-history"
+                    aria-label="Record contact" title="Record contact" hidden
+                    aria-haspopup="dialog" aria-controls="contact-history-dialog">
+                <img src="{% static 'GarageSale/images/icons/menu/contact-us-svgrepo-com.svg' %}" alt="" width="24" height="24">
+            </button>
+        </div>
+        <div id="contributor-details-scroll" tabindex="0" role="region" aria-label="{{ data_label|default:'Contributor' }} details content">
         {# Loaded by contributor_details.js from the contributors:details endpoint. #}
         {# Fields come from contributor_details_form.html and widgets/contributor_detail_field.html. #}
         {# Construction, editing, and related scripts: Contributors/DETAILS_POPUP_GUIDE.md. #}
         <div id="contributor-details-fields"></div>
-        <section class="details-history" aria-labelledby="contributor-history-title">
-            <div class="history-toolbar">
-                <h3 id="contributor-history-title">Confirmation and contribution history</h3>
-                <button id="details-add-contact-history" type="button" class="add-contact-history"
-                        aria-label="Record contact" title="Record contact" hidden
-                        aria-haspopup="dialog" aria-controls="contact-history-dialog">
-                    <img src="{% static 'GarageSale/images/icons/menu/contact-us-svgrepo-com.svg' %}" alt="" width="24" height="24">
-                </button>
-            </div>
+        <details id="contributor-history-panel" class="details-history">
+            <summary id="contributor-history-title">Confirmation and contribution history</summary>
             <div id="contributor-details-history" class="history-scroll" tabindex="0" role="region" aria-label="{{ data_label|default:"Contributor" }} history"></div>
-        </section>
+        </details>
         <p id="contributor-details-error" class="field-error" role="alert"></p>
+        </div>
         <div class="buttons">
             <input id="contributor-details-edit" type="button" value="Edit" hidden>
             <input id="contributor-details-cancel" type="button" value="Cancel" hidden>

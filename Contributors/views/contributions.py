@@ -65,7 +65,7 @@ def contributions_context(contributor, current_event):
         if current_event is not None else Contributions.objects.none()
     )
     return {"contributor": contributor, "current_event": current_event,
-            "contributions": contributions, "show_contributions": bool(contributions)}
+            "contributions": contributions, "show_contributions": current_event is not None}
 
 
 class ContributionForm(forms.Form):

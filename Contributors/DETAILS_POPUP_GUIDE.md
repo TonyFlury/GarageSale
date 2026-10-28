@@ -12,6 +12,13 @@ by event, newest event first. Status records within an event are newest first;
 unassigned contributions appear in a separate final group. Data-change audit
 records continue to be saved in `ContributorHistory` but are not displayed here.
 Adding or deleting a contribution refreshes this history without resetting edits.
+History is inside a native `<details>`/`<summary>` disclosure, closed on every
+opening. The viewport-bounded form keeps the title and action buttons outside
+`#contributor-details-scroll`; long fields and expanded history scroll inside
+that body, so Close remains visible without scrolling the popup itself.
+Expanding history automatically scrolls this body just far enough to show the
+entire panel when it fits. Longer history aligns its summary at the top of the
+content viewport and remains scrollable; the title and Close controls stay put.
 
 ## Where each part lives
 

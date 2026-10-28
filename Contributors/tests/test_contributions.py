@@ -11,6 +11,23 @@ from Contributors.views.contributions import ContributionForm, add_contribution,
 
 
 class AddContributionTests(SimpleTestCase):
+    @patch("Contributors.views.contributions.Contributions.objects.filter")
+    @patch("Contributors.views.contributions.get_object_or_404")
+    def test_deleting_last_contribution_preserves_add_control(self, lookup, contributions):
+        contributor = SimpleNamespace(pk=7, contributor_type="Sponsor", contributor_name="Oak")
+        deleted = SimpleNamespace(delete=Mock())
+        lookup.side_effect = [contributor, deleted]
+        contributions.return_value.order_by.return_value = []
+        request = self.request({"event_id": "23"})
+        request.current_event = SimpleNamespace(pk=23)
+        response = delete_contribution(request, pk=7, contribution_pk=42)
+        self.assertEqual(response.status_code, 200)
+        html = json.loads(response.content)["contributions_html"]
+        self.assertIn("No contributions recorded for this event.", html)
+        self.assertIn('value="Add contribution"', html)
+        self.assertIn('data-event-id="23"', html)
+        deleted.delete.assert_called_once_with()
+
     def setUp(self):
         atomic = patch("Contributors.views.contributions.transaction.atomic")
         self.atomic = atomic.start()

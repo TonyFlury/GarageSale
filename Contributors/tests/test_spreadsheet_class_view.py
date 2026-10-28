@@ -11,6 +11,21 @@ from Contributors.views.general_views import ContributorSpreadsheetView
 
 
 class ContributorSpreadsheetClassViewTests(SimpleTestCase):
+    def test_details_history_starts_collapsed_and_close_is_outside_scrolling_content(self):
+        from pathlib import Path
+        from bs4 import BeautifulSoup
+        from django.template import Context, Template
+        # Render the actual dialog shell without unrelated page or database setup.
+        source = (Path(__file__).parents[1]/'templates/contributor_spreadsheet.html').read_text()
+        shell = '<dialog id="contributor-details-dialog"' + source.split(
+            '<dialog id="contributor-details-dialog"',1)[1].split('</dialog>',1)[0] + '</dialog>'
+        soup = BeautifulSoup(Template('{% load static %}'+shell).render(Context({'data_label':'Sponsor'})),'html.parser')
+        self.assertFalse(soup.select_one('#contributor-history-panel').has_attr('open'))
+        self.assertIsNotNone(soup.select_one('#contributor-history-panel > summary'))
+        self.assertIsNotNone(soup.select_one('#contributor-details-scroll #contributor-details-history'))
+        self.assertIsNone(soup.select_one('#contributor-details-scroll #contributor-details-close'))
+        self.assertIsNotNone(soup.select_one('#contributor-details-form > .buttons #contributor-details-close'))
+
     def request(self, authenticated=True):
         request = RequestFactory().get(reverse("contributors:spreadsheet"))
         request.user = SimpleNamespace(is_authenticated=authenticated, is_active=True, has_perm=lambda permission: True)
@@ -328,7 +343,7 @@ class ContributorSpreadsheetClassViewTests(SimpleTestCase):
         self.assertIn('aria-label="Filter sponsor records"', html)
         self.assertIn('title="Sponsor details"', html)
         self.assertIn('>Sponsor details</h2>', html)
-        self.assertIn('>Confirmation and contribution history</h3>', html)
+        self.assertIn('>Confirmation and contribution history</summary>', html)
         self.assertNotIn('id="spreadsheet-modal-dialog"', html)
         context["modal_html"] = '<form method="post" action="/confirm/"><button>Confirm</button></form>'
         html = render_to_string("contributor_spreadsheet.html", context)
