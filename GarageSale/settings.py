@@ -61,8 +61,6 @@ if debug and TEST_SERVER:
             "fontTools.ttLib.ttFont" : {"level": "ERROR"},
             "fontTools.subset" : {"level": "ERROR"},
             "fontTools.subset.timer" : {"level": "ERROR"},
-            'matplotlib': {'level': 'ERROR'},
-            'matplotlib.font_manager': {'level': 'ERROR'},
             "django.request": {
                 "handlers": ["console"],
                 "level": os.getenv("DJANGO_LOG_LEVEL", "ERROR"),

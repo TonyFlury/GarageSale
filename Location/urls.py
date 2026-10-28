@@ -15,9 +15,6 @@ urlpatterns = [
 
     path('add_location/', views.AddLocation.as_view(), name='AddLocation'),
 
-    path('stats/', stats_view.event_stats, name='EventStats'),
-    path('stats/<int:event_id>/', stats_view.event_stats, name='EventStats'),
-
     path('event/ad_board/', stats_view.event_ad_board, name='EventAdBoard'),
     path('event/ad_board/download/<int:event_id>/', stats_view.download_ad_board_csv, name='EventAdBoardDownload'),
 

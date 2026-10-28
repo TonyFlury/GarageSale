@@ -61,7 +61,7 @@ class AccessPolicyMiddleware(MiddlewareMixin):
             if name == "template_duplicate" and request.method != "POST":
                 return HttpResponseNotAllowed(["POST"])
         elif namespace == "Location":
-            if name in {"EventStats", "EventAdBoard"}:
+            if name == "EventAdBoard":
                 permission = "Location.view_location"
             elif name == "EventAdBoardDownload":
                 permission = custom("export_location")
