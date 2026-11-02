@@ -48,52 +48,49 @@ Section 12 includes questions for the next discussion.
 ## 2. Technical names
 
 These technical names have the same meaning throughout this document.
-The names apply to the calendar system and the existing website.
+The list defines Diary concepts, roles, and interface names.
+Host applications define their own business terms and group mappings in their integration documents.
 
 | Technical name | Meaning |
 | --- | --- |
-| Event | One Garage Sale occasion. |
-| Event date | The date on which the Garage Sale occurs. |
-| Activation date | The date from which an event can become the current event. |
-| Booking date | A date that starts or stops permission to make a booking. |
-| Calendar | The website function that shows dates and tasks for an event. |
+| Calendar | The Diary view that shows dated entries and tasks. |
 | Calendar entry | One item that the calendar shows. |
-| Diary | The separate Django app for calendar templates, event calendars, entries, and task dependencies. |
-| Diary key | The UUID that the API returns for an event calendar. |
+| Diary | The reusable Django app for templates, diary instances, entries, and task dependencies. |
+| Diary instance | The entries and date rules created from an approved template version, with their own milestone values and task records. |
+| Diary key | The UUID that identifies a diary instance through the API. |
+| Diary name | The required name of a diary instance, displayed as its heading and task group label. |
 | Milestone | A named date definition that a template can use. |
-| Milestone date | The value of a named milestone in one event calendar. |
-| Actor | The trusted caller identity, group names, and permitted calendar keys supplied to the API. |
+| Milestone date | The caller-supplied value of a named milestone in one diary instance. |
+| Actor | The trusted caller identity, group names, and permitted Diary keys supplied to the API. |
 | Personal entry | A calendar entry that a DiaryUser creates with themselves as its owner. |
-| Calendar template | The common entries and date rules for future event calendars. |
-| Template version | An identified set of template entries that the team can approve. |
+| Calendar template | The reusable entries and date rules used to create diary instances. |
+| Template version | An identified set of entries and rules within a calendar template. |
 | Entry key | An identifier that stays the same for the same template entry across template versions. |
-| Event calendar | The entries and date rules copied for one event from an approved template version. |
 | Date rule | A calculation that gives the date for a calendar entry. |
-| Fixed date | A specified date that does not use a day count from the event date. |
+| Fixed date | An annual or one-time date that does not depend on a milestone date. |
 | Annual date | A fixed month and day with one occurrence in each applicable year. |
 | One-time date | A full date that includes the year. It has no annual repetition. |
-| Task | Work that a team member must do. |
+| Task | Work recorded in a diary instance that a user can progress to completion. |
 | Due date | The date by which a task must be complete. |
-| Task owner | An optional person or role that must do a task for an event. |
+| Task owner | The selected person or role responsible for a task, when a specific owner is assigned. |
 | Owner type | The choice of a person, a role, or the whole team for a task. |
-| Role owner | A selected project role whose members must do a task. |
-| Whole-team task | A task for the whole team, with no selected person or role. |
+| Task ownership role | A configured role permitted to own tasks through `DIARY_TASK_OWNER_ROLES`. |
+| Role owner | A selected task ownership role whose current members are associated with the task. |
+| Whole-team task | A task with no selected person or ownership role. |
 | Predecessor | A task that must be completed before another task becomes ready. |
 | Successor | A task that uses another task as a predecessor, directly or through other tasks. |
 | Circular dependency | A chain of task dependencies that returns to its first task. |
-| Reminder | A message that tells a person about a date or task. |
-| Team view | Calendar information for users with the applicable team permissions. |
-| Officer | The existing `Officer` permission group in this project. |
-| ExecMember | The existing `ExecMember` permission group in this project. |
-| DiaryManager | The configurable Diary management role. Garage Sale maps this role to Officer. |
-| DiaryUser | The configurable Diary task user role. Garage Sale maps this role to ExecMember. |
-| SponsorshipManager | The existing `SponsorshipManager` permission group in this project. |
+| Completion record | The recorded caller, time, and due date at task completion. V1 uses one record per task. |
+| Close all | The V1 DiaryManager action that completes the blocking predecessor chain and selected task. |
+| Reminder | A proposed Diary message about a date or task. Reminders are outside V1 scope. |
+| Full diary view | The view of permitted entries in one selected diary instance. |
+| Personal task view | The user's open personal and role-owned tasks, grouped by diary name when no instance is selected. |
+| DiaryManager | The configurable Diary role permitted to manage templates and diary tasks. |
+| DiaryUser | The configurable Diary role permitted to access associated tasks within the host's permitted diary scope. |
 | Selected diary | The diary instance identified by a permitted key supplied by the caller. |
-| Date review | A comparison of old dates and proposed new dates. |
-| PostgreSQL | The database system that this project uses in all environments. |
+| Date review | A V2 comparison of stored and proposed milestone dates and their effects on tasks. |
 
-Exact field names, group names, and file names identify existing application items.
-Mermaid is the diagram format in this document.
+Exact code names identify Diary API arguments, settings, models, and interface labels where necessary.
 
 ## 3. Caller inputs and integration boundary
 
