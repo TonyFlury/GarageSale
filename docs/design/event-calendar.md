@@ -19,6 +19,10 @@ The first version does not send messages or change booking controls.
 The backlog includes this task list request.
 The task list uses dates calculated from the event date.
 
+The user confirmed that events generally occur in late June.
+Some calendar entries have fixed dates.
+The calendar must show fixed dates and calculated dates together.
+
 The audience is an open decision.
 Section 11 includes questions for the next discussion.
 
@@ -36,6 +40,9 @@ The names apply to the calendar system and the existing website.
 | Calendar | The website function that shows dates and tasks for an event. |
 | Calendar entry | One item that the calendar shows. |
 | Date rule | A calculation that gives the date for a calendar entry. |
+| Fixed date | A specified date that does not use a day count from the event date. |
+| Annual date | A fixed month and day with one occurrence in each applicable year. |
+| One-time date | A full date that includes the year. It has no annual repetition. |
 | Task | Work that a team member must do. |
 | Due date | The date by which a task must be complete. |
 | Task owner | The person who must do a task. |
@@ -77,7 +84,7 @@ An event selector lets the user select the event for the calendar display.
 | Alternative | First version | Main benefit | Main limit |
 | --- | --- | --- | --- |
 | A | Show the existing event dates. | The team can check dates in one place. | The calendar does not show tasks. |
-| B | Show existing dates and calculated task dates. | The team can see the work sequence. | The team cannot record task completion. |
+| B | Show existing dates, fixed dates, and calculated task dates. | The team can see the work sequence. | The team cannot record task completion. |
 | C | Add task owners, completion records, and reminders. | The team can control the work through the calendar. | More rules and permissions are necessary. |
 
 Alternative B is the first proposal.
@@ -88,6 +95,7 @@ Alternative C can start after the team gives approval for the dates and tasks.
 flowchart LR
     A[Existing event dates] --> C[Calendar entries]
     B[Date rules for tasks] --> C
+    H[Fixed dates] --> C
     C --> D[Team view]
     C --> E[Public view: phase 4]
     C --> F[Reminders: phase 3]
@@ -98,15 +106,41 @@ It must not receive private task details or contact data.
 
 ## 5. Date rules
 
+Each calendar entry identifies its date type.
+The date type can be an existing event field, a fixed date, or a calculated date.
+
 Each calculated date has one source date and one day count.
 The day count can be before or after the source date.
 
 Existing booking dates use direct values from `EventData`.
 The calendar does not calculate replacement values for these fields.
 
+### Fixed dates
+
+A fixed date can be an annual date or a one-time date.
+An annual date repeats on the same month and day.
+A one-time date includes its year.
+
+For example, an annual task can occur on 1 March.
+Its date does not move when the event moves from 20 June to 27 June in the same year.
+
+The first proposal uses the event year for an annual date.
+An annual date before the event year needs an explicit year rule.
+For example, 1 December in the previous year uses the event year minus one.
+
+The system must identify an annual date that does not exist in the selected year.
+For example, 29 February does not exist in 2027.
+The calendar shows “Date not set” until the team selects a permitted date rule.
+It must not silently change the date to 28 February or 1 March.
+
+### Example entries
+
 | Example entry | Source | Rule | Example result |
 | --- | --- | --- | --- |
 | Event day | `event_date` | Use the stored date. | 27 June 2027 |
+| Annual preparation task | Annual date | Use 1 March in the event year. | 1 March 2027 |
+| Previous-year preparation task | Annual date | Use 1 December in the previous year. | 1 December 2026 |
+| One-time team meeting | One-time date | Use the full specified date. | 12 May 2027 |
 | Check advertising boards | Event date | Subtract 42 days. | 16 May 2027 |
 | Check the location map | Event date | Subtract 7 days. | 20 June 2027 |
 | Check the event records | Event date | Add 7 days. | 4 July 2027 |
@@ -116,13 +150,18 @@ They are not agreed operating instructions.
 
 ```mermaid
 flowchart TD
-    A[Select an event] --> B{Does the source date exist?}
-    B -->|No| C[Show Date not set]
-    B -->|Yes| D{Is the entry a stored date?}
-    D -->|Yes| E[Use the stored date]
-    D -->|No| F[Apply the date rule]
-    E --> G[Show the calendar entry]
-    F --> G
+    A[Select an event] --> B{Which date type?}
+    B -->|Event field| C[Read the existing field]
+    B -->|Fixed date| D{Which fixed date type?}
+    B -->|Calculated date| E[Apply the source date and day count]
+    D -->|Annual date| F[Use the month, day, and year rule]
+    D -->|One-time date| G[Use the full specified date]
+    C --> H{Does the result have a valid date?}
+    E --> H
+    F --> H
+    G --> H
+    H -->|Yes| I[Show the calendar entry]
+    H -->|No| J[Show Date not set]
 ```
 
 The proposal uses calendar days for date rules.
@@ -151,6 +190,8 @@ flowchart TD
 
 Each entry shows its date source.
 For example, it can show “Event date minus 42 days”.
+An annual entry can show “Fixed date: 1 March each year”.
+A one-time entry shows its full date and “One-time date”.
 
 The team can select a past event to examine its dates.
 The page shows the selected event name at all times.
@@ -164,15 +205,25 @@ The user must be able to use the keyboard for all actions.
 
 A change to the event date changes dates that depend on it.
 It does not change the booking dates or the activation date.
+It does not change fixed dates within the same event year.
+
+| Change | Calculated date | Annual date | One-time date |
+| --- | --- | --- | --- |
+| Event moves within the same year. | Calculate the date again. | Keep the same date. | Keep the same date. |
+| Event moves to a different year. | Calculate the date again. | Use the new event year and the year rule. | Keep the full date. |
+
+A change to the event year needs a date review for all entries.
+An unchanged one-time date can be incorrect for the new event year.
+The date review must identify that condition without an automatic date change.
 
 ```mermaid
 flowchart TD
     A[New event date] --> B[Date review]
-    B --> C[Show old and new task dates]
+    B --> C[Show changed dates and fixed dates]
     C --> D{Does the user give approval?}
     D -->|No| E[Keep the stored dates]
     D -->|Yes| F[Save the event date]
-    F --> G[Show the new calculated dates]
+    F --> G[Show the calculated dates and fixed dates]
 ```
 
 The date review is part of the proposal for the event edit procedure.
@@ -230,7 +281,7 @@ A date change must cancel pending messages that use the old date.
 
 | Phase | Result | Decision before the next phase |
 | --- | --- | --- |
-| 1 | Team date list with calculated task dates. | Give approval for the audience, date rules, and display. |
+| 1 | Team date list with fixed dates and calculated dates. | Give approval for the audience, date rules, and display. |
 | 2 | Task owners and completion records in PostgreSQL. | Give approval for task states and permissions. |
 | 3 | Reminders with send records. | Give approval for recipients, timing, retries, and message content. |
 | 4 | Optional public view or calendar export. | Give approval for public data and update rules. |
@@ -248,6 +299,8 @@ They do not give approval for implementation work.
 6. Is a date review necessary before the user saves a changed event date?
 7. Which groups can view the calendar and change tasks?
 8. Which people must receive reminders, and at which times?
+9. Which entries have annual dates, and which have one-time dates?
+10. Which annual entries occur in the year before the event?
 
 The first three questions give the next design step.
 
