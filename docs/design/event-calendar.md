@@ -152,6 +152,15 @@ Diary stores those references without a database link to another app.
 It must not create another user list or role system.
 All Diary database tables use PostgreSQL.
 
+`DIARY_TASK_OWNER_ROLES` lists the roles that can own tasks.
+Diary does not contain a fixed list of host role names.
+`DIARY_ROLE_LOOKUP` identifies a host callable that reads existing role names from the database.
+Diary compares the configured names with that result during application startup.
+Missing roles cause an `ImproperlyConfigured` exception that names the roles and relevant settings.
+Diary does not create missing roles automatically.
+Database migration and host role setup commands can run before this existence check.
+The assignment API also rejects roles outside `DIARY_TASK_OWNER_ROLES`.
+
 ```mermaid
 flowchart LR
     A[Caller: event and booking dates] -->|Callable API| D[Diary]
@@ -538,7 +547,9 @@ The settings mapping and host permissions determine access through DiaryUser or 
 If a selected person leaves DiaryUser, the system must identify their open tasks for review.
 The system must not silently change those tasks into whole-team tasks.
 The rule for that change needs approval before implementation.
-Whether each role member must confirm task completion is also an open decision.
+Multiple sign-offs are outside V1 scope.
+V1 keeps one completion record for each task, including a role-owned task.
+The permission to record that completion remains a separate decision.
 
 ### Diary pages and dashboard section
 
@@ -922,7 +933,7 @@ Unresolved rules still need approval before implementation.
 16. Who can change a task owner or complete a role-owned or whole-team task?
 17. Deferred beyond V1: Who must receive reminders for whole-team tasks?
 18. Resolved: Task role membership alone does not grant Diary access. The configured Diary roles and host permissions control access.
-19. Does a role-owned task need one completion record or confirmation from every role member?
+19. Resolved for V1: Multiple sign-offs are outside scope. Each task has one completion record, including role-owned tasks.
 20. Are personal entries visible to all ExecMembers, or only to the owner and permitted Officers?
 21. Resolved for V1: A DiaryManager's template addition approves the resulting version through the same save action.
 22. Must dependencies prevent completion, or only identify tasks that are not ready?
