@@ -164,12 +164,8 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = "user_management.UserExtended"
 
 # Diary receives caller identities through its API; it does not import user models.
-DIARY_PERMISSION_GROUPS = {
-    'use': ('ExecMember', 'Officer'),
-    'view': ('ExecMember', 'Officer'),
-    'edit': ('Officer',),
-    'view_template': ('Officer',),
-}
+DIARY_MANAGER = 'Officer'
+DIARY_USER = 'ExecMember'
 DIARY_TIME_ZONE = 'Europe/London'
 DIARY_TEMPLATE_NAME = 'Garage Sale calendar'
 DIARY_TASK_OWNER_ROLES = (

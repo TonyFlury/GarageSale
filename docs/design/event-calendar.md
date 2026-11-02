@@ -173,7 +173,7 @@ flowchart LR
     D --> I[Task progress and completion: first release]
 ```
 
-The API uses the permission group mapping in Django settings.
+The API uses `DIARY_MANAGER` and `DIARY_USER` from Django settings.
 Diary provides default page styles and permits host overrides.
 The caller selects the diary instance through a permitted Diary key.
 
@@ -250,10 +250,14 @@ The creation API requires a nonempty diary name.
 The task views use that name as the heading for the diary's task group.
 Different inputs for that reference need an explicit update through the API.
 
-`DIARY_PERMISSION_GROUPS` defines the groups for use, view, edit, and template view actions.
-The host currently uses ExecMember and Officer for use and view actions.
-It uses Officer for edit and template view actions.
-The API denies an action if its group mapping is absent.
+V1 requires only `DIARY_MANAGER` and `DIARY_USER` for access configuration.
+Each setting contains one Django group name.
+DiaryManagers inherit DiaryUser capabilities and have all template permissions.
+DiaryUsers cannot access templates through their user role.
+Missing or invalid setting values raise `ImproperlyConfigured`.
+V1 does not use a configurable action-to-group mapping.
+Finer-grained permissions may be offered as an option in a later version.
+That option is outside V1 scope and has no confirmed release number.
 
 The caller must supply a trusted Actor from its authenticated identity system.
 It must not accept Actor group names or permitted keys from an untrusted request body.
@@ -337,7 +341,7 @@ Calendar creation does not send reminders.
 
 The caller can close an existing diary through `DiaryInstance.close()`.
 Open tasks must not prevent closure.
-The operation uses the configured DiaryManager edit permission and the host's permitted calendar scope.
+The operation requires membership in `DIARY_MANAGER` and the host's permitted calendar scope.
 It records the closure time and caller reference.
 Repeated calls preserve the original closure record.
 
@@ -810,7 +814,9 @@ An account or team membership alone does not give calendar access.
 ### Confirmed access requirements
 
 The user confirmed that Diary uses the role names DiaryManager and DiaryUser.
-The host maps its groups to these roles through `settings.py`.
+The host supplies the group names through `DIARY_MANAGER` and `DIARY_USER` in Django settings.
+Each setting identifies one group.
+DiaryManagers have all template permissions and inherit DiaryUser capabilities.
 Other projects can use different group names without changes to Diary.
 
 A DiaryManager can view any calendar instance that the host project permits.
@@ -941,7 +947,7 @@ The server must restrict pages, downloads, and calendar feeds to configured Diar
 
 ### Configured access groups
 
-At startup, Diary must confirm that Django settings specify both DiaryManager and DiaryUser mappings.
+At startup, Diary must confirm that Django settings specify valid `DIARY_MANAGER` and `DIARY_USER` group names.
 Each referenced group must exist in the database.
 Each referenced group must have at least one user.
 These checks apply to every group named by either mapping.
@@ -983,8 +989,9 @@ The API usage guide must document this limit.
 
 ### Implementation status
 
-The current startup check validates the existence of configured task ownership roles.
-Access-group validation, membership checks, creation checks, and template editor warnings remain implementation work.
+The current startup check validates access setting values and the existence of configured task ownership roles.
+Database checks for access-group existence, membership, and diary creation remain implementation work.
+Template editor warnings also remain implementation work.
 
 ## 10. Reminders: subsequent design
 

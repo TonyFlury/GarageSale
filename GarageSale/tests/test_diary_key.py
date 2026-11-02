@@ -6,7 +6,7 @@ from Diary import api
 from GarageSale.models import EventData
 
 
-@override_settings(DIARY_PERMISSION_GROUPS={'use': ('Officer',), 'edit': ('Officer',)})
+@override_settings(DIARY_MANAGER='Officer', DIARY_USER='ExecMember')
 class EventDiaryKeyTests(TestCase):
     def test_event_stores_the_api_key_without_a_foreign_key(self):
         actor = api.Actor('officer', frozenset({'Officer'}))

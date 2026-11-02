@@ -48,7 +48,8 @@ Diary shows “Date not set” when a necessary date has no value.
 
 ## Host group mapping and page context
 
-Garage Sale maps Officer to DiaryManager and ExecMember to DiaryUser through Django settings.
+Garage Sale sets `DIARY_MANAGER = 'Officer'` and `DIARY_USER = 'ExecMember'` in Django settings.
+The manager setting also grants all Diary template permissions.
 Its access policy also makes each Officer an ExecMember.
 These group names and that membership rule belong to Garage Sale.
 Diary uses the configured Diary roles without those project-specific names.
