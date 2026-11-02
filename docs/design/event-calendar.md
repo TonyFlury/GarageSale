@@ -141,7 +141,7 @@ The API does not import or change `EventData`.
 The caller must save the returned key against the correct event.
 
 Milestone dates in Diary are input values from the caller.
-The caller must supply changed values through the API when the source dates change.
+The V2 design must define how the caller supplies changed milestone dates through the API.
 Diary uses those values to calculate task dates.
 
 The caller supplies person references, role references, and current group membership.
@@ -632,7 +632,21 @@ If another edit makes a selection invalid, the server rejects the save and suppl
 Task readiness, completion rules, and Officer overrides still need approval.
 Dependency editing does not change due dates automatically.
 
-## 7. Changes to an event date
+## 7. Milestone date changes: V2
+
+The user confirmed that milestone date changes and their impact review belong in V2.
+These changes can affect whether the team can complete all diary tasks.
+The first release accepts milestone dates during calendar creation.
+Changes to those dates after creation are outside the first release scope.
+
+The V2 design must define how Diary presents the effects before the caller applies changed dates.
+The presentation must support a review of the affected tasks and their dependencies.
+The review process, permissions, and API behavior still need design.
+The existing `set_milestone_dates` API does not provide this review process.
+The milestone editor in the preview demonstrates possible behavior, not an approved first-release workflow.
+
+The following event date examples illustrate one milestone in the Garage Sale app.
+Diary receives named milestone dates and does not interpret external event fields.
 
 A change to the event date changes dates that depend on it.
 It does not change the booking dates or the activation date.
@@ -657,7 +671,7 @@ flowchart TD
     F --> G[Show the calculated dates and fixed dates]
 ```
 
-The date review is part of the proposal for the event edit procedure.
+The date review is a V2 proposal for the milestone change procedure.
 It is not part of the present application.
 
 A date change must keep completed task records unchanged.
@@ -821,11 +835,12 @@ A date change must cancel pending messages that use the old date.
 | Phase | Result | Decision before the next phase |
 | --- | --- | --- |
 | 1 | Template copies, team dates, optional task owners, entry creation, task progress, and completion records in PostgreSQL. | Define task states and permissions before implementation. |
-| 2 | Other task changes. | Give approval for the applicable change rules and permissions. |
+| 2 | Milestone date changes with impact review, plus proposed other task changes. | Design the impact presentation, change rules, and permissions. |
 | 3 | Reminders with send records. | Give approval for recipients, timing, retries, and message content. |
 | 4 | Optional calendar export for permitted ExecMembers. | Give approval for export data and update rules. |
 
 Task progress and completion are confirmed requirements for the first release.
+Milestone date changes and their impact review are confirmed V2 scope.
 The other phase assignments remain proposals.
 Unresolved rules still need approval before implementation.
 
@@ -836,7 +851,7 @@ Unresolved rules still need approval before implementation.
 3. Resolved: Templates identify named milestones for task date rules. The caller supplies each required milestone date through the API during calendar creation.
 4. Resolved: The first feature release must support task progress through completion.
 5. Resolved: A simple date-ordered list is sufficient for the first release. A month display is not required.
-6. Is a date review necessary before the user saves a changed event date?
+6. Resolved: Milestone date changes and the presentation of their effects belong in V2. The review workflow still needs design.
 7. Which users can view other event calendars or change tasks?
 8. Which people must receive reminders, and at which times?
 9. Outside feature scope: The selection of annual or one-time dates for specific entries is application data.
