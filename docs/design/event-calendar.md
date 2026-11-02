@@ -200,6 +200,8 @@ The task rule uses that milestone and a day count of positive 42.
 It returns each milestone once, with its name and label.
 It excludes milestones used only by other template versions.
 Annual dates and one-time dates do not add a milestone requirement.
+Calling `required_milestones` is an optional safety check.
+The caller can supply the expected named milestone dates without first reading this list.
 
 `DIARY_TEMPLATE_NAME` selects the default template by name in settings.
 The API uses that template's highest approved version when the caller does not select a version.
@@ -211,14 +213,22 @@ The API reports an error if the configured template has no approved version.
 sequenceDiagram
     participant H as Calling application
     participant D as Diary API
-    H->>D: Read required milestones for a template version
-    D-->>H: Milestone names and labels
+    opt Optional milestone safety check
+        H->>D: Read required milestones for a template version
+        D-->>H: Milestone names and labels
+    end
     H->>D: Create calendar with milestone dates
     D-->>H: Stable Diary key
     H->>H: Save the key against the caller's record
-    H->>D: Read tasks with the stored key
-    D-->>H: Task list
+    opt Optional host task display
+        H->>D: Read tasks with the stored key
+        D-->>H: Task list
+    end
 ```
+
+The calling project does not need to read task lists.
+It can use Diary's own UI for task display and actions.
+The caller must still supply the expected milestone dates when it creates the calendar.
 
 Repeated creation with the same event reference and the same inputs returns the same key.
 Different inputs for that reference need an explicit update through the API.
