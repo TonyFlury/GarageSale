@@ -23,6 +23,9 @@ The user confirmed that events generally occur in late June.
 Some calendar entries have fixed dates.
 The calendar must show fixed dates and calculated dates together.
 
+The user confirmed that the basic calendar is common to different events.
+A calendar template defines those common entries and their date rules.
+
 The audience is an open decision.
 Section 11 includes questions for the next discussion.
 
@@ -39,6 +42,10 @@ The names apply to the calendar system and the existing website.
 | Booking date | A date that starts or stops permission to make a booking. |
 | Calendar | The website function that shows dates and tasks for an event. |
 | Calendar entry | One item that the calendar shows. |
+| Calendar template | The common entries and date rules for future event calendars. |
+| Template version | An identified set of template entries that the team can approve. |
+| Entry key | An identifier that stays the same for the same template entry across template versions. |
+| Event calendar | The entries and date rules copied for one event from an approved template version. |
 | Date rule | A calculation that gives the date for a calendar entry. |
 | Fixed date | A specified date that does not use a day count from the event date. |
 | Annual date | A fixed month and day with one occurrence in each applicable year. |
@@ -103,6 +110,90 @@ flowchart LR
 
 The public view must receive only approved public entries.
 It must not receive private task details or contact data.
+
+### Calendar template and event calendars
+
+One calendar template defines the basic calendar across events.
+Each event has its own event calendar.
+The event calendar identifies the template version that supplied its entries.
+
+```mermaid
+flowchart LR
+    A[Calendar template] --> B[Approved template version]
+    B --> C[Event calendar: 2027]
+    B --> D[Event calendar: 2028]
+    E[Event dates: 2027] --> C
+    F[Event dates: 2028] --> D
+```
+
+The template keeps the entry names, descriptions, entry keys, and date rules.
+An annual date keeps its month, day, and year rule.
+A calculated date keeps its source field and day count.
+An existing event field keeps its field reference.
+
+The template does not keep calculated dates for a particular event year.
+A one-time date belongs to one event calendar.
+The system must not copy that date to every new event.
+
+The event calendar copies the template entries and rules.
+It reads the applicable dates from its own event.
+Thus, a template change cannot silently change an existing event calendar.
+An event date change still uses the copied rules to calculate dates again.
+
+The read-only first version can keep these copies in PostgreSQL.
+Task owners and completion records are additions for a subsequent phase.
+
+### Creation and activation
+
+The proposal creates the event calendar when the user creates the event.
+The team can then see tasks before the activation date.
+Some tasks can occur in the year before the event.
+
+Activation must not create a second event calendar.
+It must not reset entries or completed task records.
+It must not give public access to private entries.
+
+```mermaid
+flowchart TD
+    A[Create an event] --> B{Does an event calendar exist?}
+    H[Activate an event] --> B
+    B -->|Yes| C[Keep the existing event calendar]
+    B -->|No| D{Is an approved template version selected?}
+    D -->|No| E[Show Calendar not prepared]
+    D -->|Yes| F[Copy the selected entries and rules once]
+    F --> G[Calculate dates for this event]
+    G --> I[Identify missing dates and past dates]
+```
+
+The activation check also covers events created before the calendar feature exists.
+An event without a calendar needs a selected template version before the system can prepare its calendar.
+The system must not select an unapproved template version as a substitute.
+
+Repeated creation or activation requests must not add the same entry twice.
+The event and entry key identify each copied entry.
+The database must enforce that identity.
+
+If a calculated date is already past, the calendar shows that condition.
+It does not change the date or record the task as completed.
+Calendar preparation does not send reminders for past dates.
+
+### Template changes
+
+A template change creates a new template version.
+New events use a selected approved version.
+Existing event calendars keep their copied entries and rules.
+
+A user can apply a new template version to an existing event only after a date review.
+That review must show added entries, removed entries, changed text, and changed rules.
+The entry key connects each existing entry to the same entry in the new version.
+
+The update must keep completed task records unchanged.
+The user must give explicit approval before the update changes event-specific entries.
+It must not repeat completed work or send the same reminder again.
+The system must record the user, time, and selected template version for the update.
+
+The first version does not need this update function.
+The team can improve the template for future events without that function.
 
 ## 5. Date rules
 
@@ -281,7 +372,7 @@ A date change must cancel pending messages that use the old date.
 
 | Phase | Result | Decision before the next phase |
 | --- | --- | --- |
-| 1 | Team date list with fixed dates and calculated dates. | Give approval for the audience, date rules, and display. |
+| 1 | Template copies and a team date list with fixed dates and calculated dates. | Give approval for the template, creation step, and display. |
 | 2 | Task owners and completion records in PostgreSQL. | Give approval for task states and permissions. |
 | 3 | Reminders with send records. | Give approval for recipients, timing, retries, and message content. |
 | 4 | Optional public view or calendar export. | Give approval for public data and update rules. |
@@ -301,6 +392,10 @@ They do not give approval for implementation work.
 8. Which people must receive reminders, and at which times?
 9. Which entries have annual dates, and which have one-time dates?
 10. Which annual entries occur in the year before the event?
+11. Is event creation the correct step to copy the template, with activation as a check for an absent event calendar?
+12. Who can change a calendar template and give approval for a template version?
+13. Can an event calendar have extra entries or changes to template entries?
+14. Must the first version apply new template versions to existing event calendars?
 
 The first three questions give the next design step.
 
