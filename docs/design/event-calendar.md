@@ -327,7 +327,11 @@ The user confirmed that only DiaryManagers can change a calendar template.
 This restriction applies to template entries, date rules, owners, and dependencies.
 DiaryUsers cannot change templates through pages, the callable API, or the HTTP API.
 The host settings identify the groups that have the DiaryManager role.
-Template version approval rules remain a separate open decision.
+DiaryManagers approve new templates and template versions.
+V1 has no separate approval step.
+The DiaryManager's save approves the resulting template version for future calendar creation.
+This rule also applies when the DiaryManager adds an event entry to the template.
+Existing event calendars keep their copied entries and rules.
 
 A template change creates a new template version.
 New events use a selected approved version.
@@ -820,7 +824,8 @@ Changing an event identifier does not grant access outside the calendar scope su
 The template view permission does not give permission to change the template or approve a template version.
 The Officer entry creation permission includes the template addition defined above.
 Only DiaryManagers can change templates.
-Template version approval rules remain open decisions.
+DiaryManagers approve new templates and versions through the save action in V1.
+A separate approval step is outside V1 scope.
 The calendar view permission does not give permission to change tasks or send reminders.
 
 The confirmed entry creation actions need their own permission checks.
@@ -899,7 +904,7 @@ Unresolved rules still need approval before implementation.
 9. Outside feature scope: The selection of annual or one-time dates for specific entries is application data.
 10. Outside feature scope: The selection of annual entries for the year before the event is application data.
 11. Is event creation the correct step to copy the template, with activation as a check for an absent event calendar?
-12. Editing resolved: Only DiaryManagers can change templates. Template version approval rules remain open.
+12. Resolved: Only DiaryManagers can change and approve templates. V1 has no separate approval step.
 13. Who can change entries copied from the template?
 14. Must the first version apply new template versions to existing event calendars?
 15. Must a template identify an initial owner by person or role, or leave that choice to each event?
@@ -908,7 +913,7 @@ Unresolved rules still need approval before implementation.
 18. Resolved: Task role membership alone does not grant Diary access. The configured Diary roles and host permissions control access.
 19. Does a role-owned task need one completion record or confirmation from every role member?
 20. Are personal entries visible to all ExecMembers, or only to the owner and permitted Officers?
-21. Does an Officer's template addition approve its new version, or is a separate approval step necessary?
+21. Resolved for V1: A DiaryManager's template addition approves the resulting version through the same save action.
 22. Must dependencies prevent completion, or only identify tasks that are not ready?
 23. Can Officers override a dependency, and what record must that action create?
 
