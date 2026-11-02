@@ -107,7 +107,7 @@ Diary shows “Date not set” when a necessary date has no value.
 The [Garage Sale integration document](../../GarageSale/DIARY_INTEGRATION.md#source-dates-and-event-selection) records that host's source fields and event selection considerations.
 Those details are outside the generic Diary feature definition.
 
-## 4. Three possible designs
+## 4. Chosen design
 
 ### Separate Diary app: confirmed requirement
 
@@ -119,7 +119,6 @@ Diary pages are a subsequent implementation step.
 The Diary app owns calendar templates, template versions, event calendars, entries, and task dependencies.
 It also owns the calendar pages and the applicable permission checks.
 Task progress and completion records belong to Diary in the first feature release.
-Reminder rules belong to Diary if reminders are added.
 
 Diary is independent of other project apps.
 Its models have no foreign keys to event, user, or group models in other apps.
@@ -160,7 +159,6 @@ flowchart LR
     D --> G[Task dependencies]
     D --> H[Calendar pages]
     D --> I[Task progress and completion: first release]
-    D --> J[Reminders: subsequent phase]
 ```
 
 The API uses the permission group mapping in settings.
@@ -227,25 +225,20 @@ It must not accept Actor group names or permitted keys from an untrusted request
 The API limits calendar access to the keys in that Actor.
 See [the callable API guide](../../Diary/README.md) for exact signatures and examples.
 
-### Calendar functions
+### Calendar functions: V1
 
-| Alternative | First version | Main benefit | Main limit |
-| --- | --- | --- | --- |
-| A | Show the existing event dates. | The team can check dates in one place. | The calendar does not show tasks. |
-| B | Show dates and task owners. Include the confirmed entry creation actions. | The team can see the work sequence and add entries. | The team cannot record task completion. |
-| C | Add task changes, completion records, and reminders. | The team can control the work through the calendar. | More rules and permissions are necessary. |
-
-These alternatives record earlier design options.
 The confirmed first release includes dates, task owners, entry creation, and task progress through completion.
+The task display uses a simple date-ordered list.
+Section 6 defines the task highlighting and completion controls.
 The first release does not include reminders.
 
 ```mermaid
 flowchart LR
-    A[Existing event dates] --> C[Calendar entries]
+    A[Caller-supplied milestone dates] --> C[Calendar entries]
     B[Date rules for tasks] --> C
     H[Fixed dates] --> C
     C --> D[Team view]
-    C --> F[Reminders: phase 3]
+    C --> F[Task progress and completion]
 ```
 
 Diary must restrict calendar access to configured DiaryUsers and DiaryManagers with the applicable host permissions.
@@ -283,7 +276,7 @@ It reads the applicable dates from its own event.
 Thus, a template change cannot silently change an existing event calendar.
 An event date change still uses the copied rules to calculate dates again.
 
-The first version can keep these copies in PostgreSQL.
+The first version stores these copies in PostgreSQL.
 Each task can have an optional task owner.
 Section 8 defines the entry creation actions.
 Task progress and completion records are required in the first feature release.
@@ -352,9 +345,6 @@ The stable entry key must prevent repeated additions of the same template item t
 The interface must identify the target diary, selected item, and calculated date before the save.
 Handling of absent required milestones and absent predecessor tasks still needs design for this action.
 That design must respect the separate V2 scope for changes to milestone dates.
-
-Replacement of existing tasks or removal of items through a full template update remains a separate proposal.
-Any such proposal must preserve completed records and require a review of the proposed changes.
 
 ## 5. Date rules
 
