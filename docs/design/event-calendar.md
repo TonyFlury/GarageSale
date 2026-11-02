@@ -323,6 +323,12 @@ Calendar preparation does not send reminders for past dates.
 
 ### Template changes
 
+The user confirmed that only DiaryManagers can change a calendar template.
+This restriction applies to template entries, date rules, owners, and dependencies.
+DiaryUsers cannot change templates through pages, the callable API, or the HTTP API.
+The host settings identify the groups that have the DiaryManager role.
+Template version approval rules remain a separate open decision.
+
 A template change creates a new template version.
 New events use a selected approved version.
 Existing event calendars keep their copied entries and rules.
@@ -813,7 +819,8 @@ The same checks apply to direct page URLs, downloads, and calendar feeds.
 Changing an event identifier does not grant access outside the calendar scope supplied by the host.
 The template view permission does not give permission to change the template or approve a template version.
 The Officer entry creation permission includes the template addition defined above.
-Other template changes and version approval rules are open decisions.
+Only DiaryManagers can change templates.
+Template version approval rules remain open decisions.
 The calendar view permission does not give permission to change tasks or send reminders.
 
 The confirmed entry creation actions need their own permission checks.
@@ -892,7 +899,7 @@ Unresolved rules still need approval before implementation.
 9. Outside feature scope: The selection of annual or one-time dates for specific entries is application data.
 10. Outside feature scope: The selection of annual entries for the year before the event is application data.
 11. Is event creation the correct step to copy the template, with activation as a check for an absent event calendar?
-12. Beyond Officer additions, who can change a calendar template and give approval for a template version?
+12. Editing resolved: Only DiaryManagers can change templates. Template version approval rules remain open.
 13. Who can change entries copied from the template?
 14. Must the first version apply new template versions to existing event calendars?
 15. Must a template identify an initial owner by person or role, or leave that choice to each event?
