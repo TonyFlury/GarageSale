@@ -2,7 +2,9 @@
 
 Date: 2 November 2026.
 
-Status: Draft. The user did not give approval for the design.
+Status: Draft with confirmed requirements.
+Section 8 records the confirmed access requirements.
+The other design proposals still need approval unless the text identifies a confirmed requirement.
 
 Scope: Design documents only. This work does not change the application.
 
@@ -26,7 +28,8 @@ The calendar must show fixed dates and calculated dates together.
 The user confirmed that the basic calendar is common to different events.
 A calendar template defines those common entries and their date rules.
 
-The audience is an open decision.
+The first calendar includes a team view.
+Public access is an open decision.
 Section 11 includes questions for the next discussion.
 
 ## 2. Technical names
@@ -56,6 +59,9 @@ The names apply to the calendar system and the existing website.
 | Reminder | A message that tells a person about a date or task. |
 | Public view | Calendar information that a visitor can read without an account. |
 | Team view | Calendar information for users with the applicable team permissions. |
+| Officer | The existing `Officer` permission group in this project. |
+| ExecMember | The existing `ExecMember` permission group in this project. |
+| Current event | The event that the application supplies as `request.current_event`. |
 | Date review | A comparison of old dates and proposed new dates. |
 | PostgreSQL | The database system that this project uses in all environments. |
 
@@ -284,7 +290,9 @@ For example, it can show “Event date minus 42 days”.
 An annual entry can show “Fixed date: 1 March each year”.
 A one-time entry shows its full date and “One-time date”.
 
-The team can select a past event to examine its dates.
+The confirmed ExecMember view opens the calendar for `request.current_event`.
+Access to other events is an open decision.
+An event selector must show only events that the user has permission to view.
 The page shows the selected event name at all times.
 It does not silently change to the current event.
 
@@ -331,11 +339,54 @@ It must keep the earlier records available to users with the applicable permissi
 Calendar access must use the existing permission system.
 An account or team membership alone does not give calendar access.
 
-The first proposal uses the existing permission to view event details.
-The access matrix must confirm the applicable groups before implementation.
+### Confirmed access requirements
+
+The user confirmed these read permissions.
+
+| User group | View the calendar template | View the calendar for the current event |
+| --- | --- | --- |
+| `Officer` | Yes. | Yes, through `ExecMember` membership. |
+| `ExecMember` without `Officer` membership | No grant from this requirement. | Yes, for all members of the group. |
+
+The existing access policy makes each Officer an ExecMember.
+Thus, each Officer can also view the calendar for the current event.
+Other group permissions must use the existing access policy or a subsequent explicit decision.
+
+The template view shows its entries, date rules, and template version.
+The current calendar view shows the entries for `request.current_event`.
+The page must show the event name and event date.
+
+```mermaid
+flowchart LR
+    A[Officer] --> B[View the calendar template]
+    A --> C[ExecMember membership]
+    D[All other ExecMembers] --> C
+    C --> E[View the current event calendar]
+    E --> F{Does the current event exist?}
+    F -->|No| G[Show No current event]
+    F -->|Yes| H{Does its calendar exist?}
+    H -->|No| I[Show Calendar not prepared]
+    H -->|Yes| J[Show the event calendar]
+```
+
+Opening the view must not create a calendar or copy template entries.
+The page must not substitute another event if the current event is absent.
+
+### Server checks and other actions
+
+The server must check the applicable permission on each request.
+A hidden navigation item alone does not prevent access.
+The same checks apply to direct page URLs, downloads, and calendar feeds.
+
+The current calendar permission does not give access to another event through a changed event identifier.
+The template permission does not give permission to change the template or approve a template version.
+The calendar permission does not give permission to change tasks or send reminders.
 
 Task changes and reminder controls must have their own access rules.
-The design does not grant new rights to any group.
+The design does not grant these additional rights.
+
+The project access matrix must include the confirmed view permissions before implementation.
+The template view and current calendar view need distinct permission checks.
 
 If the public view is added, each entry needs an explicit public status.
 An entry has a private status until a user with the applicable permissions gives approval for public access.
@@ -382,13 +433,13 @@ They do not give approval for implementation work.
 
 ## 11. Open decisions
 
-1. Is the first calendar for the team, website users, or both?
+1. Must a subsequent version include a public view as well as the confirmed team view?
 2. Which tasks must appear before and after an event?
 3. Can task dates use booking dates as well as the event date?
 4. Must the first version record task completion?
 5. Is a date list sufficient, or is a month display also necessary?
 6. Is a date review necessary before the user saves a changed event date?
-7. Which groups can view the calendar and change tasks?
+7. Which users can view other event calendars or change tasks?
 8. Which people must receive reminders, and at which times?
 9. Which entries have annual dates, and which have one-time dates?
 10. Which annual entries occur in the year before the event?
