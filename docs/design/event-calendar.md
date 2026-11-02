@@ -487,6 +487,10 @@ Whether each role member must confirm task completion is also an open decision.
 
 ### Diary pages and dashboard section
 
+An [interactive UI mock-up](../../Diary/design/ui/index.html) shows the main Diary pages with sample data.
+Its [review guide](../../Diary/design/ui/README.md) includes page descriptions and example workflows.
+This preview has no Garage Sale integration or database writes.
+
 The user confirmed that Diary owns all calendar UI except the dashboard summary.
 Its pages include the personal task view, template editor, event calendar, and task completion actions.
 The app must use the callable API for those actions.
