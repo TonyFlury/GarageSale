@@ -289,7 +289,7 @@ The event calendar copies the template entries and rules.
 Only DiaryManagers can modify tasks copied from a template into a calendar instance.
 DiaryUsers cannot modify those tasks, including tasks assigned to themselves.
 An instance task change does not change its source template or other calendar instances.
-This editing restriction does not settle task completion permissions.
+Section 6 defines separate V1 task completion permissions.
 It reads the applicable dates from its own event.
 Thus, a template change cannot silently change an existing event calendar.
 An event date change still uses the copied rules to calculate dates again.
@@ -484,7 +484,30 @@ Template definitions have no instance dates and do not receive lateness highligh
 
 The user confirmed that task progress through completion is required in the first feature release.
 The progress states and permitted transitions still need definition.
-Completion permissions and dependency rules remain open decisions.
+The following completion rules define the V1 permissions and dependency behavior.
+
+### Task completion and blocking predecessors: confirmed V1 requirements
+
+When a user attempts task completion, Diary lists all open predecessors in the blocking dependency chain.
+The display must preserve personal-entry visibility and the host's permitted calendar scope.
+Each permitted DiaryUser and DiaryManager has a “Complete” button for a task they can access.
+That action completes the selected task only when its open predecessor list is empty.
+The server checks the predecessor state again before the save.
+
+When open predecessors remain, a DiaryManager also has a “Close all” button.
+This is the V1 force completion option.
+The action completes all open predecessors in the blocking chain and then completes the selected task.
+It includes indirect predecessors that block those open predecessors.
+The save records the manager, completion time, and due date at completion for each affected task.
+Each forced predecessor completion includes a comment that identifies the “Close all” action and selected task.
+The action preserves existing completion records and dependency links.
+The save must complete all affected tasks together or leave them unchanged.
+Ordinary DiaryUsers cannot use “Close all”.
+
+These actions complete tasks within an open diary.
+The separate `close_calendar` operation closes a diary instance without completing its tasks.
+The V1 force completion behavior must be reviewed for V2.
+Its inclusion in V1 does not approve the same feature set for V2.
 
 The user confirmed that a task can have an optional task owner.
 The task owner can be a specific DiaryUser or a role.
@@ -505,7 +528,8 @@ An absent person does not mean “Whole team” when the task has a role owner.
 
 The calendar must not show a whole-team task as an incorrect or missing owner.
 The task date does not change when its task owner changes.
-Task ownership does not grant permission to change a task or record its completion.
+Task ownership does not grant task editing permission.
+The V1 completion rules above apply separately to tasks the user can access.
 Section 8 defines the confirmed view permissions.
 The permission to change tasks is an open decision.
 
@@ -549,7 +573,7 @@ The system must not silently change those tasks into whole-team tasks.
 The rule for that change needs approval before implementation.
 Multiple sign-offs are outside V1 scope.
 V1 keeps one completion record for each task, including a role-owned task.
-The permission to record that completion remains a separate decision.
+The V1 completion rules above define who can record that completion.
 
 ### Diary pages and dashboard section
 
@@ -668,7 +692,7 @@ Concurrent saves must not combine into a circular dependency.
 The proposal serializes dependency changes within the affected template version or event calendar.
 If another edit makes a selection invalid, the server rejects the save and supplies an updated list.
 
-Task readiness, completion rules, and Officer overrides still need approval.
+The V1 completion rules define readiness checks and the DiaryManager “Close all” action.
 Dependency editing does not change due dates automatically.
 
 ## 7. Milestone date changes: V2
@@ -930,17 +954,17 @@ Unresolved rules still need approval before implementation.
 10. Outside feature scope: The selection of annual entries for the year before the event is application data.
 11. Outside generic Diary scope: Calendar creation timing and activation checks belong to Garage Sale integration. See [the host integration design](../../GarageSale/DIARY_INTEGRATION.md).
 12. Resolved: Only DiaryManagers can change and approve templates. V1 has no separate approval step.
-13. Resolved: Only DiaryManagers can modify tasks copied from a template into a calendar instance. Completion permissions remain separate.
+13. Resolved: Only DiaryManagers can modify tasks copied from a template into a calendar instance. The V1 completion rules apply separately.
 14. Resolved: Template changes are not retrospective by default. V1 permits explicit addition of a new template item to an active diary, including a late task.
 15. Resolved: The template author may select a person, role, or whole team for each task. A specific owner is optional.
-16. Who can change a task owner or complete a role-owned or whole-team task?
+16. Completion resolved for V1: Permitted users can complete accessible tasks under the predecessor rules. Owner-change permissions remain open.
 17. Deferred beyond V1: Who must receive reminders for whole-team tasks?
 18. Resolved: Task role membership alone does not grant Diary access. The configured Diary roles and host permissions control access.
 19. Resolved for V1: Multiple sign-offs are outside scope. Each task has one completion record, including role-owned tasks.
 20. Resolved: Personally added tasks are visible only to their owner and DiaryManagers. Only DiaryManagers can add tasks owned by another person.
 21. Resolved for V1: A DiaryManager's template addition approves the resulting version through the same save action.
-22. Must dependencies prevent completion, or only identify tasks that are not ready?
-23. Can Officers override a dependency, and what record must that action create?
+22. Resolved for V1: “Complete” requires no open predecessors. DiaryManagers can use “Close all” to complete the blocking chain and selected task.
+23. Resolved for V1: “Close all” records the manager, time, due date, and explanatory predecessor comments. Review force completion features for V2.
 
 Template content does not prevent implementation of the generic Diary capability.
 
