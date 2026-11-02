@@ -28,6 +28,14 @@
 
 The official reference is https://www.asd-ste100.org/assets/files/ASD-STE100_ISSUE9.pdf.
 
+## Diary UI
+
+- Give each visible component, content role, form control, and task state a stable, descriptive CSS class.
+- Use the `diary-` prefix and keep component rules within the `.diary` namespace.
+- Use classes as the styling interface. Do not require IDs, text values, or element positions for host style overrides.
+- Do not put presentation rules in inline style attributes.
+- Document each styling class and CSS variable in `Diary/README.md`. Record the impact of changes to existing class names.
+
 ## Deployment
 
 - Read `General Deployment Instructions` before work on this project.

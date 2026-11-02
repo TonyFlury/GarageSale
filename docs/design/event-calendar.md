@@ -496,6 +496,11 @@ Each Diary page must be a complete browser view through that base template.
 Its reusable content belongs in a fragment that a host can include in its own page.
 The host must not include a complete Diary document inside another HTML document.
 The host can override them through Django's normal template loaders and static file finders.
+Every visible component, content role, form control, and state must have a stable, descriptive class.
+Those classes are the public styling interface and use the `diary-` prefix.
+Host overrides must not depend on IDs, text values, element positions, or specific HTML tags.
+Diary must not use inline style attributes for presentation.
+The styling guide must document the classes and any changes to their names.
 An extra stylesheet can change the default CSS variables without replacing the complete stylesheet.
 The API guide includes search-order examples and deployment checks for these overrides.
 `DIARY_TEMPLATE_NAME` selects calendar data, not the HTML base template.
