@@ -63,6 +63,11 @@ Host applications define their own business terms and group mappings in their in
 | Milestone | A named date definition that a template can use. |
 | Milestone date | The caller-supplied value of a named milestone in one diary instance. |
 | Actor | The trusted caller identity, group names, and permitted Diary keys supplied to the API. |
+| DiaryAPI | The callable API class that holds caller context and provides factories and shared services. |
+| DiaryInstance | The callable API reference to one diary instance, identified by its key. |
+| DiaryTemplate | The callable API reference to one named calendar template. |
+| DiaryTemplateVersion | The callable API reference to one template version and its entry operations. |
+| API factory | A method that creates or looks up a Diary API reference. |
 | Personal entry | A calendar entry that a DiaryUser creates with themselves as its owner. |
 | Calendar template | The reusable entries and date rules used to create diary instances. |
 | Template version | An identified set of entries and rules within a calendar template. |
@@ -176,6 +181,17 @@ The caller selects the diary instance through a permitted Diary key.
 
 The user confirmed that Diary needs a formal callable API.
 The API is `Diary.api`, version 1.
+Its public interface uses API classes and class-level factory methods.
+`DiaryAPI` holds a trusted Actor and provides shared services and object factories.
+`DiaryInstance`, `DiaryTemplate`, and `DiaryTemplateVersion` provide operations on their corresponding objects.
+Factories return API references with a stable UUID in the `key` property.
+The host stores that key against its own record.
+
+An API reference keeps its Actor and key without caching Django model instances or permission decisions.
+Each operation checks its permission and reads current database state.
+The host supplies fresh identity, membership, and scope when constructing the Actor for each request.
+Creation does not automatically expand that Actor's permitted diary keys.
+
 It is a Python interface, not an HTTP endpoint.
 The confirmed interface scope also requires an HTTP API, which is not implemented yet.
 
@@ -195,11 +211,11 @@ The template can use a milestone directly or apply a day count to it.
 For example, a task can be due 42 days after `add_board_bookings_open`.
 The task rule uses that milestone and a day count of positive 42.
 
-`required_milestones` enumerates the milestones used by a selected template version.
+`DiaryTemplateVersion.required_milestones()` enumerates the milestones used by that version.
 It returns each milestone once, with its name and label.
 It excludes milestones used only by other template versions.
 Annual dates and one-time dates do not add a milestone requirement.
-Calling `required_milestones` is an optional safety check.
+Calling `DiaryTemplateVersion.required_milestones()` is an optional safety check.
 The caller can supply the expected named milestone dates without first reading this list.
 
 `DIARY_TEMPLATE_NAME` selects the default template by name in settings.
@@ -319,7 +335,7 @@ Calendar creation does not send reminders.
 
 ### Close a diary instance: confirmed requirement
 
-The caller can close an existing diary through `Diary.api.close_calendar`.
+The caller can close an existing diary through `DiaryInstance.close()`.
 Open tasks must not prevent closure.
 The operation uses the configured DiaryManager edit permission and the host's permitted calendar scope.
 It records the closure time and caller reference.
@@ -512,7 +528,7 @@ The save must complete all affected tasks together or leave them unchanged.
 Ordinary DiaryUsers cannot use “Close all”.
 
 These actions complete tasks within an open diary.
-The separate `close_calendar` operation closes a diary instance without completing its tasks.
+The separate `DiaryInstance.close()` operation closes a diary instance without completing its tasks.
 The V1 force completion behavior must be reviewed for V2.
 Its inclusion in V1 does not approve the same feature set for V2.
 
@@ -598,7 +614,7 @@ Diary's HTML views accept the applicable object selector through a URL parameter
 Use the technical name `diary_key` for a diary instance.
 Use the technical name `template_name` for a calendar template.
 Context variables are values supplied to the view by trusted server code.
-The view maps `diary_key` to the callable API's `calendar_key` argument.
+The view supplies `diary_key` as `key` to `DiaryAPI.diary()` or `DiaryInstance.from_key()`.
 Neither selection method grants access beyond the caller's permissions.
 
 | View | Selector | Required behavior |
@@ -639,7 +655,7 @@ The API guide includes search-order examples and deployment checks for these ove
 The personal view includes tasks assigned to the user and tasks assigned to any role that includes that user.
 The user confirmed that this personal view is the default page for a logged-in user.
 The default must not include tasks owned only by other people or other roles.
-The current `personal_tasks` API supplies that list for one Diary key.
+The current `DiaryInstance.personal_tasks()` method supplies that list for one instance.
 The confirmed API scope also requires personal task access across all instances permitted by the host.
 The caller can instead select one permitted instance.
 Without a diary key, the HTTP view groups the user's open tasks by diary name across all permitted open instances.
@@ -655,7 +671,7 @@ It shows clickable Late and Ready counts for the current user, not an embedded t
 Each count opens the matching filter in the personal Diary view.
 An [interactive dashboard mock-up](../../Diary/design/dashboard/index.html) demonstrates that presentation.
 
-`personal_tasks` returns the user's open tasks for that key, including tasks owned by their roles.
+`DiaryInstance.personal_tasks()` returns the user's open tasks for that instance, including tasks owned by their roles.
 The dashboard counts ready tasks and late tasks from that result.
 The counts exclude whole-team tasks and completed tasks.
 Each result identifies whether the task is ready or blocked.
@@ -678,7 +694,7 @@ flowchart TD
     B -->|No| C[Do not show the task section]
     B -->|Yes| D{Does the current event have a Diary key?}
     D -->|No| E[Show Calendar not prepared]
-    D -->|Yes| F[Call personal_tasks with the key]
+    D -->|Yes| F[Read the instance's personal tasks]
     F --> G[Show clickable Late and Ready counts]
     G --> H[Open the matching personal Diary filter]
 ```

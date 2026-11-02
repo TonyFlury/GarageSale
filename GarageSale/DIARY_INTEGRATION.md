@@ -11,7 +11,7 @@ This document replaces open decision 11 in the [event calendar design](../docs/d
 
 An event is a Garage Sale occasion represented by `EventData`.
 The activation date is the `use_from` value used by the host's current-event selection rules.
-The Diary key is the UUID returned by `Diary.api.create_calendar`.
+The creation factory `DiaryInstance.create()` returns an API object with its Diary key in `key`.
 The host stores that key in `EventData.diary_key`.
 An approved template version supplies the entries and rules for a new calendar.
 
@@ -112,7 +112,7 @@ Repeated host requests must not create duplicate calendars or entries.
 ## Remaining integration work
 
 - [ ] Confirm the event creation and activation procedure.
-- [ ] Define the host callbacks that call `Diary.api.create_calendar`.
+- [ ] Define the host callbacks that call `DiaryInstance.create()` or `DiaryAPI.create_diary()`.
 - [ ] Supply the named milestone dates required by the selected template version.
 - [ ] Define the mapping from `EventData` source fields to the template's named milestones.
 - [ ] Save the returned key against the correct `EventData` record.
@@ -122,7 +122,7 @@ Repeated host requests must not create duplicate calendars or entries.
 - [ ] Read `request.current_event` only in the Garage Sale adapter and supply its permitted Diary key.
 
 Milestone date changes and their impact review belong in V2.
-The host can call `Diary.api.close_calendar` to close an instance with open tasks.
+The host can call `DiaryInstance.close()` to close an instance with open tasks.
 The host must separately decide which lifecycle action calls that operation.
 Reminders are outside V1 scope.
 Neither feature is part of this proposed initial lifecycle connection.
