@@ -5,6 +5,7 @@ Date: 2 November 2026.
 Status: Draft with confirmed requirements.
 Section 8 records the confirmed access and entry creation requirements.
 Section 6 records the confirmed task owner requirement.
+Section 6 also records the confirmed first-release requirement for task progress and completion.
 Section 4 records the separate Diary app requirement.
 Section 6 also records the rule that excludes circular predecessor choices.
 The other design proposals still need approval unless the text identifies a confirmed requirement.
@@ -125,7 +126,8 @@ Diary pages are a subsequent implementation step.
 
 The Diary app owns calendar templates, template versions, event calendars, entries, and task dependencies.
 It also owns the calendar pages and the applicable permission checks.
-Completion records and reminder rules belong to Diary when those features are added.
+Task progress and completion records belong to Diary in the first feature release.
+Reminder rules belong to Diary if reminders are added.
 
 Diary is independent of other project apps.
 Its models have no foreign keys to event, user, or group models in other apps.
@@ -156,7 +158,8 @@ flowchart LR
     D --> F[Event calendars and entries]
     D --> G[Task dependencies]
     D --> H[Calendar pages]
-    D --> I[Completion and reminders: subsequent phases]
+    D --> I[Task progress and completion: first release]
+    D --> J[Reminders: subsequent phase]
 ```
 
 The API uses the permission group mapping in settings.
@@ -230,9 +233,9 @@ See [the callable API guide](../../Diary/README.md) for exact signatures and exa
 | B | Show dates and task owners. Include the confirmed entry creation actions. | The team can see the work sequence and add entries. | The team cannot record task completion. |
 | C | Add task changes, completion records, and reminders. | The team can control the work through the calendar. | More rules and permissions are necessary. |
 
-Alternative B is the first proposal.
-It agrees with the task list request in the backlog.
-Alternative C can start after the team gives approval for the dates and tasks.
+These alternatives record earlier design options.
+The confirmed first release includes dates, task owners, entry creation, and task progress through completion.
+The first release does not include reminders.
 
 ```mermaid
 flowchart LR
@@ -277,7 +280,8 @@ An event date change still uses the copied rules to calculate dates again.
 The first version can keep these copies in PostgreSQL.
 Each task can have an optional task owner.
 Section 8 defines the entry creation actions.
-Other task changes and completion records are additions for a subsequent phase.
+Task progress and completion records are required in the first feature release.
+Other task changes still need approved rules.
 
 ### Creation and activation
 
@@ -432,6 +436,10 @@ Labels must explain each state without color alone.
 The user must be able to use the keyboard for all actions.
 
 ### Task owners: confirmed requirement
+
+The user confirmed that task progress through completion is required in the first feature release.
+The progress states and permitted transitions still need definition.
+Completion permissions and dependency rules remain open decisions.
 
 The user confirmed that a task can have an optional task owner.
 The task owner can be a specific ExecMember or a role.
@@ -639,7 +647,7 @@ flowchart TD
 The date review is part of the proposal for the event edit procedure.
 It is not part of the present application.
 
-In a subsequent version, a date change must keep completed task records unchanged.
+A date change must keep completed task records unchanged.
 The system must identify open tasks for a date review.
 
 Cancellation of an event must stop future reminders.
@@ -799,20 +807,21 @@ A date change must cancel pending messages that use the old date.
 
 | Phase | Result | Decision before the next phase |
 | --- | --- | --- |
-| 1 | Template copies, the team date list, optional task owners, and the confirmed entry creation actions. | Give approval for the creation step and display. |
-| 2 | Other task changes and completion records in PostgreSQL. | Give approval for task states and permissions. |
+| 1 | Template copies, team dates, optional task owners, entry creation, task progress, and completion records in PostgreSQL. | Define task states and permissions before implementation. |
+| 2 | Other task changes. | Give approval for the applicable change rules and permissions. |
 | 3 | Reminders with send records. | Give approval for recipients, timing, retries, and message content. |
 | 4 | Optional calendar export for permitted ExecMembers. | Give approval for export data and update rules. |
 
-These phases are proposals.
-They do not give approval for implementation work.
+Task progress and completion are confirmed requirements for the first release.
+The other phase assignments remain proposals.
+Unresolved rules still need approval before implementation.
 
 ## 11. Open decisions
 
 1. Resolved: Diary is for ExecMembers only. There is no public view.
 2. Resolved: The selection of template tasks is outside the feature definition. Diary provides a generic capability to hold those tasks.
 3. Resolved: Templates identify named milestones for task date rules. The caller supplies each required milestone date through the API during calendar creation.
-4. Must the first version record task completion?
+4. Resolved: The first feature release must support task progress through completion.
 5. Is a date list sufficient, or is a month display also necessary?
 6. Is a date review necessary before the user saves a changed event date?
 7. Which users can view other event calendars or change tasks?
