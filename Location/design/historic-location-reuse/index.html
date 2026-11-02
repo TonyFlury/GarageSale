@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reuse historic locations · Interactive mock-up</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#20352e;background:#f3f6f2;line-height:1.5}*{box-sizing:border-box}body{margin:0}header{background:#234c3e;color:white;padding:22px max(24px,calc((100vw - 1040px)/2))}header small{color:#cce1cf}h1{font-size:1.6rem;margin:0}h2{margin:0 0 12px;font-size:1.5rem}h3{margin:0}main{max-width:1040px;margin:32px auto;padding:0 24px}button,input,select{font:inherit}button{border:1px solid #8b9c94;border-radius:7px;padding:10px 16px;background:white;color:#20352e;cursor:pointer}button:hover{background:#eaf2eb}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #c07814;outline-offset:3px}button.primary{background:#276246;color:white;border-color:#276246}button:disabled{opacity:.45;cursor:not-allowed}.toolbar{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}.panel{background:white;border:1px solid #d5ded5;border-radius:12px;padding:24px;margin:22px 0}.muted{color:#596b61}.tag{font-size:.8rem;padding:4px 9px;border-radius:20px;background:#e9f2e6;color:#365a3c;display:inline-block}.demo{background:#fff3d7;padding:12px 18px;border-radius:8px;margin-bottom:24px}dialog{border:0;border-radius:16px;padding:0;width:min(680px,calc(100% - 24px));max-height:90vh;box-shadow:0 20px 80px #102d3540}dialog::backdrop{background:#152c25a8}dialog .intro{padding:28px 28px 12px}dialog p{margin:8px 0 16px}.history{padding:0 28px;max-height:38vh;overflow:auto}.history label{display:flex;gap:14px;align-items:flex-start;padding:17px 14px;border:1px solid #d5ded5;border-radius:9px;margin:10px 0;cursor:pointer}.history label:has(input:checked){background:#edf6eb;border-color:#276246}.history input{width:20px;height:20px;accent-color:#276246;margin-top:5px;flex-shrink:0}.history strong,.history small{display:block}.history small{color:#596b61}.actions{padding:20px 28px;background:#f5f7f3;border-top:1px solid #d5ded5;margin-top:18px}.actions .choices{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}.actions button{flex:1}.actions .cancel{padding:6px 0;border:0;background:transparent;text-decoration:underline}.location{padding:16px 0;border-bottom:1px solid #e0e6df}.location:last-child{border:0}form label{display:block;margin:14px 0}form input{display:block;width:100%;border:1px solid #8b9c94;padding:10px;border-radius:6px}#feedback:empty{display:none}#feedback{padding:14px;background:#e9f2e6;border-radius:8px}select{padding:8px;max-width:100%}@media(max-width:520px){dialog .intro,.actions{padding:20px}.history{padding:0 20px}.choices{flex-direction:column}.toolbar button{width:100%}}
+</style>
+<header><small>BRANTHAM GARAGE SALE</small><h1>Your locations</h1></header>
+<main>
+ <div class="demo"><strong>Interactive mock-up</strong> · Sample addresses only. Changes stay in this page and are never saved.</div>
+ <div class="toolbar"><div><span class="tag">27 June 2027</span><h2>Are you on the map?</h2><span class="muted">Add locations for your sale or an advertising board.</span></div><button class="primary" id="add">Add a location</button></div>
+ <p id="feedback" role="status"></p>
+ <section class="panel" aria-label="Locations for this event"><h3>This event</h3><div id="locations"></div></section>
+ <details class="panel"><summary>Preview scenarios</summary><p class="muted">Reset the preview to try when the popup should appear.</p><label for="scenario">User history</label> <select id="scenario"><option value="multiple">First location · multiple historic locations</option><option value="single">First location · one historic location</option><option value="none">First location · no history</option><option value="existing">Already has a location for this event</option></select><p><button id="reset">Reset preview</button></p></details>
+ <section class="panel" id="new-panel" hidden><h2>Add a new location</h2><p class="muted">Simplified form for this preview. The existing address and map flow would open here.</p><form id="new-form"><label>House number and street<input id="address" required autocomplete="street-address"></label><label>Postcode<input id="postcode" required autocomplete="postal-code"></label><div class="choices"><button type="submit" class="primary">Add to preview</button> <button type="button" id="cancel-new">Cancel new location</button></div></form></section>
+</main>
+<dialog id="reuse" aria-labelledby="reuse-title" aria-describedby="reuse-description">
+ <div class="intro"><span class="tag">Your first location for 27 June 2027</span><h2 id="reuse-title">Use a location from a previous event?</h2><p id="reuse-description">You have locations from earlier events. Choose any you want to reuse, or start with a new location.</p><small class="muted">Most recent event first, then postcode A–Z. Nothing is selected yet.</small></div>
+ <div class="history" id="history"></div>
+ <div class="actions"><strong id="count" aria-live="polite">0 locations selected</strong><div class="choices"><button type="button" class="primary" id="historic">Add selected only</button><button type="button" id="both">Add selected + new</button></div><div class="choices"><button type="button" id="new-only">Just add a new location</button></div><button type="button" class="cancel" id="cancel">Cancel</button></div>
+</dialog>
+<script>
+'use strict';
+const samples=[
+ {id:1,date:'2026-06-28',event:'28 June 2026',address:'12 Brook Lane, Brantham',postcode:'CO11 1AA',use:'Sale and advertising board'},
+ {id:2,date:'2026-06-28',event:'28 June 2026',address:'7 Orchard Close, Brantham',postcode:'CO11 1BB',use:'Sale'},
+ {id:3,date:'2025-06-29',event:'29 June 2025',address:'4 Meadow Road, Brantham',postcode:'CO11 1AB',use:'Advertising board'}
+];
+const $=id=>document.getElementById(id);
+let current=[],history=[];
+function render(){
+ $('locations').replaceChildren();
+ if(!current.length){$('locations').textContent='No locations added for this event yet.';return;}
+ current.forEach(item=>{const row=document.createElement('div');row.className='location';const title=document.createElement('strong');title.textContent=item.address;const detail=document.createElement('div');detail.className='muted';detail.textContent=item.postcode+' · '+(item.use||'New location');row.append(title,detail);$('locations').append(row);});
+}
+function selected(){return [...$('history').querySelectorAll('input:checked')].map(input=>history.find(item=>item.id===Number(input.value)));}
+function count(){const n=selected().length;$('count').textContent=n+' location'+(n===1?'':'s')+' selected';$('historic').disabled=$('both').disabled=n===0;}
+function openNew(){ $('new-panel').hidden=false;$('address').focus(); }
+function addHistory(withNew){const chosen=selected();if(!chosen.length)return;current.push(...chosen);render();$('reuse').close();$('feedback').textContent=chosen.length+' historic location'+(chosen.length===1?'':'s')+' added to this preview.'+(withNew?' You can now add a new location.':'');if(withNew)openNew();}
+$('add').onclick=()=>{
+ if(current.length||!history.length){openNew();return;}
+ $('history').replaceChildren();
+ history.forEach(item=>{const label=document.createElement('label');const input=document.createElement('input');input.type='checkbox';input.value=item.id;input.addEventListener('change',count);const text=document.createElement('span');const title=document.createElement('strong');title.textContent=item.address;const postcode=document.createElement('span');postcode.textContent=item.postcode;const event=document.createElement('small');event.textContent='Event: '+item.event;const use=document.createElement('small');use.textContent='Previously: '+item.use;text.append(title,postcode,event,use);label.append(input,text);$('history').append(label);});
+ count();$('reuse').showModal();
+};
+$('historic').onclick=()=>addHistory(false);
+$('both').onclick=()=>addHistory(true);
+$('new-only').onclick=()=>{$('reuse').close();openNew();};
+$('cancel').onclick=()=>{$('reuse').close();$('feedback').textContent='Cancelled. No locations added.';};
+$('reuse').addEventListener('cancel',()=>{$('feedback').textContent='Cancelled. No locations added.';});
+$('cancel-new').onclick=()=>{$('new-panel').hidden=true;$('feedback').textContent='New location cancelled. Any historic locations already added remain in this preview.';$('add').focus();};
+$('new-form').onsubmit=event=>{event.preventDefault();current.push({address:$('address').value,postcode:$('postcode').value});render();$('new-form').reset();$('new-panel').hidden=true;$('feedback').textContent='New location added to this preview.';$('add').focus();};
+function reset(){const mode=$('scenario').value;current=mode==='existing'?[{...samples[0]}]:[];history=(mode==='none'?[]:mode==='single'?[samples[0]]:[...samples]).sort((a,b)=>b.date.localeCompare(a.date)||a.postcode.localeCompare(b.postcode)||a.address.localeCompare(b.address));$('new-panel').hidden=true;$('new-form').reset();$('feedback').textContent='';render();}
+$('reset').onclick=reset;
+reset();
+</script>
+</html>
