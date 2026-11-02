@@ -15,6 +15,32 @@ The Diary key is the UUID returned by `Diary.api.create_calendar`.
 The host stores that key in `EventData.diary_key`.
 An approved template version supplies the entries and rules for a new calendar.
 
+## Source dates and event selection
+
+This section contains the Garage Sale details moved from section 3 of the generic Diary design.
+The `EventData` model keeps these source dates.
+Garage Sale supplies their values through the Diary API when the selected template requires them.
+
+| Existing field | Meaning in Garage Sale |
+| --- | --- |
+| `event_date` | The event date. |
+| `use_from` | The activation date. |
+| `open_sales_bookings` | The first date for sale bookings. |
+| `close_sales_bookings` | The last date for sale bookings. |
+| `open_billboard_bookings` | The first date for advertising board bookings. |
+| `close_billboard_bookings` | The last date for advertising board bookings. |
+
+The event date and activation date have different functions.
+The integration must supply different labels when both appear as milestones.
+Garage Sale must define the mapping from source fields to the template's named milestones.
+Diary does not define that mapping.
+
+The repository contains different rules for selection of the current event.
+This design does not select a new rule for the website.
+The proposed host event selector permits selection only from events available to the user.
+A missing source value does not mean that its date has passed.
+Diary shows “Date not set” when a necessary date has no value.
+
 ## Open lifecycle decision
 
 Should Garage Sale create the Diary calendar during event creation?
@@ -52,6 +78,7 @@ Repeated host requests must not create duplicate calendars or entries.
 - [ ] Confirm the event creation and activation procedure.
 - [ ] Define the host callbacks that call `Diary.api.create_calendar`.
 - [ ] Supply the named milestone dates required by the selected template version.
+- [ ] Define the mapping from `EventData` source fields to the template's named milestones.
 - [ ] Save the returned key against the correct `EventData` record.
 - [ ] Preserve existing keys and completion records during repeated requests.
 - [ ] Define the procedure for existing events without a Diary key.

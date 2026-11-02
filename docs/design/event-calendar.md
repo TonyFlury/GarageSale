@@ -94,29 +94,18 @@ The names apply to the calendar system and the existing website.
 Exact field names, group names, and file names identify existing application items.
 Mermaid is the diagram format in this document.
 
-## 3. Existing information
+## 3. Caller inputs and integration boundary
 
-The `EventData` model already keeps these dates.
-The calling application supplies these dates through the Diary API when the template needs them.
+Diary receives the named milestone dates required by the selected template through its API.
+The caller determines their sources and meanings.
+Diary does not need knowledge of the caller's event models, booking fields, or activation rules.
+The host determines which diary instances the caller can access.
 
-| Existing field | Meaning in the calendar |
-| --- | --- |
-| `event_date` | The event date. |
-| `use_from` | The activation date. |
-| `open_sales_bookings` | The first date for sale bookings. |
-| `close_sales_bookings` | The last date for sale bookings. |
-| `open_billboard_bookings` | The first date for advertising board bookings. |
-| `close_billboard_bookings` | The last date for advertising board bookings. |
+An absent milestone date does not mean that the date has passed.
+Diary shows “Date not set” when a necessary date has no value.
 
-The event date and the activation date have different functions.
-The calendar must show different labels for these dates.
-
-A missing field does not mean that a date has passed.
-The calendar shows “Date not set” for a necessary date that has no value.
-
-The repository contains different rules for selection of the current event.
-The design does not select a new rule for the website.
-An event selector lets the user select the event for the calendar display.
+The [Garage Sale integration document](../../GarageSale/DIARY_INTEGRATION.md#source-dates-and-event-selection) records that host's source fields and event selection considerations.
+Those details are outside the generic Diary feature definition.
 
 ## 4. Three possible designs
 
