@@ -440,27 +440,36 @@ The user confirmed that a simple date-ordered list is sufficient for the first r
 The list works on a phone and shows long task names without small calendar cells.
 A month display is not required for the first release.
 
+### Calendar list navigation
+
+This diagram shows how a user opens entry details from a diary's date-ordered list.
+It describes the full calendar view available through explicit navigation.
+The personal task view remains the default page for a logged-in user.
+The host supplies the selected diary key and its permitted scope.
+Filter controls remain a UI proposal.
+
 ```mermaid
 flowchart TD
-    A[Event selector] --> B[Selected event and event date]
-    B --> C[Filters: date range and entry type]
-    C --> D[Date list]
-    D --> E[Date, entry name, source, and task owner]
-    E --> F[Entry details]
+    A[Open a permitted diary instance] --> B[Show the diary name]
+    B --> C[Apply optional list filters]
+    C --> D[Show visible entries in date order]
+    D --> E[Select an entry]
+    E --> F[Open entry details]
 ```
 
+Each list row shows the date, entry name, date source, task owner, and applicable status labels.
 Each entry shows its date source.
-For example, it can show “Event date minus 42 days”.
+For example, it can show “Target milestone minus 42 days”.
 An annual entry can show “Fixed date: 1 March each year”.
 A one-time entry shows its full date and “One-time date”.
 
 The calendar view opens the diary instance identified by the permitted key supplied by the host.
 The host determines which instances the user can select.
-An event selector must show only events that the user has permission to view.
-The page shows the selected event name at all times.
-It does not silently change to the current event.
+A diary selector must show only instances that the user has permission to view.
+The page shows the selected diary name at all times.
+It must preserve that selection until the user or host explicitly changes it.
 
-The page uses the existing team page styles.
+The page uses Diary's default styles or the host's configured overrides.
 Labels must explain each state without color alone.
 The user must be able to use the keyboard for all actions.
 
