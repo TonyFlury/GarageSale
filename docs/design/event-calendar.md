@@ -407,9 +407,9 @@ UTC is the time reference for message times in the database.
 
 ## 6. Page design
 
-The default display is a date list.
+The user confirmed that a simple date-ordered list is sufficient for the first release.
 The list works on a phone and shows long task names without small calendar cells.
-A month display is an alternative for a subsequent version.
+A month display is not required for the first release.
 
 ```mermaid
 flowchart TD
@@ -822,7 +822,7 @@ Unresolved rules still need approval before implementation.
 2. Resolved: The selection of template tasks is outside the feature definition. Diary provides a generic capability to hold those tasks.
 3. Resolved: Templates identify named milestones for task date rules. The caller supplies each required milestone date through the API during calendar creation.
 4. Resolved: The first feature release must support task progress through completion.
-5. Is a date list sufficient, or is a month display also necessary?
+5. Resolved: A simple date-ordered list is sufficient for the first release. A month display is not required.
 6. Is a date review necessary before the user saves a changed event date?
 7. Which users can view other event calendars or change tasks?
 8. Which people must receive reminders, and at which times?
