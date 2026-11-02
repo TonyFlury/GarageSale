@@ -231,6 +231,8 @@ It can use Diary's own UI for task display and actions.
 The caller must still supply the expected milestone dates when it creates the calendar.
 
 Repeated creation with the same event reference and the same inputs returns the same key.
+The creation API requires a nonempty diary name.
+The task views use that name as the heading for the diary's task group.
 Different inputs for that reference need an explicit update through the API.
 
 `DIARY_PERMISSION_GROUPS` defines the groups for use, view, edit, and template view actions.
@@ -591,6 +593,36 @@ The user confirmed that Diary owns all calendar UI except the dashboard summary.
 Its pages include the personal task view, template editor, event calendar, and task completion actions.
 The app must use the callable API for those actions.
 
+### HTTP views and object selection: confirmed requirements
+
+Diary's HTML views accept the applicable object selector through a URL parameter or a named context variable.
+Use the technical name `diary_key` for a diary instance.
+Use the technical name `template_name` for a calendar template.
+Context variables are values supplied to the view by trusted server code.
+The view maps `diary_key` to the callable API's `calendar_key` argument.
+Neither selection method grants access beyond the caller's permissions.
+
+| View | Selector | Required behavior |
+| --- | --- | --- |
+| Personal tasks | `diary_key` supplied | Show this user's open tasks and current role-owned tasks in the selected permitted diary. |
+| Personal tasks | No `diary_key` | Show those tasks across all permitted open diaries, grouped by diary name. |
+| Template | `template_name` supplied | Show the most recent version of that named template. |
+| Template | No `template_name` | Show all templates available to the user for selection. |
+
+Each task group retains its diary key and displays the diary name as its heading.
+The API requires a name when the caller creates a diary.
+The task view excludes completed tasks and tasks in closed diaries.
+The normal personal-entry visibility rules apply in both task view modes.
+The personal task view without a diary key is the default logged-in view.
+
+The most recent template version is the version with the highest version number, including a draft if one exists.
+Only DiaryManagers can edit the selected template under the confirmed template rules.
+An absent template name opens the chooser rather than selects `DIARY_TEMPLATE_NAME` automatically.
+That setting continues to select the default template for calendar creation.
+These view requirements do not change the current callable API's approved-version default.
+
+### Page structure and styling
+
 Diary includes a default base template and a namespaced stylesheet.
 Each Diary page must be a complete browser view through that base template.
 Its reusable content belongs in a fragment that a host can include in its own page.
@@ -611,6 +643,7 @@ The default must not include tasks owned only by other people or other roles.
 The current `personal_tasks` API supplies that list for one Diary key.
 The confirmed API scope also requires personal task access across all instances permitted by the host.
 The caller can instead select one permitted instance.
+Without a diary key, the HTTP view groups the user's open tasks by diary name across all permitted open instances.
 The caller supplies the current role memberships through the Actor.
 Whole-team tasks can appear through an explicit list option.
 The full event calendar remains an explicit navigation choice for users with calendar view permission.
