@@ -4,6 +4,7 @@ Date: 2 November 2026.
 
 Status: Draft with confirmed requirements.
 Section 8 records the confirmed access and entry creation requirements.
+Section 9 records the confirmed startup and ownership validation requirements.
 Section 6 records the confirmed task owner requirement.
 Section 6 also records the confirmed first-release requirement for task progress and completion.
 Section 4 records the separate Diary app requirement.
@@ -15,7 +16,7 @@ The app, models, migrations, and callable API now exist.
 The standalone task list template and its reusable fragment also exist.
 The routed pages and event lifecycle connections still need implementation.
 
-Language reference: ASD-STE100, Issue 9. Section 12 records the language review.
+Language reference: ASD-STE100, Issue 9. Section 13 records the language review.
 
 ## 1. Purpose
 
@@ -42,7 +43,7 @@ A calendar template defines those common entries and their date rules.
 Diary is for configured DiaryUsers and DiaryManagers who have actions to complete for a successful event.
 For Garage Sale, these roles use the ExecMember and Officer groups defined in `settings.py`.
 The user confirmed that Diary has no public view.
-Section 11 includes questions for the next discussion.
+Section 12 includes questions for the next discussion.
 
 ## 2. Technical names
 
@@ -931,7 +932,56 @@ The template view and current calendar view need distinct permission checks.
 Diary has no public view.
 The server must restrict pages, downloads, and calendar feeds to configured Diary roles within the host's permitted scope.
 
-## 9. Reminders: subsequent design
+## 9. Startup validation
+
+### Configured access groups
+
+At startup, Diary must confirm that Django settings specify both DiaryManager and DiaryUser mappings.
+Each referenced group must exist in the database.
+Each referenced group must have at least one user.
+These checks apply to every group named by either mapping.
+Diary must use the configured Django user model through `get_user_model()` for user-model access.
+
+A missing mapping, missing group, or empty group must raise `ImproperlyConfigured` during startup.
+The error must identify the relevant setting and each invalid group.
+It must distinguish an absent group from a group with no users.
+The error must explain that the administrator must correct the settings or group membership.
+
+### Task ownership roles
+
+At startup, Diary must validate every role in `DIARY_TASK_OWNER_ROLES`.
+Each role must exist in the database and have at least one member.
+An absent or empty configured ownership role must raise an actionable `ImproperlyConfigured` exception.
+This check helps ensure that template instances have people who can progress their tasks.
+Database and role setup commands must remain available before application startup validation succeeds.
+
+### Diary creation
+
+Diary creation must repeat the ownership-role existence and membership checks against the current database state.
+It must reject creation when a configured ownership role is absent or empty.
+The API must identify the affected roles in its validation error.
+A failed check must not leave a partly created diary.
+
+### Template editing
+
+The template editor must show an on-screen warning when a selected task ownership group has no members.
+The warning must identify the group and the affected task.
+The editor must read current membership when it performs this check.
+The warning does not replace the validation required at diary creation.
+
+### Runtime warning limit
+
+**Warning:** Diary does not continuously monitor ownership groups for deletion or membership changes.
+If a task-owning group becomes empty or is deleted, Diary gives no automatic runtime warning.
+The next server restart, diary creation, or template edit is the next validation or warning point.
+The API usage guide must document this limit.
+
+### Implementation status
+
+The current startup check validates the existence of configured task ownership roles.
+Access-group validation, membership checks, creation checks, and template editor warnings remain implementation work.
+
+## 10. Reminders: subsequent design
 
 Reminders are a separate phase.
 The first version does not send them.
@@ -969,7 +1019,7 @@ If the service starts after a scheduled send time, a rule must control the misse
 A completed task must stop subsequent reminders for that task.
 A date change must cancel pending messages that use the old date.
 
-## 10. Proposed phases
+## 11. Proposed phases
 
 | Phase | Result | Decision before the next phase |
 | --- | --- | --- |
@@ -984,7 +1034,7 @@ The other phase assignments remain proposals.
 Reminders are confirmed as outside V1 scope.
 Unresolved rules still need approval before implementation.
 
-## 11. Open decisions
+## 12. Open decisions
 
 1. Resolved: Diary has no public view. Configured DiaryUsers and DiaryManagers have access within the scope permitted by the host.
 2. Resolved: The selection of template tasks is outside the feature definition. Diary provides a generic capability to hold those tasks.
@@ -1013,7 +1063,7 @@ Unresolved rules still need approval before implementation.
 
 Template content does not prevent implementation of the generic Diary capability.
 
-## 12. Language review
+## 13. Language review
 
 The author got the official Issue 9 PDF on 2 November 2026.
 The review used its writing rules and dictionary.
@@ -1026,7 +1076,7 @@ Status: Draft language inspection.
 A full inspection of word meanings and technical names is necessary.
 This draft does not claim full ASD-STE100 compliance.
 
-## 13. References
+## 14. References
 
 - [ASD-STE100, Issue 9](https://www.asd-ste100.org/assets/files/ASD-STE100_ISSUE9.pdf).
 - [Existing event fields](../../GarageSale/models.py).

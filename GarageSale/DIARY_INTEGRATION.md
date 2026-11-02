@@ -7,7 +7,7 @@ Date: 2 November 2026.
 
 This document records Garage Sale responsibilities when the application uses the generic Diary app.
 Calendar creation timing is a host integration decision, not a generic Diary requirement.
-This document replaces open decision 11 in the [event calendar design](../docs/design/event-calendar.md#11-open-decisions).
+This document replaces open decision 11 in the [event calendar design](../docs/design/event-calendar.md#12-open-decisions).
 
 An event is a Garage Sale occasion represented by `EventData`.
 The activation date is the `use_from` value used by the host's current-event selection rules.
