@@ -5,6 +5,8 @@ Date: 2 November 2026.
 Status: Draft with confirmed requirements.
 Section 8 records the confirmed access and entry creation requirements.
 Section 6 records the confirmed task owner requirement.
+Section 4 records the separate Diary app requirement.
+Section 6 also records the rule that excludes circular predecessor choices.
 The other design proposals still need approval unless the text identifies a confirmed requirement.
 
 Scope: Design documents only. This work does not change the application.
@@ -46,6 +48,7 @@ The names apply to the calendar system and the existing website.
 | Booking date | A date that starts or stops permission to make a booking. |
 | Calendar | The website function that shows dates and tasks for an event. |
 | Calendar entry | One item that the calendar shows. |
+| Diary | The separate Django app for calendar templates, event calendars, entries, and task dependencies. |
 | Personal entry | A calendar entry that an ExecMember creates with themselves as its owner. |
 | Calendar template | The common entries and date rules for future event calendars. |
 | Template version | An identified set of template entries that the team can approve. |
@@ -61,6 +64,9 @@ The names apply to the calendar system and the existing website.
 | Owner type | The choice of a person, a role, or the whole team for a task. |
 | Role owner | A selected project role whose members must do a task. |
 | Whole-team task | A task for the whole team, with no selected person or role. |
+| Predecessor | A task that must be completed before another task becomes ready. |
+| Successor | A task that uses another task as a predecessor, directly or through other tasks. |
+| Circular dependency | A chain of task dependencies that returns to its first task. |
 | Reminder | A message that tells a person about a date or task. |
 | Public view | Calendar information that a visitor can read without an account. |
 | Team view | Calendar information for users with the applicable team permissions. |
@@ -99,6 +105,45 @@ The design does not select a new rule for the website.
 An event selector lets the user select the event for the calendar display.
 
 ## 4. Three possible designs
+
+### Separate Diary app: confirmed requirement
+
+The user confirmed that the Diary needs a separate Django app.
+The app name is `Diary`.
+This document defines its design only.
+It does not create the app or its database tables.
+
+The Diary app owns calendar templates, template versions, event calendars, entries, and task dependencies.
+It also owns the calendar pages and the applicable permission checks.
+Completion records and reminder rules belong to Diary when those features are added.
+
+`GarageSale.EventData` remains the source for event dates and booking dates.
+Diary links each event calendar to its `EventData` record.
+Diary must not keep another editable copy of those event fields.
+It can calculate task dates from those fields through its own date rules.
+
+The existing user and group models remain the source for people and roles.
+Diary uses their identifiers for task ownership.
+It must not create another user list or role system.
+All Diary database tables use PostgreSQL.
+
+```mermaid
+flowchart LR
+    A[GarageSale: EventData] -->|Event and booking dates| D[Diary]
+    B[Existing users and groups] -->|People and roles| D
+    C[Existing access policy] -->|Applicable permissions| D
+    D --> E[Calendar templates and versions]
+    D --> F[Event calendars and entries]
+    D --> G[Task dependencies]
+    D --> H[Calendar pages]
+    D --> I[Completion and reminders: subsequent phases]
+```
+
+The existing access policy must include the Diary permissions when implementation starts.
+Diary must use the existing team page styles and navigation conventions.
+The app must not change the rule that selects `request.current_event`.
+
+### Calendar functions
 
 | Alternative | First version | Main benefit | Main limit |
 | --- | --- | --- | --- |
@@ -370,6 +415,56 @@ The system must not silently change those tasks into whole-team tasks.
 The rule for that change needs approval before implementation.
 Whether each role member must confirm task completion is also an open decision.
 
+### Predecessor editor
+
+The dependency feature is a design proposal.
+The user confirmed that the predecessor selector must exclude choices that create circular dependencies.
+The editor must prevent those choices before save.
+
+Each task has a human-readable name and a stable entry key.
+The proposal requires a unique task name within its template version or event calendar.
+Dependencies use the entry key, so a name change does not break a link.
+Each task can have zero or more predecessors.
+
+The first editor proposal uses a task list and a details form.
+The form has a searchable predecessor list with checkboxes.
+Selected predecessors stay visible when the search changes.
+The form also shows the tasks that use this task as a predecessor.
+A read-only diagram is an additional inspection aid.
+A graphical connection editor is not necessary for the first version.
+
+When the user edits a task, the selector must exclude these choices:
+
+- The task itself.
+- Every direct successor of the task.
+- Every indirect successor of the task.
+- Tasks from another template version or event calendar.
+
+```mermaid
+flowchart LR
+    A[Task A] --> B[Task B]
+    B --> C[Task C]
+    D[Task D: independent]
+```
+
+An arrow means that the first task is a predecessor of the next task.
+When the user edits Task A, the selector excludes Task A, Task B, and Task C.
+Task D is an available predecessor choice.
+When the user edits Task C, Task A and Task B are available choices.
+
+The selector must calculate available choices again after a dependency change.
+It must use the proposed links in the form, including changes that the user did not save yet.
+It must not show invalid choices with only a warning.
+
+The server must also examine all dependencies before save.
+An old form or a direct request must not create a circular dependency.
+Concurrent saves must not combine into a circular dependency.
+The proposal serializes dependency changes within the affected template version or event calendar.
+If another edit makes a selection invalid, the server rejects the save and supplies an updated list.
+
+Task readiness, completion rules, and Officer overrides still need approval.
+Dependency editing does not change due dates automatically.
+
 ## 7. Changes to an event date
 
 A change to the event date changes dates that depend on it.
@@ -590,6 +685,8 @@ They do not give approval for implementation work.
 19. Does a role-owned task need one completion record or confirmation from every role member?
 20. Are personal entries visible to all ExecMembers, or only to the owner and permitted Officers?
 21. Does an Officer's template addition approve its new version, or is a separate approval step necessary?
+22. Must dependencies prevent completion, or only identify tasks that are not ready?
+23. Can Officers override a dependency, and what record must that action create?
 
 The first three questions give the next design step.
 
