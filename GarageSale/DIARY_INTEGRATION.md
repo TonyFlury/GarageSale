@@ -46,6 +46,19 @@ Diary does not read this custom request attribute or select the current event.
 A missing source value does not mean that its date has passed.
 Diary shows “Date not set” when a necessary date has no value.
 
+## Host group mapping and page context
+
+Garage Sale maps Officer to DiaryManager and ExecMember to DiaryUser through Django settings.
+Its access policy also makes each Officer an ExecMember.
+These group names and that membership rule belong to Garage Sale.
+Diary uses the configured Diary roles without those project-specific names.
+
+The Garage Sale current-event adapter selects a permitted Diary key from its event record.
+Host pages can display the event name and event date separately.
+Diary pages identify their instance by its required diary name.
+They do not require event metadata or an event date for the page heading.
+An event date supplied as a named milestone remains an ordinary Diary input.
+
 ## Open lifecycle decision
 
 Should Garage Sale create the Diary calendar during event creation?

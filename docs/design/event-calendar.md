@@ -797,11 +797,10 @@ An account or team membership alone does not give calendar access.
 
 The user confirmed that Diary uses the role names DiaryManager and DiaryUser.
 The host maps its groups to these roles through `settings.py`.
-Garage Sale uses Officer for DiaryManager and ExecMember for DiaryUser.
 Other projects can use different group names without changes to Diary.
 
 A DiaryManager can view any calendar instance that the host project permits.
-Diary adds no current-event restriction or other calendar selection policy for managers.
+Diary adds no separate calendar selection policy for managers.
 The host can restrict which calendar instances a manager can access.
 
 A DiaryUser can view tasks associated with that user in the instances permitted by the host.
@@ -815,51 +814,43 @@ Diary enforces that supplied scope without inventing another calendar access pol
 Neither API accepts permission grants from an untrusted request body.
 HTTP requests need authentication and the same access checks as callable API requests.
 
-The following table records the Garage Sale group mapping and current-event view.
-It does not limit the generic API to the current event.
-
-The user confirmed these read permissions.
-
-| User group | View the calendar template | View the calendar for the current event |
+| Configured Diary role | View templates | View tasks in permitted diary instances |
 | --- | --- | --- |
-| `Officer` | Yes. | Yes, through `ExecMember` membership. |
-| `ExecMember` without `Officer` membership | No grant from this requirement. | Yes, for all members of the group. |
-
-The existing access policy makes each Officer an ExecMember.
-Thus, each Officer can also view the calendar for the current event.
-Other group permissions must use the existing access policy or a subsequent explicit decision.
+| DiaryManager | Yes. | All entries within the host's permitted scope. |
+| DiaryUser without DiaryManager membership | No grant from this role. | Tasks associated with the user or their current groups. |
 
 The template view shows its entries, date rules, and template version.
-The calendar view receives a permitted Diary key from the host.
-The page must show the event name and event date.
+The diary view identifies each selected instance by its permitted Diary key and required diary name.
+A diary page displays the diary name.
+It does not require an external event name or event date.
+Without a diary key, the personal task view groups the user's open tasks by diary name.
+Section 6 defines the URL and context selectors.
 
 ```mermaid
-flowchart LR
-    A[Officer] --> B[View the calendar template]
-    A --> C[ExecMember membership]
-    D[All other ExecMembers] --> C
-    C --> E[View the current event calendar]
-    E --> F{Does the current event exist?}
-    F -->|No| G[Show No current event]
-    F -->|Yes| H{Does its calendar exist?}
-    H -->|No| I[Show Calendar not prepared]
-    H -->|Yes| J[Show the event calendar]
+flowchart TD
+    A[Authenticated caller] --> B[Apply configured roles and host diary scope]
+    B --> C[DiaryManager]
+    B --> D[DiaryUser]
+    C --> E[Template chooser or selected template]
+    C --> F[Permitted diary name and entries]
+    D --> G[Associated tasks grouped by diary name]
 ```
 
-Opening the view must not create a calendar or copy template entries.
-The page must not substitute another event if the current event is absent.
+Opening a view must not create a diary or copy template entries.
+The view must preserve the selected diary key.
+The host's event selection and group mapping belong in its integration document.
 
 ### Entry creation: confirmed requirements
 
 The user confirmed these entry creation permissions.
-For Garage Sale, the entry creation forms use the calendar for the current event.
+Entry creation targets a selected diary instance within the caller's permitted scope.
 
 | Action | DiaryUser without DiaryManager membership | DiaryManager |
 | --- | --- | --- |
-| Add a personal entry for themselves. | Yes. | Yes, through DiaryUser membership. |
+| Add a personal entry for themselves. | Yes. | Yes. |
 | Add an entry for a specific person. | Only for themselves. | Yes. |
 | Add an entry for all members of a selected user role. | No grant. | Yes. |
-| Also add the new entry to the template for future events. | No grant. | Yes. |
+| Also add the new entry to the template for future diaries. | No grant. | Yes. |
 
 The server sets the owner of a DiaryUser's personal entry to that DiaryUser.
 The user cannot select another person or role through the personal entry action.
@@ -870,10 +861,10 @@ A DiaryManager can select a specific person or a user role for the new entry.
 The existing person ownership rule uses a selected DiaryUser.
 Role ownership includes all members of the selected role.
 
-The DiaryManager form includes an “Add to template for future events” choice.
+The DiaryManager form includes an “Add to template for future diaries” choice.
 That choice is off initially.
-If the DiaryManager selects it, the save adds the entry to this event calendar and to a new template version.
-Without that choice, the save adds the entry only to this event calendar.
+If the DiaryManager selects it, the save adds the entry to the selected diary and to a new template version.
+Without that choice, the save adds the entry only to the selected diary.
 
 The template addition must keep a reusable date rule.
 A one-time date needs an annual date rule or calculated date rule before the entry can become a recurring template entry.
@@ -881,21 +872,21 @@ The form must show the future date rule and owner choice before save.
 It must not change an exact date into an annual date without the DiaryManager's selection.
 
 The new template entry must have an entry key.
-The current event entry must identify that key when the DiaryManager also adds it to the template.
-The save must not create a second current event entry from the template addition.
-Other existing event calendars must stay unchanged.
+The selected diary entry must identify that key when the DiaryManager also adds it to the template.
+The save must not create a second entry in the selected diary from the template addition.
+Other existing diaries must stay unchanged.
 
 ```mermaid
 flowchart TD
     A[Add a calendar entry] --> B{Which permission applies?}
     B -->|DiaryUser personal entry| C[Set the owner to the current user]
     B -->|DiaryManager entry| D[Select a person or user role]
-    C --> E[Save in the current event calendar]
+    C --> E[Save in the selected diary]
     D --> F{Also add to the template?}
     F -->|No| E
     F -->|Yes| G[Examine the reusable date rule and owner choice]
-    G --> H[Save one event entry and one new template entry]
-    H --> I[Use the new template version for future events]
+    G --> H[Save one diary entry and one new template entry]
+    H --> I[Use the new template version for future diaries]
 ```
 
 The save must prevent repeated requests from adding the same entry twice.
@@ -914,9 +905,9 @@ The server must check the applicable permission on each request.
 A hidden navigation item alone does not prevent access.
 The same checks apply to direct page URLs, downloads, and calendar feeds.
 
-Changing an event identifier does not grant access outside the calendar scope supplied by the host.
+Changing a Diary key does not grant access outside the calendar scope supplied by the host.
 The template view permission does not give permission to change the template or approve a template version.
-The Officer entry creation permission includes the template addition defined above.
+The DiaryManager entry creation permission includes the template addition defined above.
 Only DiaryManagers can change templates.
 DiaryManagers approve new templates and versions through the save action in V1.
 A separate approval step is outside V1 scope.
@@ -927,7 +918,7 @@ Other task changes and reminder controls must also have their own access rules.
 The design does not grant those additional rights.
 
 The host configuration must preserve the confirmed view and entry creation rules.
-The template view and current calendar view need distinct permission checks.
+The template view and diary view need distinct permission checks.
 
 Diary has no public view.
 The server must restrict pages, downloads, and calendar feeds to configured Diary roles within the host's permitted scope.
