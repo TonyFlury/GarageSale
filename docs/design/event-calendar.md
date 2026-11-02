@@ -9,7 +9,10 @@ Section 4 records the separate Diary app requirement.
 Section 6 also records the rule that excludes circular predecessor choices.
 The other design proposals still need approval unless the text identifies a confirmed requirement.
 
-Scope: Design documents only. This work does not change the application.
+Scope: Design and the initial Diary data layer.
+The app, models, migrations, and callable API now exist.
+The standalone task list template and its reusable fragment also exist.
+The routed pages and event lifecycle connections still need implementation.
 
 Language reference: ASD-STE100, Issue 9. Section 12 records the language review.
 
@@ -49,6 +52,10 @@ The names apply to the calendar system and the existing website.
 | Calendar | The website function that shows dates and tasks for an event. |
 | Calendar entry | One item that the calendar shows. |
 | Diary | The separate Django app for calendar templates, event calendars, entries, and task dependencies. |
+| Diary key | The UUID that the API returns for an event calendar. |
+| Milestone | A named date definition that a template can use. |
+| Milestone date | The value of a named milestone in one event calendar. |
+| Actor | The trusted caller identity, group names, and permitted calendar keys supplied to the API. |
 | Personal entry | A calendar entry that an ExecMember creates with themselves as its owner. |
 | Calendar template | The common entries and date rules for future event calendars. |
 | Template version | An identified set of template entries that the team can approve. |
@@ -83,7 +90,7 @@ Mermaid is the diagram format in this document.
 ## 3. Existing information
 
 The `EventData` model already keeps these dates.
-The calendar must use these fields for the same dates.
+The calling application supplies these dates through the Diary API when the template needs them.
 
 | Existing field | Meaning in the calendar |
 | --- | --- |
@@ -110,28 +117,38 @@ An event selector lets the user select the event for the calendar display.
 
 The user confirmed that the Diary needs a separate Django app.
 The app name is `Diary`.
-This document defines its design only.
-It does not create the app or its database tables.
+The initial app, models, migrations, and callable API implement the data layer.
+Diary pages are a subsequent implementation step.
 
 The Diary app owns calendar templates, template versions, event calendars, entries, and task dependencies.
 It also owns the calendar pages and the applicable permission checks.
 Completion records and reminder rules belong to Diary when those features are added.
 
-`GarageSale.EventData` remains the source for event dates and booking dates.
-Diary links each event calendar to its `EventData` record.
-Diary must not keep another editable copy of those event fields.
-It can calculate task dates from those fields through its own date rules.
+Diary is independent of other project apps.
+Its models have no foreign keys to event, user, or group models in other apps.
+Its migration has no dependency on those apps.
+Its API receives references and date values from the caller.
 
-The existing user and group models remain the source for people and roles.
-Diary uses their identifiers for task ownership.
+`GarageSale.EventData` is the source for this website's event dates and booking dates.
+The host stores the returned Diary key in `EventData.diary_key`.
+That field is a nullable UUID, not a foreign key.
+The API does not import or change `EventData`.
+The caller must save the returned key against the correct event.
+
+Milestone dates in Diary are input values from the caller.
+The caller must supply changed values through the API when the source dates change.
+Diary uses those values to calculate task dates.
+
+The caller supplies person references, role references, and current group membership.
+Diary stores those references without a database link to another app.
 It must not create another user list or role system.
 All Diary database tables use PostgreSQL.
 
 ```mermaid
 flowchart LR
-    A[GarageSale: EventData] -->|Event and booking dates| D[Diary]
-    B[Existing users and groups] -->|People and roles| D
-    C[Existing access policy] -->|Applicable permissions| D
+    A[Caller: event and booking dates] -->|Callable API| D[Diary]
+    B[Caller: people and roles] -->|Trusted references| D
+    C[Settings: permission groups] -->|API access rules| D
     D --> E[Calendar templates and versions]
     D --> F[Event calendars and entries]
     D --> G[Task dependencies]
@@ -139,9 +156,61 @@ flowchart LR
     D --> I[Completion and reminders: subsequent phases]
 ```
 
-The existing access policy must include the Diary permissions when implementation starts.
+The API uses the permission group mapping in settings.
 Diary must use the existing team page styles and navigation conventions.
 The app must not change the rule that selects `request.current_event`.
+
+### Callable API, milestones, and calendar keys
+
+The user confirmed that Diary needs a formal callable API.
+The API is `Diary.api`, version 1.
+It is a Python interface, not an HTTP endpoint.
+
+The caller can define multiple named milestones.
+For example, `add_board_bookings_open` identifies the date on which advertising board bookings open.
+A milestone has a stable name and a human-readable label.
+Each event calendar has its own milestone date values.
+
+The template can use a milestone directly or apply a day count to it.
+For example, a task can be due 42 days after `add_board_bookings_open`.
+The task rule uses that milestone and a day count of positive 42.
+
+`required_milestones` enumerates the milestones used by a selected template version.
+It returns each milestone once, with its name and label.
+It excludes milestones used only by other template versions.
+Annual dates and one-time dates do not add a milestone requirement.
+
+`DIARY_TEMPLATE_NAME` selects the default template by name in settings.
+The API uses that template's highest approved version when the caller does not select a version.
+A changed setting affects new calendars, not existing calendars.
+This permits reuse of Diary with a different template in another application.
+The API reports an error if the configured template has no approved version.
+
+```mermaid
+sequenceDiagram
+    participant H as Calling application
+    participant D as Diary API
+    H->>D: Read required milestones for a template version
+    D-->>H: Milestone names and labels
+    H->>D: Create calendar with milestone dates
+    D-->>H: Stable Diary key
+    H->>H: Save the key against the event
+    H->>D: Read tasks with the stored key
+    D-->>H: Task list
+```
+
+Repeated creation with the same event reference and the same inputs returns the same key.
+Different inputs for that reference need an explicit update through the API.
+
+`DIARY_PERMISSION_GROUPS` defines the groups for use, view, edit, and template view actions.
+The host currently uses ExecMember and Officer for use and view actions.
+It uses Officer for edit and template view actions.
+The API denies an action if its group mapping is absent.
+
+The caller must supply a trusted Actor from its authenticated identity system.
+It must not accept Actor group names or permitted keys from an untrusted request body.
+The API limits calendar access to the keys in that Actor.
+See [the callable API guide](../../Diary/README.md) for exact signatures and examples.
 
 ### Calendar functions
 
@@ -185,8 +254,8 @@ flowchart LR
 
 The template keeps the entry names, descriptions, entry keys, and date rules.
 An annual date keeps its month, day, and year rule.
-A calculated date keeps its source field and day count.
-An existing event field keeps its field reference.
+A calculated date keeps its milestone reference and day count.
+A source date entry keeps its milestone reference.
 
 The template does not keep calculated dates for a particular event year.
 A one-time date belongs to one event calendar.
@@ -263,7 +332,8 @@ Each calculated date has one source date and one day count.
 The day count can be before or after the source date.
 
 Existing booking dates use direct values from `EventData`.
-The calendar does not calculate replacement values for these fields.
+The caller supplies those values as named milestone dates.
+The calendar does not calculate replacement values for the external fields.
 
 ### Fixed dates
 
@@ -415,6 +485,55 @@ The system must not silently change those tasks into whole-team tasks.
 The rule for that change needs approval before implementation.
 Whether each role member must confirm task completion is also an open decision.
 
+### Diary pages and dashboard section
+
+The user confirmed that Diary owns all calendar UI except the dashboard summary.
+Its pages include the personal task view, template editor, event calendar, and task completion actions.
+The app must use the callable API for those actions.
+
+Diary includes a default base template and a namespaced stylesheet.
+Each Diary page must be a complete browser view through that base template.
+Its reusable content belongs in a fragment that a host can include in its own page.
+The host must not include a complete Diary document inside another HTML document.
+The host can override them through Django's normal template loaders and static file finders.
+An extra stylesheet can change the default CSS variables without replacing the complete stylesheet.
+The API guide includes search-order examples and deployment checks for these overrides.
+`DIARY_TEMPLATE_NAME` selects calendar data, not the HTML base template.
+
+The personal view includes tasks assigned to the user and tasks assigned to any role that includes that user.
+`personal_tasks` supplies that list for one Diary key.
+The caller supplies the current role memberships through the Actor.
+Whole-team tasks can appear through an explicit list option.
+
+The dashboard has an active tasks section only when the Diary app is enabled.
+The dashboard must test app availability before it imports the Diary API.
+If Diary is disabled, the dashboard does not show the section or call its API.
+The dashboard uses the current event's stored Diary key.
+
+`active_tasks` returns the open tasks for that key.
+Each result identifies whether the task is ready or blocked.
+A separate result value identifies lateness.
+These values are calculations, not database flags.
+
+A task is late when its due date is today or earlier and the task is not completed.
+A blocked task can also be late.
+A task with no due date shows “Date not set” and is not late.
+Date comparisons use the Diary time zone in settings.
+
+Completed tasks do not appear in the active task list.
+The API keeps their completion records and their due dates at completion.
+The dashboard must show an explicit empty state when the event has no Diary key or has no open tasks.
+
+```mermaid
+flowchart TD
+    A[Open the dashboard] --> B{Is Diary enabled?}
+    B -->|No| C[Do not show the task section]
+    B -->|Yes| D{Does the current event have a Diary key?}
+    D -->|No| E[Show Calendar not prepared]
+    D -->|Yes| F[Call active_tasks with the key]
+    F --> G[Show readiness and lateness]
+```
+
 ### Predecessor editor
 
 The dependency feature is a design proposal.
@@ -501,7 +620,7 @@ It must keep the earlier records available to users with the applicable permissi
 
 ## 8. Access
 
-Calendar access must use the existing permission system.
+Calendar access must use the configured Diary permission groups and trusted caller identity.
 An account or team membership alone does not give calendar access.
 
 ### Confirmed access requirements
@@ -609,7 +728,7 @@ The confirmed entry creation actions need their own permission checks.
 Other task changes and reminder controls must also have their own access rules.
 The design does not grant those additional rights.
 
-The project access matrix must include the confirmed view and entry creation permissions before implementation.
+The host configuration must preserve the confirmed view and entry creation rules.
 The template view and current calendar view need distinct permission checks.
 
 If the public view is added, each entry needs an explicit public status.

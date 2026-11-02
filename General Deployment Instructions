@@ -46,6 +46,16 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
 
         python manage.py migrate
 
+        Diary data layer: deploy Diary migrations 0001_initial and 0002, plus
+        GarageSale migration 0026_eventdata_diary_key. All Diary tables use
+        PostgreSQL. Existing events keep a null diary_key until the caller
+        creates a calendar through Diary.api and saves the returned UUID.
+        Configure DIARY_TEMPLATE_NAME, DIARY_PERMISSION_GROUPS and
+        DIARY_TIME_ZONE for the target site. No template data is seeded.
+        The routed Diary pages, dashboard section and automatic event callbacks are
+        not included in this data-layer release. API setup and examples are
+        in Diary/README.md. Collect static files for the default Diary styling.
+
         Craft Market pitch-fee workflow: deploy Contributors migration
         0009_contributorevent_details and 0010_alter_contributorevent_status,
         and CraftMarket migrations 0013_pitch_payment and 0014_fee_pending_status.

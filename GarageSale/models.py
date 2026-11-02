@@ -127,6 +127,7 @@ class EventData(models.Model):
     """Various Event settings - critical data
     """
     objects = models.Manager()
+    diary_key = models.UUIDField(null=True, blank=True, unique=True, editable=False)
     CurrentFuture = CurrentFuture()
     event_logo = models.FileField(null=True, upload_to=save_event_logo_to)    # The specific logo for this event
     event_date = models.DateField()                                             # The date of the actual sale event
