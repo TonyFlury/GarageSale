@@ -323,17 +323,24 @@ A template change creates a new template version.
 New events use a selected approved version.
 Existing event calendars keep their copied entries and rules.
 
-A user can apply a new template version to an existing event only after a date review.
-That review must show added entries, removed entries, changed text, and changed rules.
-The entry key connects each existing entry to the same entry in the new version.
+The user confirmed that template changes are not retrospective by default.
+A DiaryManager can explicitly add a new template item to an existing active diary in V1.
+This action copies the selected item rather than replaces the diary with a new template version.
+It leaves existing tasks, instance changes, and completion records unchanged.
+Other diaries remain unchanged.
 
-The update must keep completed task records unchanged.
-The user must give explicit approval before the update changes event-specific entries.
-It must not repeat completed work or send the same reminder again.
-The system must record the user, time, and selected template version for the update.
+The new task uses the selected template rule and the target diary's milestone dates.
+The action must permit a task whose calculated date is already late.
+It keeps that calculated date and shows the normal Late label and red shadowed border.
+It does not move the date forward or mark the task complete.
+The stable entry key must prevent repeated additions of the same template item to the same diary.
 
-The first version does not need this update function.
-The team can improve the template for future events without that function.
+The interface must identify the target diary, selected item, and calculated date before the save.
+Handling of absent required milestones and absent predecessor tasks still needs design for this action.
+That design must respect the separate V2 scope for changes to milestone dates.
+
+Replacement of existing tasks or removal of items through a full template update remains a separate proposal.
+Any such proposal must preserve completed records and require a review of the proposed changes.
 
 ## 5. Date rules
 
@@ -892,7 +899,7 @@ Unresolved rules still need approval before implementation.
 11. Outside generic Diary scope: Calendar creation timing and activation checks belong to Garage Sale integration. See [the host integration design](../../GarageSale/DIARY_INTEGRATION.md).
 12. Resolved: Only DiaryManagers can change and approve templates. V1 has no separate approval step.
 13. Resolved: Only DiaryManagers can modify tasks copied from a template into a calendar instance. Completion permissions remain separate.
-14. Must the first version apply new template versions to existing event calendars?
+14. Resolved: Template changes are not retrospective by default. V1 permits explicit addition of a new template item to an active diary, including a late task.
 15. Must a template identify an initial owner by person or role, or leave that choice to each event?
 16. Who can change a task owner or complete a role-owned or whole-team task?
 17. Deferred beyond V1: Who must receive reminders for whole-team tasks?
