@@ -367,14 +367,14 @@ That design must respect the separate V2 scope for changes to milestone dates.
 ## 5. Date rules
 
 Each calendar entry identifies its date type.
-The date type can be an existing event field, a fixed date, or a calculated date.
+The date type can be a named milestone, a fixed date, or a calculated date.
 
 Each calculated date has one source date and one day count.
 The day count can be before or after the source date.
 
-Existing booking dates use direct values from `EventData`.
-The caller supplies those values as named milestone dates.
-The calendar does not calculate replacement values for the external fields.
+The caller supplies named milestone dates through the API.
+Diary uses those values without knowledge of the caller's source models or fields.
+The [Garage Sale integration document](../../GarageSale/DIARY_INTEGRATION.md#source-dates-and-event-selection) defines that project's source-field mapping.
 
 ### Fixed dates
 
@@ -383,11 +383,11 @@ An annual date repeats on the same month and day.
 A one-time date includes its year.
 
 For example, an annual task can occur on 1 March.
-Its date does not move when the event moves from 20 June to 27 June in the same year.
+Its date does not move when a milestone changes within the same calendar year.
 
-The first proposal uses the event year for an annual date.
-An annual date before the event year needs an explicit year rule.
-For example, 1 December in the previous year uses the event year minus one.
+Annual dates use the calendar year supplied by the caller through the technical API argument `event_year`.
+An annual date in a different year needs an explicit year offset.
+For example, 1 December in the previous year uses the supplied year minus one.
 
 The system must identify an annual date that does not exist in the selected year.
 For example, 29 February does not exist in 2027.
@@ -398,21 +398,21 @@ It must not silently change the date to 28 February or 1 March.
 
 | Example entry | Source | Rule | Example result |
 | --- | --- | --- | --- |
-| Event day | `event_date` | Use the stored date. | 27 June 2027 |
-| Annual preparation task | Annual date | Use 1 March in the event year. | 1 March 2027 |
+| Target milestone | Named milestone `target_date` | Use the supplied date. | 27 June 2027 |
+| Annual preparation task | Annual date | Use 1 March in the supplied calendar year. | 1 March 2027 |
 | Previous-year preparation task | Annual date | Use 1 December in the previous year. | 1 December 2026 |
 | One-time team meeting | One-time date | Use the full specified date. | 12 May 2027 |
-| Check advertising boards | Event date | Subtract 42 days. | 16 May 2027 |
-| Check the location map | Event date | Subtract 7 days. | 20 June 2027 |
-| Check the event records | Event date | Add 7 days. | 4 July 2027 |
+| Preparation check | Named milestone `target_date` | Subtract 42 days. | 16 May 2027 |
+| Final check | Named milestone `target_date` | Subtract 7 days. | 20 June 2027 |
+| Records review | Named milestone `target_date` | Add 7 days. | 4 July 2027 |
 
 These task names and dates are examples.
 They are not agreed operating instructions.
 
 ```mermaid
 flowchart TD
-    A[Select an event] --> B{Which date type?}
-    B -->|Event field| C[Read the existing field]
+    A[Select a diary instance] --> B{Which date type?}
+    B -->|Named milestone| C[Read the caller-supplied milestone date]
     B -->|Fixed date| D{Which fixed date type?}
     B -->|Calculated date| E[Apply the source date and day count]
     D -->|Annual date| F[Use the month, day, and year rule]
@@ -430,9 +430,9 @@ They include weekends and public holidays.
 Business days are a different alternative.
 A different date rule with team approval is necessary.
 
-Dates without times use the local date in `Europe/London`.
+Dates without times use the local date in the configured `DIARY_TIME_ZONE`.
 They do not represent midnight in UTC.
-UTC is the time reference for message times in the database.
+UTC is the time reference for stored timestamps.
 
 ## 6. Page design
 

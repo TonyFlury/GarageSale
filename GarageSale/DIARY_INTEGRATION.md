@@ -34,6 +34,8 @@ The event date and activation date have different functions.
 The integration must supply different labels when both appear as milestones.
 Garage Sale must define the mapping from source fields to the template's named milestones.
 Diary does not define that mapping.
+Booking milestones use the stored `EventData` booking dates directly.
+Diary does not calculate replacement values for those source fields.
 
 The repository contains different rules for selection of the current event.
 This design does not select a new rule for the website.
