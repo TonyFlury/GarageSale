@@ -647,7 +647,12 @@ flowchart TD
 
 ### Predecessor editor
 
-The dependency feature is a design proposal.
+The user confirmed that V1 permits dependency editing only in templates by DiaryManagers.
+DiaryManagers cannot add, remove, or replace predecessor links through dependency editing in live diaries.
+Template dependency changes do not propagate into existing diary instances.
+The “Close all” action completes tasks and preserves their dependency links.
+Dependency editing in live diaries can be reviewed for a future release.
+The editor layout below remains a design proposal for template editing.
 The user confirmed that the predecessor selector must exclude choices that create circular dependencies.
 The editor must prevent those choices before save.
 
@@ -663,12 +668,12 @@ The form also shows the tasks that use this task as a predecessor.
 A read-only diagram is an additional inspection aid.
 A graphical connection editor is not necessary for the first version.
 
-When the user edits a task, the selector must exclude these choices:
+When the DiaryManager edits a template task, the selector must exclude these choices:
 
 - The task itself.
 - Every direct successor of the task.
 - Every indirect successor of the task.
-- Tasks from another template version or event calendar.
+- Tasks outside the selected template version.
 
 ```mermaid
 flowchart LR
@@ -689,7 +694,7 @@ It must not show invalid choices with only a warning.
 The server must also examine all dependencies before save.
 An old form or a direct request must not create a circular dependency.
 Concurrent saves must not combine into a circular dependency.
-The proposal serializes dependency changes within the affected template version or event calendar.
+The proposal serializes dependency changes within the affected template version.
 If another edit makes a selection invalid, the server rejects the save and supplies an updated list.
 
 The V1 completion rules define readiness checks and the DiaryManager “Close all” action.
@@ -965,6 +970,7 @@ Unresolved rules still need approval before implementation.
 21. Resolved for V1: A DiaryManager's template addition approves the resulting version through the same save action.
 22. Resolved for V1: “Complete” requires no open predecessors. DiaryManagers can use “Close all” to complete the blocking chain and selected task.
 23. Resolved for V1: “Close all” records the manager, time, due date, and explanatory predecessor comments. Review force completion features for V2.
+24. Resolved for V1: DiaryManagers can edit dependencies only in templates. Changes do not propagate into live diaries. Review live dependency editing for a future release.
 
 Template content does not prevent implementation of the generic Diary capability.
 
