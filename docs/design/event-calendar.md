@@ -3,7 +3,7 @@
 Date: 2 November 2026.
 
 Status: Draft with confirmed requirements.
-Section 8 records the confirmed access requirements.
+Section 8 records the confirmed access and entry creation requirements.
 Section 6 records the confirmed task owner requirement.
 The other design proposals still need approval unless the text identifies a confirmed requirement.
 
@@ -16,7 +16,7 @@ Language reference: ASD-STE100, Issue 9. Section 12 records the language review.
 The calendar shows important dates for each Garage Sale event.
 It helps the team see what work is necessary before and after the event.
 
-The first proposal is a calendar that the team can read.
+The calendar includes read access and the confirmed entry creation actions.
 The first version does not send messages or change booking controls.
 
 The backlog includes this task list request.
@@ -46,6 +46,7 @@ The names apply to the calendar system and the existing website.
 | Booking date | A date that starts or stops permission to make a booking. |
 | Calendar | The website function that shows dates and tasks for an event. |
 | Calendar entry | One item that the calendar shows. |
+| Personal entry | A calendar entry that an ExecMember creates with themselves as its owner. |
 | Calendar template | The common entries and date rules for future event calendars. |
 | Template version | An identified set of template entries that the team can approve. |
 | Entry key | An identifier that stays the same for the same template entry across template versions. |
@@ -102,7 +103,7 @@ An event selector lets the user select the event for the calendar display.
 | Alternative | First version | Main benefit | Main limit |
 | --- | --- | --- | --- |
 | A | Show the existing event dates. | The team can check dates in one place. | The calendar does not show tasks. |
-| B | Show dates, tasks, and optional task owners. | The team can see the work sequence and task owners. | The team cannot record task completion. |
+| B | Show dates and task owners. Include the confirmed entry creation actions. | The team can see the work sequence and add entries. | The team cannot record task completion. |
 | C | Add task changes, completion records, and reminders. | The team can control the work through the calendar. | More rules and permissions are necessary. |
 
 Alternative B is the first proposal.
@@ -151,9 +152,10 @@ It reads the applicable dates from its own event.
 Thus, a template change cannot silently change an existing event calendar.
 An event date change still uses the copied rules to calculate dates again.
 
-The read-only first version can keep these copies in PostgreSQL.
+The first version can keep these copies in PostgreSQL.
 Each task can have an optional task owner.
-Task changes and completion records are additions for a subsequent phase.
+Section 8 defines the entry creation actions.
+Other task changes and completion records are additions for a subsequent phase.
 
 ### Creation and activation
 
@@ -440,6 +442,62 @@ flowchart LR
 Opening the view must not create a calendar or copy template entries.
 The page must not substitute another event if the current event is absent.
 
+### Entry creation: confirmed requirements
+
+The user confirmed these entry creation permissions.
+They apply to the calendar for the current event.
+
+| Action | ExecMember without Officer membership | Officer |
+| --- | --- | --- |
+| Add a personal entry for themselves. | Yes. | Yes, through ExecMember membership. |
+| Add an entry for a specific person. | Only for themselves. | Yes. |
+| Add an entry for all members of a selected user role. | No grant. | Yes. |
+| Also add the new entry to the template for future events. | No grant. | Yes. |
+
+The server sets the owner of an ExecMember's personal entry to that ExecMember.
+The user cannot select another person or role through the personal entry action.
+The server must enforce this rule if a request contains another owner identifier.
+
+An Officer can select a specific person or a user role for the new entry.
+The existing person ownership rule uses a selected ExecMember.
+Role ownership includes all members of the selected role.
+
+The Officer form includes an “Add to template for future events” choice.
+That choice is off initially.
+If the Officer selects it, the save adds the entry to this event calendar and to a new template version.
+Without that choice, the save adds the entry only to this event calendar.
+
+The template addition must keep a reusable date rule.
+A one-time date needs an annual date rule or calculated date rule before the entry can become a recurring template entry.
+The form must show the future date rule and owner choice before save.
+It must not change an exact date into an annual date without the Officer's selection.
+
+The new template entry must have an entry key.
+The current event entry must identify that key when the Officer also adds it to the template.
+The save must not create a second current event entry from the template addition.
+Other existing event calendars must stay unchanged.
+
+```mermaid
+flowchart TD
+    A[Add a calendar entry] --> B{Which permission applies?}
+    B -->|ExecMember personal entry| C[Set the owner to the current user]
+    B -->|Officer entry| D[Select a person or user role]
+    C --> E[Save in the current event calendar]
+    D --> F{Also add to the template?}
+    F -->|No| E
+    F -->|Yes| G[Examine the reusable date rule and owner choice]
+    G --> H[Save one event entry and one new template entry]
+    H --> I[Use the new template version for future events]
+```
+
+The save must prevent repeated requests from adding the same entry twice.
+If the template addition fails, the system must not report a successful combined save.
+The proposal saves both additions in one database transaction.
+
+Personal ownership does not by itself define private visibility.
+The visibility of personal entries is an open decision.
+The permission to add an entry does not settle permission to edit, delete, or complete it.
+
 ### Server checks and other actions
 
 The server must check the applicable permission on each request.
@@ -447,13 +505,16 @@ A hidden navigation item alone does not prevent access.
 The same checks apply to direct page URLs, downloads, and calendar feeds.
 
 The current calendar permission does not give access to another event through a changed event identifier.
-The template permission does not give permission to change the template or approve a template version.
-The calendar permission does not give permission to change tasks or send reminders.
+The template view permission does not give permission to change the template or approve a template version.
+The Officer entry creation permission includes the template addition defined above.
+Other template changes and version approval rules are open decisions.
+The calendar view permission does not give permission to change tasks or send reminders.
 
-Task changes and reminder controls must have their own access rules.
-The design does not grant these additional rights.
+The confirmed entry creation actions need their own permission checks.
+Other task changes and reminder controls must also have their own access rules.
+The design does not grant those additional rights.
 
-The project access matrix must include the confirmed view permissions before implementation.
+The project access matrix must include the confirmed view and entry creation permissions before implementation.
 The template view and current calendar view need distinct permission checks.
 
 If the public view is added, each entry needs an explicit public status.
@@ -498,8 +559,8 @@ A date change must cancel pending messages that use the old date.
 
 | Phase | Result | Decision before the next phase |
 | --- | --- | --- |
-| 1 | Template copies and a team date list with fixed dates, calculated dates, and optional task owners. | Give approval for the template, creation step, and display. |
-| 2 | Task changes and completion records in PostgreSQL. | Give approval for task states and permissions. |
+| 1 | Template copies, the team date list, optional task owners, and the confirmed entry creation actions. | Give approval for the template, creation step, and display. |
+| 2 | Other task changes and completion records in PostgreSQL. | Give approval for task states and permissions. |
 | 3 | Reminders with send records. | Give approval for recipients, timing, retries, and message content. |
 | 4 | Optional public view or calendar export. | Give approval for public data and update rules. |
 
@@ -519,14 +580,16 @@ They do not give approval for implementation work.
 9. Which entries have annual dates, and which have one-time dates?
 10. Which annual entries occur in the year before the event?
 11. Is event creation the correct step to copy the template, with activation as a check for an absent event calendar?
-12. Who can change a calendar template and give approval for a template version?
-13. Can an event calendar have extra entries or changes to template entries?
+12. Beyond Officer additions, who can change a calendar template and give approval for a template version?
+13. Who can change entries copied from the template?
 14. Must the first version apply new template versions to existing event calendars?
 15. Must a template identify an initial owner by person or role, or leave that choice to each event?
 16. Who can change a task owner or complete a role-owned or whole-team task?
 17. Who must receive reminders for whole-team tasks?
 18. Can role members outside ExecMember view tasks that their role owns?
 19. Does a role-owned task need one completion record or confirmation from every role member?
+20. Are personal entries visible to all ExecMembers, or only to the owner and permitted Officers?
+21. Does an Officer's template addition approve its new version, or is a separate approval step necessary?
 
 The first three questions give the next design step.
 
