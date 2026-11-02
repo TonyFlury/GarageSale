@@ -510,9 +510,12 @@ The API guide includes search-order examples and deployment checks for these ove
 `DIARY_TEMPLATE_NAME` selects calendar data, not the HTML base template.
 
 The personal view includes tasks assigned to the user and tasks assigned to any role that includes that user.
+The user confirmed that this personal view is the default page for a logged-in user.
+The default must not include tasks owned only by other people or other roles.
 `personal_tasks` supplies that list for one Diary key.
 The caller supplies the current role memberships through the Actor.
 Whole-team tasks can appear through an explicit list option.
+The full event calendar remains an explicit navigation choice for users with calendar view permission.
 
 The dashboard has an active tasks section only when the Diary app is enabled.
 The dashboard must test app availability before it imports the Diary API.
