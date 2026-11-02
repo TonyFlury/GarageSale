@@ -277,6 +277,10 @@ A one-time date belongs to one event calendar.
 The system must not copy that date to every new event.
 
 The event calendar copies the template entries and rules.
+Only DiaryManagers can modify tasks copied from a template into a calendar instance.
+DiaryUsers cannot modify those tasks, including tasks assigned to themselves.
+An instance task change does not change its source template or other calendar instances.
+This editing restriction does not settle task completion permissions.
 It reads the applicable dates from its own event.
 Thus, a template change cannot silently change an existing event calendar.
 An event date change still uses the copied rules to calculate dates again.
@@ -287,39 +291,21 @@ Section 8 defines the entry creation actions.
 Task progress and completion records are required in the first feature release.
 Other task changes still need approved rules.
 
-### Creation and activation
+### Calendar creation: generic interface
 
-The proposal creates the event calendar when the user creates the event.
-The team can then see tasks before the activation date.
-Some tasks can occur in the year before the event.
+The caller chooses when to create a calendar through the API.
+Diary does not define event creation, event activation, or host lifecycle callbacks.
+The caller supplies an event reference and the required milestone dates.
+The API returns a stable Diary key.
+Repeated creation with the same reference and inputs must return the same calendar.
+The database must prevent duplicate copied entries within that calendar.
 
-Activation must not create a second event calendar.
-It must not reset entries or completed task records.
-It must not give calendar access outside the roles and calendar scope permitted by the host.
+The [Garage Sale integration design](../../GarageSale/DIARY_INTEGRATION.md) records the proposed event creation and activation connections.
+That host decision is outside the generic Diary feature definition.
 
-```mermaid
-flowchart TD
-    A[Create an event] --> B{Does an event calendar exist?}
-    H[Activate an event] --> B
-    B -->|Yes| C[Keep the existing event calendar]
-    B -->|No| D{Is an approved template version selected?}
-    D -->|No| E[Show Calendar not prepared]
-    D -->|Yes| F[Copy the selected entries and rules once]
-    F --> G[Calculate dates for this event]
-    G --> I[Identify missing dates and past dates]
-```
-
-The activation check also covers events created before the calendar feature exists.
-An event without a calendar needs a selected template version before the system can prepare its calendar.
-The system must not select an unapproved template version as a substitute.
-
-Repeated creation or activation requests must not add the same entry twice.
-The event and entry key identify each copied entry.
-The database must enforce that identity.
-
-If a calculated date is already past, the calendar shows that condition.
+If a calculated date is already past, Diary shows that condition.
 It does not change the date or record the task as completed.
-Calendar preparation does not send reminders for past dates.
+Calendar creation does not send reminders.
 
 ### Template changes
 
@@ -903,9 +889,9 @@ Unresolved rules still need approval before implementation.
 8. Resolved for V1: Reminders are outside scope. Recipient and timing rules are deferred to a later release.
 9. Outside feature scope: The selection of annual or one-time dates for specific entries is application data.
 10. Outside feature scope: The selection of annual entries for the year before the event is application data.
-11. Is event creation the correct step to copy the template, with activation as a check for an absent event calendar?
+11. Outside generic Diary scope: Calendar creation timing and activation checks belong to Garage Sale integration. See [the host integration design](../../GarageSale/DIARY_INTEGRATION.md).
 12. Resolved: Only DiaryManagers can change and approve templates. V1 has no separate approval step.
-13. Who can change entries copied from the template?
+13. Resolved: Only DiaryManagers can modify tasks copied from a template into a calendar instance. Completion permissions remain separate.
 14. Must the first version apply new template versions to existing event calendars?
 15. Must a template identify an initial owner by person or role, or leave that choice to each event?
 16. Who can change a task owner or complete a role-owned or whole-team task?
