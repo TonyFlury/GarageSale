@@ -2,6 +2,8 @@
 
 Open `index.html` directly in a browser. No server, login, dependencies or database is required. Click **Add a location** to open the popup.
 
+The preview loads the existing GarageSale base and Location stylesheets, plus the existing map background and New Location icon through relative paths. Keep it inside this checkout so those assets resolve. `preview.css` adapts the standalone layout and popup using the app's dark slate section bars, grey buttons, rounded cards and blue/green selection switches.
+
 This is a standalone interactive design proposal, not connected to the live Location flow. All sample data and additions exist only in memory; refreshing resets them. The simplified new-location form stands in for the existing address/map form.
 
 ## Review paths
