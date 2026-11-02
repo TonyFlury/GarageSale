@@ -58,6 +58,8 @@ Repeated host requests must not create duplicate calendars or entries.
 - [ ] Keep the host's current-event selection rule unchanged by Diary integration.
 
 Milestone date changes and their impact review belong in V2.
+The host can call `Diary.api.close_calendar` to close an instance with open tasks.
+The host must separately decide which lifecycle action calls that operation.
 Reminders are outside V1 scope.
 Neither feature is part of this proposed initial lifecycle connection.
 

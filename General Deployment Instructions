@@ -50,6 +50,9 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         GarageSale migration 0026_eventdata_diary_key. All Diary tables use
         PostgreSQL. Existing events keep a null diary_key until the caller
         creates a calendar through Diary.api and saves the returned UUID.
+        Apply Diary migration 0003_calendar_closure before using close_calendar.
+        This migration adds closure fields and a constraint.
+        Existing diaries remain open.
         Configure DIARY_TEMPLATE_NAME, DIARY_PERMISSION_GROUPS and
         DIARY_TIME_ZONE for the target site. No template data is seeded.
         The routed Diary pages, dashboard section and automatic event callbacks are

@@ -307,6 +307,22 @@ If a calculated date is already past, Diary shows that condition.
 It does not change the date or record the task as completed.
 Calendar creation does not send reminders.
 
+### Close a diary instance: confirmed requirement
+
+The caller can close an existing diary through `Diary.api.close_calendar`.
+Open tasks must not prevent closure.
+The operation uses the configured DiaryManager edit permission and the host's permitted calendar scope.
+It records the closure time and caller reference.
+Repeated calls preserve the original closure record.
+
+Closing does not complete or delete tasks.
+It preserves milestone dates, dependencies, and completion records.
+The closed diary remains available for permitted reads.
+Its tasks no longer appear in active or personal open-task results.
+The API rejects further entry, milestone, and dependency changes.
+No reopen operation is included.
+The host decides when to call this operation.
+
 ### Template changes
 
 The user confirmed that only DiaryManagers can change a calendar template.
@@ -497,8 +513,10 @@ flowchart TD
 
 The optional owner belongs to the task in its event calendar.
 Different events can have different owners for the same template task.
-The template rule for an initial task owner is an open decision.
-It can identify a person, identify a role, or leave the task for the whole team.
+The template author can optionally select a specific person, a role, or the whole team for each task.
+The template does not require a specific person or role.
+The selection is template content, not a fixed Diary policy.
+Calendar creation copies the selected ownership with the task.
 
 ### Role membership and access
 
@@ -900,7 +918,7 @@ Unresolved rules still need approval before implementation.
 12. Resolved: Only DiaryManagers can change and approve templates. V1 has no separate approval step.
 13. Resolved: Only DiaryManagers can modify tasks copied from a template into a calendar instance. Completion permissions remain separate.
 14. Resolved: Template changes are not retrospective by default. V1 permits explicit addition of a new template item to an active diary, including a late task.
-15. Must a template identify an initial owner by person or role, or leave that choice to each event?
+15. Resolved: The template author may select a person, role, or whole team for each task. A specific owner is optional.
 16. Who can change a task owner or complete a role-owned or whole-team task?
 17. Deferred beyond V1: Who must receive reminders for whole-team tasks?
 18. Resolved: Task role membership alone does not grant Diary access. The configured Diary roles and host permissions control access.
