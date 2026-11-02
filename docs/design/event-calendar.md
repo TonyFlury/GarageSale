@@ -136,6 +136,10 @@ The V2 design must define how the caller supplies changed milestone dates throug
 Diary uses those values to calculate task dates.
 
 The caller supplies person references, role references, and current group membership.
+Person and role references identify task owners in the host's identity system.
+The caller also supplies the authenticated user's identity and permitted diary keys through a trusted Actor.
+Diary uses current group membership for access checks and role-owned task selection.
+Permitted diary keys limit the instances that the caller can access.
 Diary stores those references without a database link to another app.
 It must not create another user list or role system.
 All Diary database tables use PostgreSQL.
@@ -151,11 +155,13 @@ The assignment API also rejects roles outside `DIARY_TASK_OWNER_ROLES`.
 
 ```mermaid
 flowchart LR
-    A[Caller: event and booking dates] -->|Callable API| D[Diary]
-    B[Caller: people and roles] -->|Trusted references| D
-    C[Settings: permission groups] -->|API access rules| D
+    A[Caller: milestone dates] -->|Callable API| D[Diary]
+    B[Caller: authenticated user and current memberships] -->|Trusted Actor| D
+    J[Caller: permitted diary keys] -->|Instance access scope| D
+    K[Caller: person and role identifiers] -->|Task owner references| D
+    C[Settings: access groups and task-owner roles] -->|API access and assignment rules| D
     D --> E[Calendar templates and versions]
-    D --> F[Event calendars and entries]
+    D --> F[Diary instances and entries]
     D --> G[Task dependencies]
     D --> H[Calendar pages]
     D --> I[Task progress and completion: first release]
@@ -207,7 +213,7 @@ sequenceDiagram
     D-->>H: Milestone names and labels
     H->>D: Create calendar with milestone dates
     D-->>H: Stable Diary key
-    H->>H: Save the key against the event
+    H->>H: Save the key against the caller's record
     H->>D: Read tasks with the stored key
     D-->>H: Task list
 ```
@@ -252,10 +258,10 @@ The event calendar identifies the template version that supplied its entries.
 ```mermaid
 flowchart LR
     A[Calendar template] --> B[Approved template version]
-    B --> C[Event calendar: 2027]
-    B --> D[Event calendar: 2028]
-    E[Event dates: 2027] --> C
-    F[Event dates: 2028] --> D
+    B --> C[Diary instance A]
+    B --> D[Diary instance B]
+    E[Milestone dates for instance A] --> C
+    F[Milestone dates for instance B] --> D
 ```
 
 The template keeps the entry names, descriptions, entry keys, and date rules.
