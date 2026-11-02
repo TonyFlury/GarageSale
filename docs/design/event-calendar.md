@@ -18,6 +18,10 @@ Language reference: ASD-STE100, Issue 9. Section 12 records the language review.
 
 ## 1. Purpose
 
+Diary provides a generic capability to store and display an event diary.
+The selection of template tasks is outside the feature definition.
+Template content is application data, not a requirement for implementation of the feature.
+
 The calendar shows important dates for each Garage Sale event.
 It helps the team see what work is necessary before and after the event.
 
@@ -788,7 +792,7 @@ A date change must cancel pending messages that use the old date.
 
 | Phase | Result | Decision before the next phase |
 | --- | --- | --- |
-| 1 | Template copies, the team date list, optional task owners, and the confirmed entry creation actions. | Give approval for the template, creation step, and display. |
+| 1 | Template copies, the team date list, optional task owners, and the confirmed entry creation actions. | Give approval for the creation step and display. |
 | 2 | Other task changes and completion records in PostgreSQL. | Give approval for task states and permissions. |
 | 3 | Reminders with send records. | Give approval for recipients, timing, retries, and message content. |
 | 4 | Optional calendar export for permitted ExecMembers. | Give approval for export data and update rules. |
@@ -799,15 +803,15 @@ They do not give approval for implementation work.
 ## 11. Open decisions
 
 1. Resolved: Diary is for ExecMembers only. There is no public view.
-2. Which tasks must appear before and after an event?
+2. Resolved: The selection of template tasks is outside the feature definition. Diary provides a generic capability to hold those tasks.
 3. Can task dates use booking dates as well as the event date?
 4. Must the first version record task completion?
 5. Is a date list sufficient, or is a month display also necessary?
 6. Is a date review necessary before the user saves a changed event date?
 7. Which users can view other event calendars or change tasks?
 8. Which people must receive reminders, and at which times?
-9. Which entries have annual dates, and which have one-time dates?
-10. Which annual entries occur in the year before the event?
+9. Outside feature scope: The selection of annual or one-time dates for specific entries is application data.
+10. Outside feature scope: The selection of annual entries for the year before the event is application data.
 11. Is event creation the correct step to copy the template, with activation as a check for an absent event calendar?
 12. Beyond Officer additions, who can change a calendar template and give approval for a template version?
 13. Who can change entries copied from the template?
@@ -822,7 +826,7 @@ They do not give approval for implementation work.
 22. Must dependencies prevent completion, or only identify tasks that are not ready?
 23. Can Officers override a dependency, and what record must that action create?
 
-Questions 2 and 3 give the next design step.
+Template content does not prevent implementation of the generic Diary capability.
 
 ## 12. Language review
 
