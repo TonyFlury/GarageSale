@@ -39,7 +39,8 @@ The calendar must show fixed dates and calculated dates together.
 The user confirmed that the basic calendar is common to different events.
 A calendar template defines those common entries and their date rules.
 
-Diary is for ExecMembers who have actions to complete for a successful event.
+Diary is for configured DiaryUsers and DiaryManagers who have actions to complete for a successful event.
+For Garage Sale, these roles use the ExecMember and Officer groups defined in `settings.py`.
 The user confirmed that Diary has no public view.
 Section 11 includes questions for the next discussion.
 
@@ -83,6 +84,8 @@ The names apply to the calendar system and the existing website.
 | Team view | Calendar information for users with the applicable team permissions. |
 | Officer | The existing `Officer` permission group in this project. |
 | ExecMember | The existing `ExecMember` permission group in this project. |
+| DiaryManager | The configurable Diary management role. Garage Sale maps this role to Officer. |
+| DiaryUser | The configurable Diary task user role. Garage Sale maps this role to ExecMember. |
 | SponsorshipManager | The existing `SponsorshipManager` permission group in this project. |
 | Current event | The event that the application supplies as `request.current_event`. |
 | Date review | A comparison of old dates and proposed new dates. |
@@ -171,6 +174,7 @@ The app must not change the rule that selects `request.current_event`.
 The user confirmed that Diary needs a formal callable API.
 The API is `Diary.api`, version 1.
 It is a Python interface, not an HTTP endpoint.
+The confirmed interface scope also requires an HTTP API, which is not implemented yet.
 
 The caller can define multiple named milestones.
 For example, `add_board_bookings_open` identifies the date on which advertising board bookings open.
@@ -246,7 +250,7 @@ flowchart LR
     C --> F[Reminders: phase 3]
 ```
 
-Diary must restrict calendar access to ExecMembers with the applicable permissions.
+Diary must restrict calendar access to configured DiaryUsers and DiaryManagers with the applicable host permissions.
 
 ### Calendar template and event calendars
 
@@ -291,7 +295,7 @@ Some tasks can occur in the year before the event.
 
 Activation must not create a second event calendar.
 It must not reset entries or completed task records.
-It must not give calendar access to users outside ExecMember.
+It must not give calendar access outside the roles and calendar scope permitted by the host.
 
 ```mermaid
 flowchart TD
@@ -425,8 +429,8 @@ For example, it can show “Event date minus 42 days”.
 An annual entry can show “Fixed date: 1 March each year”.
 A one-time entry shows its full date and “One-time date”.
 
-The confirmed ExecMember view opens the calendar for `request.current_event`.
-Access to other events is an open decision.
+The Garage Sale current-event view opens the calendar for `request.current_event`.
+The host can also permit access to other calendar instances.
 An event selector must show only events that the user has permission to view.
 The page shows the selected event name at all times.
 It does not silently change to the current event.
@@ -455,18 +459,18 @@ The progress states and permitted transitions still need definition.
 Completion permissions and dependency rules remain open decisions.
 
 The user confirmed that a task can have an optional task owner.
-The task owner can be a specific ExecMember or a role.
+The task owner can be a specific DiaryUser or a role.
 A role owner includes all members of the selected role.
 A task without a selected person or role is for the whole team.
 
 | Owner type | Meaning | Display label |
 | --- | --- | --- |
-| Person | One selected ExecMember must do the task. | Show the person's name. |
+| Person | One selected DiaryUser must do the task. | Show the person's name. |
 | Role | All members of the selected role must do the task. | Show the role name, for example, “All SponsorshipManagers”. |
 | Whole team | The task has no selected person or role. The task is for the whole team. | Show “Whole team”. |
 
 Each task has one owner type at a time.
-A person-owned task has one selected ExecMember and no selected role.
+A person-owned task has one selected DiaryUser and no selected role.
 A role-owned task has one selected role and no selected person.
 A whole-team task has neither selection.
 An absent person does not mean “Whole team” when the task has a role owner.
@@ -480,7 +484,7 @@ The permission to change tasks is an open decision.
 ```mermaid
 flowchart TD
     A[Task for an event] --> B{Which owner type?}
-    B -->|Person| C[Show the selected ExecMember]
+    B -->|Person| C[Show the selected DiaryUser]
     B -->|Role| D[Show all members of the selected role]
     B -->|Whole team| E[Show Whole team]
     C --> F[Show the task in the event calendar]
@@ -505,11 +509,12 @@ The system must identify a selected role with no current members.
 The display must show “No role members” with the role name.
 It must not change that task into a whole-team task.
 
-Some role members are not ExecMembers.
+Some role members are not DiaryUsers.
 Role ownership does not grant calendar access or task change permissions.
-Role members outside ExecMember cannot access Diary.
+Task role membership alone does not grant Diary access.
+The settings mapping and host permissions determine access through DiaryUser or DiaryManager membership.
 
-If a selected person leaves ExecMember, the system must identify their open tasks for review.
+If a selected person leaves DiaryUser, the system must identify their open tasks for review.
 The system must not silently change those tasks into whole-team tasks.
 The rule for that change needs approval before implementation.
 Whether each role member must confirm task completion is also an open decision.
@@ -541,7 +546,9 @@ The API guide includes search-order examples and deployment checks for these ove
 The personal view includes tasks assigned to the user and tasks assigned to any role that includes that user.
 The user confirmed that this personal view is the default page for a logged-in user.
 The default must not include tasks owned only by other people or other roles.
-`personal_tasks` supplies that list for one Diary key.
+The current `personal_tasks` API supplies that list for one Diary key.
+The confirmed API scope also requires personal task access across all instances permitted by the host.
+The caller can instead select one permitted instance.
 The caller supplies the current role memberships through the Actor.
 Whole-team tasks can appear through an explicit list option.
 The full event calendar remains an explicit navigation choice for users with calendar view permission.
@@ -687,6 +694,29 @@ An account or team membership alone does not give calendar access.
 
 ### Confirmed access requirements
 
+The user confirmed that Diary uses the role names DiaryManager and DiaryUser.
+The host maps its groups to these roles through `settings.py`.
+Garage Sale uses Officer for DiaryManager and ExecMember for DiaryUser.
+Other projects can use different group names without changes to Diary.
+
+A DiaryManager can view any calendar instance that the host project permits.
+Diary adds no current-event restriction or other calendar selection policy for managers.
+The host can restrict which calendar instances a manager can access.
+
+A DiaryUser can view tasks associated with that user in the instances permitted by the host.
+These tasks include personal tasks and tasks owned by roles that include the user.
+The callable API and HTTP API must support all permitted instances or one selected permitted instance.
+Each task result must identify its calendar instance.
+Selection of all instances means all instances permitted by the host, not unrestricted project data.
+
+The host supplies trusted identity, role membership, and calendar scope.
+Diary enforces that supplied scope without inventing another calendar access policy.
+Neither API accepts permission grants from an untrusted request body.
+HTTP requests need authentication and the same access checks as callable API requests.
+
+The following table records the Garage Sale group mapping and current-event view.
+It does not limit the generic API to the current event.
+
 The user confirmed these read permissions.
 
 | User group | View the calendar template | View the calendar for the current event |
@@ -721,43 +751,43 @@ The page must not substitute another event if the current event is absent.
 ### Entry creation: confirmed requirements
 
 The user confirmed these entry creation permissions.
-They apply to the calendar for the current event.
+For Garage Sale, the entry creation forms use the calendar for the current event.
 
-| Action | ExecMember without Officer membership | Officer |
+| Action | DiaryUser without DiaryManager membership | DiaryManager |
 | --- | --- | --- |
-| Add a personal entry for themselves. | Yes. | Yes, through ExecMember membership. |
+| Add a personal entry for themselves. | Yes. | Yes, through DiaryUser membership. |
 | Add an entry for a specific person. | Only for themselves. | Yes. |
 | Add an entry for all members of a selected user role. | No grant. | Yes. |
 | Also add the new entry to the template for future events. | No grant. | Yes. |
 
-The server sets the owner of an ExecMember's personal entry to that ExecMember.
+The server sets the owner of an DiaryUser's personal entry to that DiaryUser.
 The user cannot select another person or role through the personal entry action.
 The server must enforce this rule if a request contains another owner identifier.
 
-An Officer can select a specific person or a user role for the new entry.
-The existing person ownership rule uses a selected ExecMember.
+An DiaryManager can select a specific person or a user role for the new entry.
+The existing person ownership rule uses a selected DiaryUser.
 Role ownership includes all members of the selected role.
 
-The Officer form includes an “Add to template for future events” choice.
+The DiaryManager form includes an “Add to template for future events” choice.
 That choice is off initially.
-If the Officer selects it, the save adds the entry to this event calendar and to a new template version.
+If the DiaryManager selects it, the save adds the entry to this event calendar and to a new template version.
 Without that choice, the save adds the entry only to this event calendar.
 
 The template addition must keep a reusable date rule.
 A one-time date needs an annual date rule or calculated date rule before the entry can become a recurring template entry.
 The form must show the future date rule and owner choice before save.
-It must not change an exact date into an annual date without the Officer's selection.
+It must not change an exact date into an annual date without the DiaryManager's selection.
 
 The new template entry must have an entry key.
-The current event entry must identify that key when the Officer also adds it to the template.
+The current event entry must identify that key when the DiaryManager also adds it to the template.
 The save must not create a second current event entry from the template addition.
 Other existing event calendars must stay unchanged.
 
 ```mermaid
 flowchart TD
     A[Add a calendar entry] --> B{Which permission applies?}
-    B -->|ExecMember personal entry| C[Set the owner to the current user]
-    B -->|Officer entry| D[Select a person or user role]
+    B -->|DiaryUser personal entry| C[Set the owner to the current user]
+    B -->|DiaryManager entry| D[Select a person or user role]
     C --> E[Save in the current event calendar]
     D --> F{Also add to the template?}
     F -->|No| E
@@ -780,7 +810,7 @@ The server must check the applicable permission on each request.
 A hidden navigation item alone does not prevent access.
 The same checks apply to direct page URLs, downloads, and calendar feeds.
 
-The current calendar permission does not give access to another event through a changed event identifier.
+Changing an event identifier does not grant access outside the calendar scope supplied by the host.
 The template view permission does not give permission to change the template or approve a template version.
 The Officer entry creation permission includes the template addition defined above.
 Other template changes and version approval rules are open decisions.
@@ -794,7 +824,7 @@ The host configuration must preserve the confirmed view and entry creation rules
 The template view and current calendar view need distinct permission checks.
 
 Diary has no public view.
-The server must restrict pages, downloads, and calendar feeds to ExecMembers with the applicable permissions.
+The server must restrict pages, downloads, and calendar feeds to configured Diary roles within the host's permitted scope.
 
 ## 9. Reminders: subsequent design
 
@@ -846,13 +876,13 @@ Unresolved rules still need approval before implementation.
 
 ## 11. Open decisions
 
-1. Resolved: Diary is for ExecMembers only. There is no public view.
+1. Resolved: Diary has no public view. Configured DiaryUsers and DiaryManagers have access within the scope permitted by the host.
 2. Resolved: The selection of template tasks is outside the feature definition. Diary provides a generic capability to hold those tasks.
 3. Resolved: Templates identify named milestones for task date rules. The caller supplies each required milestone date through the API during calendar creation.
 4. Resolved: The first feature release must support task progress through completion.
 5. Resolved: A simple date-ordered list is sufficient for the first release. A month display is not required.
 6. Resolved: Milestone date changes and the presentation of their effects belong in V2. The review workflow still needs design.
-7. Which users can view other event calendars or change tasks?
+7. Access resolved: Configured DiaryManagers can view host-permitted calendars. DiaryUsers can read associated tasks across all permitted instances or one selected instance. Task-change permissions remain open.
 8. Which people must receive reminders, and at which times?
 9. Outside feature scope: The selection of annual or one-time dates for specific entries is application data.
 10. Outside feature scope: The selection of annual entries for the year before the event is application data.
@@ -863,7 +893,7 @@ Unresolved rules still need approval before implementation.
 15. Must a template identify an initial owner by person or role, or leave that choice to each event?
 16. Who can change a task owner or complete a role-owned or whole-team task?
 17. Who must receive reminders for whole-team tasks?
-18. Resolved: Role membership outside ExecMember does not grant Diary access.
+18. Resolved: Task role membership alone does not grant Diary access. The configured Diary roles and host permissions control access.
 19. Does a role-owned task need one completion record or confirmation from every role member?
 20. Are personal entries visible to all ExecMembers, or only to the owner and permitted Officers?
 21. Does an Officer's template addition approve its new version, or is a separate approval step necessary?
