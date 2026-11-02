@@ -1,14 +1,16 @@
-<dialog id="historic-locations" class="historic-locations" open
+<dialog id="historic-locations" class="historic-locations" {% if not historic_manual %}open{% endif %}
+        data-manual="{{ historic_manual|yesno:'true,false' }}"
         aria-labelledby="historic-title" aria-describedby="historic-description"
         data-cancel-url="{% url 'Location:view' %}">
     <form method="post" action="{% url 'Location:create' %}">
         {% csrf_token %}
         <div class="section">
             <div class="header"><h2 id="historic-title">Use a location from a previous event?</h2></div>
-            <p>Your first location for {{ request.current_event.get_event_date_display }}</p>
+            <p>Locations for {{ request.current_event.get_event_date_display }}</p>
             <p id="historic-description">Choose any historic locations you want to reuse, or add a new location.
                 Your previous sale and advertising board choices and map positions will be copied.</p>
-            <p class="historic-order">Most recent event first, then postcode A–Z. Nothing is selected initially.</p>
+            <p class="historic-order">Most recent event first, then postcode A–Z. Nothing is selected initially.
+                Addresses already added to this event are excluded.</p>
             <div role="alert">{{ historic_form.errors }}</div>
             <div class="historic-options">
                 {% for source in historic_form.fields.locations.queryset %}
@@ -21,6 +23,8 @@
                             <small>Sale: {{ source.sale_event|yesno:"Yes,No" }} · Advertising board: {{ source.ad_board|yesno:"Yes,No" }}</small>
                         </span>
                     </label>
+                {% empty %}
+                    <p>No historic locations are available to add to this event.</p>
                 {% endfor %}
             </div>
             <p id="historic-count" aria-live="polite">Choose one or more locations, or continue without historic locations.</p>

@@ -20,6 +20,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView, TemplateView
 from .models import Location as LocationModel
 from .forms import LocationForm, HistoricLocationForm
+from .history import ADDRESS_FIELDS, available_historic_locations
 from django.conf import settings
 import logging
 logger = logging.getLogger(__name__)
@@ -109,10 +110,7 @@ class LocationCreateView(LocationBase, UserRecognisedMixin, CreateView):
     transaction_type = "locations"
 
     def historic_locations(self):
-        return self.model.objects.filter(
-            user=self.request.user,
-            event__event_date__lt=self.request.current_event.event_date,
-        ).select_related('event').order_by('-event__event_date', 'postcode', 'pk')
+        return available_historic_locations(self.request.user, self.request.current_event)
 
     def has_current_locations(self):
         return self.model.objects.filter(
@@ -127,7 +125,8 @@ class LocationCreateView(LocationBase, UserRecognisedMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # A bound new-location form must remain visible when validation fails.
-        if self.request.method == 'GET' and self.request.GET.get('new') != '1' and not self.has_current_locations():
+        if (self.request.method == 'GET' and self.request.GET.get('new') != '1'
+                and (self.request.GET.get('history') == '1' or not self.has_current_locations())):
             history = self.historic_locations()
             if history.exists():
                 context['historic_form'] = HistoricLocationForm(locations=history, event=self.request.current_event)
@@ -146,18 +145,19 @@ class LocationCreateView(LocationBase, UserRecognisedMixin, CreateView):
         self.object = None
         if action not in {'reuse', 'reuse_new'}:
             raise Http404('Unknown location action.')
-        # Serialise reuse requests for a user; recheck eligibility after locking
-        # so a repeated submission cannot create the selected records twice.
+        # Serialise reuse requests and exclude addresses already copied into
+        # this event, including those added in another tab or earlier batch.
         with transaction.atomic():
             get_user_model().objects.select_for_update().get(pk=request.user.pk)
-            if self.has_current_locations():
-                return redirect('Location:view')
             form = HistoricLocationForm(request.POST, locations=self.historic_locations(), event=request.current_event)
             if not form.is_valid():
                 context = self.get_context_data()
                 context['historic_form'] = form
                 return self.render_to_response(context, status=400)
             for source in form.cleaned_data['locations']:
+                address = {field: getattr(source, field) for field in ADDRESS_FIELDS}
+                if self.model.objects.filter(user=request.user, event=request.current_event, **address).exists():
+                    continue
                 location = self.model.objects.create(
                     user=request.user, event=request.current_event,
                     house_number=source.house_number, street_name=source.street_name,
@@ -196,6 +196,15 @@ class LocationView(UserRecognisedMixin, ListView):
     def get_queryset(self):
         return self.model.objects.filter(event=self.request.current_event,
                                          user=self.request.user).order_by('creation_timestamp')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['historic_manual'] = True
+        context['historic_form'] = HistoricLocationForm(
+            locations=available_historic_locations(self.request.user, self.request.current_event),
+            event=self.request.current_event,
+        )
+        return context
 
 
 class LocationEditView(UserRecognisedMixin, UpdateView):

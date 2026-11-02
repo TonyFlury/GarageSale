@@ -1,3 +1,4 @@
+#add-historic-locations { display: block; }
 dialog.historic-locations {
     width: min(700px, calc(100% - 2rem));
     max-height: 90vh;
@@ -11,6 +12,22 @@ dialog.historic-locations {
 }
 dialog.historic-locations::backdrop { background: rgb(0 0 0 / 45%); }
 dialog.historic-locations h2 { margin: 0; font-size: inherit; }
+.historic-locations .section .header, .historic-locations .section .footer {
+    background: darkslategray;
+    color: white;
+    font-size: 130%;
+    border-radius: 10px;
+    margin: 1rem 0;
+}
+.historic-locations .section .header { margin-top: 0; padding: .1em .5em; }
+.historic-locations .section .footer { display: flex; padding: .5rem; }
+.historic-locations .historic-actions button {
+    font-size: 80%;
+    background: gray;
+    border-radius: 10px;
+    color: white;
+    margin: .25rem;
+}
 .historic-order, .historic-option small { font-size: 85%; color: #505050; }
 .historic-options { max-height: 35vh; overflow-y: auto; padding: .25rem; }
 dialog.historic-locations .historic-option {

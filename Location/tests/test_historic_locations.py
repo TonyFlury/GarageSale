@@ -11,7 +11,7 @@ from django.utils import timezone
 
 from GarageSale.models import EventData
 from Location.models import Location
-from Location.views import LocationCreateView
+from Location.views import LocationCreateView, LocationView
 
 
 class HistoricLocationTests(TestCase):
@@ -70,6 +70,52 @@ class HistoricLocationTests(TestCase):
     def test_existing_current_location_skips_popup(self):
         self.location(event=self.current)
         self.assertNotIn('historic_form', self.view(self.request()).context_data)
+
+    def test_view_has_manual_popup_and_button_below_new_location(self):
+        self.location(event=self.current, house_number='99')
+        response = LocationView.as_view()(self.request())
+        self.assertTrue(response.context_data['historic_manual'])
+        response.render()
+        self.assertContains(response, 'id="add-historic-locations"')
+        self.assertContains(response, 'data-manual="true"')
+        self.assertContains(response, '?history=1')
+        html = response.content.decode()
+        self.assertLess(html.index('Add a new Location'), html.index('id="add-historic-locations"'))
+        self.assertEqual(list(response.context_data['historic_form'].fields['locations'].queryset), [self.source])
+
+    def test_view_empty_history_has_an_empty_state_and_no_missing_event_popup(self):
+        self.source.delete()
+        response = LocationView.as_view()(self.request())
+        response.render()
+        self.assertContains(response, 'No historic locations are available')
+        request = self.request()
+        request.current_event = None
+        response = LocationView.as_view()(request)
+        response.render()
+        self.assertNotContains(response, 'id="add-historic-locations"')
+        self.assertNotContains(response, 'id="historic-locations"')
+
+    @patch.object(LocationCreateView, '_send_created_email')
+    def test_can_reuse_more_history_after_first_location_and_excludes_existing_addresses(self, send):
+        self.location(event=self.current)
+        other_address = self.location(house_number='7')
+        response = self.view(self.request(query={'history': '1'}))
+        self.assertEqual(list(response.context_data['historic_form'].fields['locations'].queryset), [other_address])
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.view(self.request({'history_action': 'reuse', 'locations': [other_address.pk]}))
+        self.assertEqual(response.url, reverse('Location:view'))
+        self.assertEqual(self.current_locations().count(), 2)
+        send.assert_called_once()
+        replay = self.view(self.request({'history_action': 'reuse', 'locations': [other_address.pk]}))
+        self.assertEqual(replay.status_code, 400)
+        self.assertEqual(self.current_locations().count(), 2)
+
+    @patch.object(LocationCreateView, '_send_created_email')
+    def test_same_address_from_multiple_events_is_only_copied_once(self, send):
+        older_copy = self.location(event=self.older)
+        response = self.view(self.request({'history_action': 'reuse', 'locations': [self.source.pk, older_copy.pk]}))
+        self.assertEqual(response.url, reverse('Location:view'))
+        self.assertEqual(self.current_locations().count(), 1)
 
     def test_no_history_skips_popup(self):
         self.source.delete()

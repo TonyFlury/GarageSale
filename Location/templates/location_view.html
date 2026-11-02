@@ -5,6 +5,7 @@
 {% load location_tags %}
 
 {% block head-extra %}
+    <script defer src="{% static 'Location/js/historic_locations.js' %}"></script>
     <script async
     src="https://maps.googleapis.com/maps/api/js?key={%  settings_value "GOOGLE_MAP_SETTINGS.API_KEY" %}&loading=async&libraries=places&libraries=marker&callback=initMaps">
 </script>
@@ -13,6 +14,7 @@
 
     {% block PageStyles %}
         <link rel="stylesheet" href="{% static 'Location/styles/locations.css' %}">
+        <link rel="stylesheet" href="{% static 'Location/styles/historic_locations.css' %}">
 
         <style>
             div.address {
@@ -50,6 +52,16 @@
                     <label for="id_AddLocation">New Location</label>
             <span class="tooltiptext right arrow">Add a new Location</span>
         </div>
+        {% if request.current_event %}
+        <div class="sidebar entry direct tooltip">
+            <a href="{% url 'Location:create' %}?history=1" id="add-historic-locations"
+               data-historic-open aria-haspopup="dialog" aria-controls="historic-locations">
+                <img class="sidebar icon" alt="" src="{% static 'GarageSale/images/icons/menu/add-location-svgrepo-com.svg' %}">
+                <span>Add historic locations</span>
+            </a>
+            <span class="tooltiptext right arrow">Reuse locations from previous events</span>
+        </div>
+        {% endif %}
         {% if object_list.count > 0 %}
             <hr/>
             {% for location in object_list %}
@@ -65,6 +77,9 @@
 {% endblock %}
 
     {%  block SnappableSections %}
+        {% if request.current_event %}
+            {% include "widgets/historic_locations.html" %}
+        {% endif %}
         {% for location in object_list %}
             <div class='card location form' card_name="location_{{location.id}}" location_id="{{ location.ext_id }}" style="float:left; width:auto; padding:0.5em; margin:1em; border:thin lightgrey solid; border-radius:0.5rem;">
                 <div class='address-and-map'>
