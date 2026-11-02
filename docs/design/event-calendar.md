@@ -435,6 +435,19 @@ The page uses the existing team page styles.
 Labels must explain each state without color alone.
 The user must be able to use the keyboard for all actions.
 
+### Task highlighting: confirmed requirement
+
+All views must distinguish Late and Blocked tasks from normal tasks.
+A Late task has a red border with a red shadow.
+A Blocked task has an amber border with an amber shadow when a direct predecessor is late.
+The red border takes priority when the task itself is late.
+A completed predecessor does not cause an amber border.
+Other Blocked tasks have a dashed border and a Blocked label.
+Text labels identify Late, Blocked, and Late predecessor states without color alone.
+Lists, task details, entry edit forms, and dependency lists use the same rules.
+The display calculates these states again after date, dependency, or completion changes.
+Template definitions have no instance dates and do not receive lateness highlights.
+
 ### Task owners: confirmed requirement
 
 The user confirmed that task progress through completion is required in the first feature release.
