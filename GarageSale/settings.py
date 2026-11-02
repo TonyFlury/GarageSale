@@ -172,7 +172,6 @@ DIARY_TASK_OWNER_ROLES = (
     'ExecMember', 'Officer', 'SponsorshipManager', 'PrizeDrawManager',
     'CraftMarketManager', 'Financier', 'WebAdmin', 'Volunteer',
 )
-DIARY_ROLE_LOOKUP = 'GarageSale.diary_roles.existing_task_owner_roles'
 
 if DEBUG:
     INSTALLED_APPS.extend(

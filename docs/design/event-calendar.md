@@ -129,6 +129,7 @@ Its only host dependencies are Django settings and the configured Django user mo
 Diary must retrieve the user model through `django.contrib.auth.get_user_model()` when it needs the model class.
 It must not import a host user model class directly.
 Diary has no dependency on a host event model or custom request attributes.
+Diary assumes the standard Django authentication, group, and permission system is available.
 Its models have no foreign keys to event, user, or group models in other apps.
 Its migration has no dependency on those apps.
 Its API receives references and date values from the caller.
@@ -152,8 +153,8 @@ All Diary database tables use PostgreSQL.
 
 `DIARY_TASK_OWNER_ROLES` lists the roles that can own tasks.
 Diary does not contain a fixed list of host role names.
-`DIARY_ROLE_LOOKUP` identifies a host callable that reads existing role names from the database.
-Diary compares the configured names with that result during application startup.
+Diary checks the configured role names directly against Django's standard `Group` model during application startup.
+No project-supplied role lookup is required.
 Missing roles cause an `ImproperlyConfigured` exception that names the roles and relevant settings.
 Diary does not create missing roles automatically.
 Database migration and host role setup commands can run before this existence check.
@@ -218,8 +219,11 @@ Annual dates and one-time dates do not add a milestone requirement.
 Calling `DiaryTemplateVersion.required_milestones()` is an optional safety check.
 The caller can supply the expected named milestone dates without first reading this list.
 
-`DIARY_TEMPLATE_NAME` selects the default template by name in settings.
-The API uses that template's highest approved version when the caller does not select a version.
+`DIARY_TEMPLATE_NAME` is an optional default template name in settings.
+The caller can instead supply an explicit template name or version key.
+The API uses the highest approved version of the selected name.
+Supplying a name and a version key together is invalid.
+Without a selector or configured default, the API reports a validation error.
 A changed setting affects new calendars, not existing calendars.
 This permits reuse of Diary with a different template in another application.
 The API reports an error if the configured template has no approved version.

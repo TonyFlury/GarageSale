@@ -56,10 +56,11 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         Configure DIARY_MANAGER and DIARY_USER with one group name each.
         Replace the former DIARY_PERMISSION_GROUPS setting before restarting.
         Managers include all Diary template permissions and user capabilities.
-        Configure DIARY_TEMPLATE_NAME and DIARY_TIME_ZONE for the target site.
+        Configure DIARY_TIME_ZONE for the target site.
+        DIARY_TEMPLATE_NAME is optional when callers select a template explicitly.
         No template data is seeded.
         Configure DIARY_TASK_OWNER_ROLES with permitted task-owner group names.
-        Set DIARY_ROLE_LOOKUP to GarageSale.diary_roles.existing_task_owner_roles.
+        Remove DIARY_ROLE_LOOKUP overrides. Diary uses standard Django groups directly.
         Run migrate and sync_access_policy before application startup.
         Those setup commands permit creation of missing tables and roles.
         Other startup paths reject configured roles absent from the database.

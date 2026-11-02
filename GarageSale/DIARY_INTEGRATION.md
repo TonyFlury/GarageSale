@@ -50,6 +50,9 @@ Diary shows “Date not set” when a necessary date has no value.
 
 Garage Sale sets `DIARY_MANAGER = 'Officer'` and `DIARY_USER = 'ExecMember'` in Django settings.
 The manager setting also grants all Diary template permissions.
+Task-owning roles use normal Django groups without a Garage Sale lookup callback.
+The adapter can supply a fixed template name or version key during diary creation.
+`DIARY_TEMPLATE_NAME` is an optional default for calls without an explicit selector.
 Its access policy also makes each Officer an ExecMember.
 These group names and that membership rule belong to Garage Sale.
 Diary uses the configured Diary roles without those project-specific names.
