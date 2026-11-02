@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import Http404
 from django.shortcuts import redirect, render
@@ -18,7 +19,7 @@ from django.urls import reverse_lazy, reverse
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView, TemplateView
 from .models import Location as LocationModel
-from .forms import LocationForm
+from .forms import LocationForm, HistoricLocationForm
 from django.conf import settings
 import logging
 logger = logging.getLogger(__name__)
@@ -106,6 +107,67 @@ class LocationCreateView(LocationBase, UserRecognisedMixin, CreateView):
     template_name = "location_create_form.html"
     login_url = reverse_lazy("user_management:identify")
     transaction_type = "locations"
+
+    def historic_locations(self):
+        return self.model.objects.filter(
+            user=self.request.user,
+            event__event_date__lt=self.request.current_event.event_date,
+        ).select_related('event').order_by('-event__event_date', 'postcode', 'pk')
+
+    def has_current_locations(self):
+        return self.model.objects.filter(
+            user=self.request.user, event=self.request.current_event,
+        ).exists()
+
+    def get(self, request, *args, **kwargs):
+        if not request.current_event:
+            raise Http404('No current event is available.')
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # A bound new-location form must remain visible when validation fails.
+        if self.request.method == 'GET' and self.request.GET.get('new') != '1' and not self.has_current_locations():
+            history = self.historic_locations()
+            if history.exists():
+                context['historic_form'] = HistoricLocationForm(locations=history, event=self.request.current_event)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if not request.current_event:
+            raise Http404('No current event is available.')
+        action = request.POST.get('history_action')
+        if action is None:
+            return super().post(request, *args, **kwargs)
+        if action == 'cancel':
+            return redirect('Location:view')
+        if action == 'new':
+            return redirect(f'{reverse("Location:create")}?new=1')
+        self.object = None
+        if action not in {'reuse', 'reuse_new'}:
+            raise Http404('Unknown location action.')
+        # Serialise reuse requests for a user; recheck eligibility after locking
+        # so a repeated submission cannot create the selected records twice.
+        with transaction.atomic():
+            get_user_model().objects.select_for_update().get(pk=request.user.pk)
+            if self.has_current_locations():
+                return redirect('Location:view')
+            form = HistoricLocationForm(request.POST, locations=self.historic_locations(), event=request.current_event)
+            if not form.is_valid():
+                context = self.get_context_data()
+                context['historic_form'] = form
+                return self.render_to_response(context, status=400)
+            for source in form.cleaned_data['locations']:
+                location = self.model.objects.create(
+                    user=request.user, event=request.current_event,
+                    house_number=source.house_number, street_name=source.street_name,
+                    town=source.town, postcode=source.postcode, lng_lat=source.lng_lat,
+                    sale_event=source.sale_event, ad_board=source.ad_board,
+                )
+                transaction.on_commit(lambda location=location: self._send_created_email(location=location))
+        if action == 'reuse_new':
+            return redirect(f'{reverse("Location:create")}?new=1')
+        return redirect('Location:view')
 
     def form_valid(self, form):
         location = self.form_is_valid(form)

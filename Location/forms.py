@@ -12,6 +12,39 @@ from django.core import exceptions
 from DjangoGoogleMap.forms.widgets import GoogleMapWidget
 from .models import Location
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from django import forms as django_forms
+
+
+class HistoricLocationForm(django_forms.Form):
+    locations = django_forms.ModelMultipleChoiceField(
+        queryset=Location.objects.none(),
+        widget=django_forms.CheckboxSelectMultiple,
+        error_messages={'required': 'Select at least one historic location.'},
+    )
+
+    def __init__(self, *args, locations, event, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['locations'].queryset = locations
+        self.event = event
+
+    def clean_locations(self):
+        locations = self.cleaned_data['locations']
+        today = timezone.localdate()
+        for flag, opening, closing, label in (
+            ('sale_event', self.event.open_sales_bookings, self.event.close_sales_bookings, 'sale'),
+            ('ad_board', self.event.open_billboard_bookings, self.event.close_billboard_bookings, 'advertising board'),
+        ):
+            if any(getattr(location, flag) for location in locations) and not (
+                opening and closing and opening <= today <= closing
+            ):
+                raise django_forms.ValidationError(
+                    f'{label.capitalize()} bookings are closed for this event. '
+                    'Choose other historic locations or add a new location with the available options.'
+                )
+        if any(not (location.sale_event or location.ad_board) for location in locations):
+            raise django_forms.ValidationError('A selected location has no sale or advertising board choice. Add it as a new location instead.')
+        return locations
 
 # Fixed Web-46 bug to allow lower case letters in postcode.
 postcode_regex = re.compile(r'(?P<incode>[a-zA-Z]{1,2}[1-9][0-9]?)\s*(?P<outcode>[1-9][a-zA-Z]{2})')

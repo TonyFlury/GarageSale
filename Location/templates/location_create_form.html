@@ -8,6 +8,7 @@
     <script src="{% static 'DjangoGoogleMap/api/display_location.js' %}"></script>
     <script type="text/javascript" src="{% static 'GarageSale/js/tooltip.js' %}"></script>
     <script type="text/javascript" src="{% static 'Location/js/create_location.js' %}"></script>
+    <script defer src="{% static 'Location/js/historic_locations.js' %}"></script>
 {% endblock %}
 
 
@@ -15,6 +16,7 @@
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'Location/styles/locations.css' %}">
         <link rel="stylesheet" href="{% static 'Location/styles/location_create.css' %}">
+    <link rel="stylesheet" href="{% static 'Location/styles/historic_locations.css' %}">
 {% endblock %}
 
  {% block TopBar %}
@@ -41,5 +43,8 @@
 {%  endblock %}
 
 {%  block SnappableSections %}
+    {% if historic_form %}
+        {% include "widgets/historic_locations.html" %}
+    {% endif %}
     {% include "widgets/create_location.html" %}
 {% endblock %}

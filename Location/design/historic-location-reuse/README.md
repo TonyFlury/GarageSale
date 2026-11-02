@@ -1,5 +1,7 @@
 # Historic location reuse mock-up
 
+The feature is now also implemented in the application's **New Location** flow. See [the implementation notes](../../HISTORIC_LOCATIONS.md) for behaviour, validation and deployment. This folder remains a standalone design preview.
+
 Open `index.html` directly in a browser. No server, login, dependencies or database is required. Click **Add a location** to open the popup.
 
 The preview loads the existing GarageSale base and Location stylesheets, plus the existing map background and New Location icon through relative paths. Keep it inside this checkout so those assets resolve. `preview.css` adapts the standalone layout and popup using the app's dark slate section bars, grey buttons, rounded cards and blue/green selection switches.
