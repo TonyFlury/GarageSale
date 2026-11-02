@@ -521,8 +521,13 @@ The dashboard has an active tasks section only when the Diary app is enabled.
 The dashboard must test app availability before it imports the Diary API.
 If Diary is disabled, the dashboard does not show the section or call its API.
 The dashboard uses the current event's stored Diary key.
+It shows clickable Late and Ready counts for the current user, not an embedded task list.
+Each count opens the matching filter in the personal Diary view.
+An [interactive dashboard mock-up](../../Diary/design/dashboard/index.html) demonstrates that presentation.
 
-`active_tasks` returns the open tasks for that key.
+`personal_tasks` returns the user's open tasks for that key, including tasks owned by their roles.
+The dashboard counts ready tasks and late tasks from that result.
+The counts exclude whole-team tasks and completed tasks.
 Each result identifies whether the task is ready or blocked.
 A separate result value identifies lateness.
 These values are calculations, not database flags.
@@ -532,9 +537,10 @@ A blocked task can also be late.
 A task with no due date shows “Date not set” and is not late.
 Date comparisons use the Diary time zone in settings.
 
-Completed tasks do not appear in the active task list.
+Completed tasks do not contribute to either count.
 The API keeps their completion records and their due dates at completion.
-The dashboard must show an explicit empty state when the event has no Diary key or has no open tasks.
+The dashboard must show an explicit empty state when the event has no Diary key.
+A zero count links to the corresponding empty personal task list.
 
 ```mermaid
 flowchart TD
@@ -542,8 +548,9 @@ flowchart TD
     B -->|No| C[Do not show the task section]
     B -->|Yes| D{Does the current event have a Diary key?}
     D -->|No| E[Show Calendar not prepared]
-    D -->|Yes| F[Call active_tasks with the key]
-    F --> G[Show readiness and lateness]
+    D -->|Yes| F[Call personal_tasks with the key]
+    F --> G[Show clickable Late and Ready counts]
+    G --> H[Open the matching personal Diary filter]
 ```
 
 ### Predecessor editor
