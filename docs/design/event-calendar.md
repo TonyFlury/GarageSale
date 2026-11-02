@@ -34,8 +34,8 @@ The calendar must show fixed dates and calculated dates together.
 The user confirmed that the basic calendar is common to different events.
 A calendar template defines those common entries and their date rules.
 
-The first calendar includes a team view.
-Public access is an open decision.
+Diary is for ExecMembers who have actions to complete for a successful event.
+The user confirmed that Diary has no public view.
 Section 11 includes questions for the next discussion.
 
 ## 2. Technical names
@@ -75,7 +75,6 @@ The names apply to the calendar system and the existing website.
 | Successor | A task that uses another task as a predecessor, directly or through other tasks. |
 | Circular dependency | A chain of task dependencies that returns to its first task. |
 | Reminder | A message that tells a person about a date or task. |
-| Public view | Calendar information that a visitor can read without an account. |
 | Team view | Calendar information for users with the applicable team permissions. |
 | Officer | The existing `Officer` permission group in this project. |
 | ExecMember | The existing `ExecMember` permission group in this project. |
@@ -230,12 +229,10 @@ flowchart LR
     B[Date rules for tasks] --> C
     H[Fixed dates] --> C
     C --> D[Team view]
-    C --> E[Public view: phase 4]
     C --> F[Reminders: phase 3]
 ```
 
-The public view must receive only approved public entries.
-It must not receive private task details or contact data.
+Diary must restrict calendar access to ExecMembers with the applicable permissions.
 
 ### Calendar template and event calendars
 
@@ -279,7 +276,7 @@ Some tasks can occur in the year before the event.
 
 Activation must not create a second event calendar.
 It must not reset entries or completed task records.
-It must not give public access to private entries.
+It must not give calendar access to users outside ExecMember.
 
 ```mermaid
 flowchart TD
@@ -478,7 +475,7 @@ It must not change that task into a whole-team task.
 
 Some role members are not ExecMembers.
 Role ownership does not grant calendar access or task change permissions.
-Calendar access for role members outside ExecMember is an open decision.
+Role members outside ExecMember cannot access Diary.
 
 If a selected person leaves ExecMember, the system must identify their open tasks for review.
 The system must not silently change those tasks into whole-team tasks.
@@ -750,9 +747,8 @@ The design does not grant those additional rights.
 The host configuration must preserve the confirmed view and entry creation rules.
 The template view and current calendar view need distinct permission checks.
 
-If the public view is added, each entry needs an explicit public status.
-An entry has a private status until a user with the applicable permissions gives approval for public access.
-The server must apply this rule to pages, downloads, and calendar feeds.
+Diary has no public view.
+The server must restrict pages, downloads, and calendar feeds to ExecMembers with the applicable permissions.
 
 ## 9. Reminders: subsequent design
 
@@ -795,14 +791,14 @@ A date change must cancel pending messages that use the old date.
 | 1 | Template copies, the team date list, optional task owners, and the confirmed entry creation actions. | Give approval for the template, creation step, and display. |
 | 2 | Other task changes and completion records in PostgreSQL. | Give approval for task states and permissions. |
 | 3 | Reminders with send records. | Give approval for recipients, timing, retries, and message content. |
-| 4 | Optional public view or calendar export. | Give approval for public data and update rules. |
+| 4 | Optional calendar export for permitted ExecMembers. | Give approval for export data and update rules. |
 
 These phases are proposals.
 They do not give approval for implementation work.
 
 ## 11. Open decisions
 
-1. Must a subsequent version include a public view as well as the confirmed team view?
+1. Resolved: Diary is for ExecMembers only. There is no public view.
 2. Which tasks must appear before and after an event?
 3. Can task dates use booking dates as well as the event date?
 4. Must the first version record task completion?
@@ -819,14 +815,14 @@ They do not give approval for implementation work.
 15. Must a template identify an initial owner by person or role, or leave that choice to each event?
 16. Who can change a task owner or complete a role-owned or whole-team task?
 17. Who must receive reminders for whole-team tasks?
-18. Can role members outside ExecMember view tasks that their role owns?
+18. Resolved: Role membership outside ExecMember does not grant Diary access.
 19. Does a role-owned task need one completion record or confirmation from every role member?
 20. Are personal entries visible to all ExecMembers, or only to the owner and permitted Officers?
 21. Does an Officer's template addition approve its new version, or is a separate approval step necessary?
 22. Must dependencies prevent completion, or only identify tasks that are not ready?
 23. Can Officers override a dependency, and what record must that action create?
 
-The first three questions give the next design step.
+Questions 2 and 3 give the next design step.
 
 ## 12. Language review
 
