@@ -62,7 +62,7 @@ The names apply to the calendar system and the existing website.
 | Milestone | A named date definition that a template can use. |
 | Milestone date | The value of a named milestone in one event calendar. |
 | Actor | The trusted caller identity, group names, and permitted calendar keys supplied to the API. |
-| Personal entry | A calendar entry that an ExecMember creates with themselves as its owner. |
+| Personal entry | A calendar entry that a DiaryUser creates with themselves as its owner. |
 | Calendar template | The common entries and date rules for future event calendars. |
 | Template version | An identified set of template entries that the team can approve. |
 | Entry key | An identifier that stays the same for the same template entry across template versions. |
@@ -792,11 +792,12 @@ For Garage Sale, the entry creation forms use the calendar for the current event
 | Add an entry for all members of a selected user role. | No grant. | Yes. |
 | Also add the new entry to the template for future events. | No grant. | Yes. |
 
-The server sets the owner of an DiaryUser's personal entry to that DiaryUser.
+The server sets the owner of a DiaryUser's personal entry to that DiaryUser.
 The user cannot select another person or role through the personal entry action.
 The server must enforce this rule if a request contains another owner identifier.
+Only DiaryManagers can add tasks owned by another person.
 
-An DiaryManager can select a specific person or a user role for the new entry.
+A DiaryManager can select a specific person or a user role for the new entry.
 The existing person ownership rule uses a selected DiaryUser.
 Role ownership includes all members of the selected role.
 
@@ -832,8 +833,10 @@ The save must prevent repeated requests from adding the same entry twice.
 If the template addition fails, the system must not report a successful combined save.
 The proposal saves both additions in one database transaction.
 
-Personal ownership does not by itself define private visibility.
-The visibility of personal entries is an open decision.
+A personally added entry is visible only to its owner and DiaryManagers within the host's permitted calendar scope.
+Other DiaryUsers cannot see that entry through lists, task details, searches, or predecessor choices.
+The callable API and HTTP API must enforce the same visibility rule.
+Hiding a page link alone does not enforce this requirement.
 The permission to add an entry does not settle permission to edit, delete, or complete it.
 
 ### Server checks and other actions
@@ -934,7 +937,7 @@ Unresolved rules still need approval before implementation.
 17. Deferred beyond V1: Who must receive reminders for whole-team tasks?
 18. Resolved: Task role membership alone does not grant Diary access. The configured Diary roles and host permissions control access.
 19. Resolved for V1: Multiple sign-offs are outside scope. Each task has one completion record, including role-owned tasks.
-20. Are personal entries visible to all ExecMembers, or only to the owner and permitted Officers?
+20. Resolved: Personally added tasks are visible only to their owner and DiaryManagers. Only DiaryManagers can add tasks owned by another person.
 21. Resolved for V1: A DiaryManager's template addition approves the resulting version through the same save action.
 22. Must dependencies prevent completion, or only identify tasks that are not ready?
 23. Can Officers override a dependency, and what record must that action create?
