@@ -38,6 +38,9 @@ Diary does not define that mapping.
 The repository contains different rules for selection of the current event.
 This design does not select a new rule for the website.
 The proposed host event selector permits selection only from events available to the user.
+The Garage Sale adapter can obtain its current event from `request.current_event`.
+It supplies that event's stored Diary key to Diary.
+Diary does not read this custom request attribute or select the current event.
 A missing source value does not mean that its date has passed.
 Diary shows “Date not set” when a necessary date has no value.
 
@@ -83,6 +86,7 @@ Repeated host requests must not create duplicate calendars or entries.
 - [ ] Preserve existing keys and completion records during repeated requests.
 - [ ] Define the procedure for existing events without a Diary key.
 - [ ] Keep the host's current-event selection rule unchanged by Diary integration.
+- [ ] Read `request.current_event` only in the Garage Sale adapter and supply its permitted Diary key.
 
 Milestone date changes and their impact review belong in V2.
 The host can call `Diary.api.close_calendar` to close an instance with open tasks.

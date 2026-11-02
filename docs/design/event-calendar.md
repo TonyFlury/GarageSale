@@ -87,7 +87,7 @@ The names apply to the calendar system and the existing website.
 | DiaryManager | The configurable Diary management role. Garage Sale maps this role to Officer. |
 | DiaryUser | The configurable Diary task user role. Garage Sale maps this role to ExecMember. |
 | SponsorshipManager | The existing `SponsorshipManager` permission group in this project. |
-| Current event | The event that the application supplies as `request.current_event`. |
+| Selected diary | The diary instance identified by a permitted key supplied by the caller. |
 | Date review | A comparison of old dates and proposed new dates. |
 | PostgreSQL | The database system that this project uses in all environments. |
 
@@ -121,15 +121,17 @@ It also owns the calendar pages and the applicable permission checks.
 Task progress and completion records belong to Diary in the first feature release.
 
 Diary is independent of other project apps.
+Its only host dependencies are Django settings and the configured Django user model.
+Diary must retrieve the user model through `django.contrib.auth.get_user_model()` when it needs the model class.
+It must not import a host user model class directly.
+Diary has no dependency on a host event model or custom request attributes.
 Its models have no foreign keys to event, user, or group models in other apps.
 Its migration has no dependency on those apps.
 Its API receives references and date values from the caller.
 
-`GarageSale.EventData` is the source for this website's event dates and booking dates.
-The host stores the returned Diary key in `EventData.diary_key`.
-That field is a nullable UUID, not a foreign key.
-The API does not import or change `EventData`.
-The caller must save the returned key against the correct event.
+The caller supplies named milestone dates and stores the returned Diary key against its own record.
+Diary does not import or change that record.
+The host integration document defines any project-specific storage or event selection rules.
 
 Milestone dates in Diary are input values from the caller.
 The V2 design must define how the caller supplies changed milestone dates through the API.
@@ -167,9 +169,9 @@ flowchart LR
     D --> I[Task progress and completion: first release]
 ```
 
-The API uses the permission group mapping in settings.
-Diary must use the existing team page styles and navigation conventions.
-The app must not change the rule that selects `request.current_event`.
+The API uses the permission group mapping in Django settings.
+Diary provides default page styles and permits host overrides.
+The caller selects the diary instance through a permitted Diary key.
 
 ### Callable API, milestones, and calendar keys
 
@@ -442,8 +444,8 @@ For example, it can show “Event date minus 42 days”.
 An annual entry can show “Fixed date: 1 March each year”.
 A one-time entry shows its full date and “One-time date”.
 
-The Garage Sale current-event view opens the calendar for `request.current_event`.
-The host can also permit access to other calendar instances.
+The calendar view opens the diary instance identified by the permitted key supplied by the host.
+The host determines which instances the user can select.
 An event selector must show only events that the user has permission to view.
 The page shows the selected event name at all times.
 It does not silently change to the current event.
@@ -775,7 +777,7 @@ Thus, each Officer can also view the calendar for the current event.
 Other group permissions must use the existing access policy or a subsequent explicit decision.
 
 The template view shows its entries, date rules, and template version.
-The current calendar view shows the entries for `request.current_event`.
+The calendar view receives a permitted Diary key from the host.
 The page must show the event name and event date.
 
 ```mermaid
