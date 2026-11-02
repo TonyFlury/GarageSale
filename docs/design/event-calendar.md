@@ -174,6 +174,13 @@ For example, `add_board_bookings_open` identifies the date on which advertising 
 A milestone has a stable name and a human-readable label.
 Each event calendar has its own milestone date values.
 
+Each template identifies the named milestones that its task date rules require.
+When the API creates a calendar from that template, the caller supplies a date for each required milestone.
+The Garage Sale app is the caller for this website.
+The caller determines the source and meaning of each milestone date.
+Diary uses the supplied dates without knowledge of booking fields or event selection rules.
+This interface keeps Diary independent of the application that uses it.
+
 The template can use a milestone directly or apply a day count to it.
 For example, a task can be due 42 days after `add_board_bookings_open`.
 The task rule uses that milestone and a day count of positive 42.
@@ -804,7 +811,7 @@ They do not give approval for implementation work.
 
 1. Resolved: Diary is for ExecMembers only. There is no public view.
 2. Resolved: The selection of template tasks is outside the feature definition. Diary provides a generic capability to hold those tasks.
-3. Can task dates use booking dates as well as the event date?
+3. Resolved: Templates identify named milestones for task date rules. The caller supplies each required milestone date through the API during calendar creation.
 4. Must the first version record task completion?
 5. Is a date list sufficient, or is a month display also necessary?
 6. Is a date review necessary before the user saves a changed event date?
