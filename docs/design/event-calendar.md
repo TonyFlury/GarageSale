@@ -830,6 +830,10 @@ The server must restrict pages, downloads, and calendar feeds to configured Diar
 
 Reminders are a separate phase.
 The first version does not send them.
+The user confirmed that reminders are outside V1 scope.
+Recipient, timing, and delivery decisions do not prevent the V1 release.
+The following reminder rules are proposals for a later release.
+No release number is confirmed for reminders.
 
 ```mermaid
 flowchart LR
@@ -872,6 +876,7 @@ A date change must cancel pending messages that use the old date.
 Task progress and completion are confirmed requirements for the first release.
 Milestone date changes and their impact review are confirmed V2 scope.
 The other phase assignments remain proposals.
+Reminders are confirmed as outside V1 scope.
 Unresolved rules still need approval before implementation.
 
 ## 11. Open decisions
@@ -883,7 +888,7 @@ Unresolved rules still need approval before implementation.
 5. Resolved: A simple date-ordered list is sufficient for the first release. A month display is not required.
 6. Resolved: Milestone date changes and the presentation of their effects belong in V2. The review workflow still needs design.
 7. Access resolved: Configured DiaryManagers can view host-permitted calendars. DiaryUsers can read associated tasks across all permitted instances or one selected instance. Task-change permissions remain open.
-8. Which people must receive reminders, and at which times?
+8. Resolved for V1: Reminders are outside scope. Recipient and timing rules are deferred to a later release.
 9. Outside feature scope: The selection of annual or one-time dates for specific entries is application data.
 10. Outside feature scope: The selection of annual entries for the year before the event is application data.
 11. Is event creation the correct step to copy the template, with activation as a check for an absent event calendar?
@@ -892,7 +897,7 @@ Unresolved rules still need approval before implementation.
 14. Must the first version apply new template versions to existing event calendars?
 15. Must a template identify an initial owner by person or role, or leave that choice to each event?
 16. Who can change a task owner or complete a role-owned or whole-team task?
-17. Who must receive reminders for whole-team tasks?
+17. Deferred beyond V1: Who must receive reminders for whole-team tasks?
 18. Resolved: Task role membership alone does not grant Diary access. The configured Diary roles and host permissions control access.
 19. Does a role-owned task need one completion record or confirmation from every role member?
 20. Are personal entries visible to all ExecMembers, or only to the owner and permitted Officers?
