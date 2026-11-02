@@ -4,6 +4,7 @@ Date: 2 November 2026.
 
 Status: Draft with confirmed requirements.
 Section 8 records the confirmed access requirements.
+Section 6 records the confirmed task owner requirement.
 The other design proposals still need approval unless the text identifies a confirmed requirement.
 
 Scope: Design documents only. This work does not change the application.
@@ -55,7 +56,8 @@ The names apply to the calendar system and the existing website.
 | One-time date | A full date that includes the year. It has no annual repetition. |
 | Task | Work that a team member must do. |
 | Due date | The date by which a task must be complete. |
-| Task owner | The person who must do a task. |
+| Task owner | An optional person who must do a task for an event. |
+| Whole-team task | A task for the whole team, with no individual task owner. |
 | Reminder | A message that tells a person about a date or task. |
 | Public view | Calendar information that a visitor can read without an account. |
 | Team view | Calendar information for users with the applicable team permissions. |
@@ -97,8 +99,8 @@ An event selector lets the user select the event for the calendar display.
 | Alternative | First version | Main benefit | Main limit |
 | --- | --- | --- | --- |
 | A | Show the existing event dates. | The team can check dates in one place. | The calendar does not show tasks. |
-| B | Show existing dates, fixed dates, and calculated task dates. | The team can see the work sequence. | The team cannot record task completion. |
-| C | Add task owners, completion records, and reminders. | The team can control the work through the calendar. | More rules and permissions are necessary. |
+| B | Show dates, tasks, and optional task owners. | The team can see the work sequence and task owners. | The team cannot record task completion. |
+| C | Add task changes, completion records, and reminders. | The team can control the work through the calendar. | More rules and permissions are necessary. |
 
 Alternative B is the first proposal.
 It agrees with the task list request in the backlog.
@@ -147,7 +149,8 @@ Thus, a template change cannot silently change an existing event calendar.
 An event date change still uses the copied rules to calculate dates again.
 
 The read-only first version can keep these copies in PostgreSQL.
-Task owners and completion records are additions for a subsequent phase.
+Each task can have an optional task owner.
+Task changes and completion records are additions for a subsequent phase.
 
 ### Creation and activation
 
@@ -281,7 +284,7 @@ flowchart TD
     A[Event selector] --> B[Selected event and event date]
     B --> C[Filters: date range and entry type]
     C --> D[Date list]
-    D --> E[Date, entry name, and source]
+    D --> E[Date, entry name, source, and task owner]
     E --> F[Entry details]
 ```
 
@@ -299,6 +302,41 @@ It does not silently change to the current event.
 The page uses the existing team page styles.
 Labels must explain each state without color alone.
 The user must be able to use the keyboard for all actions.
+
+### Task owners: confirmed requirement
+
+The user confirmed that a task can have an optional task owner.
+Some tasks are for a specific person.
+Other tasks are for the whole team.
+
+| Task owner | Meaning | Display label |
+| --- | --- | --- |
+| A selected person | That person must do the task. | Show the person's name. |
+| No selected person | The task is for the whole team. | Show “Whole team”. |
+
+The calendar must not show a whole-team task as an incorrect or missing owner.
+The task date does not change when its task owner changes.
+Task ownership does not grant permission to change a task or record its completion.
+Section 8 defines the confirmed view permissions.
+The permission to change tasks is an open decision.
+
+```mermaid
+flowchart TD
+    A[Task for an event] --> B{Does the task have an owner?}
+    B -->|Yes| C[Show the person's name]
+    B -->|No| D[Show Whole team]
+    C --> E[Show the task in the event calendar]
+    D --> E
+```
+
+The optional owner belongs to the task in its event calendar.
+Different events can have different owners for the same template task.
+The template rule for an initial task owner is an open decision.
+It can identify a person, identify a role, or leave the task for the whole team.
+
+If a person leaves the team, the system must identify their open tasks for review.
+The system must not silently change those tasks into whole-team tasks.
+The rule for that change needs approval before implementation.
 
 ## 7. Changes to an event date
 
@@ -408,6 +446,9 @@ flowchart LR
 
 The team must give approval for each recipient and message channel.
 Email to the task owner is one possible channel.
+Whole-team tasks have no individual task owner for that channel.
+The recipient rule for whole-team reminders is an open decision.
+An absent owner must not automatically cause an email to every team member.
 
 Each reminder must have a record of the entry, recipient, and scheduled send time.
 The system must use this record to prevent repeated messages.
@@ -423,8 +464,8 @@ A date change must cancel pending messages that use the old date.
 
 | Phase | Result | Decision before the next phase |
 | --- | --- | --- |
-| 1 | Template copies and a team date list with fixed dates and calculated dates. | Give approval for the template, creation step, and display. |
-| 2 | Task owners and completion records in PostgreSQL. | Give approval for task states and permissions. |
+| 1 | Template copies and a team date list with fixed dates, calculated dates, and optional task owners. | Give approval for the template, creation step, and display. |
+| 2 | Task changes and completion records in PostgreSQL. | Give approval for task states and permissions. |
 | 3 | Reminders with send records. | Give approval for recipients, timing, retries, and message content. |
 | 4 | Optional public view or calendar export. | Give approval for public data and update rules. |
 
@@ -447,6 +488,9 @@ They do not give approval for implementation work.
 12. Who can change a calendar template and give approval for a template version?
 13. Can an event calendar have extra entries or changes to template entries?
 14. Must the first version apply new template versions to existing event calendars?
+15. Must a template identify an initial owner by person or role, or leave that choice to each event?
+16. Who can change a task owner or complete a whole-team task?
+17. Who must receive reminders for whole-team tasks?
 
 The first three questions give the next design step.
 
