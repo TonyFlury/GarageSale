@@ -28,6 +28,22 @@
 
 The official reference is https://www.asd-ste100.org/assets/files/ASD-STE100_ISSUE9.pdf.
 
+## Code documentation
+
+These rules apply throughout the project, including tests and private implementation code.
+
+- Give every class, function, and method a docstring.
+- Include constructors, factory methods, protocol methods, and test helpers.
+- Describe the purpose of each class and callable.
+- Document inputs, results, side effects, and exceptions where they are relevant.
+- Add explanatory comments before conditional branches and guard clauses.
+- Put a blank line before each explanatory comment or comment block.
+- Include conditional expressions, comprehension filters, and conditional loop logic.
+- Explain the reason for each condition and the behavior it protects.
+- Explain separate branch outcomes when one comment does not cover them clearly.
+- Keep docstrings and comments consistent with the implementation.
+- Apply the project documentation language rules to docstrings and explanatory comments.
+
 ## Diary UI
 
 - Give each visible component, content role, form control, and task state a stable, descriptive CSS class.
