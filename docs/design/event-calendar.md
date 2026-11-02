@@ -56,13 +56,16 @@ The names apply to the calendar system and the existing website.
 | One-time date | A full date that includes the year. It has no annual repetition. |
 | Task | Work that a team member must do. |
 | Due date | The date by which a task must be complete. |
-| Task owner | An optional person who must do a task for an event. |
-| Whole-team task | A task for the whole team, with no individual task owner. |
+| Task owner | An optional person or role that must do a task for an event. |
+| Owner type | The choice of a person, a role, or the whole team for a task. |
+| Role owner | A selected project role whose members must do a task. |
+| Whole-team task | A task for the whole team, with no selected person or role. |
 | Reminder | A message that tells a person about a date or task. |
 | Public view | Calendar information that a visitor can read without an account. |
 | Team view | Calendar information for users with the applicable team permissions. |
 | Officer | The existing `Officer` permission group in this project. |
 | ExecMember | The existing `ExecMember` permission group in this project. |
+| SponsorshipManager | The existing `SponsorshipManager` permission group in this project. |
 | Current event | The event that the application supplies as `request.current_event`. |
 | Date review | A comparison of old dates and proposed new dates. |
 | PostgreSQL | The database system that this project uses in all environments. |
@@ -306,13 +309,21 @@ The user must be able to use the keyboard for all actions.
 ### Task owners: confirmed requirement
 
 The user confirmed that a task can have an optional task owner.
-Some tasks are for a specific person.
-Other tasks are for the whole team.
+The task owner can be a specific ExecMember or a role.
+A role owner includes all members of the selected role.
+A task without a selected person or role is for the whole team.
 
-| Task owner | Meaning | Display label |
+| Owner type | Meaning | Display label |
 | --- | --- | --- |
-| A selected person | That person must do the task. | Show the person's name. |
-| No selected person | The task is for the whole team. | Show “Whole team”. |
+| Person | One selected ExecMember must do the task. | Show the person's name. |
+| Role | All members of the selected role must do the task. | Show the role name, for example, “All SponsorshipManagers”. |
+| Whole team | The task has no selected person or role. The task is for the whole team. | Show “Whole team”. |
+
+Each task has one owner type at a time.
+A person-owned task has one selected ExecMember and no selected role.
+A role-owned task has one selected role and no selected person.
+A whole-team task has neither selection.
+An absent person does not mean “Whole team” when the task has a role owner.
 
 The calendar must not show a whole-team task as an incorrect or missing owner.
 The task date does not change when its task owner changes.
@@ -322,11 +333,13 @@ The permission to change tasks is an open decision.
 
 ```mermaid
 flowchart TD
-    A[Task for an event] --> B{Does the task have an owner?}
-    B -->|Yes| C[Show the person's name]
-    B -->|No| D[Show Whole team]
-    C --> E[Show the task in the event calendar]
-    D --> E
+    A[Task for an event] --> B{Which owner type?}
+    B -->|Person| C[Show the selected ExecMember]
+    B -->|Role| D[Show all members of the selected role]
+    B -->|Whole team| E[Show Whole team]
+    C --> F[Show the task in the event calendar]
+    D --> F
+    E --> F
 ```
 
 The optional owner belongs to the task in its event calendar.
@@ -334,9 +347,26 @@ Different events can have different owners for the same template task.
 The template rule for an initial task owner is an open decision.
 It can identify a person, identify a role, or leave the task for the whole team.
 
-If a person leaves the team, the system must identify their open tasks for review.
+### Role membership and access
+
+The proposal keeps the role reference in the task.
+It does not replace the role with a fixed list of people when the calendar is created.
+The calendar shows the current role members.
+Thus, a new SponsorshipManager becomes a task owner through role membership.
+A person outside that role is not a task owner through that role.
+
+The system must identify a selected role with no current members.
+The display must show “No role members” with the role name.
+It must not change that task into a whole-team task.
+
+Some role members are not ExecMembers.
+Role ownership does not grant calendar access or task change permissions.
+Calendar access for role members outside ExecMember is an open decision.
+
+If a selected person leaves ExecMember, the system must identify their open tasks for review.
 The system must not silently change those tasks into whole-team tasks.
 The rule for that change needs approval before implementation.
+Whether each role member must confirm task completion is also an open decision.
 
 ## 7. Changes to an event date
 
@@ -446,6 +476,10 @@ flowchart LR
 
 The team must give approval for each recipient and message channel.
 Email to the task owner is one possible channel.
+For a person-owned task, the recipient is the selected ExecMember.
+For a role-owned task, the proposal uses all current members of the selected role.
+The system must identify the recipients when it prepares the reminder.
+The send record must keep the actual recipients after a role membership change.
 Whole-team tasks have no individual task owner for that channel.
 The recipient rule for whole-team reminders is an open decision.
 An absent owner must not automatically cause an email to every team member.
@@ -489,8 +523,10 @@ They do not give approval for implementation work.
 13. Can an event calendar have extra entries or changes to template entries?
 14. Must the first version apply new template versions to existing event calendars?
 15. Must a template identify an initial owner by person or role, or leave that choice to each event?
-16. Who can change a task owner or complete a whole-team task?
+16. Who can change a task owner or complete a role-owned or whole-team task?
 17. Who must receive reminders for whole-team tasks?
+18. Can role members outside ExecMember view tasks that their role owns?
+19. Does a role-owned task need one completion record or confirmation from every role member?
 
 The first three questions give the next design step.
 
