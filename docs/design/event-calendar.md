@@ -15,6 +15,7 @@ Scope: Design and the initial Diary data layer.
 The app, models, migrations, and callable API now exist.
 The standalone task list template and its reusable fragment also exist.
 The routed pages and event lifecycle connections still need implementation.
+The [Diary V1 checklist](../../Diary/TODO_V1.md) tracks implemented components and each remaining V1 item.
 
 Language reference: ASD-STE100, Issue 9. Section 13 records the language review.
 
@@ -565,8 +566,8 @@ The calendar shows the current role members.
 Thus, a new SponsorshipManager becomes a task owner through role membership.
 A person outside that role is not a task owner through that role.
 
-The system must identify a selected role with no current members.
-The display must show “No role members” with the role name.
+During template editing, the system must identify a selected role with no current members.
+The warning must show “No role members” with the role name.
 It must not change that task into a whole-team task.
 
 Some role members are not DiaryUsers.

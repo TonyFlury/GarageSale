@@ -59,6 +59,24 @@ Diary pages identify their instance by its required diary name.
 They do not require event metadata or an event date for the page heading.
 An event date supplied as a named milestone remains an ordinary Diary input.
 
+## Dashboard connection
+
+The host dashboard shows the current user's Late, Ready, and Blocked counts when Diary is enabled.
+The adapter uses the host-selected event's stored Diary key.
+It must check Diary availability before importing the API.
+It must omit the section and API calls when Diary is disabled.
+
+The counts include personal tasks and tasks owned by the user's current groups.
+They exclude completed tasks and whole-team tasks.
+Late includes open tasks due today or earlier and takes priority over Blocked or Ready.
+Each remaining task contributes to Blocked or Ready according to its open predecessors.
+Each count links to the matching personal Diary filter.
+A zero count remains a link to an empty result.
+An absent Diary key has an explicit empty state.
+
+The [Diary V1 checklist](../Diary/TODO_V1.md#host-integration-work) tracks this separate host work.
+The generic Diary app owns the destination task views.
+
 ## Open lifecycle decision
 
 Should Garage Sale create the Diary calendar during event creation?
