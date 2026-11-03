@@ -61,6 +61,10 @@ class HostDiaryBrowserTests(StaticLiveServerTestCase):
             self.dismiss_banner(driver)
             self.assertTrue(driver.find_elements(By.ID, 'Buttons'))
             self.assertTrue(driver.find_elements(By.ID, 'SidebarContainer'))
+            self.assert_diary_fills_content(driver, '.diary-manager')
+            driver.set_window_size(1920, 1080)
+            self.assert_diary_fills_content(driver, '.diary-manager')
+            driver.save_screenshot('/tmp/diary-host-manager-wide.png')
             self.assertFalse(driver.find_elements(By.CSS_SELECTOR, '.diary-host-event-form, .diary-host-event-control'))
             self.assertEqual(len(driver.find_elements(By.CSS_SELECTOR, '#SidebarContainer .diary-host-sidebar-entry')), 3)
             self.assertFalse(driver.find_elements(By.CSS_SELECTOR,
@@ -68,6 +72,12 @@ class HostDiaryBrowserTests(StaticLiveServerTestCase):
             driver.find_element(By.CSS_SELECTOR, '#SidebarContainer .diary-host-personal').click()
             wait.until(lambda browser: browser.current_url.endswith(reverse('Diary:personal-diary')))
             self.dismiss_banner(driver)
+            self.assert_diary_fills_content(driver, '.diary-personal')
+            driver.save_screenshot('/tmp/diary-host-personal-wide.png')
+            driver.set_window_size(390, 844)
+            self.assert_diary_fills_content(driver, '.diary-personal')
+            self.assertTrue(driver.execute_script('return document.documentElement.scrollWidth <= innerWidth'))
+            driver.set_window_size(1280, 1000)
             driver.find_element(By.CSS_SELECTOR, '#SidebarContainer .diary-host-manager').click()
             wait.until(lambda browser: browser.current_url.endswith(url))
             self.dismiss_banner(driver)
@@ -95,3 +105,12 @@ class HostDiaryBrowserTests(StaticLiveServerTestCase):
             self.assertTrue(driver.execute_script('return document.documentElement.scrollWidth <= innerWidth'))
         finally:
             driver.quit()
+
+    def assert_diary_fills_content(self, driver, selector):
+        """Check that the Diary overview uses the available host width without crossing its content boundary."""
+        widths = driver.execute_script('''
+            const panel = document.querySelector(arguments[0]);
+            return [panel.getBoundingClientRect().width, panel.parentElement.clientWidth];
+        ''', selector)
+        self.assertGreaterEqual(widths[0], widths[1] * .98)
+        self.assertLessEqual(widths[0], widths[1] + 1)
