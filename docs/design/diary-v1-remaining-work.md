@@ -581,7 +581,7 @@ Successful template tests do not verify unimplemented task workflows.
 
 **Remaining requirements**
 
-Add verification for membership-loss handling under DEC-005 and the proposed recovery page.
+Add concurrent membership-change verification for the implemented ownership recovery workflow.
 Task creation tests now cover ownership, template revisions, rollback, duplicate requests, and concurrent saves.
 Personal tests now cover privacy, cross-diary reads, configured groups, selectors, and filters.
 Verify repeated requests and transaction rollback for each new operation.
@@ -604,7 +604,7 @@ Extend browser coverage after task routes and completion controls exist.
 | DV1-028 | Implemented dependency freeze with API, model, migration, and concurrency verification. |
 | DV1-043 | Implemented milestone restriction with API, model, and PostgreSQL verification. |
 | DV1-035 through DV1-038 | Implemented and verified through the task detail workflow. |
-| DV1-040 | Membership-loss handling under DEC-005. |
+| DV1-040 | Implemented under DEC-005. Concurrent membership-change verification remains under DV1-044. |
 | DV1-039, DV1-041, DV1-042 | Implemented for the required pages and states. |
 
 **Completion checks**
@@ -694,12 +694,12 @@ ASD-STE100 Issue 9 was available locally.
 A full dictionary and technical-name review remains necessary.
 This document does not claim full ASD-STE100 compliance.
 
-## DV1-040: Ownership recovery API and proposed page
+## DV1-040: Ownership recovery in the existing editor
 
 **Current implementation**
 
 The technical function `Diary.ownership.orphaned_entry_keys()` identifies open tasks without an eligible person or role member.
-It excludes completed tasks and whole-team tasks.
+It excludes diary additions, completed tasks, and whole-team tasks.
 The technical method `DiaryInstance.reassign_task()` requires manager permission, trusted diary scope, and the inspected task revision.
 It checks current eligibility before it changes ownership.
 It preserves task dates, task identity, dependency links, and completion records.
@@ -708,14 +708,25 @@ That option requires `expected_version_key` and a matching stable task key in th
 Failure rolls back both operations. Existing diary copies retain their owners.
 The technical class `OwnershipRecoveryTests` verifies permission, stale revisions, closure, replacement eligibility, and template rollback.
 
-**Proposed interface and open decisions**
+**Approved decision: DEC-005**
 
-DEC-005 remains open for the manager review workflow and its presentation.
-The callable API does not add automatic reassignment or a recovery page.
-A proposed manager page would list orphaned open tasks and require an explicit replacement selection.
-The page would offer a separate template-update option.
-The host identity adapter must check active status and current Diary access for person references.
-Further verification must cover concurrent membership changes and the proposed page before DV1-040 can be complete.
+The manager full diary list places orphaned template tasks before other tasks.
+The normal date, name, and stable-key ordering remains within each category. Existing filters still apply.
+Managers can leave an orphaned task unresolved.
+An unresolved task preserves its owner and remains incomplete.
+Dependent tasks remain blocked while that predecessor stays incomplete.
+Managers assign replacements through the existing task detail editor. No separate popup or recovery page is required.
+Person replacements must be active members of the configured DiaryUser group.
+Authorized ownership groups and whole-team ownership are also permitted.
+The selected ownership group must have an eligible active member.
+The existing editor changes this diary only. The optional template revision remains a callable API operation.
+
+**Verification limits**
+
+The technical class `ManagerOwnershipRecoveryTests` verifies list ordering, existing-editor controls, person eligibility, stale forms, and trusted scope.
+The technical class `OwnershipRecoveryTests` verifies restored membership and rejection of diary additions and manager-only replacement persons.
+The technical class `OwnershipRecoveryBrowserTests` verifies navigation, replacement controls, and phone layout.
+DV1-044 retains verification for simultaneous membership changes, completion, and closure through separate database connections.
 
 ## DV1-043: Implemented milestone boundary
 

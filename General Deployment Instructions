@@ -137,7 +137,14 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         Verify rejected API and database edits before deployment.
         DiaryInstance.reassign_task provides manager ownership recovery through the callable API.
         Supply the inspected task revision and an eligible replacement owner.
-        The ownership recovery page remains outstanding.
+        Ownership recovery uses the existing task detail editor.
+        Orphaned template tasks appear first in the full manager diary list.
+        Managers can leave them unresolved or select Assign owner in the existing editor.
+        Person replacements require active DIARY_USER membership.
+        Authorized ownership groups and Whole team are also permitted.
+        Collect Diary/styles/diary.css for orphan labels and ownership controls.
+        Verify orphan ordering, existing-editor reassignment, current membership checks, and trusted diary scope after deployment.
+        Ownership recovery requires no additional migration.
         The dashboard section and automatic event callbacks remain outstanding.
         API setup, template page usage, and styling classes are in Diary/README.md.
 

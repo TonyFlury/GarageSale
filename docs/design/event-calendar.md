@@ -463,6 +463,16 @@ UTC is the time reference for stored timestamps.
 ## 6. Page design
 
 The user confirmed that a simple date-ordered list is sufficient for the first release.
+DEC-005 adds one ordering exception for the full manager diary view.
+Show orphaned template tasks before other tasks. Keep the normal ordering within each category.
+An orphaned task is an incomplete template copy without an eligible person or ownership group member.
+Diary additions do not qualify as orphaned tasks.
+Managers can leave these tasks unresolved. Their incomplete predecessor links continue to block dependent tasks.
+Managers can assign replacements through the existing task editor. No separate popup is required.
+Person replacements must be active members of the configured `DIARY_USER` group.
+Authorized ownership groups and Whole team are also permitted.
+The selected ownership group must have an eligible active member.
+
 The list works on a phone and shows long task names without small calendar cells.
 A month display is not required for the first release.
 
