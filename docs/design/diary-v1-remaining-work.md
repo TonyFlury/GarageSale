@@ -336,6 +336,39 @@ That browser method checks keyboard controls, mobile layout, status filters, pri
 This documentation change did not repeat the earlier broader or browser checks.
 Host dashboard integration and deployment remain separate work.
 
+## DV1-028: Frozen diary dependencies
+
+**Status: implemented.**
+
+The confirmed V1 policy prohibits dependency changes after a diary's initial creation.
+The policy applies to users, managers, open diaries, closed diaries, and completed tasks.
+Initial template dependencies remain part of the creation snapshot.
+Template graph changes do not propagate to existing diaries.
+
+The technical API method `_DependencyAPI.set_predecessors()` in [Diary/api.py](../../Diary/api.py) rejects every diary edit.
+It retains role, diary scope, and closure checks.
+Draft template edits remain permitted through the same method.
+The technical model methods `EntryDependency.clean()`, `EntryDependency.save()`, and `EntryDependency.delete()` in [Diary/models.py](../../Diary/models.py) enforce normal model writes.
+
+Migration [0006_freeze_live_dependencies.py](../../Diary/migrations/0006_freeze_live_dependencies.py), class `Migration`, adds the internal technical field `EventCalendar.dependencies_locked`.
+Existing rows start locked, without any change to their dependency links or completion data.
+`DiaryInstance.create()` initializes a new graph and locks it before returning.
+PostgreSQL rejects unlocking and prevents an unfinished initialization transaction from committing.
+
+The migration's technical SQL value `FORWARD_SQL` defines guards for dependency row writes and stable endpoint identities.
+These guards cover bulk writes, querysets, and many-to-many relationship operations.
+Normal dates, completion actions, and closed-diary reads continue to work.
+
+[LiveDependencyTests](../../Diary/tests/test_live_dependencies.py) covers API, model, bulk, relationship, browser-action, and identity restrictions.
+`LiveDependencyTransactionTests` covers concurrent mutations and unfinished initialization.
+`LiveDependencyMigrationTests.test_existing_links_and_completion_records_are_preserved` applies the real migration to historical PostgreSQL tables.
+The template graph race remains in [DependencyConcurrencyTests.test_concurrent_opposite_links_cannot_form_a_cycle](../../Diary/tests/test_concurrency.py).
+Historical test fixtures use [seed_legacy_dependencies](../../Diary/tests/legacy_dependencies.py) only to represent pre-migration data.
+Production code does not use that fixture helper.
+
+No implementation remains under DV1-028.
+DFUT-004 records possible later editing, without an assigned release or approved policy.
+
 ## DV1-029, DV1-030, and DV1-033: Task creation
 
 **Status: implemented.**
@@ -465,7 +498,7 @@ The exact staged implementation passed 177 tests with each user-model configurat
 
 DV1-022 is complete through the existing manager diary list.
 Copying existing template tasks into existing diaries is not required.
-The existing callable live-dependency restriction remains under DV1-028.
+DV1-028 now enforces the live dependency restriction through the API, models, and PostgreSQL.
 V1 does not add task reopening, owner changes, other content edits, or automatic scheduling-conflict warnings.
 The proposed shared identity module remains an open implementation choice under DV1-013.
 
@@ -533,7 +566,7 @@ Successful template tests do not verify unimplemented task workflows.
 
 **Remaining requirements**
 
-Add verification for membership-loss handling under DEC-005 and the remaining privacy, dependency, and milestone API boundaries.
+Add verification for membership-loss handling under DEC-005 and the remaining privacy and milestone API boundaries.
 Task creation tests now cover ownership, template revisions, rollback, duplicate requests, and concurrent saves.
 Personal tests now cover privacy, cross-diary reads, configured groups, selectors, and filters.
 Verify repeated requests and transaction rollback for each new operation.
@@ -553,7 +586,8 @@ Extend browser coverage after task routes and completion controls exist.
 | --- | --- |
 | DV1-013, DV1-018, DV1-019 | Implemented for the required interfaces. |
 | DV1-031 | Remaining privacy checks for searches and the HTTP data API. |
-| DV1-028, DV1-043 | Remaining live dependency and milestone mutation restrictions. |
+| DV1-028 | Implemented dependency freeze with API, model, migration, and concurrency verification. |
+| DV1-043 | Remaining milestone mutation restriction. |
 | DV1-035 through DV1-038 | Implemented and verified through the task detail workflow. |
 | DV1-040 | Membership-loss handling under DEC-005. |
 | DV1-039, DV1-041, DV1-042 | Implemented for the required pages and states. |
@@ -601,7 +635,31 @@ Verify task privacy and permitted diary scope in every applicable view.
 Verify consistent results between personal views and specific diary views.
 Record exact implementation and verification symbols when this deferred requirement is implemented.
 
+## DFUT-004: Live diary dependency editing
+
+**Backlog proposal. No assigned release.**
+
+A later version may offer a controlled editor for existing diary dependencies.
+This is not an approved V1 editing capability.
+The V1 database guards and API restrictions remain in force.
+
+**Open design questions**
+
+Define which roles can edit and which graph changes are permitted.
+Define handling for completed tasks, forced completions, and completion history.
+Define the effect on readiness and the display of changed blocking chains.
+Define cycle checks, concurrent saves, rollback, and closed-diary behavior.
+Define the records needed to explain who changed a graph and why.
+A future implementation must explicitly replace the V1 restriction through reviewed code and database changes.
+
+No editor, public mutation method, or release date is approved by this backlog record.
+
 ## Review limits
+
+The staged dependency restriction passed 190 tests with each supported user model.
+Both runs used separate PostgreSQL test databases.
+All 15 Chrome cases passed.
+One navigation case required a retry after a Chrome document-node error.
 
 This document records remaining work and proposed implementation boundaries.
 It does not change application code, migrations, or deployed services.

@@ -509,6 +509,14 @@ Lists, task details, entry edit forms, and dependency lists use the same rules.
 The display calculates these states again after date, dependency, or completion changes.
 Template definitions have no instance dates and do not receive lateness highlights.
 
+### V1 diary dependency freeze
+
+DV1-028 enforces immutable dependency links after diary creation.
+The API, model methods, and PostgreSQL reject live graph changes.
+Initial diary creation still copies the approved template graph.
+Template changes, date edits, and task completion keep existing links unchanged.
+DFUT-004 records possible later controlled editing without an assigned release.
+
 ### Task owners: confirmed requirement
 
 The user confirmed that task progress through completion is required in the first feature release.
