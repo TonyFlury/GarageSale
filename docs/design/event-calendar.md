@@ -663,6 +663,14 @@ The API guide includes search-order examples and deployment checks for these ove
 The personal view includes tasks assigned to the user and tasks assigned to any role that includes that user.
 The user confirmed that this personal view is the default page for a logged-in user.
 The default must not include tasks owned only by other people or other roles.
+
+The “My Diary” view shows only ready tasks by default.
+The “show blocked also” checkbox is clear by default.
+Selecting it also shows blocked tasks assigned to the user or their groups.
+A task remains blocked while any required predecessor is incomplete, regardless of that predecessor’s owner.
+The checkbox does not grant access to other users’ tasks or private predecessor details.
+This display filter does not change the callable API task results.
+
 The current `DiaryInstance.personal_tasks()` method supplies that list for one instance.
 The confirmed API scope also requires personal task access across all instances permitted by the host.
 The caller can instead select one permitted instance.
