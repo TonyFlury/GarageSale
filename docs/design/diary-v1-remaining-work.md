@@ -581,7 +581,7 @@ Successful template tests do not verify unimplemented task workflows.
 
 **Remaining requirements**
 
-Add verification for membership-loss handling under DEC-005 and the remaining milestone API boundary.
+Add verification for membership-loss handling under DEC-005 and the proposed recovery page.
 Task creation tests now cover ownership, template revisions, rollback, duplicate requests, and concurrent saves.
 Personal tests now cover privacy, cross-diary reads, configured groups, selectors, and filters.
 Verify repeated requests and transaction rollback for each new operation.
@@ -602,7 +602,7 @@ Extend browser coverage after task routes and completion controls exist.
 | DV1-013, DV1-018, DV1-019 | Implemented for the required interfaces. |
 | DV1-031 | Implemented privacy checks for searches, HTTP data reads, and related task references. |
 | DV1-028 | Implemented dependency freeze with API, model, migration, and concurrency verification. |
-| DV1-043 | Remaining milestone mutation restriction. |
+| DV1-043 | Implemented milestone restriction with API, model, and PostgreSQL verification. |
 | DV1-035 through DV1-038 | Implemented and verified through the task detail workflow. |
 | DV1-040 | Membership-loss handling under DEC-005. |
 | DV1-039, DV1-041, DV1-042 | Implemented for the required pages and states. |
@@ -693,3 +693,35 @@ DV1-034 is not required, and DEC-003 is closed.
 ASD-STE100 Issue 9 was available locally.
 A full dictionary and technical-name review remains necessary.
 This document does not claim full ASD-STE100 compliance.
+
+## DV1-040: Ownership recovery API and proposed page
+
+**Current implementation**
+
+The technical function `Diary.ownership.orphaned_entry_keys()` identifies open tasks without an eligible person or role member.
+It excludes completed tasks and whole-team tasks.
+The technical method `DiaryInstance.reassign_task()` requires manager permission, trusted diary scope, and the inspected task revision.
+It checks current eligibility before it changes ownership.
+It preserves task dates, task identity, dependency links, and completion records.
+An explicit `update_template=True` also creates an approved template version in the same transaction.
+That option requires `expected_version_key` and a matching stable task key in the latest template.
+Failure rolls back both operations. Existing diary copies retain their owners.
+The technical class `OwnershipRecoveryTests` verifies permission, stale revisions, closure, replacement eligibility, and template rollback.
+
+**Proposed interface and open decisions**
+
+DEC-005 remains open for the manager review workflow and its presentation.
+The callable API does not add automatic reassignment or a recovery page.
+A proposed manager page would list orphaned open tasks and require an explicit replacement selection.
+The page would offer a separate template-update option.
+The host identity adapter must check active status and current Diary access for person references.
+Further verification must cover concurrent membership changes and the proposed page before DV1-040 can be complete.
+
+## DV1-043: Implemented milestone boundary
+
+The technical method `DiaryInstance.set_milestone_dates()` rejects post-creation changes after permission, scope, and closure checks.
+The technical class `CalendarMilestone` rejects normal model changes after initialization.
+Migration `0007_freeze_live_milestones` protects stored dates against direct PostgreSQL writes.
+It does not change existing milestone values.
+The technical class `LiveMilestoneTests` verifies API, model, bulk insertion, queryset update, and deletion restrictions.
+Milestone editing and impact review remain V2 work.

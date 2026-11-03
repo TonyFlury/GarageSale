@@ -702,12 +702,16 @@ The dashboard has an active tasks section only when the Diary app is enabled.
 The dashboard must test app availability before it imports the Diary API.
 If Diary is disabled, the dashboard does not show the section or call its API.
 The dashboard uses the current event's stored Diary key.
-It shows clickable Late and Ready counts for the current user, not an embedded task list.
+It shows compact clickable Late, Ready, and Blocked counts for the current user, not an embedded task list.
 Each count opens the matching filter in the personal Diary view.
 An [interactive dashboard mock-up](../../Diary/design/dashboard/index.html) demonstrates that presentation.
 
 `DiaryInstance.personal_tasks()` returns the user's open tasks for that instance, including tasks owned by their roles.
-The dashboard counts ready tasks and late tasks from that result.
+The dashboard gives each task one category from that result.
+An incomplete task due today or earlier contributes to Late, even if it has unfinished predecessors.
+Other tasks with unfinished predecessors contribute to Blocked.
+Other tasks with no unfinished predecessors contribute to Ready.
+Thus, the counts do not overlap.
 The counts exclude whole-team tasks and completed tasks.
 Each result identifies whether the task is ready or blocked.
 A separate result value identifies lateness.
@@ -718,7 +722,7 @@ A blocked task can also be late.
 A task with no due date shows “Date not set” and is not late.
 Date comparisons use the Diary time zone in settings.
 
-Completed tasks do not contribute to either count.
+Completed tasks do not contribute to any count.
 The API keeps their completion records and their due dates at completion.
 The dashboard must show an explicit empty state when the event has no Diary key.
 A zero count links to the corresponding empty personal task list.
@@ -730,7 +734,7 @@ flowchart TD
     B -->|Yes| D{Does the current event have a Diary key?}
     D -->|No| E[Show Calendar not prepared]
     D -->|Yes| F[Read the instance's personal tasks]
-    F --> G[Show clickable Late and Ready counts]
+    F --> G[Show compact Late, Ready, and Blocked counts]
     G --> H[Open the matching personal Diary filter]
 ```
 

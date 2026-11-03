@@ -130,6 +130,14 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         Search uses DiaryAPI.search_tasks and DiaryInstance.search_tasks with personal-task privacy.
         Verify private task searches, guessed identifiers, current roles, and host scope after deployment.
         HTTP data reads require no additional migration or static files.
+        Apply Diary migration 0007_freeze_live_milestones before restarting the updated application.
+        This migration protects existing milestone dates against inserts, updates, and deletes.
+        Supply milestone dates during diary creation.
+        DiaryInstance.set_milestone_dates rejects changes after creation.
+        Verify rejected API and database edits before deployment.
+        DiaryInstance.reassign_task provides manager ownership recovery through the callable API.
+        Supply the inspected task revision and an eligible replacement owner.
+        The ownership recovery page remains outstanding.
         The dashboard section and automatic event callbacks remain outstanding.
         API setup, template page usage, and styling classes are in Diary/README.md.
 

@@ -170,7 +170,7 @@ DIARY_TIME_ZONE = 'Europe/London'
 DIARY_TEMPLATE_NAME = 'Garage Sale calendar'
 DIARY_TASK_OWNER_ROLES = (
     'ExecMember', 'Officer', 'SponsorshipManager', 'PrizeDrawManager',
-    'CraftMarketManager', 'Financier', 'WebAdmin', 'Volunteer',
+    'CraftMarketManager', 'Financier',
 )
 
 if DEBUG:
