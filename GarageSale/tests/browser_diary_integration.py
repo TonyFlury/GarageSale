@@ -73,6 +73,15 @@ class HostDiaryBrowserTests(StaticLiveServerTestCase):
             wait.until(lambda browser: browser.current_url.endswith(reverse('Diary:personal-diary')))
             self.dismiss_banner(driver)
             self.assert_diary_fills_content(driver, '.diary-personal')
+            aligned = driver.execute_script('''
+                const links = document.querySelector('.diary-personal-status-links').getBoundingClientRect();
+                const count = document.querySelector('.diary-personal-result-count').getBoundingClientRect();
+                return {links: {top: links.top, right: links.right, height: links.height},
+                        count: {top: count.top, left: count.left, height: count.height}};
+            ''')
+            self.assertGreaterEqual(aligned['count']['left'], aligned['links']['right'], aligned)
+            self.assertAlmostEqual(aligned['links']['top'] + aligned['links']['height'] / 2,
+                                   aligned['count']['top'] + aligned['count']['height'] / 2, delta=2)
             driver.save_screenshot('/tmp/diary-host-personal-wide.png')
             driver.set_window_size(390, 844)
             self.assert_diary_fills_content(driver, '.diary-personal')
