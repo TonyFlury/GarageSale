@@ -107,7 +107,16 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         Check personal ownership, manager assignments, and optional template revision after deployment.
         The combined save creates one diary task and one approved template revision.
         Other existing diaries keep their tasks.
-        Task details, completion, the dashboard section, and automatic event callbacks remain outstanding.
+        Apply Diary migration 0005_task_dates_and_completion before using task editing or completion.
+        The migration adds date overrides, task revisions, and completion audit fields.
+        The task detail view is Diary.views.TaskDetailView at /diary/tasks/<entry_key>/.
+        Supply trusted permitted_diary_keys for the detail view.
+        Supply task_detail_url_name in list-view context when the host uses a separate named detail route.
+        Collect Diary/styles/diary.css for detail forms, completion controls, and task-state highlights.
+        Check personal date permissions, manager template-task date edits, completion, and Close all after deployment.
+        V1 does not warn managers when a due-date change causes a conflict.
+        Existing completion records and original date rules remain unchanged.
+        The dashboard section and automatic event callbacks remain outstanding.
         API setup, template page usage, and styling classes are in Diary/README.md.
 
         Craft Market pitch-fee workflow: deploy Contributors migration

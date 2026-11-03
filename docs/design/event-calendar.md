@@ -519,7 +519,8 @@ Template definitions have no instance dates and do not receive lateness highligh
 ### Task owners: confirmed requirement
 
 The user confirmed that task progress through completion is required in the first feature release.
-The progress states and permitted transitions still need definition.
+The implemented transitions keep a task open or complete it once.
+Additional progress states and reopening have no V1 interface.
 The following completion rules define the V1 permissions and dependency behavior.
 
 ### Task completion and blocking predecessors: confirmed V1 requirements
@@ -564,10 +565,16 @@ An absent person does not mean “Whole team” when the task has a role owner.
 
 The calendar must not show a whole-team task as an incorrect or missing owner.
 The task date does not change when its task owner changes.
-Task ownership does not grant task editing permission.
+Task ownership alone does not grant permission to edit copied template-task dates.
 The V1 completion rules above apply separately to tasks the user can access.
 Section 8 defines the confirmed view permissions.
-The permission to change tasks is an open decision.
+Due-date editing now permits self-owned diary additions for DiaryUsers and copied template-task dates for DiaryManagers.
+Managers can also change due dates on other tasks within their permitted diary scope.
+Completed tasks and closed diaries reject date changes.
+The original rule, source template, ownership, dependencies, and other diaries remain unchanged.
+V1 does not warn managers when a due-date change causes a conflict.
+Other content edits, ownership changes, and extra progress states remain outside this editing interface.
+The [implementation record](diary-v1-remaining-work.md#task-editing-and-completion-dv1-023-dv1-032-and-dv1-035-through-dv1-038) identifies storage, API methods, view classes, and verification.
 
 ```mermaid
 flowchart TD
