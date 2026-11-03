@@ -9,14 +9,13 @@ from django.core import signing
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.http import Http404, HttpResponseBadRequest
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
 
 from Diary.api import Actor, DiaryAPI
 from Diary.forms import TaskFormSet, TemplateForm, editor_task_limit
 from Diary.views import (ManagerDiaryView, PersonalDiaryView, TaskCreateView, TaskDetailView, TemplateEditorView)
-from GarageSale.models import EventData
 
 
 logger = logging.getLogger(__name__)
@@ -136,33 +135,31 @@ class DiaryTeamView(LoginRequiredMixin, View):
         return state
 
     def current_event(self, request, state):
-        """Return the POST-bound event, saved user selection, or existing trusted current-event context."""
-        event_id = state.get('event_id')
+        """Use the trusted current event and reject forms from a different event."""
+        event = getattr(request, 'current_event', None)
 
-        # A posted page retains its originating event even when another browser tab changes the session selection.
-        if request.method != 'POST':
-            event_id = request.session.get('diary_event_id')
+        # An absent current event has no record key for signed form scope.
+        event_id = event.pk if event is not None else None
 
-        # Explicit user selections must still identify an existing host event on every request.
-        if event_id is not None:
-            return get_object_or_404(EventData, pk=event_id)
-        return getattr(request, 'current_event', None)
+        # An event change must not apply an old form to the new current Diary.
+        if request.method == 'POST' and state.get('event_id') != event_id:
+            raise ValidationError('The current event changed. Reload the Diary before saving.')
+
+        # Old session selections cannot retain a task from a different event.
+        if request.session.get('diary_event_id') != event_id:
+            request.session.pop('diary_task_key', None)
+            request.session.pop('diary_added_task', None)
+            request.session['diary_event_id'] = event_id
+        return event
 
     def select(self, request, state, groups):
-        """Validate one event, task, or template selection from a CSRF-protected POST action."""
+        """Validate one task or template selection from a CSRF-protected POST action."""
         kind = request.POST.get('selection')
-
-        # Event selections use host records and never accept a browser-supplied Diary UUID.
-        if kind == 'event':
-            event = get_object_or_404(EventData, pk=request.POST.get('event_id'))
-            request.session['diary_event_id'] = event.pk
-            request.session.pop('diary_task_key', None)
-            return redirect('Diary:personal-diary')
 
         # Template selection remains manager-only and resolves through the public Diary API.
         if kind == 'template':
 
-            # Ordinary users cannot select template records even when they can select events and personal tasks.
+            # Ordinary users cannot select template records even when they can select personal tasks.
             if settings.DIARY_MANAGER not in groups:
                 raise PermissionDenied('DiaryManager membership is required.')
             actor = Actor(f'user:{request.user.pk}', frozenset(groups))
@@ -177,7 +174,7 @@ class DiaryTeamView(LoginRequiredMixin, View):
 
             # An unprepared event cannot grant a task lookup through a guessed identifier.
             if event is None or event.diary_key is None:
-                raise ValidationError('Select a prepared event before opening a task.')
+                raise ValidationError('The current event has no prepared Diary.')
             key = UUID(request.POST.get('entry_key', ''))
             actor = Actor(f'user:{request.user.pk}', frozenset(groups), frozenset({event.diary_key}))
             DiaryAPI(actor=actor).diary(key=event.diary_key).task(entry_key=key)
@@ -239,7 +236,7 @@ class DiaryTeamView(LoginRequiredMixin, View):
             raise PermissionDenied('DiaryManager membership is required.')
         context, handler_kwargs = {}, {}
 
-        # Template pages do not require a selected event or fail because an old event selection was removed.
+        # Template pages remain available when there is no current event.
         event = None if self.page.startswith('template') else self.current_event(request, state)
         task_key, template_name = None, None
 
@@ -265,7 +262,6 @@ class DiaryTeamView(LoginRequiredMixin, View):
                       'entry_key': task_key, 'template_name': template_name}
         request.diary_host_token = signing.dumps(page_state, salt=STATE_SALT)
         request.diary_host_event = event
-        request.diary_host_events = EventData.objects.order_by('-event_date', '-pk')
         request.diary_host_manager = settings.DIARY_MANAGER in groups
 
         # Event pages require the host's stored Diary key. Reads never prepare calendars as a side effect.
@@ -301,7 +297,7 @@ class DiaryTeamView(LoginRequiredMixin, View):
 
         # Dependency redirects can carry their own diary selector or added-task key. Neither belongs in host URLs.
         if response.has_header('Location'):
-            # A successful edit restores its originating event and task before the clean redirect is followed.
+            # A successful edit records its current event scope before the clean redirect is followed.
             if request.method == 'POST' and event is not None:
                 request.session['diary_event_id'] = event.pk
 

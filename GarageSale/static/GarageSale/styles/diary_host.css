@@ -4,6 +4,3 @@
 .diary.diary-host-topbar .ToolBar { box-sizing: border-box; max-width: 100%; }
 .diary.diary-host-sidebar { max-width: none; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; }
 .diary.diary-host-sidebar .diary-host-sidebar-label { margin: 0; font-weight: inherit; }
-.diary.diary-host-navigation { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
-.diary .diary-host-event-form { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; width: 100%; min-width: 0; }
-.diary .diary-host-event-control { max-width: 100%; min-width: 0; }

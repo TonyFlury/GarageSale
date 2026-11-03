@@ -61,11 +61,11 @@ class EventDiaryIntegrationTests(TestCase):
         actor = Actor(self.actor.reference, self.actor.groups, frozenset({event.diary_key}))
         return DiaryAPI(actor=actor).diary(key=event.diary_key)
 
-    def select_event(self, event):
-        """Select a host event through its signed POST action rather than an identifier URL."""
-        response = self.client.get(reverse('Diary:personal-diary'))
-        return self.client.post(reverse('Diary:select'), {'selection': 'event', 'event_id': event.pk,
-            '_diary_state': response.wsgi_request.diary_host_token})
+    def use_current_event(self, event):
+        """Supply the current event through the host middleware without a browser event selector."""
+        current = patch('GarageSale.models.EventData.get_current', return_value=event)
+        current.start()
+        self.addCleanup(current.stop)
 
     def select_task(self, entry_key):
         """Select one task from the current host event through the normal POST action."""
@@ -155,7 +155,7 @@ class EventDiaryIntegrationTests(TestCase):
     def test_all_diary_pages_use_the_normal_team_shell(self):
         """Wrap every supported Diary screen in the host base document without nesting a standalone document."""
         event = self.event()
-        self.select_event(event)
+        self.use_current_event(event)
         self.select_task(self.spec.entry_key)
         self.select_template('Event preparation')
         pages = ('personal-diary', 'manager-diary', 'task-create', 'task-detail',
@@ -183,12 +183,30 @@ class EventDiaryIntegrationTests(TestCase):
             self.assertNotIn('diary-host-personal', content)
             self.assertNotIn('diary-host-manager', content)
             self.assertNotIn('diary-host-templates', content)
-            self.assertIn('diary-host-event-form', content)
+            self.assertNotIn('diary-host-event-form', content)
+            self.assertNotIn('View event', content)
+
+    def test_current_event_ignores_saved_selection_and_rejects_event_switching(self):
+        """Use current-event context even when an old session or submitted event selection requests another Diary."""
+        first, second = self.event(), self.event(28)
+        self.use_current_event(first)
+        session = self.client.session
+        session['diary_event_id'] = second.pk
+        session['diary_task_key'] = str(self.spec.entry_key)
+        session.save()
+        response = self.client.get(reverse('Diary:manager-diary'))
+        self.assertEqual(response.context['diary_data']['key'], first.diary_key)
+        self.assertNotIn('diary_task_key', self.client.session)
+        self.assertEqual(self.client.post(reverse('Diary:select'), {'selection': 'event', 'event_id': second.pk,
+            '_diary_state': response.wsgi_request.diary_host_token}).status_code, 400)
+        self.use_current_event(None)
+        response = self.client.get(reverse('Diary:personal-diary'))
+        self.assertContains(response, 'There is no current event.')
 
     def test_conflicting_query_key_cannot_change_trusted_event_scope(self):
-        """Reject a second diary selector and preserve the event selected by the host URL."""
+        """Reject a browser Diary selector and preserve trusted current-event scope."""
         first, second = self.event(), self.event(28)
-        self.select_event(first)
+        self.use_current_event(first)
         url = reverse('Diary:manager-diary')
         with self.assertLogs('GarageSale.views.diary_views', level='WARNING'):
             response = self.client.get(url, {'diary_key': second.diary_key})
@@ -201,14 +219,14 @@ class EventDiaryIntegrationTests(TestCase):
     def test_missing_diaries_never_create_on_read_and_unknown_events_are_rejected(self):
         """Keep existing events unprepared and show their empty state inside the team shell."""
         event = EventData.objects.create(event_date=date(2027, 6, 27), use_from=date(2027, 1, 1))
-        self.select_event(event)
+        self.use_current_event(event)
         response = self.client.get(reverse('Diary:personal-diary'))
         self.assertContains(response, 'Calendar not prepared')
         self.assertTemplateUsed(response, 'team_pages_base.html')
         event.refresh_from_db()
         self.assertIsNone(event.diary_key)
         self.assertEqual(self.client.post(reverse('Diary:select'), {'selection': 'event', 'event_id': 999999,
-            '_diary_state': response.wsgi_request.diary_host_token}).status_code, 404)
+            '_diary_state': response.wsgi_request.diary_host_token}).status_code, 400)
 
     def test_access_and_template_selection_use_current_membership(self):
         """Preserve Diary manager gates and reject unrelated identities before reading event data."""
@@ -263,7 +281,7 @@ class EventDiaryIntegrationTests(TestCase):
             'sales_bookings_open': event.open_sales_bookings,
             'sales_booking_closed': event.close_sales_bookings})
         self.client.force_login(self.member)
-        self.select_event(event)
+        self.use_current_event(event)
         page = self.client.get(reverse('Diary:personal-diary'))
         self.assertContains(page, 'Prepare advertising bookings')
         page = self.client.get(reverse('Diary:personal-diary'), {'task_status': 'blocked'})
@@ -299,7 +317,7 @@ class EventDiaryIntegrationTests(TestCase):
         first, second = self.event(), self.event(28)
         other = EntrySpec('Other event task', 'once', fixed_date=date(2027, 6, 20), entry_key=uuid4())
         self.client_for(second).add_entry(spec=other)
-        self.select_event(first)
+        self.use_current_event(first)
         response = self.client.get(reverse('Diary:manager-diary'))
         links = re.findall(r'(?:href|action)="([^"]*)"', response.content.decode())
         for link in links:
@@ -311,22 +329,21 @@ class EventDiaryIntegrationTests(TestCase):
         detail = self.client.get(reverse('Diary:task-detail'))
         self.assertEqual(detail.context['task']['diary_key'], first.diary_key)
 
-    def test_edit_uses_signed_originating_event_after_another_tab_changes_selection(self):
-        """Apply a stale tab's form to its original task and never to the other tab's selected event."""
+    def test_current_event_change_rejects_an_old_form(self):
+        """Reject an old event form after the host current event changes without editing either Diary."""
         first, second = self.event(), self.event(28)
-        self.select_event(first)
+        self.use_current_event(first)
         self.select_task(self.spec.entry_key)
         page = self.client.get(reverse('Diary:task-detail'))
         token = page.wsgi_request.diary_host_token
-        self.select_event(second)
+        self.use_current_event(second)
         self.select_task(self.spec.entry_key)
         response = self.client.post(reverse('Diary:task-detail'), {'action': 'save_date', 'revision': 0,
             'due_date': '2027-07-01', '_diary_state': token})
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('Diary:task-detail'))
-        self.assertEqual(self.client_for(first).task(entry_key=self.spec.entry_key)['date'], date(2027, 7, 1))
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.client_for(first).task(entry_key=self.spec.entry_key)['date'], date(2027, 6, 27))
         self.assertEqual(self.client_for(second).task(entry_key=self.spec.entry_key)['date'], date(2027, 6, 28))
-        self.assertEqual(self.client.session['diary_event_id'], first.pk)
+        self.assertEqual(self.client.session['diary_event_id'], second.pk)
 
     def test_missing_or_tampered_state_and_missing_csrf_cannot_select_records(self):
         """Reject unsigned selection requests and preserve Django's CSRF checks on normal POST controls."""
@@ -346,7 +363,8 @@ class EventDiaryIntegrationTests(TestCase):
         client = Client(enforce_csrf_checks=True)
         client.force_login(self.manager)
         page = client.get(reverse('Diary:personal-diary'))
-        values = {'selection': 'event', 'event_id': event.pk, '_diary_state': page.wsgi_request.diary_host_token}
+        values = {'selection': 'template', 'template_name': 'Event preparation',
+                  '_diary_state': page.wsgi_request.diary_host_token}
         self.assertEqual(client.post(reverse('Diary:select'), values).status_code, 403)
         values['csrfmiddlewaretoken'] = client.cookies['csrftoken'].value
         self.assertEqual(client.post(reverse('Diary:select'), values).status_code, 302)
@@ -356,7 +374,7 @@ class EventDiaryIntegrationTests(TestCase):
         from uuid import uuid4
 
         event = self.event()
-        self.select_event(event)
+        self.use_current_event(event)
         page = self.client.get(reverse('Diary:template-create'))
         response = self.client.post(reverse('Diary:template-create'), {'name': 'Another template', 'description': '',
             'tasks-TOTAL_FORMS': '0', 'tasks-INITIAL_FORMS': '0', 'tasks-MIN_NUM_FORMS': '0',
@@ -393,6 +411,6 @@ class EventDiaryIntegrationTests(TestCase):
                             owner_kind='person', person_ref=f'user:{self.manager.pk}')
         self.client_for(event).add_entry(spec=private, directory=DjangoOwnerDirectory())
         self.client.force_login(self.member)
-        self.select_event(event)
+        self.use_current_event(event)
         self.assertEqual(self.select_task(private.entry_key).status_code, 404)
         self.assertNotIn('diary_task_key', self.client.session)

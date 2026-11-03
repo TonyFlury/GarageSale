@@ -25,7 +25,7 @@ class HostDiaryBrowserTests(StaticLiveServerTestCase):
     available_apps = [config.name for config in apps.get_app_configs()]
 
     event = EventDiaryIntegrationTests.event
-    select_event = EventDiaryIntegrationTests.select_event
+    use_current_event = EventDiaryIntegrationTests.use_current_event
 
     def setUp(self):
         """Prepare the host identities and public-API template used by the integration fixtures."""
@@ -44,7 +44,7 @@ class HostDiaryBrowserTests(StaticLiveServerTestCase):
     def test_diary_screens_keep_team_shell_and_template_editor_scripts(self):
         """Navigate manager tasks and template editing within one responsive host document."""
         event = self.event()
-        self.select_event(event)
+        self.use_current_event(event)
         options = webdriver.ChromeOptions()
         for argument in ('--headless', '--no-sandbox', '--disable-dev-shm-usage'):
             options.add_argument(argument)
@@ -61,6 +61,7 @@ class HostDiaryBrowserTests(StaticLiveServerTestCase):
             self.dismiss_banner(driver)
             self.assertTrue(driver.find_elements(By.ID, 'Buttons'))
             self.assertTrue(driver.find_elements(By.ID, 'SidebarContainer'))
+            self.assertFalse(driver.find_elements(By.CSS_SELECTOR, '.diary-host-event-form, .diary-host-event-control'))
             self.assertEqual(len(driver.find_elements(By.CSS_SELECTOR, '#SidebarContainer .diary-host-sidebar-entry')), 3)
             self.assertFalse(driver.find_elements(By.CSS_SELECTOR,
                 '#Content .diary-host-personal, #Content .diary-host-manager, #Content .diary-host-templates'))

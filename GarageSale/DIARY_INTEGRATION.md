@@ -125,8 +125,8 @@ Verification: `GarageSale/tests/test_diary_integration.py`: `EventDiaryIntegrati
 ## Current event selection
 
 The adapter uses the existing host current-event selection without changing its rules.
-The host event control permits selection through the configured Diary access groups.
-The Garage Sale adapter can obtain its current event from `request.current_event`.
+Diary pages use only the current event from `request.current_event`.
+The host provides no event selection control.
 It supplies that event's stored Diary key to Diary.
 Diary does not read this custom request attribute or select the current event.
 A missing source value does not mean that its date has passed.
@@ -219,11 +219,13 @@ flowchart TD
 Event identifiers, task keys, template names, and Diary UUIDs do not appear in these routes or their query strings.
 Ordinary display filters can remain in query strings.
 
-The host initially derives its event from the existing trusted `request.current_event` value.
-The event control changes the selected event through a CSRF-protected POST action.
+The host derives its event from the trusted `request.current_event` value on each request.
+Old session event selections cannot change that scope.
+The selection endpoint rejects event selection actions with HTTP 400.
 Task buttons and template buttons also use POST actions. Their values belong in form data, not browser URLs.
-The host validates each selection and records the selected event, task, or template in the user's session.
-It resolves the actual Diary UUID from the selected event's stored `diary_key` field on each request.
+The host validates each selection and records the selected task or template in the user's session.
+The technical session field `diary_event_id` tracks task scope. It does not select an event.
+The host resolves the Diary UUID from the current event's stored `diary_key` field on each request.
 It passes `diary_key` and `permitted_diary_keys` through the delegated view's trusted context.
 The permitted scope contains only that event's stored Diary UUID.
 Template editing passes the selected template name through trusted context.
@@ -232,6 +234,8 @@ The dependency repeats its own permission, scope, and ownership checks.
 Every edit form carries signed state for its originating user, event, task, and template.
 The technical field `_diary_state` contains that signed state in the POST body.
 A change of selection in another browser tab cannot redirect an edit to a different task.
+An event change invalidates old event forms. The host returns HTTP 400 without changing either Diary.
+An event change also clears the saved task selection.
 Successful edits restore their originating selection before returning to the clean page URL.
 Navigation selections are shared across tabs in one session. Refreshing a page uses the latest session selection.
 Signed form state expires after 24 hours. Expired or changed state requires a reload and returns HTTP 400.
@@ -250,8 +254,8 @@ Identifier query parameters return HTTP 400 and a WARNING through `GarageSale.vi
 | --- | --- |
 | `/diary/` | Personal tasks for the selected or current event. |
 | `/diary/select/` | POST action for event, task, or template selection. |
-| `/diary/manager/` | Full diary for the selected event. |
-| `/diary/tasks/new/` | Task creation for the selected event. |
+| `/diary/manager/` | Full diary for the current event. |
+| `/diary/tasks/new/` | Task creation for the current event. |
 | `/diary/tasks/detail/` | Details and edits for the selected task. |
 | `/diary/templates/` | Template chooser. |
 | `/diary/templates/new/` | Template creation. |
@@ -289,10 +293,10 @@ The host omits the hidden `diary-personal-selector` and `diary-manager-selector`
 The existing `diary-task-detail-link` and `diary-template-link` classes now identify selection buttons instead of anchors.
 Other dependency class names remain unchanged. Host styles must target classes without requiring a particular element tag.
 
-`GarageSale/templates/GarageSale/diary/navigation.html` provides fixed navigation and the event selection control.
+`GarageSale/templates/GarageSale/diary/navigation.html` provides hidden task and template selection forms.
 `GarageSale/templates/GarageSale/diary/state.html` provides signed hidden form state.
 `GarageSale/templates/GarageSale/diary/unprepared.html` provides a host-framed empty state.
-The technical stylesheet `GarageSale/styles/diary_host.css` keeps the toolbar and event control within narrow screen widths.
+The technical stylesheet `GarageSale/styles/diary_host.css` keeps the toolbar within narrow screen widths.
 Its rules remain within the `.diary` namespace. They add no CSS variables and change no dependency class names.
 The existing `ToolBar` class is used only inside the host toolbar wrapper for its scoped sizing correction.
 Static form IDs associate selection buttons with their shared forms. They are not styling selectors.
@@ -300,7 +304,6 @@ Static form IDs associate selection buttons with their shared forms. They are no
 | Host class | Purpose |
 | --- | --- |
 | `diary-host-topbar` | Scoped wrapper for the normal team toolbar. |
-| `diary-host-navigation` | Central event selection component. |
 | `diary-host-sidebar` | Diary page links in the team sidebar. |
 | `diary-host-sidebar-entry` | One standard team sidebar entry. |
 | `diary-host-sidebar-icon` | Sidebar entry icon. |
@@ -309,11 +312,6 @@ Static form IDs associate selection buttons with their shared forms. They are no
 | `diary-host-personal` | Personal Diary navigation link. |
 | `diary-host-manager` | Manager diary navigation link. |
 | `diary-host-templates` | Template chooser navigation link. |
-| `diary-host-event-form` | Event selection form. |
-| `diary-host-event-label` | Event selection label. |
-| `diary-host-event-control` | Event selection control. |
-| `diary-host-event-option` | One available event option. |
-| `diary-host-event-submit` | Event selection button. |
 | `diary-host-selection-form` | Shared task or template selection form. |
 | `diary-host-selection` | Hidden selection action type. |
 | `diary-host-state` | Signed hidden originating page state. |
@@ -323,7 +321,9 @@ Static form IDs associate selection buttons with their shared forms. They are no
 
 My Diary, Manager Diary, and Templates appear in the left sidebar on Diary pages.
 Only managers see Manager Diary and Templates.
-The event selection form remains in the central area.
+The event selector and its submit button are removed.
+The removed classes are `diary-host-navigation`, `diary-host-event-form`, `diary-host-event-label`, `diary-host-event-control`, `diary-host-event-option`, and `diary-host-event-submit`.
+Host styles for those classes no longer apply.
 The existing page link classes now belong to sidebar links. They no longer use `diary-button`.
 Sidebar template: `GarageSale/templates/GarageSale/diary/sidebar.html`.
 The host base template includes this template in its `sidebar` block.
@@ -351,7 +351,9 @@ Their identifiers remain unchanged.
 - [x] **HOST-003: Trusted host scope, clean URLs, and team-page presentation.**
   Implementation: `GarageSale/views/diary_views.py`: `DiaryTeamView`, `EventPersonalDiaryView`, `EventManagerDiaryView`, and `EventTemplateEditorView`.
   Routes: `GarageSale/diary_urls.py`: `urlpatterns`. Base template: `GarageSale/templates/Diary/base.html`: `TopBar` and `SnappableSections`.
-  Navigation: `GarageSale/templates/GarageSale/diary/navigation.html`: `.diary-host-navigation` and `.diary-host-selection-form`.
+  Selection forms: `GarageSale/templates/GarageSale/diary/navigation.html`: `.diary-host-selection-form`.
+  Current-event scope: `GarageSale/views/diary_views.py`: `DiaryTeamView.current_event` and `DiaryTeamView.select`.
+  Scope verification: `EventDiaryIntegrationTests.test_current_event_ignores_saved_selection_and_rejects_event_switching` and `EventDiaryIntegrationTests.test_current_event_change_rejects_an_old_form`.
   Team Pages shows a Diary entry beside Dashboard in the Overview group.
   Icon file: `GarageSale/static/GarageSale/images/icons/navigation/diary-svgrepo-com.svg`.
   The unchanged notebook icon comes from [SVG Repo](https://www.svgrepo.com/svg/527821/notebook) under the CC0 license.
@@ -362,7 +364,7 @@ Their identifiers remain unchanged.
   Entry implementation: `GarageSale/templatetags/diary_navigation.py`: `diary_entry` and `team_pages/templates/navigation.html`: `SnappableSections`.
   Entry verification: `EventDiaryIntegrationTests.test_team_diary_entry_matches_group_access_and_uses_clean_url` in `GarageSale/tests/test_diary_integration.py`.
   Form state: `GarageSale/templates/GarageSale/diary/state.html`: `.diary-host-state`.
-  Styling: `GarageSale/static/GarageSale/styles/diary_host.css`: `.diary-host-topbar`, `.diary-host-navigation`, and `.diary-host-event-control`.
+  Styling: `GarageSale/static/GarageSale/styles/diary_host.css`: `.diary-host-topbar` and `.diary-host-sidebar`.
   Verification: `GarageSale/tests/test_diary_integration.py`: `EventDiaryIntegrationTests` selection, privacy, CSRF, redirect, and cross-tab tests.
   Browser verification: `GarageSale/tests/browser_diary_integration.py`: `HostDiaryBrowserTests.test_diary_screens_keep_team_shell_and_template_editor_scripts`.
 
