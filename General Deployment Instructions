@@ -71,6 +71,9 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         Assign at least one user to every group in DIARY_TASK_OWNER_ROLES.
         Normal startup rejects missing or empty configured ownership groups.
         Ownership-group membership validation needs no additional migration.
+        Diary creation repeats ownership-group existence and membership validation.
+        Missing or empty configured roles cause ImproperlyConfigured before any diary records are written.
+        Repair the groups before retrying creation. Existing diary records remain unchanged.
         The callable API now uses DiaryAPI, DiaryInstance, DiaryTemplate, and DiaryTemplateVersion.
         Update function callers with the migration table in Diary/README.md.
         Store the returned object's key property as the Diary UUID.
