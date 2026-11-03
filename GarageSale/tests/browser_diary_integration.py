@@ -11,6 +11,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
 
 from GarageSale.tests.test_diary_integration import EventDiaryIntegrationTests
 
@@ -37,8 +38,8 @@ class HostDiaryBrowserTests(StaticLiveServerTestCase):
         """Dismiss the existing test-server warning so its overlay cannot intercept Diary controls."""
         buttons = driver.find_elements(By.ID, 'test_warning_close')
 
-        # Production has no test banner. Test deployments can dismiss it through the normal close control.
-        if buttons:
+        # Only visible test banners can intercept controls. Filter navigation can retain an already closed banner.
+        if buttons and buttons[0].is_displayed():
             buttons[0].click()
 
     def test_diary_screens_keep_team_shell_and_template_editor_scripts(self):
@@ -64,7 +65,33 @@ class HostDiaryBrowserTests(StaticLiveServerTestCase):
             self.assert_diary_fills_content(driver, '.diary-manager')
             driver.set_window_size(1920, 1080)
             self.assert_diary_fills_content(driver, '.diary-manager')
+            self.assertEqual(len(driver.find_elements(By.CSS_SELECTOR,
+                '.diary-manager-filter-group .diary-manager-apply, .diary-manager-filter-group .diary-manager-reset')), 2)
+            self.assertTrue(driver.execute_script('''
+                const controls = document.querySelectorAll('.diary-manager-filter-label, .diary-manager-apply, .diary-manager-reset');
+                const centers = Array.from(controls, element => {
+                    const rect = element.getBoundingClientRect();
+                    return rect.top + rect.height / 2;
+                });
+                return Math.max(...centers) - Math.min(...centers) < 2;
+            '''))
+            driver.find_element(By.NAME, 'include_completed').click()
+            apply_button = driver.find_element(By.CSS_SELECTOR, '.diary-manager-apply')
+            apply_button.click()
+            wait.until(expected_conditions.staleness_of(apply_button))
+            self.dismiss_banner(driver)
+            self.assertTrue(driver.find_element(By.NAME, 'include_completed').is_selected())
+            clear_link = driver.find_element(By.CSS_SELECTOR, '.diary-manager-reset')
+            clear_link.click()
+            wait.until(expected_conditions.staleness_of(clear_link))
+            self.dismiss_banner(driver)
+            self.assertFalse(driver.find_element(By.NAME, 'include_completed').is_selected())
             driver.save_screenshot('/tmp/diary-host-manager-wide.png')
+            driver.set_window_size(390, 844)
+            self.assert_diary_fills_content(driver, '.diary-manager')
+            self.assertTrue(driver.execute_script('return document.documentElement.scrollWidth <= innerWidth'))
+            driver.save_screenshot('/tmp/diary-host-manager-mobile.png')
+            driver.set_window_size(1920, 1080)
             self.assertFalse(driver.find_elements(By.CSS_SELECTOR, '.diary-host-event-form, .diary-host-event-control'))
             self.assertEqual(len(driver.find_elements(By.CSS_SELECTOR, '#SidebarContainer .diary-host-sidebar-entry')), 3)
             self.assertFalse(driver.find_elements(By.CSS_SELECTOR,
