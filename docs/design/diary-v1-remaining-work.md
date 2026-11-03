@@ -37,6 +37,8 @@ Other code names below identify existing files, classes, methods, template block
 
 [Diary/views.py](../../Diary/views.py) contains `DjangoOwnerDirectory.person_in_groups()` and `TemplateEditorView.dispatch()`.
 They use the configured Django user model and current group membership for template editing.
+`ManagerDiaryView.dispatch()` now constructs a manager Actor from authenticated identity and trusted permitted diary keys.
+`ManagerDiaryView.get_diary_keys()` provides the host scope extension for this read-only view.
 [Diary/forms.py](../../Diary/forms.py) uses `TemplateTaskFormSet.__init__()` to obtain eligible person choices.
 The template workflow does not need diary-instance scope.
 
@@ -179,7 +181,8 @@ Continuous monitoring after validation remains outside this feature.
 [Diary/urls.py](../../Diary/urls.py) defines template routes in `urlpatterns`.
 [Diary/views.py](../../Diary/views.py) provides `TemplateEditorView` and `TemplateCreateView`.
 Those routes authenticate users and restrict template operations to DiaryManagers.
-Task routes and completion routes do not exist.
+`ManagerDiaryView` now provides the manager diary list at the `Diary:manager-diary` route.
+Personal task routes and completion routes remain outstanding.
 
 **Remaining requirements**
 
@@ -219,62 +222,72 @@ This document does not select a presentation for those details.
 
 ## DV1-052: Manager filters for one diary
 
-**Current implementation**
+**Status: implemented.**
 
-The production diary-instance list view remains outstanding under DV1-022.
-`DiaryInstance.read()` returns entries and completion information for one permitted diary.
-`DiaryInstance.active_tasks()` excludes completed tasks.
-No production manager view implements the three required checkbox filters.
+The technical view class `ManagerDiaryView` implements the manager-only list for one permitted diary.
+The named route `Diary:manager-diary` uses `/diary/manager/` in the standard project URL configuration.
+`ManagerDiaryFilterForm` supplies three checkboxes, all clear by default:
 
-**Remaining requirements**
-
-When a DiaryManager views one permitted diary, provide these checkboxes with the exact interface labels:
-
-| Interface label | Default | Selected behavior |
+| Interface label | Technical GET name | Selected behavior |
 | --- | --- | --- |
-| include completed tasks | Clear. | Include completed tasks for completion-history inspection. |
-| exclude blocked tasks | Clear. | Exclude tasks with incomplete predecessors. |
-| exclude non-late tasks | Clear. | Exclude tasks that are not late. |
+| include completed tasks | `include_completed` | Include completed records for history inspection. |
+| exclude blocked tasks | `exclude_blocked` | Exclude incomplete tasks with incomplete predecessors. |
+| exclude non-late tasks | `exclude_non_late` | Select only incomplete tasks due today or earlier. |
 
 The default view shows all incomplete tasks, including blocked tasks and tasks that are not late.
-Selecting “exclude non-late tasks” provides a view of late tasks only.
-Use the existing lateness rule for incomplete tasks due today or earlier in the Diary time zone.
+The view applies all selected exclusions together.
+Completed tasks are never late or blocked in this presentation.
+The late-only option therefore excludes completed history, even when the history checkbox is selected.
+The blocked-task exclusion retains completed history.
 Tasks without a due date are not late.
-Filters must preserve the selected diary, task privacy, and the host's permitted diary scope.
-The DiaryUser personal view keeps its separate ready-task default under DV1-049.
+Date comparisons use the Diary time zone or the project default.
 
-Give each implemented control and state a stable styling class within the `.diary` namespace.
-Use the `diary-` class prefix.
-Document those classes in the usage guide during implementation.
+The page orders tasks by due date, with unset dates last.
+It displays task text, source, current ownership, dependency state, and lateness.
+Completion records show the actor, time, and preserved due date.
+Closed diaries remain readable with a closed-state message.
+Displaying those records does not add them to active-task reads elsewhere.
+The page provides no task mutation controls.
+Forced-completion comments remain part of DV1-038.
 
-**Proposed implementation**
+**Selectors and scope**
 
-Implement the controls with the production list view under DV1-022 and the identity handling under DV1-013.
-Obtain permitted task data through the callable API.
-Use completion information when the history option is selected.
-Do not use `active_tasks()` as the sole source for completion history.
-Keep the callable API's existing active-task selection behavior.
+GET input uses the technical query name `diary_key`.
+Trusted context uses `diary_key` and `permitted_diary_keys`.
+Host code can supply context through `extra_context` or `get_context_data()`.
+The view also accepts those names as class attributes through `as_view()`.
+A host subclass can override `get_diary_keys()` for request-specific scope.
+The default route grants no diary scope.
+GET input cannot supply permitted diary keys.
+A selector only narrows the trusted scope and never grants access.
 
-Apply selected exclusions together to the permitted task selection.
-Keep completed tasks outside the late-only selection because the current lateness rule applies to incomplete tasks.
-These combination details are proposals for implementation review.
+Equivalent UUID selectors are accepted.
+Malformed, blank, or conflicting selectors return HTTP 400.
+An in-scope key without a diary returns HTTP 404.
+An out-of-scope key returns HTTP 403.
+An omitted selector displays an explicit selection message.
+No read changes diary data or task records.
 
-**Completion checks**
+**Presentation and verification**
 
-Verify the default and each checkbox separately.
-Verify every combination of the three checkbox values.
-Verify completion history, blocked late tasks, ready late tasks, and tasks without a due date.
-Verify due dates today and the Diary time-zone boundary.
-Verify that filters cannot expose private tasks or tasks from another diary.
-Verify that the manager controls do not change the DiaryUser personal-view default.
-Record exact view, template, styling, and verification symbols in DV1-052 after implementation.
+`Diary/manager_diary.html` extends the complete base document through `diary_content`.
+`Diary/partials/manager_diary.html` provides the reusable `.diary-manager` fragment.
+`Diary/partials/manager_tasks.html` renders `.diary-manager-task-list` and `.diary-manager-completion`.
+Manager task-state classes provide red, amber, and dashed borders with text labels.
+The usage guide documents every new styling class and variable.
+Existing styling class names retain their meanings.
 
-**Open decisions**
+[Manager view tests](../../Diary/tests/test_manager_view.py) contain `ManagerDiaryTests`.
+They verify both selectors, trusted context variants, all filter combinations, permissions, scope, history, current owners, time zones, and empty states.
+[Chrome verification](../../Diary/tests/browser_manager_diary.py) contains `ManagerDiaryBrowserTests.test_manager_filters_and_layout`.
+It verifies keyboard checkbox operation, history selection, combined filters, reset behavior, mobile layout, and host styling overrides.
 
-Define filter parameter names and whether selection persists during navigation.
-Confirm how selected exclusions treat completed history entries.
-Define completion-history ordering and behavior when viewing a closed diary.
-No new route names, view classes, or styling class names are approved by this document.
+**Remaining boundary**
+
+No implementation work remains for DV1-052.
+Personal lists and the ordinary-user full diary list remain separate V1 work.
+Host integration must supply the permitted keys for its own authenticated users.
+Future date-window filtering remains deferred under DFUT-003.
 
 ## DV1-019: Diary selectors
 
@@ -282,7 +295,9 @@ No new route names, view classes, or styling class names are approved by this do
 
 `TemplateEditorView.dispatch()` accepts a template name from URL input or trusted view context.
 It rejects conflicting names with HTTP 400.
-Diary-instance views and their selectors do not exist.
+`ManagerDiaryView.selected_key()` accepts GET selectors, view attributes, and trusted context.
+`ManagerDiaryView.get_diary_keys()` keeps selection separate from the host's permitted scope.
+Personal and cross-diary selectors remain outstanding.
 
 **Remaining requirements**
 
@@ -308,9 +323,9 @@ Verify that no selector failure creates a diary.
 
 **Open decision**
 
-DEC-001 still requires confirmation of conflict behavior for diary selectors.
-The proposal is to reject conflicting keys, consistent with template selectors.
-The exact error responses for malformed and out-of-scope keys need definition before implementation.
+Manager diary selectors now reject conflicting inputs, consistent with template selectors.
+Apply the same rule to remaining diary views under DEC-001.
+Use the implemented manager response behavior when defining those remaining selectors.
 
 ## DV1-041: Remaining pages and styling
 
@@ -318,7 +333,7 @@ The exact error responses for malformed and out-of-scope keys need definition be
 
 `StyledForm.__init__()` in [Diary/forms.py](../../Diary/forms.py) assigns stable form-control classes.
 The template workflow has complete documents, reusable fragments, and namespaced styling.
-The existing `diary_content` blocks and `.diary-template-editor` fragment implement only that workflow.
+The manager page now provides another complete document and a reusable `.diary-manager` fragment.
 The task-list fragment exists, but production task views remain incomplete.
 
 **Remaining requirements**
@@ -351,7 +366,8 @@ Verify a host stylesheet override through documented classes and variables.
 
 `TemplateEditorView.dispatch()` and `TemplateEditorView.get()` handle template selection and an empty chooser.
 Existing tests cover unknown names, conflicting selectors, denied access, and reads without creation.
-Equivalent task and diary-instance behavior remains outstanding.
+`ManagerDiaryView.get()` now handles empty selections, invalid keys, missing diaries, empty filters, and closed diaries.
+Equivalent behavior remains outstanding for personal lists, task details, creation, and completion.
 
 **Remaining requirements**
 
@@ -411,7 +427,6 @@ Extend browser coverage after task routes and completion controls exist.
 | DV1-028 through DV1-034 | Live dependency restrictions, task ownership, permitted edits, and explicit template additions. |
 | DV1-035 through DV1-038 | Predecessor inspection, completion permissions, forced comments, and concurrent operations. |
 | DV1-039 through DV1-043, DV1-049 | Highlights, ownership display, empty states, milestone boundaries, and blocked-task selection. |
-| DV1-052 | Manager defaults, checkbox combinations, completion history, late-only selection, and task privacy. |
 
 **Completion checks**
 

@@ -90,7 +90,14 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         The template editor needs no additional database migration.
         Collect static files for Diary/styles/diary.css and Diary/scripts/template_editor.js.
         Check creation, editing, ownership warnings, and manager access after deployment.
-        Task pages, the dashboard section, and automatic event callbacks remain outstanding.
+        The manager diary page is available through Diary.views.ManagerDiaryView.
+        Configure its permitted_diary_keys through trusted host context or override get_diary_keys().
+        The default /diary/manager/ route grants no diary scope.
+        Supply diary_key through GET input or trusted view context.
+        Collect Diary/styles/diary.css for the manager filters and task-state highlights.
+        Check manager access, selected diary scope, filter combinations, and completion history after deployment.
+        The manager view needs no additional database migration.
+        Other task pages, the dashboard section, and automatic event callbacks remain outstanding.
         API setup, template page usage, and styling classes are in Diary/README.md.
 
         Craft Market pitch-fee workflow: deploy Contributors migration
