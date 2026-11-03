@@ -65,6 +65,17 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         DIARY_TIME_ZONE is optional. Omit it to use the project Django TIME_ZONE setting.
         DIARY_TEMPLATE_NAME is optional when callers select a template explicitly.
         No template data is seeded.
+        Transfer approved Diary template definitions with transfer_diary_templates when a source deployment supplies them.
+        Use --dry-run before retaining an import.
+        Supply an active local manager through --actor.
+        Exported person ownership uses email addresses. Import resolves active destination users by email.
+        Use --person-map SOURCE_EMAIL=LOCAL_EMAIL only when an address differs between deployments.
+        The command validates ownership, dates, and dependency cycles before committing the complete import.
+        Use --new-version only when another approved destination version is intended.
+        Existing diary copies remain unchanged.
+        Do not use loaddata when Diary validation is required for the transfer.
+        Command examples and limits are in Diary/README.md, Template fixture transfer.
+        The command requires no additional database migration or static files.
         Configure DIARY_TASK_OWNER_ROLES with permitted task-owner group names.
         Remove DIARY_ROLE_LOOKUP overrides. Diary uses standard Django groups directly.
         Run migrate and sync_access_policy before application startup.
