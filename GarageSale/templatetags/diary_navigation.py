@@ -25,5 +25,5 @@ def diary_entry(context):
     return render_to_string('__category_list.html', {'category_list': [{
         'name': 'Diary',
         'url_path': 'Diary:personal-diary',
-        'icon_path': static('GarageSale/images/icons/navigation/calendar-date-event.svg'),
+        'icon_path': static('GarageSale/images/icons/navigation/diary-svgrepo-com.svg'),
     }]})
