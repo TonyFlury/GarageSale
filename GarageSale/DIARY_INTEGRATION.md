@@ -299,6 +299,7 @@ The package partial `Diary/partials/form_fields.html` renders signed hidden form
 The technical stylesheet `GarageSale/styles/diary_host.css` keeps the toolbar within narrow screen widths.
 The selectors `.diary.diary-personal` and `.diary.diary-manager` use the full available host content width.
 The selector `.diary.diary-personal .diary-task-panel` also removes the nested task panel width limit.
+The selector `.diary .diary-personal-status-links` adds a top margin of `1rem`.
 These host rules preserve the package classes and use no additional CSS variables.
 Its rules remain within the `.diary` namespace. They add no CSS variables and change no dependency class names.
 The existing `ToolBar` class is used only inside the host toolbar wrapper for its scoped sizing correction.
