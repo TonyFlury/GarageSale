@@ -44,6 +44,17 @@ These rules apply throughout the project, including tests and private implementa
 - Keep docstrings and comments consistent with the implementation.
 - Apply the project documentation language rules to docstrings and explanatory comments.
 
+## Diary implementation tracking
+
+- Update `Diary/TODO_V1.md` when Diary implementation changes.
+- Keep each DV1 identifier unchanged.
+- Name implementation files and exact classes, functions, or methods in the checklist annotations.
+- Name verification files and exact test classes or methods.
+- Add the same DV1 references to applicable source comments or docstrings.
+- Identify template blocks, CSS selectors, or JavaScript functions for implementations without Python symbols.
+- Keep partial items unchecked and describe the remaining work.
+- Identify documentation-only items without inventing executable symbols.
+
 ## Diary UI
 
 - Give each visible component, content role, form control, and task state a stable, descriptive CSS class.
