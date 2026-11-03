@@ -68,9 +68,14 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         Update function callers with the migration table in Diary/README.md.
         Store the returned object's key property as the Diary UUID.
         The class-based API refactor requires no database migration.
-        The routed Diary pages, dashboard section and automatic event callbacks are
-        not included in this data-layer release. API setup and examples are
-        in Diary/README.md. Collect static files for the default Diary styling.
+        Diary template creation and editing pages now use /diary/templates/.
+        Only the group configured by DIARY_MANAGER can use these pages.
+        Save creates and approves a new version without changing existing diaries.
+        The template editor needs no additional database migration.
+        Collect static files for Diary/styles/diary.css and Diary/scripts/template_editor.js.
+        Check creation, editing, ownership warnings, and manager access after deployment.
+        Task pages, the dashboard section, and automatic event callbacks remain outstanding.
+        API setup, template page usage, and styling classes are in Diary/README.md.
 
         Craft Market pitch-fee workflow: deploy Contributors migration
         0009_contributorevent_details and 0010_alter_contributorevent_status,
