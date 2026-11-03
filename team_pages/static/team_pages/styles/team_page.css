@@ -68,6 +68,13 @@ div.category-list {
 
 .team-navigation > div { min-width: 0; }
 
+.team-navigation .team-overview {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
 .team-navigation .team-overview .category-list {
     justify-content: center;
 }

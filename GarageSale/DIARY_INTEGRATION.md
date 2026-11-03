@@ -301,6 +301,12 @@ Their identifiers remain unchanged.
   Implementation: `GarageSale/views/diary_views.py`: `DiaryTeamView`, `EventPersonalDiaryView`, `EventManagerDiaryView`, and `EventTemplateEditorView`.
   Routes: `GarageSale/diary_urls.py`: `urlpatterns`. Base template: `GarageSale/templates/Diary/base.html`: `TopBar` and `SnappableSections`.
   Navigation: `GarageSale/templates/GarageSale/diary/navigation.html`: `.diary-host-navigation` and `.diary-host-selection-form`.
+  Team Pages shows a Diary entry beside Dashboard in the Overview group.
+  The entry opens the personal Diary through its fixed URL.
+  Active members of `DIARY_USER` or `DIARY_MANAGER` can see the entry.
+  The entry is absent when the Diary app is not installed.
+  Entry implementation: `GarageSale/templatetags/diary_navigation.py`: `diary_entry` and `team_pages/templates/navigation.html`: `SnappableSections`.
+  Entry verification: `EventDiaryIntegrationTests.test_team_diary_entry_matches_group_access_and_uses_clean_url` in `GarageSale/tests/test_diary_integration.py`.
   Form state: `GarageSale/templates/GarageSale/diary/state.html`: `.diary-host-state`.
   Styling: `GarageSale/static/GarageSale/styles/diary_host.css`: `.diary-host-topbar`, `.diary-host-navigation`, and `.diary-host-event-control`.
   Verification: `GarageSale/tests/test_diary_integration.py`: `EventDiaryIntegrationTests` selection, privacy, CSRF, redirect, and cross-tab tests.

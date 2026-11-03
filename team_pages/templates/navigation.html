@@ -2,6 +2,7 @@
 {% load static %}
 {% load user_management_tags %}
 {% load team_page_tags %}
+{% load diary_navigation %}
 
 {% block sidebar %}
 
@@ -11,6 +12,7 @@
 <div class="team-navigation">
     <div class="team-overview" aria-label="Overview">
         {% categoryList 'Overview' %}
+        {% diary_entry %}
     </div>
     {% categoryList 'Event participation' heading=True %}
     {% categoryList 'Prizes' heading=True %}

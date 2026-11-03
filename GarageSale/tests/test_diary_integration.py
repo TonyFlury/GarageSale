@@ -8,6 +8,8 @@ from django.contrib.auth.models import Group, Permission
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.test import TestCase, override_settings
+from django.template import RequestContext, Template
+from django.test import RequestFactory
 from django.urls import reverse
 
 from Diary.api import Actor, DiaryAPI, EntrySpec
@@ -79,6 +81,25 @@ class EventDiaryIntegrationTests(TestCase):
         return {'event_date': '2027-06-27', 'use_from': '2027-01-01',
                 'open_sales_bookings': '2027-02-01', 'close_sales_bookings': '2027-06-26',
                 'open_billboard_bookings': '2027-03-01', 'close_billboard_bookings': '2027-06-20'}
+
+    def test_team_diary_entry_matches_group_access_and_uses_clean_url(self):
+        """Show the clean Diary entry only for active members with an installed dependency."""
+        tile = Template('{% load diary_navigation %}{% diary_entry %}')
+        request = RequestFactory().get('/')
+        self.manager.groups.remove(Group.objects.get(name='ExecMember'))
+        for user in (self.manager, self.member):
+            request.user = user
+            content = tile.render(RequestContext(request))
+            self.assertIn(f'href="{reverse("Diary:personal-diary")}"', content)
+            self.assertIn('>Diary', content)
+        request.user = self.outsider
+        self.assertEqual(tile.render(RequestContext(request)), '')
+        request.user = self.member
+        self.member.is_active = False
+        self.assertEqual(tile.render(RequestContext(request)), '')
+        self.member.is_active = True
+        with patch('GarageSale.templatetags.diary_navigation.apps.is_installed', return_value=False):
+            self.assertEqual(tile.render(RequestContext(request)), '')
 
     def test_team_creation_saves_event_and_diary_together(self):
         """Create the diary immediately through the normal event creation URL without an activation action."""
