@@ -930,7 +930,9 @@ flowchart TD
 
 The save must prevent repeated requests from adding the same entry twice.
 If the template addition fails, the system must not report a successful combined save.
-The proposal saves both additions in one database transaction.
+`DiaryInstance.create_task()` now saves both additions in one PostgreSQL transaction.
+`TaskCreateView` implements the creation page with trusted diary scope and server-controlled ordinary-user ownership.
+The [implementation record](diary-v1-remaining-work.md#dv1-029-dv1-030-and-dv1-033-task-creation) identifies the forms, tests, and remaining boundaries.
 
 A personally added entry is visible only to its owner and DiaryManagers within the host's permitted calendar scope.
 Other DiaryUsers cannot see that entry through lists, task details, searches, or predecessor choices.

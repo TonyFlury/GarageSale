@@ -97,7 +97,17 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         Collect Diary/styles/diary.css for the manager filters and task-state highlights.
         Check manager access, selected diary scope, filter combinations, and completion history after deployment.
         The manager view needs no additional database migration.
-        Other task pages, the dashboard section, and automatic event callbacks remain outstanding.
+        The personal task page is available through Diary.views.PersonalDiaryView.
+        The task creation page is available through Diary.views.TaskCreateView at /diary/tasks/new/.
+        Supply trusted permitted_diary_keys for each configured view.
+        The default routes grant no diary scope.
+        Supply task_create_url in personal and manager view context when the host uses a separate creation path.
+        Collect Diary/styles/diary.css for the new form controls and task states.
+        Task creation requires no additional database migration.
+        Check personal ownership, manager assignments, and optional template revision after deployment.
+        The combined save creates one diary task and one approved template revision.
+        Other existing diaries keep their tasks.
+        Task details, completion, the dashboard section, and automatic event callbacks remain outstanding.
         API setup, template page usage, and styling classes are in Diary/README.md.
 
         Craft Market pitch-fee workflow: deploy Contributors migration
