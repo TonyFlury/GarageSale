@@ -124,6 +124,12 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         Normal model writes reject those edits, and PostgreSQL guards reject bulk and relationship writes.
         Verify creation, supported date changes, completion, and rejected live dependency edits after deployment.
         Controlled live dependency editing remains a backlog proposal without an assigned release.
+        DiaryDataView now provides read-only JSON resources under /diary/data/.
+        Supply trusted permitted_diary_keys or override get_diary_keys() for each host data route.
+        Default routes grant no diary scope. Request parameters cannot grant access.
+        Search uses DiaryAPI.search_tasks and DiaryInstance.search_tasks with personal-task privacy.
+        Verify private task searches, guessed identifiers, current roles, and host scope after deployment.
+        HTTP data reads require no additional migration or static files.
         The dashboard section and automatic event callbacks remain outstanding.
         API setup, template page usage, and styling classes are in Diary/README.md.
 

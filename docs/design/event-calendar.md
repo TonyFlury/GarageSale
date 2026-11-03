@@ -193,8 +193,11 @@ Each operation checks its permission and reads current database state.
 The host supplies fresh identity, membership, and scope when constructing the Actor for each request.
 Creation does not automatically expand that Actor's permitted diary keys.
 
-It is a Python interface, not an HTTP endpoint.
-The confirmed interface scope also requires an HTTP API, which is not implemented yet.
+The callable API is a Python interface.
+The technical view class `DiaryDataView` now provides authenticated, read-only HTTP data resources.
+The [HTTP data guide](../../Diary/README.md#http-data-api) identifies routes, selectors, trusted scope, and JSON response fields.
+DV1-031 applies personal-entry privacy to searches, task details, collections, and related references.
+Default data routes grant no diary scope.
 
 The caller can define multiple named milestones.
 For example, `add_board_bookings_open` identifies the date on which advertising board bookings open.
@@ -688,7 +691,7 @@ The current `DiaryInstance.personal_tasks()` method supplies that list for one i
 `DiaryAPI.personal_tasks()` now supplies personal tasks across all instances permitted by the host.
 The caller can instead select one permitted instance.
 `PersonalDiaryView` implements the default personal page and its display filters.
-The [implementation record](diary-v1-remaining-work.md#dv1-020-dv1-021-and-dv1-049-personal-diary) identifies completed work, verification, and remaining privacy interfaces.
+The [implementation record](diary-v1-remaining-work.md#dv1-020-dv1-021-and-dv1-049-personal-diary) identifies completed work and privacy verification.
 Without a diary key, the HTTP view groups the user's open tasks by diary name across all permitted open instances.
 The caller supplies the current role memberships through the Actor.
 Whole-team tasks can appear through an explicit list option.

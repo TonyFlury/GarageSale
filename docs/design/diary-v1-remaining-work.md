@@ -305,7 +305,7 @@ A selected diary retains its name when no tasks match.
 A selected closed diary displays its closed state without active tasks.
 Reads create no diaries and change no tasks.
 
-**Privacy boundary: partial DV1-031**
+**Privacy boundary: implemented DV1-031**
 
 The technical function `_visible_entries()` removes another person's private additions and related keys from ordinary-user reads.
 Managers can inspect these entries within their permitted diary scope.
@@ -315,8 +315,23 @@ Private tasks cannot appear as predecessor choices.
 Readiness uses the complete dependency graph before visibility filtering.
 
 Task details and completion now have privacy verification.
-Searches and the HTTP data API still need privacy verification.
-DV1-031 remains unchecked.
+The technical methods `DiaryAPI.search_tasks()` and `DiaryInstance.search_tasks()` search visible names and descriptions only.
+The technical helper `_search_entries()` rejects invalid text and limits searches to 256 characters.
+An omitted diary selector searches all permitted diaries, including completion history and closed diaries.
+An explicit selector retains scope and existence checks.
+
+The technical view class `DiaryDataView` provides authenticated, read-only JSON routes.
+It shares `DiaryScopeMixin` with the HTML views.
+The default routes grant no diary scope.
+[HTTP data integration](../../Diary/README.md#http-data-api) documents route names, selectors, response fields, and errors.
+Private and unknown task lookups return the same HTTP 404 response.
+Successful responses and handled errors prohibit storage and vary by session cookie.
+The view repeats identity and current group checks for every request.
+
+[PersonalEntryPrivacyTests](../../Diary/tests/test_privacy.py) verifies callable searches, JSON resources, HTML details, private blockers, and completion references.
+It also verifies current permissions, scope changes, unsupported writes, and the manager-only template editor.
+The template editor reads template records only. Its JavaScript receives no private diary additions.
+No privacy implementation remains under DV1-031.
 Task detail links now provide blocker inspection and completion.
 The personal list keeps its separate task-selection controls.
 
@@ -566,7 +581,7 @@ Successful template tests do not verify unimplemented task workflows.
 
 **Remaining requirements**
 
-Add verification for membership-loss handling under DEC-005 and the remaining privacy and milestone API boundaries.
+Add verification for membership-loss handling under DEC-005 and the remaining milestone API boundary.
 Task creation tests now cover ownership, template revisions, rollback, duplicate requests, and concurrent saves.
 Personal tests now cover privacy, cross-diary reads, configured groups, selectors, and filters.
 Verify repeated requests and transaction rollback for each new operation.
@@ -585,7 +600,7 @@ Extend browser coverage after task routes and completion controls exist.
 | Related items | Verification still required |
 | --- | --- |
 | DV1-013, DV1-018, DV1-019 | Implemented for the required interfaces. |
-| DV1-031 | Remaining privacy checks for searches and the HTTP data API. |
+| DV1-031 | Implemented privacy checks for searches, HTTP data reads, and related task references. |
 | DV1-028 | Implemented dependency freeze with API, model, migration, and concurrency verification. |
 | DV1-043 | Remaining milestone mutation restriction. |
 | DV1-035 through DV1-038 | Implemented and verified through the task detail workflow. |
@@ -655,6 +670,12 @@ A future implementation must explicitly replace the V1 restriction through revie
 No editor, public mutation method, or release date is approved by this backlog record.
 
 ## Review limits
+
+The staged DV1-031 implementation passed 200 tests with each supported user model.
+Both runs used separate PostgreSQL test databases.
+All 15 Chrome cases passed, including one template-editor retry after a stale-element error.
+The new privacy test class covers callable search, JSON reads, HTML details, related references, current roles, and trusted scope.
+No application data or deployed services changed during verification.
 
 The staged dependency restriction passed 190 tests with each supported user model.
 Both runs used separate PostgreSQL test databases.
