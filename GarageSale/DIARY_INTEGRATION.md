@@ -115,6 +115,21 @@ Repeated host requests must not create duplicate calendars or entries.
 
 ## Remaining integration work
 
+These host items belong to Garage Sale. They are excluded from the generic Diary application checklist.
+Their identifiers remain unchanged after their transfer to this document.
+
+- [ ] **HOST-001:** Decide when Garage Sale creates and closes diary instances.
+- [ ] **HOST-002:** Map source dates to milestones and save returned Diary keys against the correct event records.
+- [ ] **HOST-003:** Supply authenticated identity, current memberships, configured groups, and permitted diary scope.
+- [ ] **HOST-004:** Connect the dashboard's compact Late, Ready, and Blocked counts to the personal task filters.
+
+The dashboard must omit Diary imports and content when the app is disabled.
+Counts exclude whole-team tasks and completed tasks.
+Late has priority over Blocked or Ready. Each task contributes to one count.
+Zero counts remain links. An absent Diary key has an explicit empty state.
+
+The following steps describe the remaining integration details:
+
 - [ ] Confirm the event creation and activation procedure.
 - [ ] Define the host callbacks that call `DiaryInstance.create()` or `DiaryAPI.create_diary()`.
 - [ ] Supply the named milestone dates required by the selected template version.

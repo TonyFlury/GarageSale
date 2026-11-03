@@ -584,6 +584,14 @@ Successful template tests do not verify unimplemented task workflows.
 **Remaining requirements**
 
 Add concurrent membership-change verification for the implemented ownership recovery workflow.
+Transactions provide rollback. The shared diary row lock serializes supported writes to the same diary.
+The technical method `_open_calendar()` obtains that lock before reassignment, completion, and other supported task changes.
+Existing `TaskEditingConcurrencyTests` verify date edits, completion, and diary closure through separate database connections.
+User and group membership records do not share the diary row lock.
+An administrator can remove membership after Diary checks eligibility and before an assignment commits.
+The assignment can then become orphaned again. This does not imply a partial transaction or corrupt task record.
+The remaining tests must verify that behavior and the recovery operation's use of the existing diary lock.
+No demonstrated transaction defect is recorded under DV1-044.
 Task creation tests now cover ownership, template revisions, rollback, duplicate requests, and concurrent saves.
 Personal tests now cover privacy, cross-diary reads, configured groups, selectors, and filters.
 Verify repeated requests and transaction rollback for each new operation.
