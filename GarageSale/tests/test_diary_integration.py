@@ -1,5 +1,7 @@
 """HOST-001 through HOST-003: Verify event creation and host-framed Diary pages through the public dependency API."""
 from datetime import date
+from io import StringIO
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
@@ -7,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.template import RequestContext, Template
 from django.test import RequestFactory
@@ -241,6 +244,31 @@ class EventDiaryIntegrationTests(TestCase):
             invalid = admin.get_form(request)(data=self.event_data(), files={'event_logo': upload})
             self.assertFalse(invalid.is_valid())
             self.assertIn('event diary could not be prepared', str(invalid.non_field_errors()))
+
+    @override_settings(DIARY_TEMPLATE_NAME='Garage Sale calendar', DIARY_TASK_OWNER_ROLES=('ExecMember',))
+    def test_demo_template_import_creates_event_tasks_with_booking_dates(self):
+        """Validate the portable demonstration template and create tasks with host booking dates and dependencies."""
+        fixture = Path(__file__).resolve().parents[1] / 'fixtures' / 'diary_demo_template.json'
+        options = {'actor': self.manager.get_username(), 'stdout': StringIO()}
+        call_command('transfer_diary_templates', 'import', str(fixture), dry_run=True, **options)
+        call_command('transfer_diary_templates', 'import', str(fixture), **options)
+        call_command('transfer_diary_templates', 'import', str(fixture), **options)
+        response = self.client.post(reverse('TeamPages:EventCreate'), self.event_data())
+        self.assertEqual(response.status_code, 302)
+        event = EventData.objects.get()
+        dates = self.client_for(event).read()['milestones']
+        self.assertEqual(dates, {'event_date': event.event_date,
+            'ad_bookings_open': event.open_billboard_bookings,
+            'ad_bookings_closed': event.close_billboard_bookings,
+            'sales_bookings_open': event.open_sales_bookings,
+            'sales_booking_closed': event.close_sales_bookings})
+        self.client.force_login(self.member)
+        self.select_event(event)
+        page = self.client.get(reverse('Diary:personal-diary'))
+        self.assertContains(page, 'Prepare advertising bookings')
+        page = self.client.get(reverse('Diary:personal-diary'), {'task_status': 'blocked'})
+        self.assertContains(page, 'Run the Garage Sale')
+        self.assertContains(page, 'Blocked')
 
     def test_creation_rejects_unsupported_milestones_without_partial_event(self):
         """Reject unknown source-date mappings instead of supplying an incorrect milestone value."""

@@ -8,6 +8,10 @@ from GarageSale.models import EventData
 
 MILESTONE_FIELDS = {
     'event_date': 'event_date',
+    'ad_bookings_open': 'open_billboard_bookings',
+    'ad_bookings_closed': 'close_billboard_bookings',
+    'sales_bookings_open': 'open_sales_bookings',
+    'sales_booking_closed': 'close_sales_bookings',
     'activation_date': 'use_from',
     'use_from': 'use_from',
     'add_board_bookings_open': 'open_billboard_bookings',

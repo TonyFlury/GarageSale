@@ -77,6 +77,10 @@ Diary does not calculate replacement values for those source fields.
 | Template milestone name | Event source field |
 | --- | --- |
 | `event_date` | `event_date` |
+| `ad_bookings_open` | `open_billboard_bookings` |
+| `ad_bookings_closed` | `close_billboard_bookings` |
+| `sales_bookings_open` | `open_sales_bookings` |
+| `sales_booking_closed` | `close_sales_bookings` |
 | `activation_date` or `use_from` | `use_from` |
 | `add_board_bookings_open` or `open_billboard_bookings` | `open_billboard_bookings` |
 | `add_board_bookings_close` or `close_billboard_bookings` | `close_billboard_bookings` |
@@ -85,6 +89,40 @@ Diary does not calculate replacement values for those source fields.
 
 Only milestone names used by the chosen approved template are supplied.
 Other names stop event creation until the template or the host mapping is corrected.
+
+## Demonstration template
+
+The file `GarageSale/fixtures/diary_demo_template.json` contains the demonstration template named `Garage Sale calendar`.
+This name matches the default `DIARY_TEMPLATE_NAME` setting.
+The template contains eight tasks assigned to the `ExecMember` group.
+It contains preparation tasks, booking tasks, final checks, and an event-day task.
+Dependencies keep later tasks blocked until their preceding tasks are complete.
+Select the Blocked status in My Diary to see those tasks.
+The template uses the five milestone names in the first five rows of the mapping table.
+It does not use `event_created` because `EventData` has no stored creation date.
+
+Use an active member of the configured `DIARY_MANAGER` group as the import actor.
+Replace `MANAGER_USERNAME` with that person's username.
+Validate the file before import.
+
+```bash
+python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json --actor MANAGER_USERNAME --dry-run
+python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json --actor MANAGER_USERNAME
+```
+
+Use `transfer_diary_templates` instead of `loaddata` to check ownership and dependencies.
+The import creates an approved template version.
+Repeated imports preserve an identical version.
+Existing templates with different entries require review before use of `--new-version`.
+Existing milestone labels and descriptions must match the file.
+The import stops when those definitions differ.
+Create a new demonstration event after import.
+Existing event diaries remain unchanged.
+The import does not create events or assign individual people.
+
+Verification: `GarageSale/tests/test_diary_integration.py`: `EventDiaryIntegrationTests.test_demo_template_import_creates_event_tasks_with_booking_dates`.
+
+## Current event selection
 
 The adapter uses the existing host current-event selection without changing its rules.
 The host event control permits selection through the configured Diary access groups.
