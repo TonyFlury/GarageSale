@@ -4,6 +4,8 @@ Reviewed: 3 November 2026.
 
 This document describes the remaining work for partially implemented items in [the V1 checklist](../../Diary/TODO_V1.md).
 The existing [Diary design](event-calendar.md) defines the approved requirements.
+DV1-052 below records an additional confirmed V1 requirement.
+DFUT-003 below records a deferred requirement with no assigned release.
 Completed sections record their implementation evidence and link to the updated checklist.
 
 Statements under **Current implementation** describe existing code.
@@ -215,6 +217,65 @@ Route names and new view class names need definition during implementation.
 DEC-004 still controls presentation of inaccessible predecessor details.
 This document does not select a presentation for those details.
 
+## DV1-052: Manager filters for one diary
+
+**Current implementation**
+
+The production diary-instance list view remains outstanding under DV1-022.
+`DiaryInstance.read()` returns entries and completion information for one permitted diary.
+`DiaryInstance.active_tasks()` excludes completed tasks.
+No production manager view implements the three required checkbox filters.
+
+**Remaining requirements**
+
+When a DiaryManager views one permitted diary, provide these checkboxes with the exact interface labels:
+
+| Interface label | Default | Selected behavior |
+| --- | --- | --- |
+| include completed tasks | Clear. | Include completed tasks for completion-history inspection. |
+| exclude blocked tasks | Clear. | Exclude tasks with incomplete predecessors. |
+| exclude non-late tasks | Clear. | Exclude tasks that are not late. |
+
+The default view shows all incomplete tasks, including blocked tasks and tasks that are not late.
+Selecting “exclude non-late tasks” provides a view of late tasks only.
+Use the existing lateness rule for incomplete tasks due today or earlier in the Diary time zone.
+Tasks without a due date are not late.
+Filters must preserve the selected diary, task privacy, and the host's permitted diary scope.
+The DiaryUser personal view keeps its separate ready-task default under DV1-049.
+
+Give each implemented control and state a stable styling class within the `.diary` namespace.
+Use the `diary-` class prefix.
+Document those classes in the usage guide during implementation.
+
+**Proposed implementation**
+
+Implement the controls with the production list view under DV1-022 and the identity handling under DV1-013.
+Obtain permitted task data through the callable API.
+Use completion information when the history option is selected.
+Do not use `active_tasks()` as the sole source for completion history.
+Keep the callable API's existing active-task selection behavior.
+
+Apply selected exclusions together to the permitted task selection.
+Keep completed tasks outside the late-only selection because the current lateness rule applies to incomplete tasks.
+These combination details are proposals for implementation review.
+
+**Completion checks**
+
+Verify the default and each checkbox separately.
+Verify every combination of the three checkbox values.
+Verify completion history, blocked late tasks, ready late tasks, and tasks without a due date.
+Verify due dates today and the Diary time-zone boundary.
+Verify that filters cannot expose private tasks or tasks from another diary.
+Verify that the manager controls do not change the DiaryUser personal-view default.
+Record exact view, template, styling, and verification symbols in DV1-052 after implementation.
+
+**Open decisions**
+
+Define filter parameter names and whether selection persists during navigation.
+Confirm how selected exclusions treat completed history entries.
+Define completion-history ordering and behavior when viewing a closed diary.
+No new route names, view classes, or styling class names are approved by this document.
+
 ## DV1-019: Diary selectors
 
 **Current implementation**
@@ -350,6 +411,7 @@ Extend browser coverage after task routes and completion controls exist.
 | DV1-028 through DV1-034 | Live dependency restrictions, task ownership, permitted edits, and explicit template additions. |
 | DV1-035 through DV1-038 | Predecessor inspection, completion permissions, forced comments, and concurrent operations. |
 | DV1-039 through DV1-043, DV1-049 | Highlights, ownership display, empty states, milestone boundaries, and blocked-task selection. |
+| DV1-052 | Manager defaults, checkbox combinations, completion history, late-only selection, and task privacy. |
 
 **Completion checks**
 
@@ -357,6 +419,42 @@ Record the exact test files and symbols under each completed checklist item.
 Record PostgreSQL test results and the isolated-project verification result.
 Keep DV1-044 unchecked until its remaining dependent workflows have verification.
 DV1-045 separately requires final release documentation and deployment checks.
+
+## DFUT-003: Future date-window filtering
+
+**Confirmed deferred requirement**
+
+All diary views must eventually let users select incomplete tasks due within a specified future date window.
+This includes personal task views and views of a specific permitted diary.
+The filter must preserve task privacy and the host's permitted diary scope.
+The requirement has no assigned release and is not a V1 completion condition.
+No production controls or executable verification implement it.
+
+**Proposed implementation**
+
+Use one date-window rule across diary views.
+Apply the window to each task's calculated due date.
+Use the Diary time zone for relative future windows.
+Show the selected window and provide an action to clear it.
+Combine the window with permitted task selection before rendering results.
+Document each implemented control and styling class in the usage guide.
+
+**Open decisions**
+
+Define absolute date inputs, relative windows, or support for both.
+Define whether the start and end dates are included.
+Define whether the window can start today.
+Define handling for invalid ranges and tasks without a due date.
+Define interactions with completion history, late-only selection, and blocked-task filters.
+Define whether window selection persists across diary views.
+
+**Future completion checks**
+
+Verify boundary dates and Diary time-zone changes.
+Verify exclusion of completed tasks and tasks outside the selected window.
+Verify task privacy and permitted diary scope in every applicable view.
+Verify consistent results between personal views and specific diary views.
+Record exact implementation and verification symbols when this deferred requirement is implemented.
 
 ## Review limits
 
