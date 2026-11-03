@@ -302,6 +302,7 @@ Their identifiers remain unchanged.
   Routes: `GarageSale/diary_urls.py`: `urlpatterns`. Base template: `GarageSale/templates/Diary/base.html`: `TopBar` and `SnappableSections`.
   Navigation: `GarageSale/templates/GarageSale/diary/navigation.html`: `.diary-host-navigation` and `.diary-host-selection-form`.
   Team Pages shows a Diary entry beside Dashboard in the Overview group.
+  The Overview tiles share one horizontal row through `.team-overview` and `.team-overview .category-list` in `team_pages/styles/team_page.css`.
   The entry opens the personal Diary through its fixed URL.
   Active members of `DIARY_USER` or `DIARY_MANAGER` can see the entry.
   The entry is absent when the Diary app is not installed.

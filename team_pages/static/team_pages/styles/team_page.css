@@ -70,13 +70,13 @@ div.category-list {
 
 .team-navigation .team-overview {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     gap: 0.5rem;
 }
 
 .team-navigation .team-overview .category-list {
-    justify-content: center;
+    display: contents;
 }
 
 .team-navigation h4 {
