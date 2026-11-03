@@ -1,14 +1,15 @@
 # Garage Sale integration with Diary
 
-Status: Design proposal. The lifecycle decision remains open.
-Date: 2 November 2026.
+Status: Event creation and host-framed Diary pages are implemented. Dashboard integration and closure policy remain open.
+Date: 3 November 2026.
 
 ## Scope and technical names
 
 This document records Garage Sale responsibilities when the application uses the generic Diary app.
-Calendar creation timing is a host integration decision, not a generic Diary requirement.
+Garage Sale creates a Diary during event creation. This confirmed behavior belongs to the host integration.
 Garage Sale treats Diary as an independently supplied dependency with the Python import name `Diary`.
-This integration branch does not contain Diary source code, migrations, templates, static files, or implementation history.
+This integration branch excludes Diary Python source, migrations, static files, and implementation history.
+It contains host-owned template adaptations for the external Diary UI.
 The current implementation remains on the separate `feature/event-calendar` branch.
 Dependency installation or merging is a separate operation from Garage Sale integration.
 Future package installation will replace that temporary delivery arrangement.
@@ -17,20 +18,20 @@ No published distribution name or package version is assumed.
 ## Dependency boundary and current implementation
 
 The dependency must provide Diary API version 1 and `Diary.apps.DiaryConfig`.
-Garage Sale configures that application and mounts its supplied URL configuration.
+Garage Sale configures that application and supplies its own routes and team-page template wrapper.
 The nullable technical field `EventData.diary_key` stores the external Diary UUID without a foreign key.
 The Garage Sale migration depends only on Garage Sale migrations.
 The integration test calls the public Diary API. It does not import Diary models or private implementation functions.
 
-The branch currently supplies application settings, URL mounting, UUID storage, and its integration test.
-The lifecycle, source-date adapter, trusted view scope, and dashboard connection remain implementation work below.
+The branch supplies event creation, milestone mapping, trusted HTML view context, UUID storage, and host-framed Diary pages.
+Dashboard integration and the event closure policy remain separate work below.
 The separately supplied Diary developer guide defines its public interface.
 
 ## Installation and first delivery
 
 Supply the compatible Diary dependency before starting the configured Garage Sale application.
 Dependency installation must make the Python import name `Diary` available to the deployment interpreter.
-Do not copy Diary implementation files into the Garage Sale integration changes.
+Keep Diary Python implementation files and migrations outside the Garage Sale integration changes.
 The existing settings enable Diary through `INSTALLED_APPS` and configure the Garage Sale group names.
 Apply both applications' migrations through Django's normal migration command.
 Collect static files from the configured applications through Django's normal static collection command.
@@ -46,7 +47,7 @@ The host test uses a separate PostgreSQL test database and the independently sup
 No test must use application data. Package distribution tests remain the dependency's responsibility.
 
 An event is a Garage Sale occasion represented by `EventData`.
-The activation date is the `use_from` value used by the host's current-event selection rules.
+The Use from date is the `use_from` value used by the host's current-event selection rules.
 The creation factory `DiaryInstance.create()` returns an API object with its Diary key in `key`.
 The host stores that key in `EventData.diary_key`.
 An approved template version supplies the entries and rules for a new calendar.
@@ -60,22 +61,33 @@ Garage Sale supplies their values through the Diary API when the selected templa
 | Existing field | Meaning in Garage Sale |
 | --- | --- |
 | `event_date` | The event date. |
-| `use_from` | The activation date. |
+| `use_from` | The Use from date for current-event selection. |
 | `open_sales_bookings` | The first date for sale bookings. |
 | `close_sales_bookings` | The last date for sale bookings. |
 | `open_billboard_bookings` | The first date for advertising board bookings. |
 | `close_billboard_bookings` | The last date for advertising board bookings. |
 
-The event date and activation date have different functions.
+The event date and Use from date have different functions.
 The integration must supply different labels when both appear as milestones.
-Garage Sale must define the mapping from source fields to the template's named milestones.
+The technical constant `MILESTONE_FIELDS` defines the supported source-to-milestone mapping.
 Diary does not define that mapping.
 Booking milestones use the stored `EventData` booking dates directly.
 Diary does not calculate replacement values for those source fields.
 
-The repository contains different rules for selection of the current event.
-This design does not select a new rule for the website.
-The proposed host event selector permits selection only from events available to the user.
+| Template milestone name | Event source field |
+| --- | --- |
+| `event_date` | `event_date` |
+| `activation_date` or `use_from` | `use_from` |
+| `add_board_bookings_open` or `open_billboard_bookings` | `open_billboard_bookings` |
+| `add_board_bookings_close` or `close_billboard_bookings` | `close_billboard_bookings` |
+| `sale_bookings_open` or `open_sales_bookings` | `open_sales_bookings` |
+| `sale_bookings_close` or `close_sales_bookings` | `close_sales_bookings` |
+
+Only milestone names used by the chosen approved template are supplied.
+Other names stop event creation until the template or the host mapping is corrected.
+
+The adapter uses the existing host current-event selection without changing its rules.
+The host event control permits selection through the configured Diary access groups.
 The Garage Sale adapter can obtain its current event from `request.current_event`.
 It supplies that event's stored Diary key to Diary.
 Diary does not read this custom request attribute or select the current event.
@@ -87,8 +99,13 @@ Diary shows “Date not set” when a necessary date has no value.
 Garage Sale sets `DIARY_MANAGER = 'Officer'` and `DIARY_USER = 'ExecMember'` in Django settings.
 The manager setting also grants all Diary template permissions.
 Task-owning roles use normal Django groups without a Garage Sale lookup callback.
-The adapter can supply a fixed template name or version key during diary creation.
-`DIARY_TEMPLATE_NAME` is an optional default for calls without an explicit selector.
+Garage Sale uses `DIARY_TEMPLATE_NAME` to select an approved creation template and then supplies its version key.
+This host setting must identify an approved template before event creation.
+The automatic creation service checks the existing `GarageSale.add_eventdata` permission.
+It uses the host service identity `garagesale:event-creation:user:<user_id>` for the narrowly scoped creation call.
+That identity records the initiating user without claiming that the user has DiaryManager membership.
+The service receives no existing diary scope. Interactive pages always use the requesting user's actual current groups.
+An authorized event creator therefore needs no additional DiaryManager assignment.
 Its access policy also makes each Officer an ExecMember.
 These group names and that membership rule belong to Garage Sale.
 Diary uses the configured Diary roles without those project-specific names.
@@ -114,73 +131,191 @@ Each count links to the matching personal Diary filter.
 A zero count remains a link to an empty result.
 An absent Diary key has an explicit empty state.
 
-The checklist in this document tracks this host work.
-The generic Diary app owns the destination task views.
+The integration checklist in this document tracks this host work.
+Garage Sale owns the clean destination routes and delegates task behavior to the generic Diary views.
 
-## Open lifecycle decision
+## Confirmed event creation behavior
 
-Should Garage Sale create the Diary calendar during event creation?
-Should event activation also check for an absent calendar?
-These questions do not prevent implementation of the generic Diary app.
+Garage Sale creates the Diary when its normal team-page or admin interface creates an event.
+There is no separate event activation action.
+The stored Use from date remains a source value and does not trigger Diary creation.
 
-## Proposed event creation and activation
+The technical host service `ensure_event_diary()` in `GarageSale/diary_integration.py` locks the event record.
+It calls the public Diary API with an approved template and the event's mapped milestone dates.
+It saves the returned UUID against the event in the same transaction.
+A repeated call preserves an existing Diary key and its task history.
+Unsupported milestone names stop creation rather than receive guessed source values.
+Unavailable templates or rejected creation roll back the event and Diary together.
+The normal team creation page shows a form error. Admin validates initial template selection before saving.
 
-The proposal creates the calendar when Garage Sale creates the event.
-The team can then see tasks before the activation date.
-Some tasks can occur in the year before the event.
+The host event creation view is `DiaryEventCreate` in `GarageSale/views/event_views.py`.
+`GarageSale/team_urls.py` retains the existing `TeamPages:EventCreate` route name and URL.
+The admin implementation is `SettingsAdmin.get_form()` and `SettingsAdmin.save_model()` in `GarageSale/admin.py`.
+Model fixtures and direct low-level event saves do not infer a requesting user or create diaries automatically.
+Other event-creation services must call `ensure_event_diary()` within their own event transaction.
 
-Activation must preserve an existing calendar and its completion records.
-It must not create a second calendar or expand access beyond the host's permitted scope.
+Existing events without a Diary key remain unprepared.
+No view creates a Diary during GET requests. No backfill command is supplied by this change.
+Event editing preserves the stored Diary key and its milestone snapshot.
+V1 does not propagate edited event dates into existing Diary milestones.
+Automatic closure has no approved host lifecycle policy and is not added here.
 
 ```mermaid
 flowchart TD
-    A[Create a Garage Sale event] --> B{Does a calendar exist?}
-    H[Activate a Garage Sale event] --> B
-    B -->|Yes| C[Keep the existing calendar]
-    B -->|No| D{Is an approved template version available?}
-    D -->|No| E[Show Calendar not prepared]
-    D -->|Yes| F[Call Diary API with milestone dates]
-    F --> G[Save the returned Diary key against the event]
-    G --> I[Show missing dates and past dates]
+    A[Submit a new event] --> B[Start the host transaction]
+    B --> C[Save the event]
+    C --> D[Select the approved template]
+    D --> E[Map event milestone dates]
+    E --> F[Create the Diary through its API]
+    F --> G[Save the Diary key]
+    G --> H[Commit both records]
+    D -->|Failure| I[Roll back and show an error]
+    E -->|Failure| I
+    F -->|Failure| I
 ```
 
-The proposed activation check also covers events created before Diary integration exists.
-An absent calendar needs an approved template version before creation.
-The host must not select an unapproved version as a substitute.
-Repeated host requests must not create duplicate calendars or entries.
+## Host-owned Diary pages
 
-## Remaining integration work
+`GarageSale/diary_urls.py` owns fixed Diary HTML routes under `/diary/`.
+`DiaryTeamView` in `GarageSale/views/diary_views.py` resolves selected records before delegating to the dependency's supplied views.
+Event identifiers, task keys, template names, and Diary UUIDs do not appear in these routes or their query strings.
+Ordinary display filters can remain in query strings.
 
-These host items belong to Garage Sale. They are excluded from the generic Diary application checklist.
-Their identifiers remain unchanged after their transfer to this document.
+The host initially derives its event from the existing trusted `request.current_event` value.
+The event control changes the selected event through a CSRF-protected POST action.
+Task buttons and template buttons also use POST actions. Their values belong in form data, not browser URLs.
+The host validates each selection and records the selected event, task, or template in the user's session.
+It resolves the actual Diary UUID from the selected event's stored `diary_key` field on each request.
+It passes `diary_key` and `permitted_diary_keys` through the delegated view's trusted context.
+The permitted scope contains only that event's stored Diary UUID.
+Template editing passes the selected template name through trusted context.
+The dependency repeats its own permission, scope, and ownership checks.
 
-- [ ] **HOST-001:** Decide when Garage Sale creates and closes diary instances.
-- [ ] **HOST-002:** Map source dates to milestones and save returned Diary keys against the correct event records.
-- [ ] **HOST-003:** Supply authenticated identity, current memberships, configured groups, and permitted diary scope.
-- [ ] **HOST-004:** Connect the dashboard's compact Late, Ready, and Blocked counts to the personal task filters.
+Every edit form carries signed state for its originating user, event, task, and template.
+The technical field `_diary_state` contains that signed state in the POST body.
+A change of selection in another browser tab cannot redirect an edit to a different task.
+Successful edits restore their originating selection before returning to the clean page URL.
+Navigation selections are shared across tabs in one session. Refreshing a page uses the latest session selection.
+Signed form state expires after 24 hours. Expired or changed state requires a reload and returns HTTP 400.
+Missing or invalid CSRF tokens retain Django's HTTP 403 protection.
 
-The dashboard must omit Diary imports and content when the app is disabled.
-Counts exclude whole-team tasks and completed tasks.
-Late has priority over Blocked or Ready. Each task contributes to one count.
-Zero counts remain links. An absent Diary key has an explicit empty state.
+Active members of the configured DiaryUser or DiaryManager group can select event-specific personal pages.
+Manager lists and template pages require the configured DiaryManager group.
+The host applies that manager gate before showing an unprepared-event state.
+Those configured groups can select Garage Sale events. Diary's personal-task privacy still applies within each event.
+Unknown events or unavailable task selections return HTTP 404.
+Missing Diary keys show Calendar not prepared without creating data.
+A forged POST to an unprepared event returns HTTP 400.
+Identifier query parameters return HTTP 400 and a WARNING through `GarageSale.views.diary_views`.
 
-The following steps describe the remaining integration details:
+| Route | Page or action |
+| --- | --- |
+| `/diary/` | Personal tasks for the selected or current event. |
+| `/diary/select/` | POST action for event, task, or template selection. |
+| `/diary/manager/` | Full diary for the selected event. |
+| `/diary/tasks/new/` | Task creation for the selected event. |
+| `/diary/tasks/detail/` | Details and edits for the selected task. |
+| `/diary/templates/` | Template chooser. |
+| `/diary/templates/new/` | Template creation. |
+| `/diary/templates/edit/` | Editing for the selected template. |
 
-- [ ] Confirm the event creation and activation procedure.
-- [ ] Define the host callbacks that call `DiaryInstance.create()` or `DiaryAPI.create_diary()`.
-- [ ] Supply the named milestone dates required by the selected template version.
-- [ ] Define the mapping from `EventData` source fields to the template's named milestones.
-- [ ] Save the returned key against the correct `EventData` record.
-- [ ] Preserve existing keys and completion records during repeated requests.
-- [ ] Define the procedure for existing events without a Diary key.
-- [ ] Keep the host's current-event selection rule unchanged by Diary integration.
-- [ ] Read `request.current_event` only in the Garage Sale adapter and supply its permitted Diary key.
+No record-specific URL aliases are supplied.
+The host retains the `Diary` URL namespace because the supplied components use those route names.
+These are Garage Sale routes, not an inclusion of the dependency's default URL configuration.
+The host removes identifier parameters from dependency-generated redirects and status links.
+Task-creation success is retained server-side instead of placing the new task key in the URL.
+The read-only JSON routes are not mounted by this host HTML adapter.
 
-Milestone date changes and their impact review belong in V2.
-The host can call `DiaryInstance.close()` to close an instance with open tasks.
-The host must separately decide which lifecycle action calls that operation.
-Reminders are outside V1 scope.
-Neither feature is part of this proposed initial lifecycle connection.
+## Team-page template interface
+
+`GarageSale/templates/Diary/base.html` overrides the dependency's base document through Django's template search order.
+It extends `team_pages_base.html` and maps Diary content, styles, and scripts into the normal team-page blocks.
+The existing header, top bar, sidebar, and responsive shell therefore surround every Diary HTML page.
+Garage Sale must remain before Diary in `INSTALLED_APPS` for these overrides to take priority.
+Template editing retains the dependency's JavaScript through the host `PageScripts` block.
+
+The host supplies navigation adaptations for these technical fragments under `GarageSale/templates/Diary/partials/`:
+
+- `personal_diary.html` and `manager_diary.html` remove identifier fields from filter forms and navigation links.
+- `task_list.html` and `manager_tasks.html` use task selection buttons instead of identifier-bearing links.
+- `task_detail.html` binds edit forms to signed state and uses a fixed reload URL.
+- `task_create.html` binds creation forms and replaces template links with selection buttons.
+- `template_list.html` uses template selection buttons.
+- `template_editor.html` binds versioned saves to the originating template selection.
+
+The dependency still supplies the forms, field fragments, task validation, date calculation, ownership checks, and storage API.
+The host template editor uses `TaskFormSet`, `TemplateForm`, and `DiaryTemplate.save_version()` with a fixed success URL.
+No dependency Python implementation or migrations are included in this branch.
+Review these presentation overrides when updating the externally supplied Diary version.
+The host omits the hidden `diary-personal-selector` and `diary-manager-selector` controls because their keys no longer belong in GET forms.
+The existing `diary-task-detail-link` and `diary-template-link` classes now identify selection buttons instead of anchors.
+Other dependency class names remain unchanged. Host styles must target classes without requiring a particular element tag.
+
+`GarageSale/templates/GarageSale/diary/navigation.html` provides fixed navigation and the event selection control.
+`GarageSale/templates/GarageSale/diary/state.html` provides signed hidden form state.
+`GarageSale/templates/GarageSale/diary/unprepared.html` provides a host-framed empty state.
+The technical stylesheet `GarageSale/styles/diary_host.css` keeps the toolbar and event control within narrow screen widths.
+Its rules remain within the `.diary` namespace. They add no CSS variables and change no dependency class names.
+The existing `ToolBar` class is used only inside the host toolbar wrapper for its scoped sizing correction.
+Static form IDs associate selection buttons with their shared forms. They are not styling selectors.
+
+| Host class | Purpose |
+| --- | --- |
+| `diary-host-topbar` | Scoped wrapper for the normal team toolbar. |
+| `diary-host-navigation` | Fixed Diary navigation component. |
+| `diary-host-personal` | Personal Diary navigation link. |
+| `diary-host-manager` | Manager diary navigation link. |
+| `diary-host-templates` | Template chooser navigation link. |
+| `diary-host-event-form` | Event selection form. |
+| `diary-host-event-label` | Event selection label. |
+| `diary-host-event-control` | Event selection control. |
+| `diary-host-event-option` | One available event option. |
+| `diary-host-event-submit` | Event selection button. |
+| `diary-host-selection-form` | Shared task or template selection form. |
+| `diary-host-selection` | Hidden selection action type. |
+| `diary-host-state` | Signed hidden originating page state. |
+| `diary-host-unprepared` | Unprepared calendar or unselected task component. |
+| `diary-host-event` | Selected event or absent-current-event explanation. |
+| `diary-host-guidance` | Selection or manager assistance instruction. |
+
+## Integration checklist
+
+These host items belong to Garage Sale and are excluded from the generic Diary application checklist.
+Their identifiers remain unchanged.
+
+- [ ] **HOST-001: Event lifecycle.**
+  Creation is confirmed and implemented in the team-page and admin event interfaces.
+  Implementation: `GarageSale/diary_integration.py`: `event_creation_actor`, `event_diary_definition`, and `ensure_event_diary`.
+  Team implementation: `GarageSale/views/event_views.py`: `DiaryEventCreate.form_valid`. `GarageSale/team_urls.py`: `urlpatterns`.
+  Admin implementation: `GarageSale/admin.py`: `SettingsAdmin.get_form` and `SettingsAdmin.save_model`.
+  Verification: `GarageSale/tests/test_diary_integration.py`: `EventDiaryIntegrationTests` creation, rollback, admin, and permission tests.
+  Remaining: Define the host policy for closing event diaries. No automatic closure is implemented.
+
+- [x] **HOST-002: Event source dates and saved Diary key.**
+  Implementation: `GarageSale/diary_integration.py`: `MILESTONE_FIELDS`, `event_diary_definition`, and `ensure_event_diary`.
+  Storage: `GarageSale/models.py`: `EventData.diary_key`. Migration: `GarageSale/migrations/0026_eventdata_diary_key.py`: `Migration`.
+  Verification: `EventDiaryIntegrationTests.test_bookings_and_activation_date_values_come_from_event_fields` and `test_creation_rejects_unsupported_milestones_without_partial_event`.
+  UUID verification: `GarageSale/tests/test_diary_key.py`: `EventDiaryKeyTests.test_event_stores_the_api_key_without_a_foreign_key`.
+
+- [x] **HOST-003: Trusted host scope, clean URLs, and team-page presentation.**
+  Implementation: `GarageSale/views/diary_views.py`: `DiaryTeamView`, `EventPersonalDiaryView`, `EventManagerDiaryView`, and `EventTemplateEditorView`.
+  Routes: `GarageSale/diary_urls.py`: `urlpatterns`. Base template: `GarageSale/templates/Diary/base.html`: `TopBar` and `SnappableSections`.
+  Navigation: `GarageSale/templates/GarageSale/diary/navigation.html`: `.diary-host-navigation` and `.diary-host-selection-form`.
+  Form state: `GarageSale/templates/GarageSale/diary/state.html`: `.diary-host-state`.
+  Styling: `GarageSale/static/GarageSale/styles/diary_host.css`: `.diary-host-topbar`, `.diary-host-navigation`, and `.diary-host-event-control`.
+  Verification: `GarageSale/tests/test_diary_integration.py`: `EventDiaryIntegrationTests` selection, privacy, CSRF, redirect, and cross-tab tests.
+  Browser verification: `GarageSale/tests/browser_diary_integration.py`: `HostDiaryBrowserTests.test_diary_screens_keep_team_shell_and_template_editor_scripts`.
+
+- [ ] **HOST-004: Dashboard Diary counts.**
+  Remaining: Connect compact Late, Ready, and Blocked counts to the personal task filters through the selected event's trusted context.
+  Omit Diary imports and content when the app is disabled.
+  Exclude whole-team tasks and completed tasks. Give Late priority so the counts do not overlap.
+  Preserve zero-count links and the explicit absent-Diary state.
+
+Existing event records without a Diary key remain unprepared. No automatic backfill is implemented.
+The current-event selection rule remains unchanged.
+Milestone changes and their impact review remain outside the supported V1 host workflow.
+Reminders are not added by this integration change.
 
 ## Verification of the dependency boundary
 
@@ -189,6 +324,15 @@ Diary was supplied from a temporary directory outside the Garage Sale checkout.
 The test used the implementation preserved at feature commit `619e961`.
 This verifies the public API dependency boundary without merging Diary implementation files into this branch.
 It does not verify installation of a published distribution. No published Diary distribution is required by this change.
+
+The host regression run passed 67 tests, including its Chrome integration case, against a separate PostgreSQL database.
+That run covers event creation, source dates, team and admin forms, access policy, existing dashboard behavior, and charity selection.
+The browser case verifies clean task and template URLs, the normal team shell, phone layout, and template-editor JavaScript.
+The disabled configuration passed 30 host tests with no Diary API available on the interpreter path.
+The final 16 integration tests also verify signed edit targets and safe rejection of malformed selection values.
+No migration was applied to application data, and no deployed service changed during verification.
+This change requires collection of the new `GarageSale/styles/diary_host.css` asset and the supplied Diary static assets.
+It adds no database migration beyond the existing host UUID migration.
 
 ## Language review
 

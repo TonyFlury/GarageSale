@@ -1,0 +1,87 @@
+"""HOST-003: Verify the external Diary UI within the normal team-page shell in Chrome."""
+import os
+import unittest
+
+from django.conf import settings
+from django.apps import apps
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.test import override_settings
+from django.urls import reverse
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+
+from GarageSale.tests.test_diary_integration import EventDiaryIntegrationTests
+
+
+@unittest.skipUnless(os.environ.get('DIARY_CHROMEDRIVER'), 'Set DIARY_CHROMEDRIVER for the optional Chrome test.')
+@override_settings(DIARY_MANAGER='Officer', DIARY_USER='ExecMember', DIARY_TASK_OWNER_ROLES=(),
+                   DIARY_TEMPLATE_NAME='Event preparation')
+class HostDiaryBrowserTests(StaticLiveServerTestCase):
+    """Check team navigation, event-specific links, supplied template scripts, and narrow layouts."""
+
+    # The full application set permits test cleanup to cascade through retained legacy foreign-key tables.
+    available_apps = [config.name for config in apps.get_app_configs()]
+
+    event = EventDiaryIntegrationTests.event
+    select_event = EventDiaryIntegrationTests.select_event
+
+    def setUp(self):
+        """Prepare the host identities and public-API template used by the integration fixtures."""
+        super().setUp()
+        EventDiaryIntegrationTests.setUp(self)
+
+    @staticmethod
+    def dismiss_banner(driver):
+        """Dismiss the existing test-server warning so its overlay cannot intercept Diary controls."""
+        buttons = driver.find_elements(By.ID, 'test_warning_close')
+
+        # Production has no test banner. Test deployments can dismiss it through the normal close control.
+        if buttons:
+            buttons[0].click()
+
+    def test_diary_screens_keep_team_shell_and_template_editor_scripts(self):
+        """Navigate manager tasks and template editing within one responsive host document."""
+        event = self.event()
+        self.select_event(event)
+        options = webdriver.ChromeOptions()
+        for argument in ('--headless', '--no-sandbox', '--disable-dev-shm-usage'):
+            options.add_argument(argument)
+        driver = webdriver.Chrome(service=Service(os.environ['DIARY_CHROMEDRIVER']), options=options)
+        wait = WebDriverWait(driver, 10)
+        url = reverse('Diary:manager-diary')
+        try:
+            driver.get(self.live_server_url + url)
+            self.dismiss_banner(driver)
+            driver.add_cookie({'name': settings.SESSION_COOKIE_NAME,
+                               'value': self.client.cookies[settings.SESSION_COOKIE_NAME].value, 'path': '/'})
+            driver.set_window_size(1280, 1000)
+            driver.get(self.live_server_url + url)
+            self.dismiss_banner(driver)
+            self.assertTrue(driver.find_elements(By.ID, 'Buttons'))
+            self.assertTrue(driver.find_elements(By.ID, 'SidebarContainer'))
+            driver.find_element(By.CSS_SELECTOR, '.diary-task-detail-link').click()
+            wait.until(lambda browser: browser.find_elements(By.CSS_SELECTOR, '.diary-detail'))
+            self.dismiss_banner(driver)
+            self.assertTrue(driver.current_url.endswith(reverse('Diary:task-detail')))
+            self.assertNotIn('?', driver.current_url)
+            self.assertTrue(driver.find_elements(By.ID, 'SidebarContainer'))
+            driver.set_window_size(390, 844)
+            driver.save_screenshot('/tmp/diary-host-detail-mobile.png')
+            wait.until(lambda browser: browser.execute_script('return document.documentElement.scrollWidth <= innerWidth'))
+            driver.get(self.live_server_url + reverse('Diary:template-list'))
+            self.dismiss_banner(driver)
+            driver.find_element(By.CSS_SELECTOR, '.diary-template-link').click()
+            wait.until(lambda browser: browser.find_elements(By.CSS_SELECTOR, '.diary-template-editor'))
+            self.dismiss_banner(driver)
+            self.assertTrue(driver.current_url.endswith(reverse('Diary:template-edit')))
+            self.assertTrue(driver.find_elements(By.ID, 'Buttons'))
+            self.assertTrue(driver.find_elements(By.CSS_SELECTOR, 'script[src*="Diary/scripts/template_editor.js"]'))
+            before = int(driver.find_element(By.NAME, 'tasks-TOTAL_FORMS').get_attribute('value'))
+            driver.find_element(By.CSS_SELECTOR, '.diary-template-add').click()
+            wait.until(lambda browser: int(browser.find_element(By.NAME, 'tasks-TOTAL_FORMS').get_attribute('value')) == before + 1)
+            driver.save_screenshot('/tmp/diary-host-template-mobile.png')
+            self.assertTrue(driver.execute_script('return document.documentElement.scrollWidth <= innerWidth'))
+        finally:
+            driver.quit()

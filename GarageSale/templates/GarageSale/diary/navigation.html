@@ -1,0 +1,25 @@
+{# HOST-003: Fixed navigation URLs and POST selections keep record identifiers out of browser locations. #}
+<nav class="diary diary-host-navigation" aria-label="Event Diary navigation">
+    <a class="diary-button diary-host-personal" href="{% url 'Diary:personal-diary' %}">My Diary</a>
+    {% if request.diary_host_manager %}
+        <a class="diary-button diary-host-manager" href="{% url 'Diary:manager-diary' %}">Manager diary</a>
+        <a class="diary-button diary-host-templates" href="{% url 'Diary:template-list' %}">Templates</a>
+    {% endif %}
+    <form class="diary-host-event-form" method="post" action="{% url 'Diary:select' %}">
+        {% csrf_token %}{% include 'GarageSale/diary/state.html' %}
+        <input class="diary-host-selection" type="hidden" name="selection" value="event">
+        <label class="diary-host-event-label" for="diary-host-event">Event</label>
+        <select class="diary-input diary-host-event-control" name="event_id" id="diary-host-event">
+            {% for event in request.diary_host_events %}<option class="diary-host-event-option" value="{{ event.pk }}"{% if event.pk == request.diary_host_event.pk %} selected{% endif %}>{{ event }}</option>{% endfor %}
+        </select>
+        <button class="diary-button diary-host-event-submit" type="submit">View event</button>
+    </form>
+</nav>
+<form class="diary-host-selection-form" id="diary-host-select-task" method="post" action="{% url 'Diary:select' %}" hidden>
+    {% csrf_token %}{% include 'GarageSale/diary/state.html' %}
+    <input class="diary-host-selection" type="hidden" name="selection" value="task">
+</form>
+<form class="diary-host-selection-form" id="diary-host-select-template" method="post" action="{% url 'Diary:select' %}" hidden>
+    {% csrf_token %}{% include 'GarageSale/diary/state.html' %}
+    <input class="diary-host-selection" type="hidden" name="selection" value="template">
+</form>

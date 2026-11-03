@@ -14,6 +14,9 @@ Testable Statements :
 """
 from django.contrib import admin
 from django import forms
+from django.apps import apps
+from django.db import transaction
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied, ValidationError
 
 from Sponsors.models import Sponsor
 from user_management.models import TeamMember
@@ -92,11 +95,46 @@ class EventAdminForm(forms.ModelForm):
 
 @admin.register(EventData)
 class SettingsAdmin(admin.ModelAdmin):
+    """Maintain event records and prepare an initial Diary when the configured application is enabled."""
+
     form = EventAdminForm
     list_display = ['event_date']
     date_hierarchy = 'event_date'
     inlines = [OrganisationsInline,SponsorsInline, LocationInline]
     exclude = ['supporting_organisations']
+
+    def get_form(self, request, obj=None, **kwargs):
+        """Validate initial Diary template selection during admin creation and show selection failures as form errors."""
+        base_form = super().get_form(request, obj, **kwargs)
+
+        class DiaryEventAdminForm(base_form):
+            """Check the authorized event creator and configured template without changing event or Diary data."""
+
+            def clean(self):
+                """Reject unsupported initial Diary configuration while keeping event edits unchanged."""
+                data = super().clean()
+
+                # Only new valid events require a Diary. Existing events and disabled installations keep normal admin behavior.
+                if not self.instance._state.adding or not apps.is_installed('Diary') or self.errors:
+                    return data
+                from GarageSale.diary_integration import event_diary_definition
+                try:
+                    event_diary_definition(self.instance, request.user)
+                except (ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied, ValidationError) as error:
+                    raise ValidationError(f'The event diary could not be prepared: {error}') from error
+                return data
+
+        return DiaryEventAdminForm
+
+    @transaction.atomic
+    def save_model(self, request, obj, form, change):
+        """Save a new admin event and its initial Diary atomically without recreating diaries during edits."""
+        super().save_model(request, obj, form, change)
+
+        # Disabled deployments must not import Diary. Existing event edits preserve their saved calendars.
+        if not change and apps.is_installed('Diary'):
+            from GarageSale.diary_integration import ensure_event_diary
+            ensure_event_diary(obj, request.user)
 
 class TemplateAttachmentInline(admin.TabularInline):
     extra = 0

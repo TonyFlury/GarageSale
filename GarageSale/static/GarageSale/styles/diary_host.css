@@ -1,0 +1,7 @@
+/* HOST-003: Preserve the normal team header while containing its toolbar on narrow Diary pages. */
+.diary.diary-host-topbar { max-width: none; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; }
+.diary.diary-host-topbar *, .diary.diary-host-topbar *::before, .diary.diary-host-topbar *::after { box-sizing: content-box; }
+.diary.diary-host-topbar .ToolBar { box-sizing: border-box; max-width: 100%; }
+.diary.diary-host-navigation { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.diary .diary-host-event-form { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; width: 100%; min-width: 0; }
+.diary .diary-host-event-control { max-width: 100%; min-width: 0; }

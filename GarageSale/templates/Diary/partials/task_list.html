@@ -1,0 +1,45 @@
+{# HOST-003: Host navigation uses signed POST selections and fixed URLs while retaining Diary UI classes and forms. #}
+{# DV1-011: Reusable task list within the Diary styling namespace. #}
+<section class="diary diary-task-panel" aria-label="Diary tasks">
+    <div class="diary-card diary-task-card">
+        <h2 class="diary-heading diary-task-heading">{{ diary_heading|default:"Tasks" }}</h2>
+        <ul class="diary-task-list">
+            {% for task in tasks %}
+                <li class="diary-task {% if task.state == 'blocked' %}diary-task-blocked{% else %}diary-task-ready{% endif %}{% if task.blocked_late and not task.late %} diary-task-blocked-late{% endif %}{% if task.late %} diary-task-late{% endif %}">
+                    <strong class="diary-task-title">{{ task.name }}</strong>
+
+                    {# DV1-023: Routed task lists retain their diary scope in the detail link. Plain embedded lists can omit it. #}
+                    {% if task.detail_url %}<button class="diary-button diary-task-detail-link" type="submit" form="diary-host-select-task" name="entry_key" value="{{ task.entry_key }}">View and update task</button>{% endif %}
+                    {% if task.description %}<p class="diary-task-description">{{ task.description }}</p>{% endif %}
+                    <p class="diary-task-meta">
+                        {% if task.date %}
+                            Due: <time class="diary-task-date" datetime="{{ task.date|date:'Y-m-d' }}">{{ task.date|date:"j F Y" }}</time>
+                        {% else %}
+                            <span class="diary-muted diary-date-unset">Date not set</span>
+                        {% endif %}
+                        {% if task.state == 'blocked' %}
+                            <span class="diary-status diary-status-blocked">Blocked</span>
+                        {% else %}
+                            <span class="diary-status diary-status-ready">Ready</span>
+                        {% endif %}
+                        {% if task.late %}<span class="diary-status diary-status-late">Late</span>{% endif %}
+                    </p>
+                    {% if task.owner_kind == 'role' %}<p class="diary-muted diary-owner-members">Current members: {% for member in task.owner_members %}<span class="diary-owner-member">{{ member }}</span>{% if not forloop.last %}, {% endif %}{% empty %}<span class="diary-owner-empty">No current members.</span>{% endfor %}</p>{% endif %}
+                    <p class="diary-muted diary-task-owner">
+                        {% if task.owner_label %}
+                            {{ task.owner_label }}
+                        {% elif task.owner_kind == 'person' %}
+                            Person: {{ task.person_ref }}
+                        {% elif task.owner_kind == 'role' %}
+                            Role: {{ task.role_ref }}
+                        {% else %}
+                            Whole team
+                        {% endif %}
+                    </p>
+                </li>
+            {% empty %}
+                <li class="diary-muted diary-empty-state">No open tasks.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>

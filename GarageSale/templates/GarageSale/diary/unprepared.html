@@ -1,0 +1,10 @@
+{% extends "Diary/base.html" %}
+{# HOST-003: An absent calendar is a read-only state within the normal team shell. #}
+{% block diary_content %}
+<section class="diary diary-host-unprepared" aria-label="Event diary">
+    <h1 class="diary-heading">{% if host_message %}Select a task{% else %}Calendar not prepared{% endif %}</h1>
+    {% if host_event %}<p class="diary-host-event">Event: {{ host_event }}</p>
+    {% else %}<p class="diary-host-event">No current event is selected.</p>{% endif %}
+    <p class="diary-host-guidance">{{ host_message|default:"Ask a DiaryManager to prepare this event's diary." }}</p>
+</section>
+{% endblock %}

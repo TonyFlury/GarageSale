@@ -46,7 +46,7 @@ urlpatterns = [
         path('view/<int:pk>/', general_views.NominationView.as_view(), name='NominationView'),
     ])),
     path('location/', include('Location.urls')),
-    path('team_page/', include('team_pages.urls', 'TeamPages')),
+    path('team_page/', include('GarageSale.team_urls', 'TeamPages')),
     path('news/', include('News.urls')),
     path('user/', include('user_management.urls')),
 #    path('billboard/', include('Billboard.urls')),
@@ -65,9 +65,9 @@ urlpatterns = [
 
 ]
 
-# A project without Diary must not import or expose its template editor.
+# HOST-003: Host routes supply trusted context and the team shell without importing Diary when it is disabled.
 if apps.is_installed('Diary'):
-    urlpatterns.append(path('diary/', include('Diary.urls')))
+    urlpatterns.append(path('diary/', include('GarageSale.diary_urls')))
 
 
 if settings.DEBUG:
