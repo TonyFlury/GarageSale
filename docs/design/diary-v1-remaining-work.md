@@ -452,7 +452,9 @@ The implemented task creation view does not require those proposed interfaces.
 
 The user approved due-date edits for self-owned diary additions and manager edits to copied template-task dates.
 The existing [completion requirements](event-calendar.md#task-completion-and-blocking-predecessors-confirmed-v1-requirements) define normal completion and manager Close all.
-Other task fields, ownership changes, and extra progress states have no editing interface in this change.
+DEC-002 also permits managers to edit orphaned template-task ownership through the existing task editor under DEC-005.
+Ownership changes are ordinary task edits without a separate popup or approval step.
+Other task fields and extra progress states have no V1 editing interface.
 
 **Implemented storage and date behavior**
 

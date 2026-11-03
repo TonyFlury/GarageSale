@@ -587,7 +587,9 @@ Managers can also change due dates on other tasks within their permitted diary s
 Completed tasks and closed diaries reject date changes.
 The original rule, source template, ownership, dependencies, and other diaries remain unchanged.
 V1 does not warn managers when a due-date change causes a conflict.
-Other content edits, ownership changes, and extra progress states remain outside this editing interface.
+DEC-002 also permits managers to edit orphaned template-task ownership through the existing task editor under DEC-005.
+Ownership changes are ordinary task edits. No separate popup or approval step is required.
+Other content edits and extra progress states remain outside this editing interface.
 The [implementation record](diary-v1-remaining-work.md#task-editing-and-completion-dv1-023-dv1-032-and-dv1-035-through-dv1-038) identifies storage, API methods, view classes, and verification.
 
 ```mermaid
