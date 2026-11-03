@@ -15,7 +15,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.apps import apps
 from django.urls import path, include, reverse_lazy
 from django.conf import settings
 from django.conf.urls.static import static
@@ -64,10 +63,6 @@ urlpatterns = [
     path("GoogleDrive/", include('GoogleDrive.urls', namespace='GoogleDrive') ),
 
 ]
-
-# A project without Diary must not import or expose its template editor.
-if apps.is_installed('Diary'):
-    urlpatterns.append(path('diary/', include('Diary.urls')))
 
 
 if settings.DEBUG:

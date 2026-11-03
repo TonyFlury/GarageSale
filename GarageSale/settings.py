@@ -147,7 +147,6 @@ INSTALLED_APPS = [
      'Contributors.apps.ContributorsConfig',
     'user_management.apps.user_managementConfig',
     'News.apps.NewsConfig',
-    'Diary.apps.DiaryConfig',
     'django.forms',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -162,16 +161,6 @@ INSTALLED_APPS = [
 
 
 AUTH_USER_MODEL = "user_management.UserExtended"
-
-# Diary receives caller identities through its API; it does not import user models.
-DIARY_MANAGER = 'Officer'
-DIARY_USER = 'ExecMember'
-DIARY_TIME_ZONE = 'Europe/London'
-DIARY_TEMPLATE_NAME = 'Garage Sale calendar'
-DIARY_TASK_OWNER_ROLES = (
-    'ExecMember', 'Officer', 'SponsorshipManager', 'PrizeDrawManager',
-    'CraftMarketManager', 'Financier',
-)
 
 if DEBUG:
     INSTALLED_APPS.extend(

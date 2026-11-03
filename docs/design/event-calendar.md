@@ -108,7 +108,7 @@ The host determines which diary instances the caller can access.
 An absent milestone date does not mean that the date has passed.
 Diary shows “Date not set” when a necessary date has no value.
 
-The [Garage Sale integration document](../../GarageSale/DIARY_INTEGRATION.md#source-dates-and-event-selection) records that host's source fields and event selection considerations.
+The [Garage Sale integration document](https://github.com/TonyFlury/GarageSale/blob/integration/event-calendar/GarageSale/DIARY_INTEGRATION.md#source-dates-and-event-selection) records that host's source fields and event selection considerations.
 Those details are outside the generic Diary feature definition.
 
 ## 4. Chosen design
@@ -337,7 +337,7 @@ The API returns a stable Diary key.
 Repeated creation with the same reference and inputs must return the same calendar.
 The database must prevent duplicate copied entries within that calendar.
 
-The [Garage Sale integration design](../../GarageSale/DIARY_INTEGRATION.md) records the proposed event creation and activation connections.
+The [Garage Sale integration design](https://github.com/TonyFlury/GarageSale/blob/integration/event-calendar/GarageSale/DIARY_INTEGRATION.md) records the host-owned event creation connection.
 That host decision is outside the generic Diary feature definition.
 
 If a calculated date is already past, Diary shows that condition.
@@ -395,7 +395,7 @@ The day count can be before or after the source date.
 
 The caller supplies named milestone dates through the API.
 Diary uses those values without knowledge of the caller's source models or fields.
-The [Garage Sale integration document](../../GarageSale/DIARY_INTEGRATION.md#source-dates-and-event-selection) defines that project's source-field mapping.
+The [Garage Sale integration document](https://github.com/TonyFlury/GarageSale/blob/integration/event-calendar/GarageSale/DIARY_INTEGRATION.md#source-dates-and-event-selection) defines that project's source-field mapping.
 
 ### Fixed dates
 
@@ -1107,7 +1107,7 @@ Unresolved rules still need approval before implementation.
 8. Resolved for V1: Reminders are outside scope. Recipient and timing rules are deferred to a later release.
 9. Outside feature scope: The selection of annual or one-time dates for specific entries is application data.
 10. Outside feature scope: The selection of annual entries for the year before the event is application data.
-11. Outside generic Diary scope: Calendar creation timing and activation checks belong to Garage Sale integration. See [the host integration design](../../GarageSale/DIARY_INTEGRATION.md).
+11. Outside generic Diary scope: Event lifecycle decisions belong to Garage Sale integration. See [the host integration design](https://github.com/TonyFlury/GarageSale/blob/integration/event-calendar/GarageSale/DIARY_INTEGRATION.md).
 12. Resolved: Only DiaryManagers can change and approve templates. V1 has no separate approval step.
 13. Resolved: Only DiaryManagers can modify tasks copied from a template into a calendar instance. The V1 completion rules apply separately.
 14. Resolved: Copying existing template tasks into existing diaries is not required. DV1-034 is removed, and DEC-003 is closed.
@@ -1140,7 +1140,7 @@ This draft does not claim full ASD-STE100 compliance.
 ## 14. References
 
 - [ASD-STE100, Issue 9](https://www.asd-ste100.org/assets/files/ASD-STE100_ISSUE9.pdf).
-- [Existing event fields](../../GarageSale/models.py).
+- [Existing event fields](https://github.com/TonyFlury/GarageSale/blob/integration/event-calendar/GarageSale/models.py).
 - [Original task list request](../../Future%20Feature%20List).
 - [Current access policy](../../PERMISSION_ACCESS_MATRIX.md).
-- [Deployment instructions](../../General%20Deployment%20Instructions).
+- [Deployment instructions](https://github.com/TonyFlury/GarageSale/blob/master/General%20Deployment%20Instructions).
