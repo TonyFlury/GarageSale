@@ -109,9 +109,37 @@ The complete Diary suite also runs with standard and custom Django user models.
 **Remaining boundary**
 
 No implementation work remains for DV1-014.
-DV1-015 still requires ownership-group membership checks at startup.
+DV1-015 now provides ownership-group membership checks at startup.
 DV1-016 still requires ownership validation during diary creation.
 DV1-014 does not provide continuous runtime monitoring.
+
+## DV1-015: Startup ownership membership validation
+
+**Status: implemented.**
+
+[Diary/roles.py](../../Diary/roles.py) contains `validate_task_owner_roles()`.
+It checks that each configured ownership group exists and has at least one member.
+The membership query uses `get_user_model()` and evaluates all configured groups in one database query.
+An empty `DIARY_TASK_OWNER_ROLES` collection requires no ownership query.
+Validation does not create groups, assign users, or change task ownership.
+
+[Diary/apps.py](../../Diary/apps.py) calls the validator from `DiaryConfig.ready()` during normal startup.
+Errors identify `DIARY_TASK_OWNER_ROLES` and separately list missing groups and empty groups.
+Database failures retain their configuration context.
+The existing setup, repair, and test-command exceptions remain unchanged.
+
+**Verification**
+
+[Diary/tests/test_roles.py](../../Diary/tests/test_roles.py) contains `OwnershipGroupMembershipTests`, `DjangoGroupDatabaseTests`, and `RoleConfigurationTests`.
+They verify populated groups, missing groups, empty groups, and membership changes.
+They also verify database failures, empty configuration, normal startup, and setup-command exceptions.
+Populated access groups do not satisfy membership requirements for separate ownership groups.
+
+**Remaining boundary**
+
+No implementation work remains for DV1-015.
+DV1-016 still requires fresh ownership validation during diary creation.
+Continuous runtime monitoring remains outside the implemented startup checks.
 
 ## DV1-018: Remaining authenticated task views
 
@@ -288,7 +316,7 @@ Extend browser coverage after task routes and completion controls exist.
 
 | Related items | Verification still required |
 | --- | --- |
-| DV1-013, DV1-015, DV1-016 | Remaining task identity checks, ownership membership checks, and diary-creation rollback. |
+| DV1-013, DV1-016 | Remaining task identity checks and ownership validation with diary-creation rollback. |
 | DV1-019 through DV1-023, DV1-031 | Selectors, permitted diary scope, personal privacy, and task details. |
 | DV1-028 through DV1-034 | Live dependency restrictions, task ownership, permitted edits, and explicit template additions. |
 | DV1-035 through DV1-038 | Predecessor inspection, completion permissions, forced comments, and concurrent operations. |
@@ -306,7 +334,7 @@ DV1-045 separately requires final release documentation and deployment checks.
 This document records remaining work and proposed implementation boundaries.
 It does not change application code, migrations, or deployed services.
 The checklist retains its existing identifiers.
-DV1-014 is complete. The other partial items remain unchecked.
+DV1-014 and DV1-015 are complete. The other partial items remain unchecked.
 ASD-STE100 Issue 9 was available locally.
 A full dictionary and technical-name review remains necessary.
 This document does not claim full ASD-STE100 compliance.

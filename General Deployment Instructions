@@ -68,7 +68,9 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         Database checks are deferred for migrate, sync_access_policy, shell, createsuperuser, loaddata, and test.
         Setting values remain validated for those commands.
         Use shell or approved setup data to repair group membership before restarting.
-        Normal startup also rejects configured ownership roles absent from the database.
+        Assign at least one user to every group in DIARY_TASK_OWNER_ROLES.
+        Normal startup rejects missing or empty configured ownership groups.
+        Ownership-group membership validation needs no additional migration.
         The callable API now uses DiaryAPI, DiaryInstance, DiaryTemplate, and DiaryTemplateVersion.
         Update function callers with the migration table in Diary/README.md.
         Store the returned object's key property as the Diary UUID.
