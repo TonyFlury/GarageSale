@@ -12,6 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.template import RequestContext, Template
+from django.template.loader import get_template
 from django.test import RequestFactory
 from django.urls import reverse
 
@@ -158,14 +159,19 @@ class EventDiaryIntegrationTests(TestCase):
         self.use_current_event(event)
         self.select_task(self.spec.entry_key)
         self.select_template('Event preparation')
-        pages = ('personal-diary', 'manager-diary', 'task-create', 'task-detail',
-                 'template-list', 'template-create', 'template-edit')
-        for name in pages:
+        pages = {'personal-diary': 'personal_diary', 'manager-diary': 'manager_diary',
+                 'task-create': 'task_create', 'task-detail': 'task_detail', 'template-list': 'template_list',
+                 'template-create': 'template_editor', 'template-edit': 'template_editor'}
+        for name, partial in pages.items():
             with self.subTest(page=name):
                 response = self.client.get(reverse(f'Diary:{name}'))
                 self.assertEqual(response.status_code, 200)
                 self.assertTemplateUsed(response, 'team_pages_base.html')
-                self.assertTemplateUsed(response, 'Diary/base.html')
+                self.assertTemplateUsed(response, 'GarageSale/diary/base.html')
+                partial_name = f'Diary/partials/{partial}.html'
+                self.assertTemplateUsed(response, partial_name)
+                host_root = Path(__file__).resolve().parents[1] / 'templates'
+                self.assertFalse(Path(get_template(partial_name).origin.name).is_relative_to(host_root))
                 self.assertEqual(response.content.lower().count(b'<!doctype html>'), 1)
                 self.assertContains(response, 'team_pages/styles/team_page.css')
                 self.assertContains(response, 'Diary/styles/diary.css')
@@ -362,7 +368,7 @@ class EventDiaryIntegrationTests(TestCase):
         self.assertNotIn(b'<script>', response.content)
         client = Client(enforce_csrf_checks=True)
         client.force_login(self.manager)
-        page = client.get(reverse('Diary:personal-diary'))
+        page = client.get(reverse('Diary:template-list'))
         values = {'selection': 'template', 'template_name': 'Event preparation',
                   '_diary_state': page.wsgi_request.diary_host_token}
         self.assertEqual(client.post(reverse('Diary:select'), values).status_code, 403)

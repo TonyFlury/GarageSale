@@ -18,7 +18,6 @@
     <a href="{% url 'TeamPages:Root' %}">Team Page</a> / Diary
 {% endblock %}
 {% block SnappableSections %}
-    {% include 'GarageSale/diary/navigation.html' %}
     {% block diary_content %}{% endblock %}
 {% endblock %}
 {% block PageScripts %}{{ block.super }}{% block diary_scripts %}{% endblock %}{% endblock %}

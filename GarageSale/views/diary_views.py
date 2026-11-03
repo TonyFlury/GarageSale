@@ -32,29 +32,6 @@ def clean_diary_location(location):
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
-class EventDiaryLinks:
-    """Use fixed detail URLs while host POST buttons select the actual task."""
-
-    def task_url(self, entry_key, diary_key):
-        """Return the clean detail route. Task selection comes from the clicked POST button."""
-        return reverse('Diary:task-detail')
-
-
-class EventPersonalDiaryView(EventDiaryLinks, PersonalDiaryView):
-    """Render personal assignments with identifier-free status links and task selection actions."""
-
-    def filter_context(self, tasks, filters, key):
-        """Keep the dependency's task filtering while removing identifier query parameters from status links."""
-        context = super().filter_context(tasks, filters, key)
-        for link in context['status_links']:
-            link['url'] = clean_diary_location(link['url'])
-        return context
-
-
-class EventManagerDiaryView(EventDiaryLinks, ManagerDiaryView):
-    """Render the full manager list while host POST buttons select tasks without identifier URLs."""
-
-
 class EventTemplateEditorView(TemplateEditorView):
     """Retain Diary forms and API validation while using a fixed host editor success URL."""
 
@@ -222,7 +199,7 @@ class DiaryTeamView(LoginRequiredMixin, View):
 
     def show_page(self, request, state, groups):
         """Delegate one supported page and remove identifier query values from dependency-generated redirects."""
-        handlers = {'personal': EventPersonalDiaryView, 'manager': EventManagerDiaryView,
+        handlers = {'personal': PersonalDiaryView, 'manager': ManagerDiaryView,
                     'create': TaskCreateView, 'detail': TaskDetailView,
                     'templates': EventTemplateEditorView, 'template-create': EventTemplateCreateView,
                     'template-edit': EventTemplateEditorView}
@@ -261,6 +238,12 @@ class DiaryTeamView(LoginRequiredMixin, View):
         page_state = {'user': str(request.user.pk), 'event_id': event.pk if event else None,
                       'entry_key': task_key, 'template_name': template_name}
         request.diary_host_token = signing.dumps(page_state, salt=STATE_SALT)
+        context.update(diary_base_template='GarageSale/diary/base.html', diary_ui={
+            'trusted_scope': True,
+            'selection_url': reverse('Diary:select'),
+            'task_detail_url': reverse('Diary:task-detail'),
+            'form_fields': {'_diary_state': request.diary_host_token},
+        })
         request.diary_host_event = event
         request.diary_host_manager = settings.DIARY_MANAGER in groups
 

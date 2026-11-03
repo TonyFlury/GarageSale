@@ -1,9 +1,0 @@
-{# HOST-003: Fixed navigation URLs and POST selections keep record identifiers out of browser locations. #}
-<form class="diary-host-selection-form" id="diary-host-select-task" method="post" action="{% url 'Diary:select' %}" hidden>
-    {% csrf_token %}{% include 'GarageSale/diary/state.html' %}
-    <input class="diary-host-selection" type="hidden" name="selection" value="task">
-</form>
-<form class="diary-host-selection-form" id="diary-host-select-template" method="post" action="{% url 'Diary:select' %}" hidden>
-    {% csrf_token %}{% include 'GarageSale/diary/state.html' %}
-    <input class="diary-host-selection" type="hidden" name="selection" value="template">
-</form>

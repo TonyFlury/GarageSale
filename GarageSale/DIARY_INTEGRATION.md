@@ -270,31 +270,31 @@ The read-only JSON routes are not mounted by this host HTML adapter.
 
 ## Team-page template interface
 
-`GarageSale/templates/Diary/base.html` overrides the dependency's base document through Django's template search order.
+`GarageSale/templates/GarageSale/diary/base.html` provides the host document shell.
 It extends `team_pages_base.html` and maps Diary content, styles, and scripts into the normal team-page blocks.
 The existing header, top bar, sidebar, and responsive shell therefore surround every Diary HTML page.
-Garage Sale must remain before Diary in `INSTALLED_APPS` for these overrides to take priority.
+The host selects `GarageSale/diary/base.html` through the trusted `diary_base_template` context value.
 Template editing retains the dependency's JavaScript through the host `PageScripts` block.
 
-The host supplies navigation adaptations for these technical fragments under `GarageSale/templates/Diary/partials/`:
-
-- `personal_diary.html` and `manager_diary.html` remove identifier fields from filter forms and navigation links.
-- `task_list.html` and `manager_tasks.html` use task selection buttons instead of identifier-bearing links.
-- `task_detail.html` binds edit forms to signed state and uses a fixed reload URL.
-- `task_create.html` binds creation forms and replaces template links with selection buttons.
-- `template_list.html` uses template selection buttons.
-- `template_editor.html` binds versioned saves to the originating template selection.
+Diary supplies every content partial directly from its package.
+Garage Sale has no templates under `GarageSale/templates/Diary/partials/`.
+The host supplies the trusted `diary_ui` context dictionary instead of copies of package markup.
+Its `trusted_scope` value removes Diary selectors from rendered links and filter forms.
+Its `selection_url` value enables task and template selection through POST forms.
+Its `task_detail_url` value supplies the fixed task reload URL.
+Its `form_fields` dictionary carries `_diary_state` in each edit and selection form.
+The package escapes these fields. Garage Sale checks their signatures before it delegates a POST request.
 
 The dependency still supplies the forms, field fragments, task validation, date calculation, ownership checks, and storage API.
 The host template editor uses `TaskFormSet`, `TemplateForm`, and `DiaryTemplate.save_version()` with a fixed success URL.
 No dependency Python implementation or migrations are included in this branch.
-Review these presentation overrides when updating the externally supplied Diary version.
+The installed Diary version must provide these embedding controls.
 The host omits the hidden `diary-personal-selector` and `diary-manager-selector` controls because their keys no longer belong in GET forms.
 The existing `diary-task-detail-link` and `diary-template-link` classes now identify selection buttons instead of anchors.
 Other dependency class names remain unchanged. Host styles must target classes without requiring a particular element tag.
 
-`GarageSale/templates/GarageSale/diary/navigation.html` provides hidden task and template selection forms.
-`GarageSale/templates/GarageSale/diary/state.html` provides signed hidden form state.
+The package partial `Diary/partials/selection_forms.html` provides hidden task and template selection forms.
+The package partial `Diary/partials/form_fields.html` renders signed hidden form state from trusted context.
 `GarageSale/templates/GarageSale/diary/unprepared.html` provides a host-framed empty state.
 The technical stylesheet `GarageSale/styles/diary_host.css` keeps the toolbar within narrow screen widths.
 Its rules remain within the `.diary` namespace. They add no CSS variables and change no dependency class names.
@@ -312,9 +312,6 @@ Static form IDs associate selection buttons with their shared forms. They are no
 | `diary-host-personal` | Personal Diary navigation link. |
 | `diary-host-manager` | Manager diary navigation link. |
 | `diary-host-templates` | Template chooser navigation link. |
-| `diary-host-selection-form` | Shared task or template selection form. |
-| `diary-host-selection` | Hidden selection action type. |
-| `diary-host-state` | Signed hidden originating page state. |
 | `diary-host-unprepared` | Unprepared calendar or unselected task component. |
 | `diary-host-event` | Selected event or absent-current-event explanation. |
 | `diary-host-guidance` | Selection or manager assistance instruction. |
@@ -324,6 +321,8 @@ Only managers see Manager Diary and Templates.
 The event selector and its submit button are removed.
 The removed classes are `diary-host-navigation`, `diary-host-event-form`, `diary-host-event-label`, `diary-host-event-control`, `diary-host-event-option`, and `diary-host-event-submit`.
 Host styles for those classes no longer apply.
+The package also replaces `diary-host-selection-form`, `diary-host-selection`, and `diary-host-state`.
+Their replacements are `diary-selection-form`, `diary-selection-kind`, and `diary-host-field`.
 The existing page link classes now belong to sidebar links. They no longer use `diary-button`.
 Sidebar template: `GarageSale/templates/GarageSale/diary/sidebar.html`.
 The host base template includes this template in its `sidebar` block.
@@ -349,9 +348,9 @@ Their identifiers remain unchanged.
   UUID verification: `GarageSale/tests/test_diary_key.py`: `EventDiaryKeyTests.test_event_stores_the_api_key_without_a_foreign_key`.
 
 - [x] **HOST-003: Trusted host scope, clean URLs, and team-page presentation.**
-  Implementation: `GarageSale/views/diary_views.py`: `DiaryTeamView`, `EventPersonalDiaryView`, `EventManagerDiaryView`, and `EventTemplateEditorView`.
-  Routes: `GarageSale/diary_urls.py`: `urlpatterns`. Base template: `GarageSale/templates/Diary/base.html`: `TopBar` and `SnappableSections`.
-  Selection forms: `GarageSale/templates/GarageSale/diary/navigation.html`: `.diary-host-selection-form`.
+  Implementation: `GarageSale/views/diary_views.py`: `DiaryTeamView` and `EventTemplateEditorView`.
+  Routes: `GarageSale/diary_urls.py`: `urlpatterns`. Base template: `GarageSale/templates/GarageSale/diary/base.html`: `TopBar` and `SnappableSections`.
+  Package content configuration: `GarageSale/views/diary_views.py`: `DiaryTeamView.show_page`, `diary_base_template`, and `diary_ui`.
   Current-event scope: `GarageSale/views/diary_views.py`: `DiaryTeamView.current_event` and `DiaryTeamView.select`.
   Scope verification: `EventDiaryIntegrationTests.test_current_event_ignores_saved_selection_and_rejects_event_switching` and `EventDiaryIntegrationTests.test_current_event_change_rejects_an_old_form`.
   Team Pages shows a Diary entry beside Dashboard in the Overview group.
@@ -363,7 +362,7 @@ Their identifiers remain unchanged.
   The entry is absent when the Diary app is not installed.
   Entry implementation: `GarageSale/templatetags/diary_navigation.py`: `diary_entry` and `team_pages/templates/navigation.html`: `SnappableSections`.
   Entry verification: `EventDiaryIntegrationTests.test_team_diary_entry_matches_group_access_and_uses_clean_url` in `GarageSale/tests/test_diary_integration.py`.
-  Form state: `GarageSale/templates/GarageSale/diary/state.html`: `.diary-host-state`.
+  Form state: The package partial `Diary/partials/form_fields.html`: `.diary-host-field`.
   Styling: `GarageSale/static/GarageSale/styles/diary_host.css`: `.diary-host-topbar` and `.diary-host-sidebar`.
   Verification: `GarageSale/tests/test_diary_integration.py`: `EventDiaryIntegrationTests` selection, privacy, CSRF, redirect, and cross-tab tests.
   Browser verification: `GarageSale/tests/browser_diary_integration.py`: `HostDiaryBrowserTests.test_diary_screens_keep_team_shell_and_template_editor_scripts`.
