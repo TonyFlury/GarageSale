@@ -47,7 +47,7 @@ The template workflow does not need diary-instance scope.
 
 Task creation now uses `DiaryScopeMixin` for authenticated identity and trusted diary scope.
 Task details and completion now use that integration.
-The ordinary-user full diary list and remaining template-item copy operations still need integration.
+Only the planned template-item copy operations still need that integration.
 Those operations must use the configured access groups and the host's permitted diary keys.
 No request-body value can grant identity, group membership, or diary access.
 Diary must not import host business models or require a custom request attribute.
@@ -189,11 +189,11 @@ Those routes authenticate users and restrict template operations to DiaryManager
 `PersonalDiaryView` provides the default route, `Diary:personal-diary`.
 `TaskCreateView` provides task creation at `Diary:task-create`.
 Task details and completion are now implemented through `TaskDetailView`.
-The ordinary-user full diary list remains outstanding.
+The existing personal and manager views satisfy the V1 task-list scope.
 
 **Remaining requirements**
 
-Add the ordinary-user full diary list and remaining template-item copy views.
+Add the planned template-item copy views under DV1-034.
 Use the callable API for data actions.
 Apply task visibility, host scope, and action permissions to reads and writes.
 Normal completion must check the open predecessor chain again during saving.
@@ -226,6 +226,34 @@ Verify normal completion and manager-only forced completion separately.
 Route names and view classes for the remaining task pages still need definition.
 DEC-004 now uses the implemented generic private-blocker marker.
 This document does not select a presentation for those details.
+
+## DV1-022: Manager full diary list
+
+**Status: implemented.**
+
+The user confirmed the V1 scope for task lists:
+
+- DiaryUsers need the existing assigned-task view.
+- DiaryManagers need the existing full diary list for a permitted diary.
+
+V1 requires no separate full diary list for ordinary users.
+This scope does not require a new route or a permission change.
+The optional whole-team selection remains available in the personal view.
+
+The technical view classes are `PersonalDiaryView` and `ManagerDiaryView` in [Diary/views.py](../../Diary/views.py).
+DV1-021 identifies the personal view.
+DV1-022 identifies the manager's full diary list.
+DV1-052 identifies its manager filters.
+
+The manager page uses [manager_diary.html](../../Diary/templates/Diary/manager_diary.html), block `diary_content`.
+Its task fragment is [partials/manager_tasks.html](../../Diary/templates/Diary/partials/manager_tasks.html), class `.diary-manager-task-list`.
+[ManagerDiaryTests](../../Diary/tests/test_manager_view.py) covers current owners, permissions, diary scope, task selection, history, and empty states.
+[ManagerDiaryBrowserTests.test_manager_filters_and_layout](../../Diary/tests/browser_manager_diary.py) covers keyboard controls, combined filters, narrow screens, and host style overrides.
+This documentation correction relies on that existing evidence and adds no executable verification.
+
+The planned template-item copy workflow remains a separate item under DV1-034.
+DEC-003 concerns that unimplemented workflow, rather than an operation available in the current template editor.
+It does not describe a failure in current task creation or completion.
 
 ## DV1-052: Manager filters for one diary
 
@@ -293,7 +321,7 @@ It verifies keyboard checkbox operation, history selection, combined filters, re
 
 No implementation work remains for DV1-052.
 The personal list is implemented separately.
-The ordinary-user full diary list remains V1 work.
+DiaryUsers use the implemented assigned-task view. V1 requires no additional ordinary-user full diary list.
 Host integration must supply the permitted keys for its own authenticated users.
 Future date-window filtering remains deferred under DFUT-003.
 
@@ -422,7 +450,7 @@ The [usage guide](../../Diary/README.md#task-creation-page) identifies host inte
 Task creation requires no additional migration.
 DV1-034 remains separate work for copying an existing template item into an active diary.
 Task details and completion now use `TaskDetailView`.
-The ordinary-user full diary list remains outstanding.
+The existing personal and manager views satisfy the V1 task-list scope.
 The proposed identity module and internal factory remain open decisions under DV1-013.
 The implemented task creation view does not require those proposed interfaces.
 
@@ -491,7 +519,7 @@ The exact staged implementation passed 177 tests with each user-model configurat
 
 **Remaining boundaries**
 
-The ordinary-user full diary list remains under DV1-022.
+DV1-022 is complete through the existing manager diary list.
 Copying an existing template item into an active diary remains under DV1-034.
 The existing callable live-dependency restriction remains under DV1-028.
 V1 does not add task reopening, owner changes, other content edits, or automatic scheduling-conflict warnings.
@@ -509,7 +537,7 @@ It rejects conflicting names with HTTP 400.
 An omitted selector reads owned tasks across permitted open diaries.
 Task creation now uses the same shared selector checks.
 Task details and completion now use the same shared selector checks.
-The ordinary-user full diary view and template-item copy routes still need integration.
+Only the planned template-item copy routes still need selector integration.
 
 **Remaining requirements**
 
@@ -551,7 +579,8 @@ Its task fragment includes state highlights, owner names, and current role membe
 The usage guide documents its styling classes.
 Task creation provides a complete document and reusable `.diary-create` fragment.
 Task details and completion now use the complete task document and reusable `.diary-detail` fragment.
-The ordinary-user full diary document and fragment remain incomplete.
+Existing V1 task views have complete documents and reusable fragments.
+The planned template-item copy workflow under DV1-034 still needs its own page and fragment.
 
 **Remaining requirements**
 
@@ -587,7 +616,7 @@ Existing tests cover unknown names, conflicting selectors, denied access, and re
 `PersonalDiaryView.get()` handles empty results, invalid selectors, missing diaries, and selected closed diaries.
 Task creation now handles missing selections, invalid keys, denied access, closed diaries, and kept form errors.
 Task details and completion now handle invalid selections, private tasks, closed diaries, stale forms, and retained input.
-The ordinary-user full diary view and existing-template-item copy operation remain outstanding.
+The planned existing-template-item copy operation still needs empty and error states.
 
 **Remaining requirements**
 
@@ -626,7 +655,7 @@ Successful template tests do not verify unimplemented task workflows.
 
 **Remaining requirements**
 
-Add tests for the ordinary-user full diary view and existing-template-item copy operation.
+Add tests for the planned existing-template-item copy operation and membership-loss handling under DEC-005.
 Task creation tests now cover ownership, template revisions, rollback, duplicate requests, and concurrent saves.
 Personal tests now cover privacy, cross-diary reads, configured groups, selectors, and filters.
 Verify repeated requests and transaction rollback for each new operation.
@@ -645,7 +674,7 @@ Extend browser coverage after task routes and completion controls exist.
 | Related items | Verification still required |
 | --- | --- |
 | DV1-013 | Remaining identity checks for task HTTP operations. |
-| DV1-019, DV1-022, DV1-031 | Selectors and privacy for remaining copy interfaces and the ordinary-user full diary list. |
+| DV1-019, DV1-031 | Selectors and privacy for the planned copy interfaces. |
 | DV1-028, DV1-031, DV1-034 | Live dependency restrictions, remaining privacy interfaces, and copying existing template items. |
 | DV1-035 through DV1-038 | Implemented and verified through the task detail workflow. |
 | DV1-039 through DV1-043 | Remaining page highlights, ownership display, empty states, and milestone boundaries. |

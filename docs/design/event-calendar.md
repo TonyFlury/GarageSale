@@ -472,15 +472,15 @@ A month display is not required for the first release.
 
 ### Calendar list navigation
 
-This diagram shows how a user opens entry details from a diary's date-ordered list.
-It describes the full calendar view available through explicit navigation.
+This diagram shows how a DiaryManager opens entry details from a permitted diary's date-ordered list.
+The existing manager diary provides this full list.
 The personal task view remains the default page for a logged-in user.
 The host supplies the selected diary key and its permitted scope.
-Filter controls remain a UI proposal.
+The implemented manager filters follow DV1-052.
 
 ```mermaid
 flowchart TD
-    A[Open a permitted diary instance] --> B[Show the diary name]
+    A[DiaryManager opens a permitted diary] --> B[Show the diary name]
     B --> C[Apply optional list filters]
     C --> D[Show visible entries in date order]
     D --> E[Select an entry]
@@ -691,7 +691,8 @@ The [implementation record](diary-v1-remaining-work.md#dv1-020-dv1-021-and-dv1-0
 Without a diary key, the HTTP view groups the user's open tasks by diary name across all permitted open instances.
 The caller supplies the current role memberships through the Actor.
 Whole-team tasks can appear through an explicit list option.
-The full event calendar remains an explicit navigation choice for users with calendar view permission.
+DiaryManagers use the full diary list for a selected permitted diary.
+DiaryUsers need only the existing assigned-task view. V1 requires no additional full diary page for ordinary users.
 
 The dashboard has an active tasks section only when the Diary app is enabled.
 The dashboard must test app availability before it imports the Diary API.
