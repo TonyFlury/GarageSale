@@ -53,6 +53,9 @@ These rules apply throughout the project, including tests and private implementa
 - Add the same DV1 references to applicable source comments or docstrings.
 - Identify template blocks, CSS selectors, or JavaScript functions for implementations without Python symbols.
 - Keep partial items unchecked and describe the remaining work.
+- Give each partial item an explicit Remaining annotation.
+- Create or update a linked design document when the remaining work is substantial.
+- Distinguish approved requirements from proposed interfaces and open decisions in that document.
 - Identify documentation-only items without inventing executable symbols.
 
 ## Diary UI
