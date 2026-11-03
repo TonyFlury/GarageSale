@@ -25,11 +25,10 @@ The existing project authentication and diary access policy still apply.
 | `DiaryTemplateVersion.required_milestones()` | Read named milestones used by the selected template version. |
 | `Actor.calendar_keys` | Identify the diary instances the host permits the caller to access. |
 | `event_ref` | Existing API argument for a stable, unique caller reference. |
-| `event_year` | Existing API argument for the diary year used by annual date rules. |
 
 Creation selects an approved template and copies task rules, owners, stable keys, and dependencies in one transaction.
 It validates configured ownership groups against current membership.
-Repeated identical inputs reuse the existing diary key.
+Repeated identical inputs with the same caller reference reuse the existing diary key.
 Unspecified milestone dates are permitted and produce tasks with no calculated date.
 The returned reference does not automatically expand `Actor.calendar_keys`.
 
@@ -45,10 +44,10 @@ The following workflow is a proposal, not an implemented interface.
 2. Check permission to use the independent creation page.
 3. Show approved templates available under that permission.
 4. Let the user select a template version.
-5. Prompt for a diary name and diary year.
+5. Prompt for a diary name.
 6. Read the selected version's named milestones.
 7. Prompt for each relevant milestone date using its label.
-8. Show the selected version, diary name, year, and milestone dates for confirmation.
+8. Show the selected version, diary name, and milestone dates for confirmation.
 9. Submit the confirmed values through the existing creation API.
 10. Confirm the result and provide permitted navigation to the new diary.
 
@@ -62,8 +61,8 @@ Ownership validation failures must preserve entered values and explain which gro
 Use the selected approved version key for the confirmed submission.
 Do not silently substitute a newer template version after the user reviews the form.
 Use the version's milestone names as API keys and its labels as visible prompts.
-Use the diary year for annual task rules.
-Do not infer the diary year from an arbitrary milestone without an approved rule.
+Use the creation API to calculate fixed dates from the diary creation date.
+Do not request a diary year.
 
 Generate a stable internal caller reference for this independent workflow.
 Keep it unchanged across retries of the same submission.
@@ -86,7 +85,6 @@ No new class names or route names are established by this proposal.
 | Authorized role | Decide whether the page is available to DiaryManagers only or to specified DiaryUsers. |
 | Template discovery | Define permitted template choices and milestone reads if ordinary DiaryUsers can create diaries. |
 | Missing dates | Decide whether the UI requires every milestone date or permits the API's unset-date behavior. |
-| Diary year | Decide whether the user always enters the year or an explicit rule supplies it. |
 | New diary access | Define how the host permits access to an independently created diary key. |
 | Caller reference | Define the internal reference namespace and retry-state storage. |
 
@@ -97,7 +95,7 @@ These decisions do not change the implemented API or its current permissions.
 
 Verify permitted and denied users on both reads and submissions.
 Verify the correct prompts for different approved templates.
-Verify diary names, annual-rule years, milestone dates, and the selected version.
+Verify diary names, fixed-date calculations, milestone dates, and the selected version.
 Verify failed submissions without partial diary records.
 Verify repeated submissions without duplicate diaries.
 Verify that creating a diary requires no host business record.

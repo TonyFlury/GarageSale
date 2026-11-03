@@ -74,7 +74,7 @@ Host applications define their own business terms and group mappings in their in
 | Entry key | An identifier that stays the same for the same template entry across template versions. |
 | Date rule | A calculation that gives the date for a calendar entry. |
 | Fixed date | An annual or one-time date that does not depend on a milestone date. |
-| Annual date | A fixed month and day with one occurrence in each applicable year. |
+| Annual date | A fixed month and day that selects one occurrence after diary creation, with an optional year offset. |
 | One-time date | A full date that includes the year. It has no annual repetition. |
 | Task | Work recorded in a diary instance that a user can progress to completion. |
 | Due date | The date by which a task must be complete. |
@@ -306,7 +306,7 @@ An annual date keeps its month, day, and year rule.
 A calculated date keeps its milestone reference and day count.
 A source date entry keeps its milestone reference.
 
-The template does not keep calculated dates for a particular event year.
+The template does not keep calculated dates for a particular diary.
 A one-time date belongs to one event calendar.
 The system must not copy that date to every new event.
 
@@ -404,18 +404,22 @@ The [Garage Sale integration document](../../GarageSale/DIARY_INTEGRATION.md#sou
 ### Fixed dates
 
 A fixed date can be an annual date or a one-time date.
-An annual date repeats on the same month and day.
+An annual rule specifies a month and day for one occurrence in each diary.
 A one-time date includes its year.
 
 For example, an annual task can occur on 1 March.
 Its date does not move when a milestone changes within the same calendar year.
 
-Annual dates use the calendar year supplied by the caller through the technical API argument `event_year`.
-An annual date in a different year needs an explicit year offset.
-For example, 1 December in the previous year uses the supplied year minus one.
+Diary creation requires no diary year.
+An annual rule selects the nearest matching date strictly after the diary creation date.
+For example, 1 April becomes 1 April 2027 when creation occurs on 3 November 2026.
+Diary stores that date and then uses it for later reads.
+A year offset changes the selected occurrence by the specified number of years.
+Diary does not infer later occurrences for diaries that span more than 12 months.
+Future implementations will address this limitation.
 
-The system must identify an annual date that does not exist in the selected year.
-For example, 29 February does not exist in 2027.
+February 29 selects the next valid leap day after diary creation.
+A year offset can produce an invalid date.
 The calendar shows “Date not set” until the team selects a permitted date rule.
 It must not silently change the date to 28 February or 1 March.
 
@@ -789,12 +793,12 @@ Diary receives named milestone dates and does not interpret external event field
 
 A change to the event date changes dates that depend on it.
 It does not change the booking dates or the activation date.
-It does not change fixed dates within the same event year.
+It does not change stored fixed dates.
 
 | Change | Calculated date | Annual date | One-time date |
 | --- | --- | --- | --- |
 | Event moves within the same year. | Calculate the date again. | Keep the same date. | Keep the same date. |
-| Event moves to a different year. | Calculate the date again. | Use the new event year and the year rule. | Keep the full date. |
+| Event moves to a different year. | Calculate the date again. | Keep the stored date pending V2 review. | Keep the full date. |
 
 A change to the event year needs a date review for all entries.
 An unchanged one-time date can be incorrect for the new event year.

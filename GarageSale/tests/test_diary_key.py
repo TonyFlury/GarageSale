@@ -14,7 +14,7 @@ class EventDiaryKeyTests(TestCase):
         version = api.DiaryTemplate.from_key(actor=actor, key=template).create_version(number=1).key
         api.DiaryTemplateVersion.from_key(actor=actor, key=version).approve()
         key = api.DiaryInstance.create(actor=actor, template_version_key=version, event_ref='host:event:1',
-                                       name='Event calendar', event_year=2027, milestone_dates={}).key
+                                       name='Event calendar', milestone_dates={}).key
         event = EventData.objects.create(event_date=date(2027, 6, 27), use_from=date(2027, 1, 1), diary_key=key)
         event.refresh_from_db()
         self.assertEqual(event.diary_key, key)
