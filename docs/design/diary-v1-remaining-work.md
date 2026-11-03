@@ -4,7 +4,7 @@ Reviewed: 3 November 2026.
 
 This document describes the remaining work for partially implemented items in [the V1 checklist](../../Diary/TODO_V1.md).
 The existing [Diary design](event-calendar.md) defines the approved requirements.
-This document does not mark any additional feature complete.
+Completed sections record their implementation evidence and link to the updated checklist.
 
 Statements under **Current implementation** describe existing code.
 Statements under **Remaining requirements** restate approved requirements.
@@ -78,36 +78,40 @@ DV1-031 must protect personal tasks before the HTTP views expose those reads.
 
 ## DV1-014: Startup access-group validation
 
-**Current implementation**
+**Status: implemented.**
 
-[Diary/roles.py](../../Diary/roles.py) contains `access_groups()`.
-It validates setting values, not access-group existence or membership.
-[Diary/apps.py](../../Diary/apps.py) calls it from `DiaryConfig.ready()`.
-Existing configured ownership-role checks do not complete access-group validation.
+[Diary/roles.py](../../Diary/roles.py) contains `access_groups()` and `validate_access_groups()`.
+The first function checks setting values without database access.
+The second checks that both configured access groups exist and have at least one user.
+It uses the configured Django user model and one database query.
+It does not create groups or change membership.
 
-**Remaining requirements**
+[Diary/apps.py](../../Diary/apps.py) calls both validation stages from `DiaryConfig.ready()`.
+Ordinary management commands, WSGI startup, and ASGI startup require valid populated access groups.
+Errors distinguish invalid settings, missing groups, empty groups, and database failures.
+They identify the relevant settings and group names.
 
-Check that both configured access groups exist and have at least one user.
-Raise `ImproperlyConfigured` for invalid settings, missing groups, empty groups, or unavailable database checks.
-Identify the relevant setting and group in each error.
-Preserve the ability to create the database and groups during approved setup commands.
-DV1-015 separately requires ownership-group membership validation.
+Database setup and repair commands defer database checks while retaining setting-value checks.
+Those commands are `migrate`, `sync_access_policy`, `shell`, `createsuperuser`, and `loaddata`.
+The `test` command also defers database checks before Django creates its separate test database.
+Tests then exercise normal startup against that database.
+These exceptions do not exempt a subsequent server startup.
+The [usage guide](../../Diary/README.md#startup-setup-and-repair-commands) explains each exception.
 
-**Proposed implementation**
+**Verification**
 
-Keep setting-value validation in `access_groups()`.
-Add database existence and membership validation in the role-validation module.
-Call that validation from the application startup path after the setup-command exception.
-Keep missing-group and empty-group error details separate.
-Do not create groups or assign users during validation.
-Preserve the documented absence of continuous runtime monitoring.
+[Diary/tests/test_roles.py](../../Diary/tests/test_roles.py) contains `AccessGroupConfigurationTests` and `AccessGroupDatabaseTests`.
+They verify different group names, missing groups, empty groups, current membership, and a configured shared group.
+They cover database failure and unavailable tables through an isolated PostgreSQL search path.
+They verify normal startup, setup-command exceptions, and setting validation before database access.
+The complete Diary suite also runs with standard and custom Django user models.
 
-**Completion checks**
+**Remaining boundary**
 
-Verify missing and empty access groups separately.
-Verify different configured group names and a database access failure.
-Verify that approved setup commands remain usable before groups exist.
-Verify ordinary startup after setup completes.
+No implementation work remains for DV1-014.
+DV1-015 still requires ownership-group membership checks at startup.
+DV1-016 still requires ownership validation during diary creation.
+DV1-014 does not provide continuous runtime monitoring.
 
 ## DV1-018: Remaining authenticated task views
 
@@ -284,7 +288,7 @@ Extend browser coverage after task routes and completion controls exist.
 
 | Related items | Verification still required |
 | --- | --- |
-| DV1-013 through DV1-016 | Identity, alternate group names, absent groups, empty groups, and creation rollback. |
+| DV1-013, DV1-015, DV1-016 | Remaining task identity checks, ownership membership checks, and diary-creation rollback. |
 | DV1-019 through DV1-023, DV1-031 | Selectors, permitted diary scope, personal privacy, and task details. |
 | DV1-028 through DV1-034 | Live dependency restrictions, task ownership, permitted edits, and explicit template additions. |
 | DV1-035 through DV1-038 | Predecessor inspection, completion permissions, forced comments, and concurrent operations. |
@@ -301,7 +305,8 @@ DV1-045 separately requires final release documentation and deployment checks.
 
 This document records remaining work and proposed implementation boundaries.
 It does not change application code, migrations, or deployed services.
-The checklist retains its existing identifiers and completion states.
+The checklist retains its existing identifiers.
+DV1-014 is complete. The other partial items remain unchecked.
 ASD-STE100 Issue 9 was available locally.
 A full dictionary and technical-name review remains necessary.
 This document does not claim full ASD-STE100 compliance.
