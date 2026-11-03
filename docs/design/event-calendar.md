@@ -455,7 +455,8 @@ They include weekends and public holidays.
 Business days are a different alternative.
 A different date rule with team approval is necessary.
 
-Dates without times use the local date in the configured `DIARY_TIME_ZONE`.
+Dates without times use the local date in `DIARY_TIME_ZONE` when that optional setting is present.
+Otherwise, they use the project-default Django `TIME_ZONE` setting.
 They do not represent midnight in UTC.
 UTC is the time reference for stored timestamps.
 

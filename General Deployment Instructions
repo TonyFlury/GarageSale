@@ -56,7 +56,7 @@ PROJECT FOLLOW-UP: Refresh the event creation and editing UI.
         Configure DIARY_MANAGER and DIARY_USER with one group name each.
         Replace the former DIARY_PERMISSION_GROUPS setting before restarting.
         Managers include all Diary template permissions and user capabilities.
-        Configure DIARY_TIME_ZONE for the target site.
+        DIARY_TIME_ZONE is optional. Omit it to use the project Django TIME_ZONE setting.
         DIARY_TEMPLATE_NAME is optional when callers select a template explicitly.
         No template data is seeded.
         Configure DIARY_TASK_OWNER_ROLES with permitted task-owner group names.
