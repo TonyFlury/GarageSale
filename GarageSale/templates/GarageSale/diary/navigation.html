@@ -1,10 +1,5 @@
 {# HOST-003: Fixed navigation URLs and POST selections keep record identifiers out of browser locations. #}
 <nav class="diary diary-host-navigation" aria-label="Event Diary navigation">
-    <a class="diary-button diary-host-personal" href="{% url 'Diary:personal-diary' %}">My Diary</a>
-    {% if request.diary_host_manager %}
-        <a class="diary-button diary-host-manager" href="{% url 'Diary:manager-diary' %}">Manager diary</a>
-        <a class="diary-button diary-host-templates" href="{% url 'Diary:template-list' %}">Templates</a>
-    {% endif %}
     <form class="diary-host-event-form" method="post" action="{% url 'Diary:select' %}">
         {% csrf_token %}{% include 'GarageSale/diary/state.html' %}
         <input class="diary-host-selection" type="hidden" name="selection" value="event">

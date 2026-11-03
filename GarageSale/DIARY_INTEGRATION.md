@@ -262,7 +262,12 @@ Static form IDs associate selection buttons with their shared forms. They are no
 | Host class | Purpose |
 | --- | --- |
 | `diary-host-topbar` | Scoped wrapper for the normal team toolbar. |
-| `diary-host-navigation` | Fixed Diary navigation component. |
+| `diary-host-navigation` | Central event selection component. |
+| `diary-host-sidebar` | Diary page links in the team sidebar. |
+| `diary-host-sidebar-entry` | One standard team sidebar entry. |
+| `diary-host-sidebar-icon` | Sidebar entry icon. |
+| `diary-host-sidebar-label` | Sidebar entry label. |
+| `diary-host-sidebar-tooltip` | Sidebar entry tooltip. |
 | `diary-host-personal` | Personal Diary navigation link. |
 | `diary-host-manager` | Manager diary navigation link. |
 | `diary-host-templates` | Template chooser navigation link. |
@@ -277,6 +282,14 @@ Static form IDs associate selection buttons with their shared forms. They are no
 | `diary-host-unprepared` | Unprepared calendar or unselected task component. |
 | `diary-host-event` | Selected event or absent-current-event explanation. |
 | `diary-host-guidance` | Selection or manager assistance instruction. |
+
+My Diary, Manager Diary, and Templates appear in the left sidebar on Diary pages.
+Only managers see Manager Diary and Templates.
+The event selection form remains in the central area.
+The existing page link classes now belong to sidebar links. They no longer use `diary-button`.
+Sidebar template: `GarageSale/templates/GarageSale/diary/sidebar.html`.
+The host base template includes this template in its `sidebar` block.
+Verification: `EventDiaryIntegrationTests.test_diary_page_links_use_sidebar_with_current_manager_access` and `HostDiaryBrowserTests.test_diary_screens_keep_team_shell_and_template_editor_scripts`.
 
 ## Integration checklist
 

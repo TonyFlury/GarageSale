@@ -167,6 +167,21 @@ class EventDiaryIntegrationTests(TestCase):
                 self.assertContains(response, 'team_pages/styles/team_page.css')
                 self.assertContains(response, 'Diary/styles/diary.css')
 
+    def test_diary_page_links_use_sidebar_with_current_manager_access(self):
+        """Keep page links in the sidebar and restrict manager links to current managers."""
+        for user, expected in ((self.manager, 3), (self.member, 1)):
+            self.client.force_login(user)
+            response = self.client.get(reverse('Diary:personal-diary'))
+            self.assertEqual(response.status_code, 200)
+            sidebar, content = response.content.decode().split('<div id="Content">', 1)
+            self.assertIn('diary-host-sidebar', sidebar)
+            self.assertEqual(sidebar.count('diary-host-sidebar-entry'), expected)
+            self.assertIn('diary-host-personal', sidebar)
+            self.assertNotIn('diary-host-personal', content)
+            self.assertNotIn('diary-host-manager', content)
+            self.assertNotIn('diary-host-templates', content)
+            self.assertIn('diary-host-event-form', content)
+
     def test_conflicting_query_key_cannot_change_trusted_event_scope(self):
         """Reject a second diary selector and preserve the event selected by the host URL."""
         first, second = self.event(), self.event(28)

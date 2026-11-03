@@ -10,6 +10,10 @@
     {% block diary_head %}{% endblock %}
 {% endblock %}
 {% block TopBar %}<div class="diary diary-host-topbar">{{ block.super }}</div>{% endblock %}
+{% block sidebar %}
+    {{ block.super }}
+    {% include 'GarageSale/diary/sidebar.html' %}
+{% endblock %}
 {% block breadcrumb %}
     <a href="{% url 'TeamPages:Root' %}">Team Page</a> / Diary
 {% endblock %}
