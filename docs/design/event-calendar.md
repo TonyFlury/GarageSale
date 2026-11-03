@@ -677,8 +677,10 @@ The checkbox does not grant access to other users’ tasks or private predecesso
 This display filter does not change the callable API task results.
 
 The current `DiaryInstance.personal_tasks()` method supplies that list for one instance.
-The confirmed API scope also requires personal task access across all instances permitted by the host.
+`DiaryAPI.personal_tasks()` now supplies personal tasks across all instances permitted by the host.
 The caller can instead select one permitted instance.
+`PersonalDiaryView` implements the default personal page and its display filters.
+The [implementation record](diary-v1-remaining-work.md#dv1-020-dv1-021-and-dv1-049-personal-diary) identifies completed work, verification, and remaining privacy interfaces.
 Without a diary key, the HTTP view groups the user's open tasks by diary name across all permitted open instances.
 The caller supplies the current role memberships through the Actor.
 Whole-team tasks can appear through an explicit list option.

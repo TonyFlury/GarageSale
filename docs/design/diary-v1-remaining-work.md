@@ -27,7 +27,7 @@ Open decisions remain separate from approved requirements.
 | `template_name` | Existing view selector for a named template. |
 | `Diary/identity.py` | Proposed module for shared Django identity adapters. This file does not exist. |
 | `DjangoActorFactory.from_user()` | Proposed internal factory for an authenticated user's Actor. This class and method do not exist. |
-| `get_diary_keys()` | Proposed view method for trusted host scope. This method does not exist. |
+| `get_diary_keys()` | Existing `DiaryScopeMixin` method that supplies trusted host scope. |
 
 Other code names below identify existing files, classes, methods, template blocks, or checklist items.
 
@@ -37,14 +37,15 @@ Other code names below identify existing files, classes, methods, template block
 
 [Diary/views.py](../../Diary/views.py) contains `DjangoOwnerDirectory.person_in_groups()` and `TemplateEditorView.dispatch()`.
 They use the configured Django user model and current group membership for template editing.
-`ManagerDiaryView.dispatch()` now constructs a manager Actor from authenticated identity and trusted permitted diary keys.
-`ManagerDiaryView.get_diary_keys()` provides the host scope extension for this read-only view.
+`DiaryScopeMixin.dispatch()` constructs an Actor from authenticated identity, current groups, and trusted permitted diary keys.
+Both `ManagerDiaryView` and `PersonalDiaryView` use this shared implementation.
+`DiaryScopeMixin.get_diary_keys()` supplies the host scope extension.
 [Diary/forms.py](../../Diary/forms.py) uses `TemplateTaskFormSet.__init__()` to obtain eligible person choices.
 The template workflow does not need diary-instance scope.
 
 **Remaining requirements**
 
-Task lists, task details, task creation, and completion still need authenticated HTTP identity handling.
+The ordinary-user full diary list, task details, task creation, and completion still need authenticated HTTP identity handling.
 Those operations must use the configured access groups and the host's permitted diary keys.
 No request-body value can grant identity, group membership, or diary access.
 Diary must not import host business models or require a custom request attribute.
@@ -60,7 +61,7 @@ Keep the HTTP person reference format `user:<primary-key>`.
 Preserve the callable API's support for other opaque person references through `OwnerDirectory`.
 
 Obtain permitted diary keys through a trusted host extension point.
-A proposed `get_diary_keys()` view method returns no keys unless trusted host code supplies them.
+The existing `DiaryScopeMixin.get_diary_keys()` returns no keys unless trusted host code supplies them.
 A DiaryManager's role must not expand that supplied scope.
 A URL selector narrows the supplied scope and cannot add a diary to it.
 The host remains responsible for its diary access policy.
@@ -75,10 +76,11 @@ Verify the same behavior without host business apps installed.
 
 **Open decision**
 
-Confirm the internal factory and host extension method names before implementation.
-These names are proposals, not additions to the supported callable API.
-DV1-020 must provide task reads across the permitted instances.
-DV1-031 must protect personal tasks before the HTTP views expose those reads.
+The proposed identity module and internal factory remain open decisions.
+The implemented host extension method is `DiaryScopeMixin.get_diary_keys()`.
+DV1-020 now provides task reads across permitted instances.
+DV1-031 protects current list reads and predecessor choices.
+Future task interfaces still need equivalent privacy checks.
 
 ## DV1-014: Startup access-group validation
 
@@ -182,11 +184,12 @@ Continuous monitoring after validation remains outside this feature.
 [Diary/views.py](../../Diary/views.py) provides `TemplateEditorView` and `TemplateCreateView`.
 Those routes authenticate users and restrict template operations to DiaryManagers.
 `ManagerDiaryView` now provides the manager diary list at the `Diary:manager-diary` route.
-Personal task routes and completion routes remain outstanding.
+`PersonalDiaryView` provides the default route, `Diary:personal-diary`.
+Task details, creation, completion, and the ordinary-user full diary list remain outstanding.
 
 **Remaining requirements**
 
-Add personal task lists, full diary lists, task details, task creation, and completion views.
+Add ordinary-user full diary lists, task details, task creation, and completion views.
 Use the callable API for data actions.
 Apply task visibility, host scope, and action permissions to reads and writes.
 Normal completion must check the open predecessor chain again during saving.
@@ -202,7 +205,7 @@ Add completion routes after DV1-035 through DV1-038 provide inspection, completi
 Keep read requests free from creation or template-copy actions.
 Use CSRF protection for browser writes.
 
-The default personal page must implement DV1-021 and DV1-049.
+The default personal page implements DV1-021 and DV1-049.
 It shows ready tasks unless “show blocked also” is selected.
 Blocking depends on incomplete predecessors regardless of their owners.
 That selection must not expose private predecessor details.
@@ -285,9 +288,76 @@ It verifies keyboard checkbox operation, history selection, combined filters, re
 **Remaining boundary**
 
 No implementation work remains for DV1-052.
-Personal lists and the ordinary-user full diary list remain separate V1 work.
+The personal list is implemented separately.
+The ordinary-user full diary list remains V1 work.
 Host integration must supply the permitted keys for its own authenticated users.
 Future date-window filtering remains deferred under DFUT-003.
+
+## DV1-020, DV1-021, and DV1-049: Personal diary
+
+**Status: implemented.**
+
+The technical API methods are `DiaryAPI.personal_tasks()` and `DiaryInstance.personal_tasks()` in [Diary/api.py](../../Diary/api.py).
+They return open tasks owned by the caller or the caller's current groups.
+The caller can select one permitted diary or all permitted open diaries.
+Results include each diary's key and name.
+Whole-team tasks require an explicit option.
+
+The technical view class is `PersonalDiaryView` in [Diary/views.py](../../Diary/views.py).
+The default route is `Diary:personal-diary` in [Diary/urls.py](../../Diary/urls.py).
+The host supplies permitted keys through trusted context or `DiaryScopeMixin.get_diary_keys()`.
+The default route grants no diary scope.
+Current group membership controls access on each request.
+
+The view groups tasks by diary name and key.
+It shows ready tasks by default, including late ready tasks.
+The “show blocked also” checkbox adds blocked owned tasks.
+The separate whole-team checkbox adds whole-team tasks.
+Specific status filters take precedence over the blocked-task checkbox.
+Late tasks contribute only to the Late count.
+Ready and Blocked counts exclude late tasks.
+Status links retain the selected diary and optional display choices.
+Future date-window controls remain deferred under DFUT-003.
+
+**Selectors and empty states**
+
+GET selectors, view attributes, and trusted context use `DiaryScopeMixin.selected_key()`.
+Malformed, blank, or conflicting selectors return HTTP 400.
+An out-of-scope selector returns HTTP 403.
+An unknown permitted key returns HTTP 404.
+A selected diary retains its name when no tasks match.
+A selected closed diary displays its closed state without active tasks.
+Reads create no diaries and change no tasks.
+
+**Privacy boundary: partial DV1-031**
+
+The technical function `_visible_entries()` removes another person's private additions and related keys from ordinary-user reads.
+Managers can inspect these entries within their permitted diary scope.
+Template tasks remain visible through ordinary diary reads, regardless of owner.
+Personal selection includes only matching owners and current roles.
+Private tasks cannot appear as predecessor choices.
+Readiness uses the complete dependency graph before visibility filtering.
+
+Task details, searches, the HTTP data API, and future task operations still need privacy verification.
+DV1-031 remains unchecked.
+DEC-004 still concerns the future blocker-inspection display.
+The personal list does not implement that display or task completion.
+
+**Implementation and verification**
+
+The technical form class is `PersonalDiaryFilterForm` in [Diary/forms.py](../../Diary/forms.py).
+The page template is [personal_diary.html](../../Diary/templates/Diary/personal_diary.html), block `diary_content`.
+The reusable fragment is [partials/personal_diary.html](../../Diary/templates/Diary/partials/personal_diary.html), class `.diary-personal`.
+The task fragment uses `.diary-task-late`, `.diary-task-blocked-late`, and `.diary-task-blocked` for state highlights.
+The [usage guide](../../Diary/README.md#personal-diary-page-integration) describes integration and controls.
+
+[PersonalDiaryTests](../../Diary/tests/test_personal_view.py) verifies ownership, privacy, selectors, filter combinations, counts, date boundaries, and reads without changes.
+Its current 11 tests passed against a separate PostgreSQL database with Django's standard user model.
+Earlier logs record nine personal tests and 145 Diary tests passing.
+The earlier Chrome log records two passing tests, including `PersonalDiaryBrowserTests.test_personal_filters_keyboard_and_layout`.
+That browser method checks keyboard controls, mobile layout, status filters, privacy, and host style overrides.
+This documentation change did not repeat the earlier broader or browser checks.
+Host dashboard integration and deployment remain separate work.
 
 ## DV1-019: Diary selectors
 
@@ -297,7 +367,9 @@ Future date-window filtering remains deferred under DFUT-003.
 It rejects conflicting names with HTTP 400.
 `ManagerDiaryView.selected_key()` accepts GET selectors, view attributes, and trusted context.
 `ManagerDiaryView.get_diary_keys()` keeps selection separate from the host's permitted scope.
-Personal and cross-diary selectors remain outstanding.
+`PersonalDiaryView` uses `DiaryScopeMixin.selected_key()` for the same selector checks.
+An omitted selector reads owned tasks across permitted open diaries.
+Task details, creation, and completion still need selector integration.
 
 **Remaining requirements**
 
@@ -334,7 +406,10 @@ Use the implemented manager response behavior when defining those remaining sele
 `StyledForm.__init__()` in [Diary/forms.py](../../Diary/forms.py) assigns stable form-control classes.
 The template workflow has complete documents, reusable fragments, and namespaced styling.
 The manager page now provides another complete document and a reusable `.diary-manager` fragment.
-The task-list fragment exists, but production task views remain incomplete.
+The personal page supplies a complete document and the reusable `.diary-personal` fragment.
+Its task fragment includes state highlights, owner names, and current role members.
+The usage guide documents its styling classes.
+Task details, creation, and completion pages remain incomplete.
 
 **Remaining requirements**
 
@@ -367,7 +442,8 @@ Verify a host stylesheet override through documented classes and variables.
 `TemplateEditorView.dispatch()` and `TemplateEditorView.get()` handle template selection and an empty chooser.
 Existing tests cover unknown names, conflicting selectors, denied access, and reads without creation.
 `ManagerDiaryView.get()` now handles empty selections, invalid keys, missing diaries, empty filters, and closed diaries.
-Equivalent behavior remains outstanding for personal lists, task details, creation, and completion.
+`PersonalDiaryView.get()` handles empty results, invalid selectors, missing diaries, and selected closed diaries.
+Task details, creation, and completion still need equivalent behavior.
 
 **Remaining requirements**
 
@@ -406,7 +482,8 @@ Successful template tests do not verify unimplemented task workflows.
 
 **Remaining requirements**
 
-Add tests for personal-task privacy, cross-diary reads, complete group validation, selectors, task additions, and completion.
+Add tests for remaining task interfaces, task additions, and completion.
+Personal tests now cover privacy, cross-diary reads, configured groups, selectors, and filters.
 Verify repeated requests and transaction rollback for each new operation.
 Verify concurrent completion, diary closure, and permitted task edits.
 Repeat integration checks with standard and custom Django user models.
@@ -423,10 +500,10 @@ Extend browser coverage after task routes and completion controls exist.
 | Related items | Verification still required |
 | --- | --- |
 | DV1-013 | Remaining identity checks for task HTTP operations. |
-| DV1-019 through DV1-023, DV1-031 | Selectors, permitted diary scope, personal privacy, and task details. |
+| DV1-019, DV1-022, DV1-023, DV1-031 | Selectors and privacy for remaining task interfaces and the ordinary-user full diary list. |
 | DV1-028 through DV1-034 | Live dependency restrictions, task ownership, permitted edits, and explicit template additions. |
 | DV1-035 through DV1-038 | Predecessor inspection, completion permissions, forced comments, and concurrent operations. |
-| DV1-039 through DV1-043, DV1-049 | Highlights, ownership display, empty states, milestone boundaries, and blocked-task selection. |
+| DV1-039 through DV1-043 | Remaining page highlights, ownership display, empty states, and milestone boundaries. |
 
 **Completion checks**
 
@@ -476,7 +553,8 @@ Record exact implementation and verification symbols when this deferred requirem
 This document records remaining work and proposed implementation boundaries.
 It does not change application code, migrations, or deployed services.
 The checklist retains its existing identifiers.
-DV1-014, DV1-015, and DV1-016 are complete. The other partial items remain unchecked.
+DV1-014, DV1-015, DV1-016, DV1-020, DV1-021, DV1-049, and DV1-052 are complete.
+The other partial items remain unchecked.
 ASD-STE100 Issue 9 was available locally.
 A full dictionary and technical-name review remains necessary.
 This document does not claim full ASD-STE100 compliance.
