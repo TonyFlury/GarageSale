@@ -114,74 +114,114 @@ class DiaryHostContextMixin:
     def get_context_data(self, **kwargs):
         """Extend authenticated package context with host scope, explicit form targets, and the page shell."""
         context = super().get_context_data(**kwargs)
+        self.validate_url_selectors()
+        self.host_event = self.resolve_host_event()
+        fields = self.get_form_targets(context)
+        self.add_host_presentation(context, fields)
+        self.add_current_diary_scope(context)
+        self.restore_creation_notice()
+        return context
+
+    def validate_url_selectors(self):
+        """Reject browser URL identifiers before the host supplies trusted record scope."""
 
         # Query parameters cannot replace project-derived Diary scope or host selection actions.
         if IDENTIFIER_PARAMETERS.intersection(self.request.GET):
             self.reject_selection('Record identifiers are not accepted in URLs.')
 
+    def resolve_host_event(self):
+        """Return the current event only for pages whose records belong to an event."""
+
         # Template management remains independent of the current event.
-        event = self.current_event() if self.uses_event else None
+        if not self.uses_event:
+            return None
+        return self.current_event()
+
+    def get_form_targets(self, context):
+        """Collect explicit form targets and expose any selected template to the package context."""
         fields = {}
 
         # Event forms retain their origin without treating the posted value as an access grant.
-        if event is not None:
-            fields['host_event_id'] = str(event.pk)
+        if self.host_event is not None:
+            fields['host_event_id'] = str(self.host_event.pk)
+        self.add_task_target(fields)
+        self.add_template_target(context, fields)
+        return fields
+
+    def add_task_target(self, fields):
+        """Resolve a task form's identity without allowing navigation state to replace a submitted target."""
         self.host_task_key = None
 
-        # Task selection becomes package input only after the host fixes the permitted current-event scope.
-        if self.uses_task:
-            self.host_task_key = self.task_key()
+        # Pages without task detail forms must not read or emit a selected task key.
+        if not self.uses_task:
+            return
+        self.host_task_key = self.task_key()
 
-            # The same task identity is carried by its own form independently of other browser tabs.
-            if self.host_task_key is not None:
-                fields['host_task_key'] = str(self.host_task_key)
+        # The same task identity is carried by its own form independently of other browser tabs.
+        if self.host_task_key is not None:
+            fields['host_task_key'] = str(self.host_task_key)
 
-        # Explicit POST targets replace the shared navigation selection for template mutations.
-        if self.uses_template:
+    def add_template_target(self, context, fields):
+        """Supply the template selector for package lookup and the originating target for its form."""
 
-            # GET navigation can retain the last selection. Every saved form identifies its own template.
-            if self.request.method == 'POST':
-                name = self.post_value('host_template_name')
-            else:
-                name = self.request.session.get('diary_template_name')
-            context['template_name'] = name
+        # Chooser and creation pages must not inherit an existing template selection.
+        if not self.uses_template:
+            return
 
-            # The package checks template existence and current manager access before processing its forms.
-            if name:
-                fields['host_template_name'] = name
+        # GET navigation can retain the last selection. Every saved form identifies its own template.
+        if self.request.method == 'POST':
+            name = self.post_value('host_template_name')
+        else:
+            name = self.request.session.get('diary_template_name')
+        context['template_name'] = name
+
+        # The package checks template existence and current manager access before processing its forms.
+        if name:
+            fields['host_template_name'] = name
+
+    def add_host_presentation(self, context, fields):
+        """Configure the host shell, package navigation, hidden fields, and sidebar presentation."""
 
         context.update(diary_base_template='GarageSale/diary/base.html', diary_ui={
             'trusted_scope': True, 'selection_url': reverse('Diary:select'),
             'task_detail_url': reverse('Diary:task-detail'), 'form_fields': fields,
-        }, host_event=event)
-        self.host_event = event
+        }, host_event=self.host_event)
 
         # This membership query controls sidebar presentation only. Package views enforce their own access policy.
         self.request.diary_host_manager = self.request.user.groups.filter(name=settings.DIARY_MANAGER).exists()
 
-        # Only the current event's stored Diary key can enter the package's permitted scope.
-        if self.uses_event:
+    def add_current_diary_scope(self, context):
+        """Supply current-event Diary scope or stop the request at the appropriate host empty state."""
 
-            # No event or missing Diary key is an empty state, never an implicit creation request.
-            if event is None or event.diary_key is None:
-                self.empty_response(context)
-            context.update(diary_key=event.diary_key, permitted_diary_keys=(event.diary_key,),
-                           task_create_url=reverse('Diary:task-create'))
+        # Template pages and navigation actions do not receive event Diary scope here.
+        if not self.uses_event:
+            return
+        event = self.host_event
 
-            # A detail page needs a selected target before the inherited handler can run.
-            if self.uses_task and self.host_task_key is None:
-                self.empty_response(context, 'Select a task from My Diary or Manager diary.')
+        # No event or missing Diary key is an empty state, never an implicit creation request.
+        if event is None or event.diary_key is None:
+            self.empty_response(context)
+        context.update(diary_key=event.diary_key, permitted_diary_keys=(event.diary_key,),
+                       task_create_url=reverse('Diary:task-create'))
 
-        # A package-generated success marker remains server-side until the next task creation page.
-        if self.page == 'create' and self.request.method == 'GET':
-            added = self.request.session.pop('diary_added_task', None)
+        # A detail page needs a selected target before the inherited handler can run.
+        if self.uses_task and self.host_task_key is None:
+            self.empty_response(context, 'Select a task from My Diary or Manager diary.')
 
-            # Browser-supplied success markers were already rejected above.
-            if added:
-                values = self.request.GET.copy()
-                values['added'] = added
-                self.request.GET = values
-        return context
+    def restore_creation_notice(self):
+        """Expose a package-generated creation confirmation only on the next task creation page."""
+
+        # Other pages and submitted forms must not consume the pending creation confirmation.
+        if self.page != 'create' or self.request.method != 'GET':
+            return
+        added = self.request.session.pop('diary_added_task', None)
+
+        # A confirmation can originate only from a package redirect. URL identifiers were rejected earlier.
+        if not added:
+            return
+        values = self.request.GET.copy()
+        values['added'] = added
+        self.request.GET = values
 
     def clean_response(self, response):
         """Preserve clean URLs while recording navigation results from package redirects."""

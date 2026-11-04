@@ -396,11 +396,13 @@ Their identifiers remain unchanged.
   Inheritance verification: `EventDiaryIntegrationTests.test_host_routes_use_package_view_subclasses_and_inherited_form_handlers`.
   Routes: `GarageSale/diary_urls.py`: `urlpatterns`. Base template: `GarageSale/templates/GarageSale/diary/base.html`: `TopBar` and `SnappableSections`.
   Package content configuration: `GarageSale/views/diary_views.py`: `DiaryHostContextMixin.get_context_data`, `diary_base_template`, and `diary_ui`.
+  Context orchestration uses `validate_url_selectors`, `resolve_host_event`, `get_form_targets`, `add_host_presentation`, `add_current_diary_scope`, and `restore_creation_notice`.
+  Form targets use `add_task_target` and `add_template_target`. Each helper belongs to `DiaryHostContextMixin`.
   Authentication order verification: `EventDiaryIntegrationTests.test_package_checks_access_before_host_context_resolution`.
   Unsigned target verification: `EventDiaryIntegrationTests.test_explicit_targets_require_valid_origin_and_csrf_without_host_signatures` and `test_forged_post_target_cannot_grant_other_diary_or_private_task_access`.
   Cross-tab verification: `EventDiaryIntegrationTests.test_task_post_uses_its_own_target_after_another_tab_changes_selection` and `test_template_post_uses_its_own_target_after_another_tab_changes_selection`.
   Completion verification: `EventDiaryIntegrationTests.test_package_completion_token_works_without_host_signature`.
-  Current-event scope: `GarageSale/views/diary_views.py`: `DiaryHostContextMixin.current_event` and `DiarySelectionView.select`.
+  Current-event scope: `GarageSale/views/diary_views.py`: `DiaryHostContextMixin.current_event` and `DiarySelectionView.post`.
   Scope verification: `EventDiaryIntegrationTests.test_current_event_ignores_saved_selection_and_rejects_event_switching` and `EventDiaryIntegrationTests.test_current_event_change_rejects_an_old_form`.
   Team Pages shows a Diary entry beside Dashboard in the Overview group.
   Icon file: `GarageSale/static/GarageSale/images/icons/navigation/diary-svgrepo-com.svg`.
