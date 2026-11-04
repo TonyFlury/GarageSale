@@ -72,13 +72,13 @@ class EventDiaryIntegrationTests(TestCase):
         """Select one task from the current host event through the normal POST action."""
         response = self.client.get(reverse('Diary:personal-diary'))
         return self.client.post(reverse('Diary:select'), {'selection': 'task', 'entry_key': entry_key,
-            '_diary_state': response.wsgi_request.diary_host_token})
+            **response.context['diary_ui']['form_fields']})
 
     def select_template(self, name):
         """Select a named template through the manager's normal POST control."""
         response = self.client.get(reverse('Diary:template-list'))
         return self.client.post(reverse('Diary:select'), {'selection': 'template', 'template_name': name,
-            '_diary_state': response.wsgi_request.diary_host_token})
+            **response.context['diary_ui']['form_fields']})
 
     def event_data(self):
         """Return valid values for the existing team event creation form."""
@@ -187,11 +187,16 @@ class EventDiaryIntegrationTests(TestCase):
         for name, parent in parents.items():
             child = resolve(reverse(f'Diary:{name}')).func.view_class
             self.assertTrue(issubclass(child, parent))
-            self.assertIs(child.get, parent.get)
 
-            # Read-only package pages have no form handler for a host adapter to replace.
-            if hasattr(parent, 'post'):
-                self.assertIs(child.post, parent.post)
+            # Task details need a small argument adapter, while the package still owns the complete form response.
+            if parent is TaskDetailView:
+                self.assertIs(child.respond, parent.respond)
+            else:
+                self.assertIs(child.get, parent.get)
+
+                # Read-only package pages expose no form handler to compare.
+                if hasattr(parent, 'post'):
+                    self.assertIs(child.post, parent.post)
 
     def test_diary_page_links_use_sidebar_with_current_manager_access(self):
         """Keep page links in the sidebar and restrict manager links to current managers."""
@@ -221,7 +226,7 @@ class EventDiaryIntegrationTests(TestCase):
         self.assertEqual(response.context['diary_data']['key'], first.diary_key)
         self.assertNotIn('diary_task_key', self.client.session)
         self.assertEqual(self.client.post(reverse('Diary:select'), {'selection': 'event', 'event_id': second.pk,
-            '_diary_state': response.wsgi_request.diary_host_token}).status_code, 400)
+            **response.context['diary_ui']['form_fields']}).status_code, 400)
         self.use_current_event(None)
         response = self.client.get(reverse('Diary:personal-diary'))
         self.assertContains(response, 'There is no current event.')
@@ -249,7 +254,7 @@ class EventDiaryIntegrationTests(TestCase):
         event.refresh_from_db()
         self.assertIsNone(event.diary_key)
         self.assertEqual(self.client.post(reverse('Diary:select'), {'selection': 'event', 'event_id': 999999,
-            '_diary_state': response.wsgi_request.diary_host_token}).status_code, 400)
+            **response.context['diary_ui']['form_fields']}).status_code, 400)
 
     def test_access_and_template_selection_use_current_membership(self):
         """Preserve Diary manager gates and reject unrelated identities before reading event data."""
@@ -393,7 +398,7 @@ class EventDiaryIntegrationTests(TestCase):
         values = {'name': 'Event preparation', 'description': '', 'expected_version_key': self.version.key,
             'milestone_names': ['event_date', 'event_created'],
             'tasks-TOTAL_FORMS': '1', 'tasks-INITIAL_FORMS': '1', 'tasks-MIN_NUM_FORMS': '0',
-            'tasks-MAX_NUM_FORMS': '200', 'action': 'save', '_diary_state': page.wsgi_request.diary_host_token,
+            'tasks-MAX_NUM_FORMS': '200', 'action': 'save', **page.context['diary_ui']['form_fields'],
             'tasks-0-entry_key': self.spec.entry_key, 'tasks-0-name': self.spec.name,
             'tasks-0-date_kind': 'source', 'tasks-0-milestone_name': 'event_date', 'tasks-0-owner_kind': 'team',
             'tasks-0-year_offset': '0', 'tasks-0-day_offset': '0'}
@@ -429,39 +434,135 @@ class EventDiaryIntegrationTests(TestCase):
         self.use_current_event(first)
         self.select_task(self.spec.entry_key)
         page = self.client.get(reverse('Diary:task-detail'))
-        token = page.wsgi_request.diary_host_token
+        fields = page.context['diary_ui']['form_fields']
         self.use_current_event(second)
         self.select_task(self.spec.entry_key)
         response = self.client.post(reverse('Diary:task-detail'), {'action': 'save_date', 'revision': 0,
-            'due_date': '2027-07-01', '_diary_state': token})
+            'due_date': '2027-07-01', **fields})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(self.client_for(first).task(entry_key=self.spec.entry_key)['date'], date(2027, 6, 27))
         self.assertEqual(self.client_for(second).task(entry_key=self.spec.entry_key)['date'], date(2027, 6, 28))
         self.assertEqual(self.client.session['diary_event_id'], second.pk)
 
-    def test_missing_or_tampered_state_and_missing_csrf_cannot_select_records(self):
-        """Reject unsigned selection requests and preserve Django's CSRF checks on normal POST controls."""
+    def test_explicit_targets_require_valid_origin_and_csrf_without_host_signatures(self):
+        """Authorize unsigned targets while rejecting missing origins, malformed values, duplicates, and absent CSRF protection."""
         from django.test import Client
 
         event = self.event()
-        self.assertEqual(self.client.post(reverse('Diary:select'), {'selection': 'event', 'event_id': event.pk}).status_code, 400)
+        self.use_current_event(event)
+        self.assertEqual(self.client.post(reverse('Diary:select'),
+            {'selection': 'task', 'entry_key': self.spec.entry_key}).status_code, 400)
         page = self.client.get(reverse('Diary:personal-diary'))
-        self.assertEqual(self.client.post(reverse('Diary:task-detail'), {'action': 'save_date', 'revision': 0,
-            'due_date': '2027-07-01', '_diary_state': page.wsgi_request.diary_host_token}).status_code, 400)
-        self.assertEqual(self.client.post(reverse('Diary:select'), {'selection': 'event', 'event_id': event.pk,
-            '_diary_state': page.wsgi_request.diary_host_token + 'changed'}).status_code, 400)
-        response = self.client.post(reverse('Diary:select'), {'selection': 'event', 'event_id': '<script>bad()</script>',
-            '_diary_state': page.wsgi_request.diary_host_token})
+        fields = page.context['diary_ui']['form_fields']
+        self.assertNotIn('_diary_state', fields)
+        self.assertNotContains(page, '_diary_state')
+        self.assertEqual(self.client.post(reverse('Diary:select'),
+            {'selection': 'task', 'entry_key': self.spec.entry_key, **fields}).status_code, 302)
+        for value in ('invalid-key', [str(self.spec.entry_key), str(self.spec.entry_key)]):
+            response = self.client.post(reverse('Diary:task-detail'),
+                {'action': 'save_date', 'revision': 0, 'due_date': '2027-07-01',
+                 'host_task_key': value, **fields})
+            self.assertEqual(response.status_code, 400)
+        response = self.client.post(reverse('Diary:select'), {'selection': 'task',
+            'entry_key': self.spec.entry_key, 'host_event_id': '<script>bad()</script>'})
         self.assertEqual(response.status_code, 400)
         self.assertNotIn(b'<script>', response.content)
+        self.assertEqual(self.client.post(reverse('Diary:select'),
+            {'selection': 'template', 'template_name': ' '}).status_code, 400)
         client = Client(enforce_csrf_checks=True)
         client.force_login(self.manager)
-        page = client.get(reverse('Diary:template-list'))
-        values = {'selection': 'template', 'template_name': 'Event preparation',
-                  '_diary_state': page.wsgi_request.diary_host_token}
+        page = client.get(reverse('Diary:personal-diary'))
+        values = {'selection': 'task', 'entry_key': self.spec.entry_key,
+                  **page.context['diary_ui']['form_fields']}
         self.assertEqual(client.post(reverse('Diary:select'), values).status_code, 403)
         values['csrfmiddlewaretoken'] = client.cookies['csrftoken'].value
         self.assertEqual(client.post(reverse('Diary:select'), values).status_code, 302)
+
+    def test_package_completion_token_works_without_host_signature(self):
+        """Keep package completion and revision checks while carrying ordinary host target fields."""
+        event = self.event()
+        self.use_current_event(event)
+        self.select_task(self.spec.entry_key)
+        page = self.client.get(reverse('Diary:task-detail'))
+        form = page.context['completion_form']
+        response = self.client.post(reverse('Diary:task-detail'), {'action': 'complete',
+            'revision': form['revision'].value(), 'blocker_token': form['blocker_token'].value(),
+            **page.context['diary_ui']['form_fields']})
+        self.assertEqual(response.status_code, 302)
+        self.assertIsNotNone(self.client_for(event).task(entry_key=self.spec.entry_key)['completed_at'])
+
+    def test_task_post_uses_its_own_target_after_another_tab_changes_selection(self):
+        """Apply an explicit form target within current scope even when another tab changes GET navigation."""
+        event = self.event()
+        self.use_current_event(event)
+        other = EntrySpec('Another task', 'once', fixed_date=date(2027, 6, 20))
+        self.client_for(event).add_entry(spec=other)
+        self.select_task(self.spec.entry_key)
+        page = self.client.get(reverse('Diary:task-detail'))
+        fields = page.context['diary_ui']['form_fields']
+        self.select_task(other.entry_key)
+        response = self.client.post(reverse('Diary:task-detail'), {'action': 'save_date', 'revision': 0,
+            'due_date': '2027-07-01', **fields})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.client_for(event).task(entry_key=self.spec.entry_key)['date'], date(2027, 7, 1))
+        self.assertEqual(self.client_for(event).task(entry_key=other.entry_key)['date'], date(2027, 6, 20))
+
+    def test_forged_post_target_cannot_grant_other_diary_or_private_task_access(self):
+        """Authorize posted task identities against current Diary scope and personal privacy before any mutation."""
+        from Diary.views import DjangoOwnerDirectory
+
+        first, second = self.event(), self.event(28)
+        self.use_current_event(first)
+        other = EntrySpec('Other event task', 'once', fixed_date=date(2027, 6, 20))
+        self.client_for(second).add_entry(spec=other)
+        response = self.client.post(reverse('Diary:task-detail'), {'action': 'save_date', 'revision': 0,
+            'due_date': '2027-07-01', 'host_event_id': first.pk, 'host_task_key': other.entry_key})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(self.client_for(second).task(entry_key=other.entry_key)['date'], date(2027, 6, 20))
+        private = EntrySpec('Private task', 'once', fixed_date=date(2027, 6, 20),
+                            owner_kind='person', person_ref=f'user:{self.manager.pk}')
+        self.client_for(first).add_entry(spec=private, directory=DjangoOwnerDirectory())
+        self.client.force_login(self.member)
+        response = self.client.post(reverse('Diary:task-detail'), {'action': 'save_date', 'revision': 0,
+            'due_date': '2027-07-01', 'host_event_id': first.pk, 'host_task_key': private.entry_key})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(self.client_for(first).task(entry_key=private.entry_key)['date'], date(2027, 6, 20))
+
+    def test_template_post_uses_its_own_target_after_another_tab_changes_selection(self):
+        """Resolve a template form's target independently of the session's latest chooser selection."""
+        self.select_template('Event preparation')
+        page = self.client.get(reverse('Diary:template-edit'))
+        fields = page.context['diary_ui']['form_fields']
+        other = self.api.create_template(name='Other template')
+        other.save_version(entries=(), predecessors={}, expected_version_key=None)
+        self.select_template('Other template')
+        response = self.client.post(reverse('Diary:template-edit'), {'name': 'Event preparation',
+            'description': 'Original tab save', 'expected_version_key': self.version.key,
+            'tasks-TOTAL_FORMS': '0', 'tasks-INITIAL_FORMS': '0', 'tasks-MIN_NUM_FORMS': '0',
+            'tasks-MAX_NUM_FORMS': '200', 'action': 'save', **fields})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.api.template(name='Event preparation').editor_data()['number'], 2)
+        self.assertEqual(other.editor_data()['number'], 1)
+
+    def test_package_checks_access_before_host_context_resolution(self):
+        """Keep host record selection behind the package's login and group permission checks."""
+        with patch('GarageSale.views.diary_views.DiaryHostContextMixin.get_context_data',
+                   side_effect=AssertionError('Host context must follow package authorization.')):
+            self.client.logout()
+            self.assertEqual(self.client.get(reverse('Diary:personal-diary')).status_code, 302)
+            self.client.force_login(self.outsider)
+            self.assertEqual(self.client.get(reverse('Diary:personal-diary')).status_code, 403)
+            self.client.force_login(self.member)
+            self.assertEqual(self.client.get(reverse('Diary:manager-diary')).status_code, 403)
+            self.assertEqual(self.client.get(reverse('Diary:template-list')).status_code, 403)
+
+    def test_package_programming_errors_are_not_reclassified_as_bad_selections(self):
+        """Let unexpected package errors retain normal server-error handling instead of returning a misleading HTTP 400."""
+        event = self.event()
+        self.use_current_event(event)
+        with patch('Diary.views.PersonalDiaryView.get', side_effect=TypeError('Simulated package error.')):
+            with self.assertLogs('django.request', level='ERROR'), self.assertRaises(TypeError):
+                self.client.get(reverse('Diary:personal-diary'))
 
     def test_template_save_and_task_creation_redirects_have_no_identifiers(self):
         """Save templates and new tasks through the supplied forms while keeping success URLs fixed."""
@@ -472,7 +573,7 @@ class EventDiaryIntegrationTests(TestCase):
         page = self.client.get(reverse('Diary:template-create'))
         response = self.client.post(reverse('Diary:template-create'), {'name': 'Another template', 'description': '',
             'tasks-TOTAL_FORMS': '0', 'tasks-INITIAL_FORMS': '0', 'tasks-MIN_NUM_FORMS': '0',
-            'tasks-MAX_NUM_FORMS': '200', 'action': 'save', '_diary_state': page.wsgi_request.diary_host_token})
+            'tasks-MAX_NUM_FORMS': '200', 'action': 'save', **page.context['diary_ui']['form_fields']})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('Diary:template-edit'))
         self.assertEqual(self.client.session['diary_template_name'], 'Another template')
@@ -482,7 +583,7 @@ class EventDiaryIntegrationTests(TestCase):
         values = {'name': 'Forged rename', 'description': 'Updated description',
             'expected_version_key': current['version_key'], 'tasks-TOTAL_FORMS': '0', 'tasks-INITIAL_FORMS': '0',
             'tasks-MIN_NUM_FORMS': '0', 'tasks-MAX_NUM_FORMS': '200', 'action': 'save',
-            '_diary_state': page.wsgi_request.diary_host_token}
+            **page.context['diary_ui']['form_fields']}
         self.assertEqual(self.client.post(reverse('Diary:template-edit'), values).status_code, 302)
         self.assertEqual(self.api.template(name='Another template').editor_data()['number'], 2)
         self.assertEqual(self.client.post(reverse('Diary:template-edit'), values).status_code, 400)
@@ -490,7 +591,7 @@ class EventDiaryIntegrationTests(TestCase):
         page = self.client.get(reverse('Diary:task-create'))
         response = self.client.post(reverse('Diary:task-create'), {'name': 'New team task', 'date_kind': 'once',
             'fixed_date': '2027-06-20', 'owner_kind': 'team', 'entry_key': uuid4(),
-            '_diary_state': page.wsgi_request.diary_host_token})
+            **page.context['diary_ui']['form_fields']})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('Diary:task-create'))
         response = self.client.get(response['Location'])

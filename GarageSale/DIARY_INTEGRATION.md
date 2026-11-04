@@ -225,7 +225,12 @@ flowchart TD
 
 `GarageSale/diary_urls.py` owns fixed Diary HTML routes under `/diary/`.
 Each host page subclasses a Diary package view through `DiaryHostContextMixin` in `GarageSale/views/diary_views.py`.
-The shared mixin supplies trusted context before it calls `super().dispatch()`.
+The package calls `DiaryHostContextMixin.get_context_data()` after its own authentication and group checks.
+The integration uses the common context hook supplied by DjangoTaskCalendar 0.1.2.4.
+The host does not repeat those authentication or group permission checks.
+Its sidebar membership query controls presentation only.
+The host dispatch wrapper catches only `DiaryHostResponse` and removes identifiers from package redirects.
+Unexpected package exceptions retain normal server-error handling.
 The inherited package handlers process GET and POST requests and render the package templates.
 The host has no handler map and does not invoke nested views through `as_view()`.
 Event identifiers, task keys, template names, and Diary UUIDs do not appear in these routes or their query strings.
@@ -243,15 +248,21 @@ The permitted scope contains only that event's stored Diary UUID.
 Template editing passes the selected template name through trusted context.
 The dependency repeats its own permission, scope, and ownership checks.
 
-Every edit form carries signed state for its originating user, event, task, and template.
-The technical field `_diary_state` contains that signed state in the POST body.
-A change of selection in another browser tab cannot redirect an edit to a different task.
+Edit forms carry ordinary hidden target fields. The host has no custom signing key, signature, or expiration period.
+The server derives the user from the authenticated request and the event from `request.current_event`.
+The technical field `host_event_id` confirms an event form's origin. It cannot select another event or grant scope.
+The technical field `host_task_key` identifies the task requested by a task edit.
+The technical field `host_template_name` identifies the template requested by a template edit.
+The package checks record access before it processes its forms.
+Missing, repeated, or malformed required host selectors return HTTP 400.
+A change of GET navigation selection in another browser tab cannot redirect a submitted edit to that tab's task or template.
 An event change invalidates old event forms. The host returns HTTP 400 without changing either Diary.
 An event change also clears the saved task selection.
 Successful edits restore their originating selection before returning to the clean page URL.
 Navigation selections are shared across tabs in one session. Refreshing a page uses the latest session selection.
-Signed form state expires after 24 hours. Expired or changed state requires a reload and returns HTTP 400.
 Missing or invalid CSRF tokens retain Django's HTTP 403 protection.
+Package revision checks and completion tokens remain unchanged.
+Posted targets are untrusted identifiers. Authorization comes from the current user and the server-derived permitted Diary scope.
 
 Active members of the configured DiaryUser or DiaryManager group can select event-specific personal pages.
 Manager lists and template pages require the configured DiaryManager group.
@@ -275,7 +286,9 @@ Identifier query parameters return HTTP 400 and a WARNING through `GarageSale.vi
 
 The host page classes are `EventPersonalDiaryView`, `EventManagerDiaryView`, `EventTaskCreateView`, and `EventTaskDetailView`.
 Template pages use `EventTemplateListView`, `EventTemplateEditorView`, and `EventTemplateCreateView`.
-Each class inherits its GET and POST handlers from the package where those handlers exist.
+The package owns GET rendering, form validation, and POST mutations.
+Task details use small forwarding methods because the package handlers still require an `entry_key` argument.
+Those methods pass the context-resolved task key to the inherited handler without processing any forms.
 `DiarySelectionView` handles host navigation actions separately from Diary edit forms.
 The current host session selections remain in place. Their replacement is a separate design change.
 
@@ -301,11 +314,12 @@ Its `trusted_scope` value removes Diary selectors from rendered links and filter
 Its `selection_url` value enables task and template selection through POST forms.
 Its `task_detail_url` value supplies the fixed task reload URL.
 Its `form_fields` dictionary carries `_diary_state` in each edit and selection form.
-The package escapes these fields. Garage Sale checks their signatures before it delegates a POST request.
+The package escapes these fields. Garage Sale checks event origin and selector syntax.
+The package authorizes the selected record on every request.
 
 The dependency still supplies the forms, field fragments, task validation, date calculation, ownership checks, and storage API.
 The package handles Diary forms, milestone choices, task rows, validation, version creation, and failed submissions.
-Garage Sale imports no Diary form classes and does not override the package POST handler.
+Garage Sale imports no Diary form classes and contains no package form-processing logic.
 The host overrides only `TemplateEditorView.get_success_url()` to retain its template selection and fixed editor URL.
 No dependency Python implementation or migrations are included in this branch.
 The installed Diary version must provide these embedding controls.
@@ -314,7 +328,7 @@ The existing `diary-task-detail-link` and `diary-template-link` classes now iden
 Other dependency class names remain unchanged. Host styles must target classes without requiring a particular element tag.
 
 The package partial `Diary/partials/selection_forms.html` provides hidden task and template selection forms.
-The package partial `Diary/partials/form_fields.html` renders signed hidden form state from trusted context.
+The package partial `Diary/partials/form_fields.html` renders the explicit target fields supplied by host context.
 `GarageSale/templates/GarageSale/diary/unprepared.html` provides a host-framed empty state.
 The technical stylesheet `GarageSale/styles/diary_host.css` keeps the toolbar within narrow screen widths.
 The selectors `.diary.diary-personal` and `.diary.diary-manager` use the full available host content width.
@@ -381,7 +395,11 @@ Their identifiers remain unchanged.
   Implementation: `GarageSale/views/diary_views.py`: `DiaryHostContextMixin`, `DiarySelectionView`, and the concrete `Event*View` subclasses.
   Inheritance verification: `EventDiaryIntegrationTests.test_host_routes_use_package_view_subclasses_and_inherited_form_handlers`.
   Routes: `GarageSale/diary_urls.py`: `urlpatterns`. Base template: `GarageSale/templates/GarageSale/diary/base.html`: `TopBar` and `SnappableSections`.
-  Package content configuration: `GarageSale/views/diary_views.py`: `DiaryHostContextMixin.prepare_host_context`, `diary_base_template`, and `diary_ui`.
+  Package content configuration: `GarageSale/views/diary_views.py`: `DiaryHostContextMixin.get_context_data`, `diary_base_template`, and `diary_ui`.
+  Authentication order verification: `EventDiaryIntegrationTests.test_package_checks_access_before_host_context_resolution`.
+  Unsigned target verification: `EventDiaryIntegrationTests.test_explicit_targets_require_valid_origin_and_csrf_without_host_signatures` and `test_forged_post_target_cannot_grant_other_diary_or_private_task_access`.
+  Cross-tab verification: `EventDiaryIntegrationTests.test_task_post_uses_its_own_target_after_another_tab_changes_selection` and `test_template_post_uses_its_own_target_after_another_tab_changes_selection`.
+  Completion verification: `EventDiaryIntegrationTests.test_package_completion_token_works_without_host_signature`.
   Current-event scope: `GarageSale/views/diary_views.py`: `DiaryHostContextMixin.current_event` and `DiarySelectionView.select`.
   Scope verification: `EventDiaryIntegrationTests.test_current_event_ignores_saved_selection_and_rejects_event_switching` and `EventDiaryIntegrationTests.test_current_event_change_rejects_an_old_form`.
   Team Pages shows a Diary entry beside Dashboard in the Overview group.
@@ -421,7 +439,7 @@ The host regression run passed 67 tests, including its Chrome integration case, 
 That run covers event creation, source dates, team and admin forms, access policy, existing dashboard behavior, and charity selection.
 The browser case verifies clean task and template URLs, the normal team shell, phone layout, and template-editor JavaScript.
 The disabled configuration passed 30 host tests with no Diary API available on the interpreter path.
-The final 16 integration tests also verify signed edit targets and safe rejection of malformed selection values.
+The integration tests also verify explicit edit targets and safe rejection of malformed selection values.
 No migration was applied to application data, and no deployed service changed during verification.
 This change requires collection of the new `GarageSale/styles/diary_host.css` asset and the supplied Diary static assets.
 It adds no database migration beyond the existing host UUID migration.
