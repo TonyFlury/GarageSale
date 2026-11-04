@@ -30,25 +30,14 @@ def clean_diary_location(location):
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
-class EventTemplateEditorView(TemplateEditorView):
-    """Delegate Diary forms to the package and retain host navigation after a successful save."""
-
-    def get_success_url(self, *, template_name):
-        """Retain the saved template selection and return the fixed host editor URL."""
-        self.request.session['diary_template_name'] = template_name
-        return reverse('Diary:template-edit')
-
-
-class EventTemplateCreateView(EventTemplateEditorView):
-    """Create templates through Diary's supplied forms without placing their names in success URLs."""
-
-    creating = True
-
-
-class DiaryTeamView(LoginRequiredMixin, View):
-    """Resolve selected host records and delegate fixed Diary URLs through trusted view context."""
+class DiaryHostContextMixin(LoginRequiredMixin):
+    """HOST-003: Supply host identity, trusted selections, and presentation to inherited Diary views."""
 
     page = 'personal'
+    requires_manager = False
+    uses_event = True
+    uses_task = False
+    uses_template = False
     http_method_names = ['get', 'post', 'head', 'options']
 
     def read_state(self, request):
@@ -81,6 +70,218 @@ class DiaryTeamView(LoginRequiredMixin, View):
             request.session['diary_event_id'] = event_id
         return event
 
+    def dispatch(self, request, *args, **kwargs):
+        """Authenticate host access, supply trusted context, and invoke the inherited package request handler."""
+
+        # Anonymous requests follow the existing host login flow before any record lookup.
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        groups = set(request.user.groups.values_list('name', flat=True))
+
+        # Host context cannot grant access to inactive accounts or unrelated groups.
+        if not request.user.is_active or not groups.intersection({settings.DIARY_MANAGER, settings.DIARY_USER}):
+            raise PermissionDenied('Diary access membership is required.')
+
+        # Browser identifiers cannot override the trusted host context.
+        if IDENTIFIER_PARAMETERS.intersection(request.GET):
+            logger.warning('Diary identifier URL selector rejected: page=%s status=400', self.page)
+            return HttpResponseBadRequest('Select Diary records through the page controls.')
+        try:
+            state = {}
+
+            # Signed form state binds each submitted action to its originating user and records.
+            if request.method == 'POST':
+                state = self.read_state(request)
+            self.host_state = state
+            self.host_groups = groups
+            self.kwargs.update(kwargs)
+            empty = self.prepare_host_context(request, state, groups)
+
+            # An unprepared Diary must not reach a package mutation handler.
+            if empty is not None:
+                return empty
+            response = super().dispatch(request, *args, **self.kwargs)
+            return self.clean_response(response)
+        except (ValidationError, ValueError, TypeError):
+            logger.warning('Diary selection rejected: page=%s status=400', self.page)
+            return HttpResponseBadRequest('The Diary selection is invalid or expired. Reload the page before saving.')
+        except ObjectDoesNotExist as error:
+            raise Http404('The selected Diary item is unavailable.') from error
+
+    def prepare_host_context(self, request, state, groups):
+        """Supply trusted per-request context or return a host empty-state response before package dispatch."""
+
+        # Manager-only pages retain their gate even before a calendar or template is selected.
+        if self.requires_manager and settings.DIARY_MANAGER not in groups:
+            raise PermissionDenied('DiaryManager membership is required.')
+        context = dict(getattr(self, 'extra_context', None) or {})
+
+        # Template pages remain available when there is no current event.
+        event = self.current_event(request, state) if self.uses_event else None
+        task_key, template_name = None, None
+
+        # Template editing uses a prior selection action or the originating signed POST state.
+        if self.uses_template:
+            template_name = state.get('template_name')
+
+            # GET uses the latest navigation selection. POST keeps the template signed into the submitted page.
+            if request.method != 'POST':
+                template_name = request.session.get('diary_template_name')
+            context['template_name'] = template_name
+
+        # Task editing binds the selected key to the originating page rather than a mutable session value during POST.
+        if self.uses_task:
+            task_key = state.get('entry_key')
+
+            # The signed task wins during edits so another tab's session change cannot alter the mutation target.
+            if request.method != 'POST':
+                task_key = request.session.get('diary_task_key')
+
+        # Each supplied form receives signed user and record state for safe edits across browser tabs.
+        page_state = {'user': str(request.user.pk), 'event_id': event.pk if event else None,
+                      'entry_key': task_key, 'template_name': template_name}
+        request.diary_host_token = signing.dumps(page_state, salt=STATE_SALT)
+        context.update(diary_base_template='GarageSale/diary/base.html', diary_ui={
+            'trusted_scope': True,
+            'selection_url': reverse('Diary:select'),
+            'task_detail_url': reverse('Diary:task-detail'),
+            'form_fields': {'_diary_state': request.diary_host_token},
+        })
+        request.diary_host_event = event
+        request.diary_host_manager = settings.DIARY_MANAGER in groups
+        self.host_event = event
+        self.host_task_key = task_key
+        self.extra_context = context
+
+        # Event pages require the host's stored Diary key. Reads never prepare calendars as a side effect.
+        if self.uses_event:
+
+            # An absent calendar has a read-only empty state. A posted change to that state is invalid.
+            if event is None or event.diary_key is None:
+                return render(request, 'GarageSale/diary/unprepared.html', {'host_event': event},
+                              status=400 if request.method == 'POST' else 200)
+            context.update(host_event=event, diary_key=event.diary_key, permitted_diary_keys=(event.diary_key,),
+                           task_create_url=reverse('Diary:task-create'))
+
+            # An unselected detail page provides instructions instead of guessing a task from this diary.
+            if self.uses_task:
+
+                # No task can be edited until an explicit selection supplies its key in signed host state.
+                if not task_key:
+                    return render(request, 'GarageSale/diary/unprepared.html',
+                        {'host_event': event, 'host_message': 'Select a task from My Diary or Manager diary.'},
+                        status=400 if request.method == 'POST' else 200)
+                self.kwargs['entry_key'] = UUID(str(task_key))
+
+        # Creation success remains server-side after the dependency's identifier-bearing redirect is cleaned.
+        if self.page == 'create' and request.method == 'GET':
+            added = request.session.pop('diary_added_task', None)
+
+            # Only a recorded creation success can supply the dependency's internal success marker.
+            if added:
+                values = request.GET.copy()
+                values['added'] = added
+                request.GET = values
+        return None
+
+    def clean_response(self, response):
+        """Keep package redirect identifiers in host selection state and preserve the fixed browser URLs."""
+        request = self.request
+        event = getattr(self, 'host_event', None)
+        task_key = getattr(self, 'host_task_key', None)
+
+        # Dependency redirects can carry their own diary selector or added-task key. Neither belongs in host URLs.
+        if response.has_header('Location'):
+            # A successful edit records its current event scope before the clean redirect is followed.
+            if request.method == 'POST' and event is not None:
+                request.session['diary_event_id'] = event.pk
+
+                # Detail edits also restore the exact task. Creation pages retain their event without selecting a task.
+                if self.uses_task:
+                    request.session['diary_task_key'] = str(task_key)
+            location = response['Location']
+            added = dict(parse_qsl(urlsplit(location).query)).get('added')
+
+            # Keep new-task success information in the session instead of the redirected browser location.
+            if added:
+                request.session['diary_added_task'] = added
+            response['Location'] = clean_diary_location(location)
+        return response
+
+
+class EventPersonalDiaryView(DiaryHostContextMixin, PersonalDiaryView):
+    """Show the package personal Diary using the host's current-event context and page shell."""
+
+    page = 'personal'
+
+
+class EventManagerDiaryView(DiaryHostContextMixin, ManagerDiaryView):
+    """Show the package manager Diary within the current host event's permitted scope."""
+
+    page = 'manager'
+    requires_manager = True
+
+
+class EventTaskCreateView(DiaryHostContextMixin, TaskCreateView):
+    """Delegate task creation forms to Diary within trusted current-event scope."""
+
+    page = 'create'
+
+
+class EventTaskDetailView(DiaryHostContextMixin, TaskDetailView):
+    """Delegate task reads, edits, and completion to Diary with the selected trusted task key."""
+
+    page = 'detail'
+    uses_task = True
+
+
+class EventTemplateListView(DiaryHostContextMixin, TemplateEditorView):
+    """Show the package template chooser within the host page shell."""
+
+    page = 'templates'
+    requires_manager = True
+    uses_event = False
+
+
+class EventTemplateEditorView(DiaryHostContextMixin, TemplateEditorView):
+    """Delegate template forms to Diary with the host's trusted template selection."""
+
+    page = 'template-edit'
+    requires_manager = True
+    uses_event = False
+    uses_template = True
+
+    def get_success_url(self, *, template_name):
+        """Retain the saved template selection and return the fixed host editor URL."""
+        self.request.session['diary_template_name'] = template_name
+        return reverse('Diary:template-edit')
+
+
+class EventTemplateCreateView(EventTemplateEditorView):
+    """Delegate new template forms to Diary without selecting an existing template."""
+
+    page = 'template-create'
+    uses_template = False
+    creating = True
+
+
+class DiarySelectionView(DiaryHostContextMixin, View):
+    """Process host navigation actions separately from the package Diary page subclasses."""
+
+    page = 'select'
+
+    def prepare_host_context(self, request, state, groups):
+        """Leave record resolution to the host selection action without preparing a Diary content page."""
+        return None
+
+    def get(self, request, *args, **kwargs):
+        """Reject selection changes during an ordinary page read."""
+        return HttpResponseBadRequest('Select a Diary item through its page control.')
+
+    def post(self, request, *args, **kwargs):
+        """Resolve one signed host navigation action without processing a Diary edit form."""
+        return self.select(request, self.host_state, self.host_groups)
+
     def select(self, request, state, groups):
         """Validate one task or template selection from a CSRF-protected POST action."""
         kind = request.POST.get('selection')
@@ -111,139 +312,3 @@ class DiaryTeamView(LoginRequiredMixin, View):
             request.session['diary_task_key'] = str(key)
             return redirect('Diary:task-detail')
         raise ValidationError('Select one supported Diary action.')
-
-    def dispatch(self, request, *args, **kwargs):
-        """Resolve user actions without identifier URLs and bind edits to the displayed event, task, or template."""
-
-        # Anonymous users must complete the normal host login flow before selecting any records.
-        if not request.user.is_authenticated:
-            return self.handle_no_permission()
-        groups = set(request.user.groups.values_list('name', flat=True))
-
-        # URL names and session state cannot grant access to an inactive or unrelated host user.
-        if not request.user.is_active or not groups.intersection({settings.DIARY_MANAGER, settings.DIARY_USER}):
-            raise PermissionDenied('Diary access membership is required.')
-
-        # Reject browser identifier selectors rather than deriving scope from a query string.
-        if IDENTIFIER_PARAMETERS.intersection(request.GET):
-            logger.warning('Diary identifier URL selector rejected: page=%s status=400', self.page)
-            return HttpResponseBadRequest('Select Diary records through the page controls.')
-        try:
-            state = {}
-
-            # Signed POST state keeps concurrent browser tabs from applying an edit to the wrong task or template.
-            if request.method == 'POST':
-                state = self.read_state(request)
-
-            # One fixed endpoint handles selection actions before the selected page is rendered.
-            if self.page == 'select':
-
-                # Selection changes require a POST body and must not occur during an ordinary page read.
-                if request.method != 'POST':
-                    return HttpResponseBadRequest('Select a Diary item through its page control.')
-                return self.select(request, state, groups)
-            return self.show_page(request, state, groups)
-        except (ValidationError, ValueError, TypeError):
-            logger.warning('Diary selection rejected: page=%s status=400', self.page)
-            return HttpResponseBadRequest('The Diary selection is invalid or expired. Reload the page before saving.')
-        except ObjectDoesNotExist as error:
-            raise Http404('The selected Diary item is unavailable.') from error
-
-    def show_page(self, request, state, groups):
-        """Delegate one supported page and remove identifier query values from dependency-generated redirects."""
-        handlers = {'personal': PersonalDiaryView, 'manager': ManagerDiaryView,
-                    'create': TaskCreateView, 'detail': TaskDetailView,
-                    'templates': EventTemplateEditorView, 'template-create': EventTemplateCreateView,
-                    'template-edit': EventTemplateEditorView}
-
-        # Fixed host routes must not select arbitrary dependency view classes.
-        if self.page not in handlers:
-            raise Http404('Unknown Diary page.')
-
-        # Manager-only pages retain their gate even before a calendar or template is selected.
-        if self.page in {'manager', 'templates', 'template-create', 'template-edit'} and settings.DIARY_MANAGER not in groups:
-            raise PermissionDenied('DiaryManager membership is required.')
-        context, handler_kwargs = {}, {}
-
-        # Template pages remain available when there is no current event.
-        event = None if self.page.startswith('template') else self.current_event(request, state)
-        task_key, template_name = None, None
-
-        # Template editing uses a prior selection action or the originating signed POST state.
-        if self.page == 'template-edit':
-            template_name = state.get('template_name')
-
-            # GET uses the latest navigation selection. POST keeps the template signed into the submitted page.
-            if request.method != 'POST':
-                template_name = request.session.get('diary_template_name')
-            context['template_name'] = template_name
-
-        # Task editing binds the selected key to the originating page rather than a mutable session value during POST.
-        if self.page == 'detail':
-            task_key = state.get('entry_key')
-
-            # The signed task wins during edits so another tab's session change cannot alter the mutation target.
-            if request.method != 'POST':
-                task_key = request.session.get('diary_task_key')
-
-        # Each supplied form receives signed user and record state for safe edits across browser tabs.
-        page_state = {'user': str(request.user.pk), 'event_id': event.pk if event else None,
-                      'entry_key': task_key, 'template_name': template_name}
-        request.diary_host_token = signing.dumps(page_state, salt=STATE_SALT)
-        context.update(diary_base_template='GarageSale/diary/base.html', diary_ui={
-            'trusted_scope': True,
-            'selection_url': reverse('Diary:select'),
-            'task_detail_url': reverse('Diary:task-detail'),
-            'form_fields': {'_diary_state': request.diary_host_token},
-        })
-        request.diary_host_event = event
-        request.diary_host_manager = settings.DIARY_MANAGER in groups
-
-        # Event pages require the host's stored Diary key. Reads never prepare calendars as a side effect.
-        if not self.page.startswith('template'):
-
-            # An absent calendar has a read-only empty state. A posted change to that state is invalid.
-            if event is None or event.diary_key is None:
-                return render(request, 'GarageSale/diary/unprepared.html', {'host_event': event},
-                              status=400 if request.method == 'POST' else 200)
-            context.update(host_event=event, diary_key=event.diary_key, permitted_diary_keys=(event.diary_key,),
-                           task_create_url=reverse('Diary:task-create'))
-
-            # An unselected detail page provides instructions instead of guessing a task from this diary.
-            if self.page == 'detail':
-
-                # No task can be edited until an explicit selection supplies its key in signed host state.
-                if not task_key:
-                    return render(request, 'GarageSale/diary/unprepared.html',
-                        {'host_event': event, 'host_message': 'Select a task from My Diary or Manager diary.'},
-                        status=400 if request.method == 'POST' else 200)
-                handler_kwargs['entry_key'] = UUID(str(task_key))
-
-        # Creation success remains server-side after the dependency's identifier-bearing redirect is cleaned.
-        if self.page == 'create' and request.method == 'GET':
-            added = request.session.pop('diary_added_task', None)
-
-            # Only a recorded creation success can supply the dependency's internal success marker.
-            if added:
-                values = request.GET.copy()
-                values['added'] = added
-                request.GET = values
-        response = handlers[self.page].as_view(extra_context=context)(request, **handler_kwargs)
-
-        # Dependency redirects can carry their own diary selector or added-task key. Neither belongs in host URLs.
-        if response.has_header('Location'):
-            # A successful edit records its current event scope before the clean redirect is followed.
-            if request.method == 'POST' and event is not None:
-                request.session['diary_event_id'] = event.pk
-
-                # Detail edits also restore the exact task. Creation pages retain their event without selecting a task.
-                if self.page == 'detail':
-                    request.session['diary_task_key'] = str(task_key)
-            location = response['Location']
-            added = dict(parse_qsl(urlsplit(location).query)).get('added')
-
-            # Keep new-task success information in the session instead of the redirected browser location.
-            if added:
-                request.session['diary_added_task'] = added
-            response['Location'] = clean_diary_location(location)
-        return response

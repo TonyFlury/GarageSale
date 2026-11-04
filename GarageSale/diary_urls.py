@@ -1,16 +1,19 @@
 """HOST-003: Fixed Diary URLs leave event, task, and template selection to trusted host view state."""
 from django.urls import path
 
-from GarageSale.views.diary_views import DiaryTeamView
+from GarageSale.views.diary_views import (
+    DiarySelectionView, EventManagerDiaryView, EventPersonalDiaryView, EventTaskCreateView,
+    EventTaskDetailView, EventTemplateCreateView, EventTemplateEditorView, EventTemplateListView,
+)
 
 app_name = 'Diary'
 urlpatterns = [
-    path('', DiaryTeamView.as_view(page='personal'), name='personal-diary'),
-    path('select/', DiaryTeamView.as_view(page='select'), name='select'),
-    path('manager/', DiaryTeamView.as_view(page='manager'), name='manager-diary'),
-    path('tasks/new/', DiaryTeamView.as_view(page='create'), name='task-create'),
-    path('tasks/detail/', DiaryTeamView.as_view(page='detail'), name='task-detail'),
-    path('templates/', DiaryTeamView.as_view(page='templates'), name='template-list'),
-    path('templates/new/', DiaryTeamView.as_view(page='template-create'), name='template-create'),
-    path('templates/edit/', DiaryTeamView.as_view(page='template-edit'), name='template-edit'),
+    path('', EventPersonalDiaryView.as_view(), name='personal-diary'),
+    path('select/', DiarySelectionView.as_view(), name='select'),
+    path('manager/', EventManagerDiaryView.as_view(), name='manager-diary'),
+    path('tasks/new/', EventTaskCreateView.as_view(), name='task-create'),
+    path('tasks/detail/', EventTaskDetailView.as_view(), name='task-detail'),
+    path('templates/', EventTemplateListView.as_view(), name='template-list'),
+    path('templates/new/', EventTemplateCreateView.as_view(), name='template-create'),
+    path('templates/edit/', EventTemplateEditorView.as_view(), name='template-edit'),
 ]

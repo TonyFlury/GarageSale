@@ -224,7 +224,10 @@ flowchart TD
 ## Host-owned Diary pages
 
 `GarageSale/diary_urls.py` owns fixed Diary HTML routes under `/diary/`.
-`DiaryTeamView` in `GarageSale/views/diary_views.py` resolves selected records before delegating to the dependency's supplied views.
+Each host page subclasses a Diary package view through `DiaryHostContextMixin` in `GarageSale/views/diary_views.py`.
+The shared mixin supplies trusted context before it calls `super().dispatch()`.
+The inherited package handlers process GET and POST requests and render the package templates.
+The host has no handler map and does not invoke nested views through `as_view()`.
 Event identifiers, task keys, template names, and Diary UUIDs do not appear in these routes or their query strings.
 Ordinary display filters can remain in query strings.
 
@@ -253,7 +256,7 @@ Missing or invalid CSRF tokens retain Django's HTTP 403 protection.
 Active members of the configured DiaryUser or DiaryManager group can select event-specific personal pages.
 Manager lists and template pages require the configured DiaryManager group.
 The host applies that manager gate before showing an unprepared-event state.
-Those configured groups can select Garage Sale events. Diary's personal-task privacy still applies within each event.
+Both configured groups use the host's current-event scope. Diary's personal-task privacy still applies within that scope.
 Unknown events or unavailable task selections return HTTP 404.
 Missing Diary keys show Calendar not prepared without creating data.
 A forged POST to an unprepared event returns HTTP 400.
@@ -269,6 +272,12 @@ Identifier query parameters return HTTP 400 and a WARNING through `GarageSale.vi
 | `/diary/templates/` | Template chooser. |
 | `/diary/templates/new/` | Template creation. |
 | `/diary/templates/edit/` | Editing for the selected template. |
+
+The host page classes are `EventPersonalDiaryView`, `EventManagerDiaryView`, `EventTaskCreateView`, and `EventTaskDetailView`.
+Template pages use `EventTemplateListView`, `EventTemplateEditorView`, and `EventTemplateCreateView`.
+Each class inherits its GET and POST handlers from the package where those handlers exist.
+`DiarySelectionView` handles host navigation actions separately from Diary edit forms.
+The current host session selections remain in place. Their replacement is a separate design change.
 
 No record-specific URL aliases are supplied.
 The host retains the `Diary` URL namespace because the supplied components use those route names.
@@ -369,10 +378,11 @@ Their identifiers remain unchanged.
   UUID verification: `GarageSale/tests/test_diary_key.py`: `EventDiaryKeyTests.test_event_stores_the_api_key_without_a_foreign_key`.
 
 - [x] **HOST-003: Trusted host scope, clean URLs, and team-page presentation.**
-  Implementation: `GarageSale/views/diary_views.py`: `DiaryTeamView` and `EventTemplateEditorView`.
+  Implementation: `GarageSale/views/diary_views.py`: `DiaryHostContextMixin`, `DiarySelectionView`, and the concrete `Event*View` subclasses.
+  Inheritance verification: `EventDiaryIntegrationTests.test_host_routes_use_package_view_subclasses_and_inherited_form_handlers`.
   Routes: `GarageSale/diary_urls.py`: `urlpatterns`. Base template: `GarageSale/templates/GarageSale/diary/base.html`: `TopBar` and `SnappableSections`.
-  Package content configuration: `GarageSale/views/diary_views.py`: `DiaryTeamView.show_page`, `diary_base_template`, and `diary_ui`.
-  Current-event scope: `GarageSale/views/diary_views.py`: `DiaryTeamView.current_event` and `DiaryTeamView.select`.
+  Package content configuration: `GarageSale/views/diary_views.py`: `DiaryHostContextMixin.prepare_host_context`, `diary_base_template`, and `diary_ui`.
+  Current-event scope: `GarageSale/views/diary_views.py`: `DiaryHostContextMixin.current_event` and `DiarySelectionView.select`.
   Scope verification: `EventDiaryIntegrationTests.test_current_event_ignores_saved_selection_and_rejects_event_switching` and `EventDiaryIntegrationTests.test_current_event_change_rejects_an_old_form`.
   Team Pages shows a Diary entry beside Dashboard in the Overview group.
   Icon file: `GarageSale/static/GarageSale/images/icons/navigation/diary-svgrepo-com.svg`.

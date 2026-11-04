@@ -14,7 +14,7 @@ from django.test import TestCase, override_settings
 from django.template import RequestContext, Template
 from django.template.loader import get_template
 from django.test import RequestFactory
-from django.urls import reverse
+from django.urls import resolve, reverse
 
 from Diary.api import Actor, DiaryAPI, EntrySpec
 from GarageSale.diary_integration import DiaryIntegrationError, ensure_event_diary, event_diary_definition
@@ -176,6 +176,22 @@ class EventDiaryIntegrationTests(TestCase):
                 self.assertEqual(response.content.lower().count(b'<!doctype html>'), 1)
                 self.assertContains(response, 'team_pages/styles/team_page.css')
                 self.assertContains(response, 'Diary/styles/diary.css')
+
+    def test_host_routes_use_package_view_subclasses_and_inherited_form_handlers(self):
+        """Keep routing on package subclasses and leave Diary form submission handlers owned by the dependency."""
+        from Diary.views import ManagerDiaryView, PersonalDiaryView, TaskCreateView, TaskDetailView, TemplateEditorView
+
+        parents = {'personal-diary': PersonalDiaryView, 'manager-diary': ManagerDiaryView,
+            'task-create': TaskCreateView, 'task-detail': TaskDetailView, 'template-list': TemplateEditorView,
+            'template-create': TemplateEditorView, 'template-edit': TemplateEditorView}
+        for name, parent in parents.items():
+            child = resolve(reverse(f'Diary:{name}')).func.view_class
+            self.assertTrue(issubclass(child, parent))
+            self.assertIs(child.get, parent.get)
+
+            # Read-only package pages have no form handler for a host adapter to replace.
+            if hasattr(parent, 'post'):
+                self.assertIs(child.post, parent.post)
 
     def test_diary_page_links_use_sidebar_with_current_manager_access(self):
         """Keep page links in the sidebar and restrict manager links to current managers."""
