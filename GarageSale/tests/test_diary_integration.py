@@ -68,6 +68,15 @@ class EventDiaryIntegrationTests(TestCase):
         current.start()
         self.addCleanup(current.stop)
 
+    def submission_fields(self, response):
+        """Return package form targets and host navigation fields from a rendered page."""
+        fields = dict(response.context['diary_ui']['form_fields'])
+
+        # Package edit forms identify their own target independently of session navigation.
+        if response.context.get('diary_target'):
+            fields['diary_target'] = response.context['diary_target']
+        return fields
+
     def select_task(self, entry_key):
         """Select one task from the current host event through the normal POST action."""
         response = self.client.get(reverse('Diary:personal-diary'))
@@ -179,24 +188,21 @@ class EventDiaryIntegrationTests(TestCase):
 
     def test_host_routes_use_package_view_subclasses_and_inherited_form_handlers(self):
         """Keep routing on package subclasses and leave Diary form submission handlers owned by the dependency."""
-        from Diary.views import ManagerDiaryView, PersonalDiaryView, TaskCreateView, TaskDetailView, TemplateEditorView
+        from Diary.views import ManagerDiaryView, PersonalDiaryView, TaskCreateView, TaskDetailView, TemplateApplyView, TemplateEditorView
 
-        parents = {'personal-diary': PersonalDiaryView, 'manager-diary': ManagerDiaryView,
+        parents = {'template-apply': TemplateApplyView, 'personal-diary': PersonalDiaryView, 'manager-diary': ManagerDiaryView,
             'task-create': TaskCreateView, 'task-detail': TaskDetailView, 'template-list': TemplateEditorView,
             'template-create': TemplateEditorView, 'template-edit': TemplateEditorView}
         for name, parent in parents.items():
             child = resolve(reverse(f'Diary:{name}')).func.view_class
             self.assertTrue(issubclass(child, parent))
 
-            # Task details need a small argument adapter, while the package still owns the complete form response.
-            if parent is TaskDetailView:
-                self.assertIs(child.respond, parent.respond)
-            else:
-                self.assertIs(child.get, parent.get)
+            self.assertIs(child.get, parent.get)
+            self.assertIs(child.dispatch, parent.dispatch)
 
-                # Read-only package pages expose no form handler to compare.
-                if hasattr(parent, 'post'):
-                    self.assertIs(child.post, parent.post)
+            # Read-only package pages expose no form handler to compare.
+            if hasattr(parent, 'post'):
+                self.assertIs(child.post, parent.post)
 
     def test_diary_page_links_use_sidebar_with_current_manager_access(self):
         """Keep page links in the sidebar and restrict manager links to current managers."""
@@ -229,7 +235,7 @@ class EventDiaryIntegrationTests(TestCase):
             **response.context['diary_ui']['form_fields']}).status_code, 400)
         self.use_current_event(None)
         response = self.client.get(reverse('Diary:personal-diary'))
-        self.assertContains(response, 'There is no current event.')
+        self.assertEqual(response.context['permitted_diary_keys'], ())
 
     def test_conflicting_query_key_cannot_change_trusted_event_scope(self):
         """Reject a browser Diary selector and preserve trusted current-event scope."""
@@ -249,7 +255,7 @@ class EventDiaryIntegrationTests(TestCase):
         event = EventData.objects.create(event_date=date(2027, 6, 27), use_from=date(2027, 1, 1))
         self.use_current_event(event)
         response = self.client.get(reverse('Diary:personal-diary'))
-        self.assertContains(response, 'Calendar not prepared')
+        self.assertEqual(response.context['permitted_diary_keys'], ())
         self.assertTemplateUsed(response, 'team_pages_base.html')
         event.refresh_from_db()
         self.assertIsNone(event.diary_key)
@@ -398,7 +404,7 @@ class EventDiaryIntegrationTests(TestCase):
         values = {'name': 'Event preparation', 'description': '', 'expected_version_key': self.version.key,
             'milestone_names': ['event_date', 'event_created'],
             'tasks-TOTAL_FORMS': '1', 'tasks-INITIAL_FORMS': '1', 'tasks-MIN_NUM_FORMS': '0',
-            'tasks-MAX_NUM_FORMS': '200', 'action': 'save', **page.context['diary_ui']['form_fields'],
+            'tasks-MAX_NUM_FORMS': '200', 'action': 'save', **self.submission_fields(page),
             'tasks-0-entry_key': self.spec.entry_key, 'tasks-0-name': self.spec.name,
             'tasks-0-date_kind': 'source', 'tasks-0-milestone_name': 'event_date', 'tasks-0-owner_kind': 'team',
             'tasks-0-year_offset': '0', 'tasks-0-day_offset': '0'}
@@ -434,7 +440,7 @@ class EventDiaryIntegrationTests(TestCase):
         self.use_current_event(first)
         self.select_task(self.spec.entry_key)
         page = self.client.get(reverse('Diary:task-detail'))
-        fields = page.context['diary_ui']['form_fields']
+        fields = self.submission_fields(page)
         self.use_current_event(second)
         self.select_task(self.spec.entry_key)
         response = self.client.post(reverse('Diary:task-detail'), {'action': 'save_date', 'revision': 0,
@@ -445,7 +451,7 @@ class EventDiaryIntegrationTests(TestCase):
         self.assertEqual(self.client.session['diary_event_id'], second.pk)
 
     def test_explicit_targets_require_valid_origin_and_csrf_without_host_signatures(self):
-        """Authorize unsigned targets while rejecting missing origins, malformed values, duplicates, and absent CSRF protection."""
+        """Reject invalid package targets and host navigation origins while preserving Django CSRF protection."""
         from django.test import Client
 
         event = self.event()
@@ -453,7 +459,7 @@ class EventDiaryIntegrationTests(TestCase):
         self.assertEqual(self.client.post(reverse('Diary:select'),
             {'selection': 'task', 'entry_key': self.spec.entry_key}).status_code, 400)
         page = self.client.get(reverse('Diary:personal-diary'))
-        fields = page.context['diary_ui']['form_fields']
+        fields = self.submission_fields(page)
         self.assertNotIn('_diary_state', fields)
         self.assertNotContains(page, '_diary_state')
         self.assertEqual(self.client.post(reverse('Diary:select'),
@@ -461,7 +467,7 @@ class EventDiaryIntegrationTests(TestCase):
         for value in ('invalid-key', [str(self.spec.entry_key), str(self.spec.entry_key)]):
             response = self.client.post(reverse('Diary:task-detail'),
                 {'action': 'save_date', 'revision': 0, 'due_date': '2027-07-01',
-                 'host_task_key': value, **fields})
+                 'diary_target': value, **fields})
             self.assertEqual(response.status_code, 400)
         response = self.client.post(reverse('Diary:select'), {'selection': 'task',
             'entry_key': self.spec.entry_key, 'host_event_id': '<script>bad()</script>'})
@@ -473,13 +479,13 @@ class EventDiaryIntegrationTests(TestCase):
         client.force_login(self.manager)
         page = client.get(reverse('Diary:personal-diary'))
         values = {'selection': 'task', 'entry_key': self.spec.entry_key,
-                  **page.context['diary_ui']['form_fields']}
+                  **self.submission_fields(page)}
         self.assertEqual(client.post(reverse('Diary:select'), values).status_code, 403)
         values['csrfmiddlewaretoken'] = client.cookies['csrftoken'].value
         self.assertEqual(client.post(reverse('Diary:select'), values).status_code, 302)
 
     def test_package_completion_token_works_without_host_signature(self):
-        """Keep package completion and revision checks while carrying ordinary host target fields."""
+        """Keep package completion and revision checks with the package form target."""
         event = self.event()
         self.use_current_event(event)
         self.select_task(self.spec.entry_key)
@@ -487,7 +493,7 @@ class EventDiaryIntegrationTests(TestCase):
         form = page.context['completion_form']
         response = self.client.post(reverse('Diary:task-detail'), {'action': 'complete',
             'revision': form['revision'].value(), 'blocker_token': form['blocker_token'].value(),
-            **page.context['diary_ui']['form_fields']})
+            **self.submission_fields(page)})
         self.assertEqual(response.status_code, 302)
         self.assertIsNotNone(self.client_for(event).task(entry_key=self.spec.entry_key)['completed_at'])
 
@@ -499,7 +505,7 @@ class EventDiaryIntegrationTests(TestCase):
         self.client_for(event).add_entry(spec=other)
         self.select_task(self.spec.entry_key)
         page = self.client.get(reverse('Diary:task-detail'))
-        fields = page.context['diary_ui']['form_fields']
+        fields = self.submission_fields(page)
         self.select_task(other.entry_key)
         response = self.client.post(reverse('Diary:task-detail'), {'action': 'save_date', 'revision': 0,
             'due_date': '2027-07-01', **fields})
@@ -517,7 +523,7 @@ class EventDiaryIntegrationTests(TestCase):
         self.client_for(second).add_entry(spec=other)
         response = self.client.post(reverse('Diary:task-detail'), {'action': 'save_date', 'revision': 0,
             'due_date': '2027-07-01', 'host_event_id': first.pk, 'host_task_key': other.entry_key})
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(self.client_for(second).task(entry_key=other.entry_key)['date'], date(2027, 6, 20))
         private = EntrySpec('Private task', 'once', fixed_date=date(2027, 6, 20),
                             owner_kind='person', person_ref=f'user:{self.manager.pk}')
@@ -525,14 +531,14 @@ class EventDiaryIntegrationTests(TestCase):
         self.client.force_login(self.member)
         response = self.client.post(reverse('Diary:task-detail'), {'action': 'save_date', 'revision': 0,
             'due_date': '2027-07-01', 'host_event_id': first.pk, 'host_task_key': private.entry_key})
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(self.client_for(first).task(entry_key=private.entry_key)['date'], date(2027, 6, 20))
 
     def test_template_post_uses_its_own_target_after_another_tab_changes_selection(self):
         """Resolve a template form's target independently of the session's latest chooser selection."""
         self.select_template('Event preparation')
         page = self.client.get(reverse('Diary:template-edit'))
-        fields = page.context['diary_ui']['form_fields']
+        fields = self.submission_fields(page)
         other = self.api.create_template(name='Other template')
         other.save_version(entries=(), predecessors={}, expected_version_key=None)
         self.select_template('Other template')
@@ -543,6 +549,45 @@ class EventDiaryIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self.api.template(name='Event preparation').editor_data()['number'], 2)
         self.assertEqual(other.editor_data()['number'], 1)
+
+    def test_empty_calendar_template_application_uses_package_forms_and_clean_redirect(self):
+        """Apply a template to a linked empty calendar without host form processing or URL identifiers."""
+        event = EventData.objects.create(event_date=date(2027, 6, 27), use_from=date(2027, 1, 1))
+        diary = self.api.create_diary(name='Empty calendar', without_template=True)
+        event.diary_key = diary.key
+        event.save(update_fields=('diary_key',))
+        self.use_current_event(event)
+        manager = self.client.get(reverse('Diary:manager-diary'))
+        url = reverse('Diary:template-apply')
+        self.assertContains(manager, f'href="{url}"')
+        page = self.client.get(url)
+        self.assertTemplateUsed(page, 'Diary/partials/template_apply.html')
+        self.assertTemplateUsed(page, 'team_pages_base.html')
+        choice = self.client.post(url, {'action': 'choose_template', 'template_version_key': self.version.key,
+                                       **self.submission_fields(page)})
+        self.assertEqual(choice.status_code, 200)
+        self.assertIn('milestone_event_date', choice.context['application_dates'].fields)
+        self.assertIsNone(self.client_for(event).read()['template_version_key'])
+        response = self.client.post(url, {'template_version_key': self.version.key,
+            'milestone_event_date': '2027-06-27', **self.submission_fields(choice)})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('Diary:manager-diary'))
+        self.assertEqual(self.client_for(event).task(entry_key=self.spec.entry_key)['date'], event.event_date)
+        self.client.force_login(self.member)
+        self.assertEqual(self.client.get(url).status_code, 403)
+
+    def test_package_target_is_bound_to_the_original_user(self):
+        """Reject another user's valid task form before changing its target."""
+        event = self.event()
+        self.use_current_event(event)
+        self.select_task(self.spec.entry_key)
+        page = self.client.get(reverse('Diary:task-detail'))
+        fields = self.submission_fields(page)
+        self.client.force_login(self.member)
+        response = self.client.post(reverse('Diary:task-detail'), {'action': 'save_date', 'revision': 0,
+            'due_date': '2027-07-01', **fields})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.client_for(event).task(entry_key=self.spec.entry_key)['date'], event.event_date)
 
     def test_package_checks_access_before_host_context_resolution(self):
         """Keep host record selection behind the package's login and group permission checks."""
@@ -573,7 +618,7 @@ class EventDiaryIntegrationTests(TestCase):
         page = self.client.get(reverse('Diary:template-create'))
         response = self.client.post(reverse('Diary:template-create'), {'name': 'Another template', 'description': '',
             'tasks-TOTAL_FORMS': '0', 'tasks-INITIAL_FORMS': '0', 'tasks-MIN_NUM_FORMS': '0',
-            'tasks-MAX_NUM_FORMS': '200', 'action': 'save', **page.context['diary_ui']['form_fields']})
+            'tasks-MAX_NUM_FORMS': '200', 'action': 'save', **self.submission_fields(page)})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('Diary:template-edit'))
         self.assertEqual(self.client.session['diary_template_name'], 'Another template')
@@ -583,7 +628,7 @@ class EventDiaryIntegrationTests(TestCase):
         values = {'name': 'Forged rename', 'description': 'Updated description',
             'expected_version_key': current['version_key'], 'tasks-TOTAL_FORMS': '0', 'tasks-INITIAL_FORMS': '0',
             'tasks-MIN_NUM_FORMS': '0', 'tasks-MAX_NUM_FORMS': '200', 'action': 'save',
-            **page.context['diary_ui']['form_fields']}
+            **self.submission_fields(page)}
         self.assertEqual(self.client.post(reverse('Diary:template-edit'), values).status_code, 302)
         self.assertEqual(self.api.template(name='Another template').editor_data()['number'], 2)
         self.assertEqual(self.client.post(reverse('Diary:template-edit'), values).status_code, 400)
@@ -591,7 +636,7 @@ class EventDiaryIntegrationTests(TestCase):
         page = self.client.get(reverse('Diary:task-create'))
         response = self.client.post(reverse('Diary:task-create'), {'name': 'New team task', 'date_kind': 'once',
             'fixed_date': '2027-06-20', 'owner_kind': 'team', 'entry_key': uuid4(),
-            **page.context['diary_ui']['form_fields']})
+            **self.submission_fields(page)})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('Diary:task-create'))
         response = self.client.get(response['Location'])

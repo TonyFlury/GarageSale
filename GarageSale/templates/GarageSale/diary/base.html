@@ -18,6 +18,11 @@
     <a href="{% url 'TeamPages:Root' %}">Team Page</a> / Diary
 {% endblock %}
 {% block SnappableSections %}
+    {% block diary_messages %}
+        {% for message in messages %}
+            <p class="diary diary-notice{% if 'diary-task-created' in message.tags %} diary-create-success{% endif %}" role="status">{{ message }}</p>
+        {% endfor %}
+    {% endblock %}
     {% block diary_content %}{% endblock %}
 {% endblock %}
 {% block PageScripts %}{{ block.super }}{% block diary_scripts %}{% endblock %}{% endblock %}

@@ -3,7 +3,7 @@ from django.urls import path
 
 from GarageSale.views.diary_views import (
     DiarySelectionView, EventManagerDiaryView, EventPersonalDiaryView, EventTaskCreateView,
-    EventTaskDetailView, EventTemplateCreateView, EventTemplateEditorView, EventTemplateListView,
+    EventTaskDetailView, EventTemplateApplyView, EventTemplateCreateView, EventTemplateEditorView, EventTemplateListView,
 )
 
 app_name = 'Diary'
@@ -13,6 +13,7 @@ urlpatterns = [
     path('manager/', EventManagerDiaryView.as_view(), name='manager-diary'),
     path('tasks/new/', EventTaskCreateView.as_view(), name='task-create'),
     path('tasks/detail/', EventTaskDetailView.as_view(), name='task-detail'),
+    path('templates/apply/', EventTemplateApplyView.as_view(), name='template-apply'),
     path('templates/', EventTemplateListView.as_view(), name='template-list'),
     path('templates/new/', EventTemplateCreateView.as_view(), name='template-create'),
     path('templates/edit/', EventTemplateEditorView.as_view(), name='template-edit'),
