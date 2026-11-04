@@ -1,13 +1,23 @@
 """HOST-001 and HOST-002: Create event diaries through the independently supplied Diary API."""
+import logging
+from datetime import date
+
 from django.conf import settings
-from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import transaction
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied, ValidationError
+from django.db import IntegrityError, transaction
 
 from GarageSale.models import EventData
+
+logger = logging.getLogger(__name__)
+
+
+class DiaryIntegrationError(RuntimeError):
+    """Report a logged Diary setup failure without exposing configuration details in the UI."""
 
 
 MILESTONE_FIELDS = {
     'event_date': 'event_date',
+    'event_created': 'use_from',
     'ad_bookings_open': 'open_billboard_bookings',
     'ad_bookings_closed': 'close_billboard_bookings',
     'sales_bookings_open': 'open_sales_bookings',
@@ -37,20 +47,41 @@ def event_creation_actor(user):
 
 def event_diary_definition(event, user):
     """Return the authorized API, approved template, and mapped event dates without writing records.
-    Reject unsupported milestone names with ValidationError. The host authorizes automatic setup through its event creation permission.
+    Log unavailable templates or dates and raise DiaryIntegrationError. The host authorizes setup through its event creation permission.
     """
     from Diary.api import DiaryAPI
 
     client = DiaryAPI(actor=event_creation_actor(user))
-    version = client.template_version(name=settings.DIARY_TEMPLATE_NAME)
+    try:
+        version = client.template_version(name=settings.DIARY_TEMPLATE_NAME)
+        required = version.required_milestones()
+    except (ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied, ValidationError) as error:
+        logger.exception('Diary template lookup failed: event_id=%s template=%r reason=%s',
+                         event.pk, settings.DIARY_TEMPLATE_NAME, error)
+        raise DiaryIntegrationError('Internal server error.') from error
     dates = {}
-    for milestone in version.required_milestones():
+    unavailable = []
+    for milestone in required:
         name = milestone['name']
 
         # Unsupported template milestones must not receive guessed dates or silently lose their source values.
         if name not in MILESTONE_FIELDS:
-            raise ValidationError(f'The event has no date mapping for milestone {name!r}.')
-        dates[name] = getattr(event, MILESTONE_FIELDS[name])
+            unavailable.append(f'{name}: no event field mapping')
+            continue
+        field = MILESTONE_FIELDS[name]
+        value = getattr(event, field)
+
+        # Required declarations need date objects even when no template task uses them.
+        if type(value) is not date:
+            unavailable.append(f'{name}: event field {field} has no valid date')
+            continue
+        dates[name] = value
+
+    # Report every unavailable source in one clear error without attempting partial Diary creation.
+    if unavailable:
+        logger.error('Diary template cannot be used: event_id=%s template=%r version=%s unavailable_milestones=[%s]',
+                     event.pk, settings.DIARY_TEMPLATE_NAME, version.key, '; '.join(unavailable))
+        raise DiaryIntegrationError('Internal server error.')
     return client, version, dates
 
 
@@ -67,8 +98,13 @@ def ensure_event_diary(event, user):
         event.diary_key = saved.diary_key
         return saved.diary_key
     client, version, dates = event_diary_definition(saved, user)
-    diary = client.create_diary(name=f'Garage Sale {saved.event_date.isoformat()}',
-        event_ref=f'garagesale:event:{saved.pk}', template_version_key=version.key, milestone_dates=dates)
+    try:
+        diary = client.create_diary(name=f'Garage Sale {saved.event_date.isoformat()}',
+            event_ref=f'garagesale:event:{saved.pk}', template_version_key=version.key, milestone_dates=dates)
+    except (ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied, ValidationError, IntegrityError) as error:
+        logger.exception('Diary creation failed: event_id=%s template=%r version=%s reason=%s',
+                         saved.pk, settings.DIARY_TEMPLATE_NAME, version.key, error)
+        raise DiaryIntegrationError('Internal server error.') from error
     saved.diary_key = diary.key
     saved.save(update_fields=('diary_key',))
     event.diary_key = diary.key

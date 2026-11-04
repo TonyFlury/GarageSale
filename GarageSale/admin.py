@@ -16,7 +16,7 @@ from django.contrib import admin
 from django import forms
 from django.apps import apps
 from django.db import transaction
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied, ValidationError
+from django.http import HttpResponseServerError
 
 from Sponsors.models import Sponsor
 from user_management.models import TeamMember
@@ -103,28 +103,13 @@ class SettingsAdmin(admin.ModelAdmin):
     inlines = [OrganisationsInline,SponsorsInline, LocationInline]
     exclude = ['supporting_organisations']
 
-    def get_form(self, request, obj=None, **kwargs):
-        """Validate initial Diary template selection during admin creation and show selection failures as form errors."""
-        base_form = super().get_form(request, obj, **kwargs)
-
-        class DiaryEventAdminForm(base_form):
-            """Check the authorized event creator and configured template without changing event or Diary data."""
-
-            def clean(self):
-                """Reject unsupported initial Diary configuration while keeping event edits unchanged."""
-                data = super().clean()
-
-                # Only new valid events require a Diary. Existing events and disabled installations keep normal admin behavior.
-                if not self.instance._state.adding or not apps.is_installed('Diary') or self.errors:
-                    return data
-                from GarageSale.diary_integration import event_diary_definition
-                try:
-                    event_diary_definition(self.instance, request.user)
-                except (ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied, ValidationError) as error:
-                    raise ValidationError(f'The event diary could not be prepared: {error}') from error
-                return data
-
-        return DiaryEventAdminForm
+    def add_view(self, request, form_url='', extra_context=None):
+        """Return a generic HTTP 500 after a logged Diary failure rolls back admin event creation."""
+        from GarageSale.diary_integration import DiaryIntegrationError
+        try:
+            return super().add_view(request, form_url=form_url, extra_context=extra_context)
+        except DiaryIntegrationError:
+            return HttpResponseServerError('Internal server error.')
 
     @transaction.atomic
     def save_model(self, request, obj, form, change):

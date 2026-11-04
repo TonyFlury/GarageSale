@@ -17,7 +17,7 @@ from django.test import RequestFactory
 from django.urls import reverse
 
 from Diary.api import Actor, DiaryAPI, EntrySpec
-from GarageSale.diary_integration import ensure_event_diary
+from GarageSale.diary_integration import DiaryIntegrationError, ensure_event_diary, event_diary_definition
 from GarageSale.models import EventData
 
 
@@ -48,7 +48,7 @@ class EventDiaryIntegrationTests(TestCase):
         self.template = self.api.create_template(name='Event preparation')
         self.spec = EntrySpec('Prepare the event', 'source', milestone_name='event_date')
         self.version = self.template.save_version(entries=(self.spec,), predecessors={self.spec.entry_key: ()},
-                                                 expected_version_key=None)
+                                                 expected_version_key=None, milestone_names=('event_date',))
         self.client.force_login(self.manager)
 
     def event(self, day=27):
@@ -117,11 +117,12 @@ class EventDiaryIntegrationTests(TestCase):
         self.assertEqual(event.diary_key, key)
 
     def test_creation_failure_rolls_back_the_event(self):
-        """Show a form error and retain no event when the approved template is unavailable."""
-        with self.settings(DIARY_TEMPLATE_NAME='Missing template'):
+        """Log an unavailable template and return a generic HTTP 500 without retaining the event."""
+        with self.settings(DIARY_TEMPLATE_NAME='Missing template'), self.assertLogs('GarageSale.diary_integration', level='ERROR') as logged:
             response = self.client.post(reverse('TeamPages:EventCreate'), self.event_data())
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'event diary could not be created')
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.content, b'Internal server error.')
+        self.assertIn('Missing template', '\n'.join(logged.output))
         self.assertFalse(EventData.objects.exists())
 
     def test_authorized_event_creator_does_not_need_diary_manager_membership(self):
@@ -143,11 +144,11 @@ class EventDiaryIntegrationTests(TestCase):
         def fail_after_creation(event, user):
             """Create the Diary and then simulate a host write failure before the transaction commits."""
             created.append(original(event, user))
-            raise ValidationError('Simulated host failure.')
+            raise DiaryIntegrationError('Simulated host failure.')
 
         with patch('GarageSale.views.event_views.ensure_event_diary', side_effect=fail_after_creation):
             response = self.client.post(reverse('TeamPages:EventCreate'), self.event_data())
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 500)
         self.assertFalse(EventData.objects.exists())
         actor = Actor(self.actor.reference, self.actor.groups, frozenset(created))
         with self.assertRaises(ObjectDoesNotExist):
@@ -266,8 +267,31 @@ class EventDiaryIntegrationTests(TestCase):
         with self.settings(DIARY_TEMPLATE_NAME='Missing template'):
             upload = SimpleUploadedFile('event.svg', b'<svg xmlns="http://www.w3.org/2000/svg"/>')
             invalid = admin.get_form(request)(data=self.event_data(), files={'event_logo': upload})
-            self.assertFalse(invalid.is_valid())
-            self.assertIn('event diary could not be prepared', str(invalid.non_field_errors()))
+            self.assertTrue(invalid.is_valid())
+            candidate = invalid.save(commit=False)
+            with self.assertLogs('GarageSale.diary_integration', level='ERROR'), self.assertRaises(DiaryIntegrationError):
+                admin.save_model(request, candidate, invalid, False)
+            self.assertEqual(EventData.objects.count(), 1)
+
+    def test_admin_creation_failure_returns_generic_500_and_rolls_back(self):
+        """Keep admin Diary failures in the log and roll back the event before returning HTTP 500."""
+        self.manager.is_staff = True
+        self.manager.is_superuser = True
+        self.manager.save(update_fields=('is_staff', 'is_superuser'))
+        url = reverse('admin:GarageSale_eventdata_add')
+        page = self.client.get(url)
+        self.assertEqual(page.status_code, 200)
+        values = self.event_data()
+        values['event_logo'] = SimpleUploadedFile('event.svg', b'<svg xmlns="http://www.w3.org/2000/svg"/>')
+        for inline in page.context['inline_admin_formsets']:
+            prefix = inline.formset.prefix
+            values.update({f'{prefix}-TOTAL_FORMS': '0', f'{prefix}-INITIAL_FORMS': '0',
+                           f'{prefix}-MIN_NUM_FORMS': '0', f'{prefix}-MAX_NUM_FORMS': '1000'})
+        with self.settings(DIARY_TEMPLATE_NAME='Missing template'), self.assertLogs('GarageSale.diary_integration', level='ERROR'):
+            response = self.client.post(url, values)
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.content, b'Internal server error.')
+        self.assertFalse(EventData.objects.exists())
 
     @override_settings(DIARY_TEMPLATE_NAME='Garage Sale calendar', DIARY_TASK_OWNER_ROLES=('ExecMember',))
     def test_demo_template_import_creates_event_tasks_with_booking_dates(self):
@@ -299,21 +323,69 @@ class EventDiaryIntegrationTests(TestCase):
         self.api.define_milestones(definitions={'unmapped_date': 'Unsupported date'})
         spec = EntrySpec('Unmapped task', 'source', milestone_name='unmapped_date')
         self.template.save_version(entries=(spec,), predecessors={spec.entry_key: ()},
-                                   expected_version_key=self.version.key)
-        response = self.client.post(reverse('TeamPages:EventCreate'), self.event_data())
-        self.assertContains(response, 'no date mapping')
+                                   expected_version_key=self.version.key, milestone_names=('unmapped_date',))
+        with self.assertLogs('GarageSale.diary_integration', level='ERROR') as logged:
+            response = self.client.post(reverse('TeamPages:EventCreate'), self.event_data())
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.content, b'Internal server error.')
+        self.assertIn('unmapped_date: no event field mapping', '\n'.join(logged.output))
         self.assertFalse(EventData.objects.exists())
 
     def test_bookings_and_activation_date_values_come_from_event_fields(self):
         """Supply source booking dates and the stored Use from date without introducing an activation action."""
         mappings = {'add_board_bookings_open': '2027-03-01', 'sale_bookings_close': '2027-06-26',
-                    'activation_date': '2027-01-01'}
+                    'activation_date': '2027-01-01', 'event_created': '2027-01-01'}
         self.api.define_milestones(definitions={name: name for name in mappings})
         specs = [EntrySpec(name, 'source', milestone_name=name) for name in mappings]
-        self.template.save_version(entries=specs, predecessors={}, expected_version_key=self.version.key)
+        self.template.save_version(entries=specs, predecessors={}, expected_version_key=self.version.key,
+                                   milestone_names=tuple(mappings))
         self.assertEqual(self.client.post(reverse('TeamPages:EventCreate'), self.event_data()).status_code, 302)
         dates = self.client_for(EventData.objects.get()).read()['milestones']
         self.assertEqual({name: value.isoformat() for name, value in dates.items()}, mappings)
+
+    def test_unused_requirements_log_all_unavailable_event_sources(self):
+        """Reject all unavailable declarations even when no task uses them and preserve an existing event."""
+        self.api.define_milestones(definitions={'sales_bookings_open': 'Sales bookings open',
+                                              'unmapped_date': 'Unsupported date'})
+        self.template.save_version(entries=(self.spec,), predecessors={}, expected_version_key=self.version.key,
+            milestone_names=('event_date', 'sales_bookings_open', 'unmapped_date'))
+        event = EventData.objects.create(event_date=date(2027, 6, 27), use_from=date(2027, 1, 1))
+        with self.assertLogs('GarageSale.diary_integration', level='ERROR') as logged, self.assertRaises(DiaryIntegrationError):
+            ensure_event_diary(event, self.manager)
+        self.assertEqual(len(logged.records), 1)
+        self.assertIn('Event preparation', logged.output[0])
+        self.assertIn('version=', logged.output[0])
+        self.assertIn('sales_bookings_open: event field open_sales_bookings has no valid date', logged.output[0])
+        self.assertIn('unmapped_date: no event field mapping', logged.output[0])
+        event.refresh_from_db()
+        self.assertIsNone(event.diary_key)
+
+    def test_required_milestone_rejects_non_date_values(self):
+        """Reject missing dates, date strings, and timestamps before the package receives a creation request."""
+        from datetime import datetime
+
+        for value in (None, '2027-06-27', datetime(2027, 6, 27)):
+            event = EventData(event_date=value, use_from=date(2027, 1, 1))
+            with self.assertLogs('GarageSale.diary_integration', level='ERROR'), self.assertRaises(DiaryIntegrationError):
+                event_diary_definition(event, self.manager)
+
+    def test_host_template_save_delegates_declared_milestones_to_package(self):
+        """Save package forms through host navigation, preserving required declarations that no task uses."""
+        self.api.define_milestones(definitions={'event_created': 'Event created'})
+        self.select_template('Event preparation')
+        page = self.client.get(reverse('Diary:template-edit'))
+        values = {'name': 'Event preparation', 'description': '', 'expected_version_key': self.version.key,
+            'milestone_names': ['event_date', 'event_created'],
+            'tasks-TOTAL_FORMS': '1', 'tasks-INITIAL_FORMS': '1', 'tasks-MIN_NUM_FORMS': '0',
+            'tasks-MAX_NUM_FORMS': '200', 'action': 'save', '_diary_state': page.wsgi_request.diary_host_token,
+            'tasks-0-entry_key': self.spec.entry_key, 'tasks-0-name': self.spec.name,
+            'tasks-0-date_kind': 'source', 'tasks-0-milestone_name': 'event_date', 'tasks-0-owner_kind': 'team',
+            'tasks-0-year_offset': '0', 'tasks-0-day_offset': '0'}
+        response = self.client.post(reverse('Diary:template-edit'), values)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('Diary:template-edit'))
+        data = self.api.template(name='Event preparation').editor_data()
+        self.assertEqual([item['name'] for item in data['milestones']], ['event_created', 'event_date'])
 
     def test_clean_navigation_and_forged_task_selection(self):
         """Keep identifiers out of links and reject a task selected from another event's diary."""

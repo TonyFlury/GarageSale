@@ -1,5 +1,45 @@
 [
   {
+    "model": "Diary.templatemilestone",
+    "pk": 300,
+    "fields": {
+      "version": "71cbab70-5647-4b4c-9300-000000000011",
+      "milestone": "71cbab70-5647-4b4c-9300-000000000001"
+    }
+  },
+  {
+    "model": "Diary.templatemilestone",
+    "pk": 301,
+    "fields": {
+      "version": "71cbab70-5647-4b4c-9300-000000000011",
+      "milestone": "71cbab70-5647-4b4c-9300-000000000002"
+    }
+  },
+  {
+    "model": "Diary.templatemilestone",
+    "pk": 302,
+    "fields": {
+      "version": "71cbab70-5647-4b4c-9300-000000000011",
+      "milestone": "71cbab70-5647-4b4c-9300-000000000003"
+    }
+  },
+  {
+    "model": "Diary.templatemilestone",
+    "pk": 303,
+    "fields": {
+      "version": "71cbab70-5647-4b4c-9300-000000000011",
+      "milestone": "71cbab70-5647-4b4c-9300-000000000004"
+    }
+  },
+  {
+    "model": "Diary.templatemilestone",
+    "pk": 304,
+    "fields": {
+      "version": "71cbab70-5647-4b4c-9300-000000000011",
+      "milestone": "71cbab70-5647-4b4c-9300-000000000005"
+    }
+  },
+  {
     "model": "Diary.milestone",
     "pk": "71cbab70-5647-4b4c-9300-000000000001",
     "fields": {

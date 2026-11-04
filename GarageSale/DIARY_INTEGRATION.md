@@ -81,14 +81,17 @@ Diary does not calculate replacement values for those source fields.
 | `ad_bookings_closed` | `close_billboard_bookings` |
 | `sales_bookings_open` | `open_sales_bookings` |
 | `sales_booking_closed` | `close_sales_bookings` |
+| `event_created` | `use_from` |
 | `activation_date` or `use_from` | `use_from` |
 | `add_board_bookings_open` or `open_billboard_bookings` | `open_billboard_bookings` |
 | `add_board_bookings_close` or `close_billboard_bookings` | `close_billboard_bookings` |
 | `sale_bookings_open` or `open_sales_bookings` | `open_sales_bookings` |
 | `sale_bookings_close` or `close_sales_bookings` | `close_sales_bookings` |
 
-Only milestone names used by the chosen approved template are supplied.
-Other names stop event creation until the template or the host mapping is corrected.
+The host supplies dates for every milestone declared by the chosen approved template.
+Unused declarations also require dates. Required values must be `datetime.date` objects.
+Unsupported names and missing dates stop creation and produce a detailed error log.
+The technical milestone name `event_created` means the event's Use from date in this integration.
 
 ## Demonstration template
 
@@ -99,7 +102,8 @@ It contains preparation tasks, booking tasks, final checks, and an event-day tas
 Dependencies keep later tasks blocked until their preceding tasks are complete.
 Select the Blocked status in My Diary to see those tasks.
 The template uses the five milestone names in the first five rows of the mapping table.
-It does not use `event_created` because `EventData` has no stored creation date.
+It does not require `event_created`. Other templates can declare that milestone to use the event's Use from date.
+The fixture includes explicit `Diary.templatemilestone` records for its required dates.
 
 Use an active member of the configured `DIARY_MANAGER` group as the import actor.
 Replace `MANAGER_USERNAME` with that person's username.
@@ -184,11 +188,16 @@ It saves the returned UUID against the event in the same transaction.
 A repeated call preserves an existing Diary key and its task history.
 Unsupported milestone names stop creation rather than receive guessed source values.
 Unavailable templates or rejected creation roll back the event and Diary together.
-The normal team creation page shows a form error. Admin validates initial template selection before saving.
+Integration failures produce an ERROR log through `GarageSale.diary_integration` and a generic HTTP 500 response.
+The response contains only `Internal server error.`.
+Unavailable milestone logs identify the event, template, version, milestone names, source fields, and failure reasons.
+Template lookup and creation exceptions also retain tracebacks in the log.
+Ordinary Diary form validation remains within the package and keeps its normal field errors.
 
 The host event creation view is `DiaryEventCreate` in `GarageSale/views/event_views.py`.
 `GarageSale/team_urls.py` retains the existing `TeamPages:EventCreate` route name and URL.
-The admin implementation is `SettingsAdmin.get_form()` and `SettingsAdmin.save_model()` in `GarageSale/admin.py`.
+The admin implementation is `SettingsAdmin.add_view()` and `SettingsAdmin.save_model()` in `GarageSale/admin.py`.
+Milestone validation runs after event form values reach the saved event instance, within the creation transaction.
 Model fixtures and direct low-level event saves do not infer a requesting user or create diaries automatically.
 Other event-creation services must call `ensure_event_diary()` within their own event transaction.
 
@@ -207,7 +216,7 @@ flowchart TD
     E --> F[Create the Diary through its API]
     F --> G[Save the Diary key]
     G --> H[Commit both records]
-    D -->|Failure| I[Roll back and show an error]
+    D -->|Failure| I[Roll back, log details, and return HTTP 500]
     E -->|Failure| I
     F -->|Failure| I
 ```
@@ -286,7 +295,9 @@ Its `form_fields` dictionary carries `_diary_state` in each edit and selection f
 The package escapes these fields. Garage Sale checks their signatures before it delegates a POST request.
 
 The dependency still supplies the forms, field fragments, task validation, date calculation, ownership checks, and storage API.
-The host template editor uses `TaskFormSet`, `TemplateForm`, and `DiaryTemplate.save_version()` with a fixed success URL.
+The package handles Diary forms, milestone choices, task rows, validation, version creation, and failed submissions.
+Garage Sale imports no Diary form classes and does not override the package POST handler.
+The host overrides only `TemplateEditorView.get_success_url()` to retain its template selection and fixed editor URL.
 No dependency Python implementation or migrations are included in this branch.
 The installed Diary version must provide these embedding controls.
 The host omits the hidden `diary-personal-selector` and `diary-manager-selector` controls because their keys no longer belong in GET forms.
@@ -345,7 +356,7 @@ Their identifiers remain unchanged.
   Creation is confirmed and implemented in the team-page and admin event interfaces.
   Implementation: `GarageSale/diary_integration.py`: `event_creation_actor`, `event_diary_definition`, and `ensure_event_diary`.
   Team implementation: `GarageSale/views/event_views.py`: `DiaryEventCreate.form_valid`. `GarageSale/team_urls.py`: `urlpatterns`.
-  Admin implementation: `GarageSale/admin.py`: `SettingsAdmin.get_form` and `SettingsAdmin.save_model`.
+  Admin implementation: `GarageSale/admin.py`: `SettingsAdmin.add_view` and `SettingsAdmin.save_model`.
   Verification: `GarageSale/tests/test_diary_integration.py`: `EventDiaryIntegrationTests` creation, rollback, admin, and permission tests.
   Remaining: Define the host policy for closing event diaries. No automatic closure is implemented.
 
@@ -353,6 +364,8 @@ Their identifiers remain unchanged.
   Implementation: `GarageSale/diary_integration.py`: `MILESTONE_FIELDS`, `event_diary_definition`, and `ensure_event_diary`.
   Storage: `GarageSale/models.py`: `EventData.diary_key`. Migration: `GarageSale/migrations/0026_eventdata_diary_key.py`: `Migration`.
   Verification: `EventDiaryIntegrationTests.test_bookings_and_activation_date_values_come_from_event_fields` and `test_creation_rejects_unsupported_milestones_without_partial_event`.
+  Required dates and logging: `EventDiaryIntegrationTests.test_unused_requirements_log_all_unavailable_event_sources` and `test_required_milestone_rejects_non_date_values`.
+  Delegated editor verification: `EventDiaryIntegrationTests.test_host_template_save_delegates_declared_milestones_to_package`.
   UUID verification: `GarageSale/tests/test_diary_key.py`: `EventDiaryKeyTests.test_event_stores_the_api_key_without_a_foreign_key`.
 
 - [x] **HOST-003: Trusted host scope, clean URLs, and team-page presentation.**

@@ -7,14 +7,12 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core import signing
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
-from django.db import IntegrityError, transaction
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
 
 from Diary.api import Actor, DiaryAPI
-from Diary.forms import TaskFormSet, TemplateForm, editor_task_limit
 from Diary.views import (ManagerDiaryView, PersonalDiaryView, TaskCreateView, TaskDetailView, TemplateEditorView)
 
 
@@ -33,58 +31,12 @@ def clean_diary_location(location):
 
 
 class EventTemplateEditorView(TemplateEditorView):
-    """Retain Diary forms and API validation while using a fixed host editor success URL."""
+    """Delegate Diary forms to the package and retain host navigation after a successful save."""
 
-    def post(self, request, *args, **kwargs):
-        """Save a validated template version or retain submitted form errors within the selected host editor."""
-
-        # The chooser cannot save an unselected template through a forged form action.
-        if self.template is None and not self.creating:
-            return HttpResponseBadRequest('Select a template before saving.')
-        header = TemplateForm(request.POST, initial=self.header_initial(), editing=not self.creating)
-        values = request.POST.copy()
-
-        # Preserve the dependency's non-JavaScript add-row action without approving or saving template data.
-        if request.POST.get('action') == 'add_task':
-            try:
-                total = int(values.get('tasks-TOTAL_FORMS', '0'))
-            except ValueError:
-                return HttpResponseBadRequest('Invalid task form count.')
-
-            # Reject oversized additions before constructing extra forms.
-            if not 0 <= total < editor_task_limit():
-                return HttpResponseBadRequest('The task row count exceeds the configured request limit.')
-            from uuid import uuid4
-            values['tasks-TOTAL_FORMS'] = str(total + 1)
-            values[f'tasks-{total}-entry_key'] = str(uuid4())
-            values[f'tasks-{total}-owner_kind'] = 'team'
-            values[f'tasks-{total}-date_kind'] = 'source'
-            return self.render_editor(header, TaskFormSet(values, prefix='tasks', initial=list(self.data['entries'])))
-        tasks = TaskFormSet(values, prefix='tasks', initial=list(self.data['entries']))
-        header_valid, tasks_valid = header.is_valid(), tasks.is_valid()
-
-        # The public Diary API performs the version, ownership, date-rule, and graph checks for both forms.
-        if header_valid and tasks_valid:
-            try:
-                from Diary.views import DjangoOwnerDirectory
-                with transaction.atomic():
-                    template = self.template
-
-                    # New templates and their first version must be committed together.
-                    if self.creating:
-                        template = self.api.create_template(name=header.cleaned_data['name'])
-                    template.save_version(entries=tasks.specs, predecessors=tasks.graph,
-                        expected_version_key=header.cleaned_data['expected_version_key'],
-                        description=header.cleaned_data['description'], milestone_definitions=tasks.milestone_definitions,
-                        directory=DjangoOwnerDirectory())
-                request.session['diary_template_name'] = header.cleaned_data['name']
-                return redirect('Diary:template-edit')
-            except ValidationError as error:
-                for message in error.messages:
-                    header.add_error(None, message)
-            except IntegrityError:
-                header.add_error(None, 'The template changed during this save. Reopen it before trying again.')
-        return self.render_editor(header, tasks, status=400)
+    def get_success_url(self, *, template_name):
+        """Retain the saved template selection and return the fixed host editor URL."""
+        self.request.session['diary_template_name'] = template_name
+        return reverse('Diary:template-edit')
 
 
 class EventTemplateCreateView(EventTemplateEditorView):
