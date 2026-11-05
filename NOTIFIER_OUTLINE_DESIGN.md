@@ -45,6 +45,9 @@ The UI layout and interaction details remain open.
 
 ### Individual settings
 
+All streams are disabled for each user by default.
+Users must opt in before receiving notifications from a stream.
+
 Different users can select different settings for the same stream.
 For example, Task Due can support seven days, three days, or the due date itself.
 The provider obtains user settings when it runs and applies them to source data.
@@ -53,9 +56,21 @@ The example field Notice Period uses an integer number of days.
 Its validation must permit zero if zero represents the due date itself.
 The default value, maximum value, and final field name remain open.
 
+Users can configure reminder frequency separately from the notice period.
+The supported frequencies and their field definitions remain open.
+For Diary, notice period changes affect the next provider run, not an immediate evaluation.
+
+### Time policy
+
+The initial implementation uses London time, including GMT and BST.
+The technical time zone name is `Europe/London`.
+Individual user time zones and support for other regions are outside the current scope.
+The Notifier remains generic without additional regional configuration for this delivery.
+
 Notification timing and delivery frequency are separate choices.
 A user can request a daily email summary instead of an email for each notification.
 The summary combines eligible notifications from multiple providers.
+Delivery engines declare the collation choices that they support.
 
 ### Permissions and allowed groups
 
@@ -82,7 +97,14 @@ Source application access rules also apply to individual records.
 
 A Diary provider translates Diary information into Notifier streams.
 The initial stream examples are Task Due, Task Late, Task Blocked, and Task Orphaned.
-Their exact trigger and repetition rules remain open.
+Their exact trigger rules remain open.
+Reminder frequency is configurable by the user.
+
+A task ownership change produces two distinct occurrences.
+One addresses the previous owner and reports the removal of ownership.
+The other addresses the new owner and reports the assignment.
+Normal subscription and eligibility rules still apply.
+Stream names and recipient handling for team or group ownership remain open.
 
 The Diary provider needs regular execution for date-based notifications.
 Once per day is the initial scheduling assumption, not an approved fixed interval.
@@ -90,6 +112,50 @@ The execution mechanism depends on the hosting environment.
 
 The provider needs current user settings before it evaluates reminders.
 Different settings can require different source queries or different checks against shared query results.
+
+The Diary provider records when its last run completed successfully.
+Its next run uses that point to catch up on due-date changes since completion.
+A failed run must not advance the completion point.
+The checkpoint format and source change history requirements remain open.
+Recovery of elapsed reminder thresholds also needs a precise evaluation rule.
+
+### Bulk submission
+
+The reporting API supports multiple notifications in one call for a registered stream.
+A Task Due submission can contain multiple tasks for one user or multiple users.
+Each item must identify its intended recipient or recipients without applying one user's settings to the entire submission.
+The API must not require a separate call for every task or user.
+Batch size, validation, partial failure behavior, and response details remain open.
+
+### Delivery engine registration
+
+Delivery engines register their capabilities and user-configurable fields.
+Each engine declares whether it supports collation.
+An engine with collation support declares its supported choices.
+The settings UI presents choices appropriate to the selected engine.
+
+An email engine can support daily or seven-day collation.
+Before sending a delayed summary, the system checks the user's current eligibility.
+A user who loses access must not receive the restricted notification in that summary.
+
+A User Icon engine does not support collation.
+It displays an overlay on the website's user icon.
+It also provides a UI showing all open notifications for that user.
+The meaning of open depends on the unresolved read and acknowledgement rules.
+
+Grouping depends on the delivery engine.
+The registration contract, rendering interface, and final settings remain open.
+
+### Collection and provider availability
+
+The Notifier collects notifications. It provides no delivery guarantee.
+Users remain responsible for managing their use of notifications without relying on guaranteed delivery.
+No guaranteed retry or confirmed-receipt mechanism is required by this outline.
+
+The design has no provider deregistration or uninstall announcement mechanism.
+Notifications remain available after the Notifier accepts them, even if the provider is later absent.
+Provider absence alone must not remove collected notifications.
+This persistence rule does not settle access-change visibility or general retention policy.
 
 ## Proposed responsibilities
 
@@ -118,7 +184,8 @@ The returned reference would provide access to current subscriptions when the pr
 Changes to preferences would therefore take effect without an application restart.
 
 An optional schema version could support later changes to registered fields.
-The treatment of removed fields, invalid saved values, and unavailable providers remains open.
+The treatment of removed fields and invalid saved values remains open.
+An absent provider does not remove notifications already collected.
 
 Declaration during application initialization could remain separate from database synchronization.
 This would avoid database writes during application imports.
@@ -150,30 +217,32 @@ It could also query a shared date range and evaluate each user's settings agains
 The provider should choose the query strategy because it understands its source application.
 
 The settings API needs rules for large subscription sets, including pagination and concurrent preference changes.
-User time zones and date boundaries also require a defined policy.
+Date calculations use London time. Exact evaluation boundaries remain part of the provider contract.
 
 Event-driven providers could use explicit calls or documented application signals.
 Scheduled providers would evaluate conditions that become true as time passes.
 Both paths should submit notifications through the same Notifier intake contract.
 The choice of Django signals, callbacks, or explicit calls remains open.
 
-## Delivery engines: open design
+## Delivery engines: remaining design
 
-The preferred direction is a delivery engine plugin interface.
-This is a preference, not an approved architecture or API.
+The design uses registered delivery engines with declared capabilities and configurable fields.
+The plugin loading mechanism and exact API remain open.
 
 Example engines include email and a user icon overlay.
 An email engine could send immediate messages or daily summaries.
-A user icon overlay engine could display an unread count or another notification indicator.
+A User Icon engine displays an overlay and a UI for open notifications.
+Whether the overlay shows a count remains open.
 
 The design must distinguish feed storage from delivery state.
 Reading a feed entry and sending an email are different actions.
 The effect of one action on another channel remains open.
 
-Open delivery questions include engine registration, capabilities, user preferences, rendering, failure handling, and retry behavior.
-Daily summaries also need timing, time zone, grouping, and unread-entry policies.
+Open delivery questions include registration details, user settings, rendering, and failure reporting.
+Email collation needs execution times, seven-day interval boundaries, and read-entry policies in London time.
+Each engine defines its grouping behavior.
 The overlay needs rules for count updates, page integration, and acknowledgement.
-No delivery engine is selected or implemented by this outline.
+No delivery engine is implemented by this outline.
 
 ## Scheduling: open design
 
@@ -186,42 +255,43 @@ Feed creation and daily email delivery can require different schedules.
 One daily Diary evaluation might not meet every future stream's timing requirements.
 
 The host must define execution times, monitoring, and recovery after missed runs.
-Concurrent runs need protection against duplicate feed entries and duplicate delivery.
+Concurrent runs need a defined policy for repeated submissions and provider completion points.
 The final scheduling interval and deployment instructions depend on the selected hosting capability.
 
-## Reliability proposals and occurrence rules
+## Collection proposals and occurrence rules
 
 A durable pending-event record could connect a committed business change to later notification processing.
-A transactional outbox is one option. Its persistence and failure policy remain open.
+A transactional outbox is an optional proposal, not an approved reliability requirement.
 Email delivery should not occur inside the source business transaction.
 
 Each occurrence needs an identity that permits safe repeated processing.
 The identity may include the stream, source record, recipient, and relevant date or revision.
 The exact identity and retention rules remain open.
 
-Task Due needs a decision between one reminder, daily reminders, and multiple configured reminder intervals.
-Task Late, Task Blocked, and Task Orphaned need equivalent repetition rules.
-Missed runs require a decision about reminders whose original threshold has passed.
+User settings determine reminder frequency.
+The available frequencies and their interaction with missed runs remain open.
+The Diary provider uses its last successful completion point to support catch-up processing.
 
 Due-date changes, ownership changes, and preference changes can affect pending notifications.
-The design must define cancellation, replacement, and repeat-notification behavior for these changes.
-Task completion must prevent obsolete reminders from producing misleading messages.
+The treatment of already collected notifications after changed conditions remains open.
+This includes completion, cancellation, replacement, and pending delivery behavior.
+Notice period changes apply when the Diary provider next runs.
 
 ## Open decision list
 
 | Identifier | Decision |
 | --- | --- |
-| NOT-001 | Define provider registration, stream references, and payload contracts. |
+| NOT-001 | Define provider registration, stream references, bulk payloads, validation, and batch results. |
 | NOT-002 | Define configurable field types, validation, defaults, and schema changes. |
 | NOT-003 | Design personal settings, feed, and administrative UI. |
 | NOT-004 | Define Notifier permissions, allowed-group semantics, and access-change behavior. |
-| NOT-005 | Select the delivery engine architecture and define channel preferences. |
-| NOT-006 | Define daily summary timing, grouping, read-state rules, and delivery records. |
-| NOT-007 | Select host-supported scheduling and define the Diary evaluation interval. |
-| NOT-008 | Define stream triggers, reminder windows, repetition, and missed-run behavior. |
-| NOT-009 | Define durable intake, duplicate prevention, retries, and concurrent execution. |
+| NOT-005 | Define delivery engine registration, plugin loading, capabilities, and channel preferences. |
+| NOT-006 | Define email collation timing, engine-specific grouping, read-state rules, and delivery records. |
+| NOT-007 | Select host-supported scheduling and define the Diary interval and completion checkpoint. |
+| NOT-008 | Define triggers, configurable reminder frequencies, and catch-up evaluation rules. |
+| NOT-009 | Define intake persistence, repeated-submission handling, failure reporting, and concurrent execution without delivery guarantees. |
 | NOT-010 | Confirm public Diary API queries, recipient resolution, and query efficiency. |
-| NOT-011 | Define notification retention, source changes, privacy, and unavailable-provider behavior. |
+| NOT-011 | Define retention, changed conditions, and privacy while preserving collected notifications after provider absence. |
 
 ## Implementation status and language review
 
