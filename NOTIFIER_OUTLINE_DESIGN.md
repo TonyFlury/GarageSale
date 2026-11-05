@@ -107,8 +107,8 @@ Normal subscription and eligibility rules still apply.
 Stream names and recipient handling for team or group ownership remain open.
 
 The Diary provider needs regular execution for date-based notifications.
-Once per day is the initial scheduling assumption, not an approved fixed interval.
-The execution mechanism depends on the hosting environment.
+The initial Garage Sale deployment runs the Diary provider once each night.
+The agreed hosting schedule appears below.
 
 The provider needs current user settings before it evaluates reminders.
 Different settings can require different source queries or different checks against shared query results.
@@ -239,24 +239,37 @@ Reading a feed entry and sending an email are different actions.
 The effect of one action on another channel remains open.
 
 Open delivery questions include registration details, user settings, rendering, and failure reporting.
-Email collation needs execution times, seven-day interval boundaries, and read-entry policies in London time.
+Email collation needs seven-day interval boundaries and read-entry policies in London time.
+The initial delivery execution time is agreed below.
 Each engine defines its grouping behavior.
 The overlay needs rules for count updates, page integration, and acknowledgement.
 No delivery engine is implemented by this outline.
 
-## Scheduling: open design
+## Scheduling: agreed initial deployment
 
-The Diary provider needs a host-supported way to execute regularly.
-Candidate mechanisms include scheduled management commands, a task scheduler, or a hosting service's scheduled jobs.
-These are alternatives. No specific service or background worker is required by this outline.
+Garage Sale uses the EU service at `eu.pythonanywhere.com`.
+The host account is a custom account. The user reports that it appears to permit unlimited scheduled tasks.
+The initial design needs only two scheduled tasks.
 
-The design should separate provider evaluation from the mechanism that starts it.
-Feed creation and daily email delivery can require different schedules.
-One daily Diary evaluation might not meet every future stream's timing requirements.
+| Task | Daily start, UTC | London time, GMT | London time, BST | Purpose |
+| --- | --- | --- | --- | --- |
+| Generate notifications | 02:15 | 02:15 | 03:15 | Evaluate Diary reminders and perform catch-up processing. |
+| Deliver notifications | 03:15 | 03:15 | 04:15 | Process email summaries whose daily or seven-day interval has elapsed. |
 
-The host must define execution times, monitoring, and recovery after missed runs.
+These are fixed UTC schedules. Notification date calculations continue to use `Europe/London`.
+The User Icon engine displays collected notifications through the website. It needs no scheduled task.
+
+Each scheduled task will invoke a Django management command that completes its work and exits.
+Command names and arguments remain open. No commands are implemented by this outline.
+Each command needs the deployment interpreter, application configuration, and database credentials.
+
+The one-hour separation does not establish a dependency or guarantee generation has completed before delivery starts.
+Behavior after a delayed or failed generation run remains part of the execution design.
 Concurrent runs need a defined policy for repeated submissions and provider completion points.
-The final scheduling interval and deployment instructions depend on the selected hosting capability.
+Monitoring and exact deployment instructions also remain open.
+
+Provider evaluation remains separate from the host mechanism that starts it.
+Other installations can supply their own scheduler. Future streams can require a different evaluation frequency.
 
 ## Collection proposals and occurrence rules
 
@@ -287,7 +300,7 @@ Notice period changes apply when the Diary provider next runs.
 | NOT-004 | Define Notifier permissions, allowed-group semantics, and access-change behavior. |
 | NOT-005 | Define delivery engine registration, plugin loading, capabilities, and channel preferences. |
 | NOT-006 | Define email collation timing, engine-specific grouping, read-state rules, and delivery records. |
-| NOT-007 | Select host-supported scheduling and define the Diary interval and completion checkpoint. |
+| NOT-007 | Define command interfaces, completion checkpoints, monitoring, and delayed-run behavior for the agreed two-task schedule. |
 | NOT-008 | Define triggers, configurable reminder frequencies, and catch-up evaluation rules. |
 | NOT-009 | Define intake persistence, repeated-submission handling, failure reporting, and concurrent execution without delivery guarantees. |
 | NOT-010 | Confirm public Diary API queries, recipient resolution, and query efficiency. |
