@@ -451,6 +451,13 @@ No migration was applied to application data, and no deployed service changed du
 This change requires collection of the new `GarageSale/styles/diary_host.css` asset and the supplied Diary static assets.
 It adds no database migration beyond the existing host UUID migration.
 
+## User training
+
+[Diary training](DIARY_TRAINING.md) describes the recorded user and manager walkthrough for package version `0.1.5.1`.
+The recording uses the example Garage Sale template with fictional accounts and an isolated PostgreSQL test database.
+It covers filters, personal tasks, notes, dates, dependencies, orphan recovery, and manager forced completion.
+The guide identifies the local video, captions, transcript, and verification scope.
+
 ## Language review
 
 Reference: ASD-STE100, Issue 9.
