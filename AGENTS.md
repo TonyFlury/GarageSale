@@ -56,29 +56,41 @@ These rules apply throughout the project, including tests and private implementa
 - Keep docstrings and comments consistent with the implementation.
 - Apply the project documentation language rules to docstrings and explanatory comments.
 
-## Diary implementation tracking
+## Diary dependency boundary
 
-- Update `Diary/TODO_V1.md` when Diary implementation changes.
-- Keep each DV1 identifier unchanged.
-- Name implementation files and exact classes, functions, or methods in checklist annotations.
-- Name verification files and exact test classes or methods.
-- Add the same DV1 references to applicable source comments or docstrings.
+- Treat the Diary app, distributed as DjangoTaskCalendar, as a third-party dependency.
+- Diary owns its requirements, implementation, tests, release documentation, and backlog in its separate repository.
+- Garage Sale owns its integration code, host configuration, presentation adaptations, deployment integration, and compatibility tests.
+- Include only Garage Sale integration requirements in this project's feature lists and completion reports.
+- Exclude Diary package requirements, defects, release checks, and backlog items from Garage Sale outstanding work.
+- Identify package limitations separately when they affect a Garage Sale integration requirement.
+- Use the installed package's public API and documented extension interfaces.
+- Adapt Garage Sale integration code when an approved Diary update changes those interfaces.
+- Do not modify installed Diary code or its separate repository during Garage Sale work without an explicit request.
+- Do not update `Diary/TODO_V1.md` or package documentation for Garage Sale integration changes.
+- Do not copy package forms, templates, or business logic into Garage Sale to bypass the dependency boundary.
+
+## Diary host integration tracking
+
+- Record host integration requirements and status in `GarageSale/DIARY_INTEGRATION.md`.
+- Keep existing HOST identifiers unchanged.
+- Name implementation files, exact symbols, and applicable verification in checklist annotations.
 - Identify template blocks, CSS selectors, or JavaScript functions for implementations without Python symbols.
-- Keep partial items unchecked and describe the remaining work.
-- Give each partial item an explicit Remaining annotation.
-- Create or update a linked design document when the remaining work is substantial.
-- Distinguish approved requirements from proposed interfaces and open decisions in that document.
+- Keep partial items unchecked and give each an explicit Remaining annotation.
+- Distinguish approved requirements from proposed interfaces and open decisions.
 - Identify documentation-only items without inventing executable symbols.
 
-## Diary UI
+## Diary host UI
 
 - Give each visible component, content role, form control, and task state a stable, descriptive CSS class.
 - Use the `diary-` prefix. Keep component rules within the `.diary` namespace.
 - Use classes as the styling interface.
 - Do not require IDs, text values, or element positions for host style overrides.
 - Do not put presentation rules in inline style attributes.
-- Document each styling class and CSS variable in `Diary/README.md`.
-- Record the impact of changes to existing class names.
+- Document host styling classes and CSS variables in `GarageSale/DIARY_INTEGRATION.md`.
+- Preserve package styling interfaces and record the impact of host class changes.
+
+Language review limit: The new dependency rules have not received a full ASD-STE100 Issue 9 dictionary review.
 
 ## Deployment
 
