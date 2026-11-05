@@ -271,6 +271,58 @@ Monitoring and exact deployment instructions also remain open.
 Provider evaluation remains separate from the host mechanism that starts it.
 Other installations can supply their own scheduler. Future streams can require a different evaluation frequency.
 
+## Task management commands
+
+Management commands must show scheduled-task status, including the last run time.
+They must also support an immediate run and a restart operation.
+These requirements apply to generation and email delivery.
+Exact command names and arguments remain open.
+
+The proposed status report distinguishes the last attempt from the last successful completion.
+It also shows the current run state, elapsed time, and most recent failure summary.
+Run history and a progress timestamp could help identify interrupted or stalled runs.
+The required history depth and stalled-run detection rules remain open.
+
+An immediate run should use the same processing path as a scheduled run.
+The proposed default preserves subscriptions, access checks, collation intervals, and provider completion points.
+Running the email task now would not automatically make a weekly summary due.
+Any option to bypass a delivery interval requires a separate decision.
+
+The meaning of restart needs an explicit contract.
+These scheduled commands finish and exit. They are not permanent worker services.
+Restart could mean a new attempt after failure, recovery of an interrupted run, or replacement of an active run.
+The design must define each supported case before implementation.
+
+A restart must not silently reset the Diary catch-up checkpoint.
+Resetting that checkpoint is a separate administrative action, if supplied.
+The design must prevent a replacement run from overlapping an active run without controlled coordination.
+It must also define treatment of partially collected notifications and partially processed email batches.
+Task controls do not introduce a delivery guarantee.
+
+Application run tracking and host schedule configuration are separate responsibilities.
+Commands that change PythonAnywhere schedules or control remote processes would require an explicit hosting adapter.
+Whether those host controls belong in the management commands remains open.
+No command or hosted task is implemented by this document.
+
+## Notification management commands: proposals
+
+The user has identified a possible need for notification management commands.
+The command set is not approved. The following candidates support diagnosis and configuration checks.
+
+| Candidate command purpose | Proposed behavior |
+| --- | --- |
+| List registrations | Show providers, streams, delivery engines, configurable fields, and access restrictions. |
+| Validate configuration | Check registrations, field definitions, group references, and delivery engine settings. |
+| Inspect subscriptions | Show effective settings and eligibility for a selected user. |
+| Inspect notifications | Filter collected notifications by user, stream, date, and processing state. |
+| Preview generation | Report candidate notifications without collecting entries or advancing completion points. |
+| Preview email | Show an eligible summary without sending email or changing delivery state. |
+
+Inspection and preview commands need defined administrative access and private-content handling.
+Commands for acknowledgement, closure, deletion, or retention depend on decisions that remain open.
+Replay and resend commands also need explicit duplicate and partial-failure rules.
+No automatic retry or resend policy is approved by these proposals.
+
 ## Collection proposals and occurrence rules
 
 A durable pending-event record could connect a committed business change to later notification processing.
@@ -305,6 +357,8 @@ Notice period changes apply when the Diary provider next runs.
 | NOT-009 | Define intake persistence, repeated-submission handling, failure reporting, and concurrent execution without delivery guarantees. |
 | NOT-010 | Confirm public Diary API queries, recipient resolution, and query efficiency. |
 | NOT-011 | Define retention, changed conditions, and privacy while preserving collected notifications after provider absence. |
+| NOT-012 | Define task status, run-now, and restart commands, including active-run coordination and host control boundaries. |
+| NOT-013 | Select notification inspection, validation, and preview commands and define their access requirements. |
 
 ## Implementation status and language review
 
