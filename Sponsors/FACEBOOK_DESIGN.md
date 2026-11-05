@@ -25,7 +25,7 @@ Confirmed requirements do not imply an approved Facebook publication mechanism.
 | FB-001 | Prepare sponsor thank-you posts for the Garage Sale Facebook Group and onward sharing to selected Pages and Groups. | Intended feature scope. |
 | FB-002 | Include sponsor information, a logo or image, and appropriate links in prepared content. | Proposed content preparation. |
 | FB-003 | Automatically choose message text from multiple approved alternatives managed by Officers. | Confirmed requirement. |
-| FB-004 | Preview and review the prepared message and image before publication. | Proposed review workflow. |
+| FB-004 | Let Managers switch individual shout-out review on or off through the application UI. | Confirmed requirement. |
 | FB-005 | Limit the number of shout-outs published each day. | Confirmed requirement. |
 | FB-006 | Let privileged users manage permitted Group and Page destinations through the application UI. | Confirmed requirement. |
 | FB-007 | Supply copyable text and a downloadable image for manual Group publication and onward sharing. | Proposed assisted publication. |
@@ -44,6 +44,23 @@ The design must define available sponsor fields, approval states, and template v
 It must also define selection rules, such as rotation, random choice, or avoidance of recent repetitions.
 Behavior when no approved text is available remains open.
 Automatic text selection does not imply automatic publication to Facebook.
+
+### FB-004: Switchable manual review
+
+Managers control whether individual shout-outs require manual review before publication.
+They can disable review when they consider the generated shout-outs sufficiently reliable.
+The application UI provides this control without changes to deployment settings or code.
+
+When review is enabled, each prepared shout-out requires approval before the workflow permits publication.
+The reviewer can preview the message and image before approval.
+When review is disabled, eligible shout-outs can proceed to automatic publication without individual approval.
+Automatic publication depends on a supported publication mechanism for the selected destination.
+Disabling review does not provide automatic Group publication through an unavailable API.
+
+Both modes use approved message alternatives, permitted destinations, and the daily publication limit.
+Officer approval of message formats remains separate from approval of individual shout-outs.
+The exact Manager permission, initial mode, and scope of the switch remain open.
+The design must define how mode changes affect shout-outs already awaiting review.
 
 ### FB-005: Daily publication limit
 
@@ -96,7 +113,7 @@ Recheck current Meta capabilities before implementation:
 ## Proposed assisted workflow
 
 1. Select a sponsor and prepare thank-you text, logo/image and appropriate links.
-2. Preview and review the content within GarageSale.
+2. Preview and approve the content within GarageSale when manual review is enabled.
 3. Provide copyable text and a downloadable image for a team member to publish
    manually to the Garage Sale Facebook Group.
 4. Let the team member record the published post link and manually share onward
@@ -107,12 +124,15 @@ Recheck current Meta capabilities before implementation:
 Browser automation and extensions are not an agreed implementation approach.
 The assisted publication mechanism remains proposed.
 The confirmed requirements above apply when the final workflow is selected.
+For supported automatic publication, disabling review removes the individual approval step.
+Destinations that require manual publication retain their manual publication step regardless of the review mode.
 
 ## Open design decisions
 
 - Select the approved publication and onward-sharing mechanism within current Facebook platform limits.
 - Decide whether to reuse the existing template system for FB-003.
 - Define message selection, approval, version handling, and missing-template behavior.
+- Define review-mode permissions, initial mode, switch scope, and treatment of pending shout-outs for FB-004.
 - Define the daily publication limit, counting scope, day boundary, and queue behavior for FB-005.
 - Define destination-management permissions and UI details for FB-006.
 - Define publication records, manual confirmations, and uncertain-result handling.
@@ -124,6 +144,10 @@ Test content generation, previews, approval and completion records locally using
 fictional sponsors and logos. Simulate API responses for any optional Page
 integration, including failed requests and retries without duplicate posts.
 These checks create no Facebook content.
+
+Verify both review modes, Manager access, and mode changes while shout-outs await approval.
+Verify that disabling review preserves approved-text restrictions, destination restrictions, and the daily publication limit.
+Simulate automatic publication without sending content to Facebook.
 
 There is no official Groups publishing sandbox supplied by the retired API.
 If manual Group workflow testing is needed, use a separate private test Group
