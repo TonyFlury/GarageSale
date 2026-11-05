@@ -456,6 +456,8 @@ It adds no database migration beyond the existing host UUID migration.
 [Diary training](DIARY_TRAINING.md) describes the recorded user and manager walkthrough for package version `0.1.5.1`.
 The recording uses the example Garage Sale template with fictional accounts and an isolated PostgreSQL test database.
 It covers filters, personal tasks, notes, dates, dependencies, orphan recovery, and manager forced completion.
+The introduction explains templates and event milestones before describing task dependencies and states.
+Each task selection shows the appropriate task list and identifies the task by name.
 The guide identifies the local video, captions, transcript, and verification scope.
 
 ## Language review

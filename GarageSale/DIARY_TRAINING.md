@@ -1,13 +1,11 @@
 # Garage Sale Diary training
 
-Duration: 11 minutes 14 seconds. The video has 29 chapters.
-
-This training covers the Garage Sale integration with Diary package version `0.1.5.1`.
+This training covers the Garage Sale Diary user and manager screens.
 It uses actual browser interactions with the package UI and the normal Garage Sale page layout.
 
 Open [the training video](../training/diary-0.1.5.1/diary-training.mp4) in a video player.
 Enable its English subtitle track when required.
-The video contains chapter markers for individual topics.
+Duration: 13 minutes 29 seconds. The video has 31 chapters.
 [CHAPTERS.txt](../training/diary-0.1.5.1/CHAPTERS.txt) lists the chapter times.
 
 [TRANSCRIPT.md](DIARY_TRAINING_TRANSCRIPT.md) contains the narration.
@@ -16,8 +14,17 @@ The narration uses the natural synthetic British English voice `en-GB-SoniaNeura
 Orange outlines and pointer markers identify the controls used during the demonstration.
 The video holds screen states to provide reading time between actions.
 
+## Revised presentation
+
+The narration defines templates, milestones, dependencies, and task states before the examples use those terms.
+It names the destination page and the exact task during navigation.
+Each task selection shows the task list before the named task and its button are highlighted.
+The visible titles, narration, and captions omit the package version.
+Template creation and lifecycle details are outside this walkthrough.
+
 ## Coverage
 
+- Templates, event milestones, calculated due dates, and dependencies between template tasks.
 - My Diary for an ordinary user with late and upcoming activities.
 - Personal filters, status counts, blocked tasks, and whole-team tasks.
 - Private task creation, ownership, visibility, and date rules.
