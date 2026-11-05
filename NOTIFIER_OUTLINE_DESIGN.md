@@ -110,6 +110,34 @@ The Diary provider needs regular execution for date-based notifications.
 The initial Garage Sale deployment runs the Diary provider once each night.
 The agreed hosting schedule appears below.
 
+The Diary provider has two components.
+
+| Component | Execution | Purpose |
+| --- | --- | --- |
+| Scheduled evaluator | Nightly management command | Generate Task Due and Task Late notifications, including catch-up processing. |
+| Event receiver | Normal Django app component | Receive registered Diary signals and collect notifications from successful Diary operations. |
+
+The event receiver registers during Django application initialization.
+Always running means available within the Django application, not a separate permanent process.
+It requires no additional scheduled task or PythonAnywhere always-on service.
+Registration must avoid duplicate receiver connections within an application process.
+
+Diary events must describe successful business operations, including changes through the UI, callable API, and management commands.
+The adapter must not depend only on UI view callbacks.
+The event contract must prevent collection of notifications for rolled-back changes.
+Exact signal names, payloads, and transaction timing require confirmation against the public Diary interface.
+
+The Diary package owns its signal interface.
+Garage Sale owns the integration receiver and its use of that interface.
+This outline does not assert that the installed package already supplies every required signal.
+Package interface changes remain separate dependency work.
+
+Both components use shared subscription, eligibility, recipient, and notification construction rules.
+Both report through the same Notifier intake API.
+Real-time collection does not bypass the user's email collation settings.
+The website can display collected notifications when its notification UI next refreshes.
+Live browser updates remain a UI design decision.
+
 The provider needs current user settings before it evaluates reminders.
 Different settings can require different source queries or different checks against shared query results.
 
@@ -222,7 +250,8 @@ Date calculations use London time. Exact evaluation boundaries remain part of th
 Event-driven providers could use explicit calls or documented application signals.
 Scheduled providers would evaluate conditions that become true as time passes.
 Both paths should submit notifications through the same Notifier intake contract.
-The choice of Django signals, callbacks, or explicit calls remains open.
+Other providers can choose their integration mechanism.
+The Diary integration uses the registered signal receiver described above, subject to the package's public event contract.
 
 ## Delivery engines: remaining design
 
@@ -355,7 +384,7 @@ Notice period changes apply when the Diary provider next runs.
 | NOT-007 | Define command interfaces, completion checkpoints, monitoring, and delayed-run behavior for the agreed two-task schedule. |
 | NOT-008 | Define triggers, configurable reminder frequencies, and catch-up evaluation rules. |
 | NOT-009 | Define intake persistence, repeated-submission handling, failure reporting, and concurrent execution without delivery guarantees. |
-| NOT-010 | Confirm public Diary API queries, recipient resolution, and query efficiency. |
+| NOT-010 | Confirm public Diary queries and signal contracts, including payloads, transaction timing, recipient resolution, and query efficiency. |
 | NOT-011 | Define retention, changed conditions, and privacy while preserving collected notifications after provider absence. |
 | NOT-012 | Define task status, run-now, and restart commands, including active-run coordination and host control boundaries. |
 | NOT-013 | Select notification inspection, validation, and preview commands and define their access requirements. |
