@@ -3,22 +3,26 @@
 This training covers the Garage Sale Diary user and manager screens.
 It uses actual browser interactions with the package UI and the normal Garage Sale page layout.
 
-Open [the training video](../training/diary-0.1.5.1/diary-training.mp4) in a video player.
+Open [the training video](../training/diary-training.mp4) in a video player.
 Enable its English subtitle track when required.
-Duration: 13 minutes 29 seconds. The video has 31 chapters.
+[Download the complete bundle](../training/diary-training.zip) to share the video and supporting files.
+Duration: 17 minutes 38 seconds. The video has 31 chapters.
 [CHAPTERS.txt](../training/diary-0.1.5.1/CHAPTERS.txt) lists the chapter times.
 
 [TRANSCRIPT.md](DIARY_TRAINING_TRANSCRIPT.md) contains the narration.
 [diary-training.srt](../training/diary-0.1.5.1/diary-training.srt) and [diary-training.vtt](../training/diary-0.1.5.1/diary-training.vtt) contain separate caption files.
 The narration uses the natural synthetic British English voice `en-GB-SoniaNeural`.
 Orange outlines and pointer markers identify the controls used during the demonstration.
-The video holds screen states to provide reading time between actions.
+The video holds diagrams during explanations and shows each action result after its spoken instruction.
 
 ## Revised presentation
 
-The narration defines templates, milestones, dependencies, and task states before the examples use those terms.
+The opening diagrams explain templates, event milestone dates, dependencies, and the separate Ready, Blocked, and Late labels.
 It names the destination page and the exact task during navigation.
 Each task selection shows the task list before the named task and its button are highlighted.
+Each control instruction has its own narration segment.
+The resulting screen appears after that instruction finishes.
+Definition sections use diagrams without filter interactions.
 The visible titles, narration, and captions omit the package version.
 Template creation and lifecycle details are outside this walkthrough.
 
@@ -37,6 +41,22 @@ Template creation and lifecycle details are outside this walkthrough.
 - Manager date changes and person, ownership-group, or whole-team assignment choices.
 - Manager task creation and the separate option for future template versions.
 - Manager Close all, its effect on open predecessors, and completion history.
+
+## Concept diagrams
+
+The opening diagrams remain visible throughout their explanations. No filter actions occur during these definitions.
+
+![A reusable template creates separate event diaries using each event's milestone dates.](diary_training_diagrams/template-to-diary.png)
+
+![Completing an earlier required task makes the next task ready without completing it or changing its due date.](diary_training_diagrams/task-dependencies.png)
+
+![Incomplete tasks can be ready or blocked, independently of whether their due dates have arrived.](diary_training_diagrams/late-and-blocked.png)
+
+Late means an incomplete task is due today or earlier.
+Blocked means an earlier required task is unfinished.
+Ready means no required predecessor remains unfinished.
+A task can display Ready and Late, or Blocked and Late, as separate labels.
+Completed tasks are neither late nor blocked.
 
 Personal additions are private from other ordinary users. Diary Managers can inspect them within their permitted diary scope.
 The demonstrated owner change uses orphan recovery. It does not imply unrestricted reassignment of every task.
@@ -75,4 +95,4 @@ No claim of full ASD-STE100 compliance is made.
 The local video and captions are in `training/diary-0.1.5.1/`.
 The project intentionally excludes the root `training/` directory from Git.
 Transfer those media files separately when sharing the recording.
-The guide and transcript remain in the repository.
+The guide, transcript, and concept diagrams remain in the repository.

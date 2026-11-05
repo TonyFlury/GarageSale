@@ -457,6 +457,8 @@ It adds no database migration beyond the existing host UUID migration.
 The recording uses the example Garage Sale template with fictional accounts and an isolated PostgreSQL test database.
 It covers filters, personal tasks, notes, dates, dependencies, orphan recovery, and manager forced completion.
 The introduction explains templates and event milestones before describing task dependencies and states.
+Concept diagrams distinguish due-date lateness from unfinished predecessor blocking.
+The video pairs each control instruction with its own screen change after the spoken instruction finishes.
 Each task selection shows the appropriate task list and identifies the task by name.
 The guide identifies the local video, captions, transcript, and verification scope.
 
