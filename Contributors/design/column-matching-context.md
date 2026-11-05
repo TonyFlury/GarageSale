@@ -1,5 +1,13 @@
 # Django column matching template
 
+Status: Implemented. Contributor CSV import is not an outstanding future feature.
+
+`UploadCSV` in [upload.py](../views/upload.py) implements file selection, manual column matching, review, and confirmed saving.
+Existing verification is in [test_upload.py](../tests/test_upload.py).
+Automatic column-name suggestions are separate from the implemented import workflow.
+The absence of suggestions does not make Contributor Import an unfinished feature.
+This documentation correction does not repeat tests or confirm a live deployment.
+
 Render `upload/column_matching.html` from the view following file upload:
 
 ```python
@@ -50,7 +58,7 @@ form should POST `stage=review_changes` to confirm those changes. The view must 
 stage's required payload and handle missing or invalid stages; the stage value
 alone is not proof that earlier steps were completed. A bookmark of the shared
 URL therefore opens file selection via GET.
-The upload and review templates exist; CSV processing and saving remain skeletons.
+The upload and review templates, CSV processing, and confirmed saving are implemented.
 The form sends the CSV data back with the mappings, so the receiving view does
 not need a retained upload or session copy. Decode `request.POST["csv_data"]` and
 `request.POST["column_mapping"]` as JSON. All columns are sent back; the receiving
@@ -98,3 +106,5 @@ the data is missing, or an error is present. The receiving view must validate th
 payload and recalculate permitted changes before saving; displayed lists are not
 posted as trusted model updates. Treat `csv_path` as display metadata, not a path
 to open on the server.
+
+Language review limit: The new status text has not received a full ASD-STE100 Issue 9 dictionary review.

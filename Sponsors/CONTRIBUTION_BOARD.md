@@ -1,5 +1,7 @@
 # Prize Allocation
 
+Status: Implemented, including Tombola allocation. Tombola allocation is not an outstanding future feature.
+
 Open **Team Page → Prizes → Prize Allocation**.
 The entry uses the three-column board icon and is visible to users with
 `Contributors.view_prize_allocation`. Its base URL is
@@ -91,7 +93,9 @@ as Prize Draw, ordered by position then primary key. Allocation and ordering cha
 appear on the next page request. Once every listed prize has a recorded ticket,
 the page also displays ticket numbers and winner names. Phone numbers and addresses
 are never included. A recorded ticket without a name displays "Winner name pending".
-Tombola reporting is not yet connected to this board.
+The board displays Tombola contributions and saves their classification through `ContributionBoard.get` and `ContributionBoard.post` in `Sponsors/contribution_board.py`.
+Existing verification includes Tombola moves in `Sponsors/tests/test_contribution_board.py`.
+This status correction does not repeat those tests or confirm a live deployment.
 
 ## Files
 
@@ -111,3 +115,5 @@ Run the focused tests:
 ```bash
 python manage.py test Sponsors.tests.test_contribution_board
 ```
+
+Language review limit: The new status text has not received a full ASD-STE100 Issue 9 dictionary review.
