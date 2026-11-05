@@ -6,7 +6,7 @@ It uses actual browser interactions with the package UI and the normal Garage Sa
 Open [the training video](../training/diary-training.mp4) in a video player.
 Enable its English subtitle track when required.
 [Download the complete bundle](../training/diary-training.zip) to share the video and supporting files.
-Duration: 17 minutes 38 seconds. The video has 31 chapters.
+Duration: 17 minutes 50 seconds. The video has 31 chapters.
 [CHAPTERS.txt](../training/diary-0.1.5.1/CHAPTERS.txt) lists the chapter times.
 
 [TRANSCRIPT.md](DIARY_TRAINING_TRANSCRIPT.md) contains the narration.
@@ -34,7 +34,7 @@ Template creation and lifecycle details are outside this walkthrough.
 - Private task creation, ownership, visibility, and date rules.
 - Private-task limitations, including exclusion from dependency chains.
 - Personal due-date changes and restrictions on template-task date edits.
-- Notes, their author and time, and their continued availability after completion.
+- Progress notes on both template-generated tasks and private tasks, including author, time, and availability after completion.
 - Normal completion, predecessors, blocking, and task progression.
 - Manager filters, completed history, and late-task selection.
 - Orphaned template tasks, their position in the list, and optional owner recovery.
@@ -58,6 +58,11 @@ Ready means no required predecessor remains unfinished.
 A task can display Ready and Late, or Blocked and Late, as separate labels.
 Completed tasks are neither late nor blocked.
 
+The private-task demonstration uses the default My Diary list, with blocked tasks hidden.
+The personal task is Ready and has no open predecessors.
+Notes apply to both template-generated tasks and private tasks.
+Assigned users and managers can add notes under the normal task access rules.
+
 Personal additions are private from other ordinary users. Diary Managers can inspect them within their permitted diary scope.
 The demonstrated owner change uses orphan recovery. It does not imply unrestricted reassignment of every task.
 
@@ -78,6 +83,7 @@ All three accounts are fictional and use addresses in `example.test`.
 
 The recording uses the separate PostgreSQL test database `test_diary_training_video`.
 The browser scenario checks saved notes, completion refusal, normal progression, orphan recovery, and forced completion history.
+A separate browser check verifies private-task navigation with default filters and confirms that the task has no blockers.
 The test database is removed after recording.
 No application database, deployed service, or Diary package source is changed.
 
