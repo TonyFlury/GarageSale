@@ -20,7 +20,7 @@ A provider can submit signals from an event receiver or a scheduled evaluator.
 The proposed technical operation name is `publish`.
 
 All code names, field names, status values, and signatures below are proposed technical names.
-Signatures describe a Python interface without supplying implementation code.
+Signatures and examples describe a Python interface without supplying an implementation.
 Identifiers use stable strings rather than database row numbers.
 Persisted records use versioned data that can be read without importing the original provider.
 
@@ -32,6 +32,120 @@ Proposed assumptions:
 - Source changes must commit before their signals become available for processing.
 - No operation promises delivery or confirmed receipt.
 
+## Host settings and registration lifecycle
+
+The host defines one Django setting named `NOTIFIER`.
+This dictionary contains the ordered engine list and other Notifier configuration.
+The engine list follows the dotted-path convention used by `MIDDLEWARE`.
+Each engine path identifies a registration callable, rather than a middleware class.
+
+The following proposed settings belong in the host's Django settings module.
+These examples do not change the current `GarageSale/settings.py` file.
+Package paths are illustrative technical names, not installed modules.
+
+```python
+NOTIFIER = {
+    "ENGINES": [
+        "example_email.notifier.register",
+        "example_user_icon.notifier.register",
+    ],
+    "PROVIDERS": [
+        "example_app.notifications.register",
+    ],
+    "ENGINE_OPTIONS": {
+        "email": {
+            "sender": "notifications@example.org",
+            "transport_secret_ref": "notifier/email/transport",
+        },
+    },
+    "TIME_ZONE": "Europe/London",
+    "INTAKE_LIMITS": {
+        "signals": 500,
+        "recipient_entries": 5000,
+    },
+}
+```
+
+`ENGINES` is the complete engine allowlist for this deployment.
+An engine package does not register itself merely because the host installed it.
+`PROVIDERS` explicitly identifies application registration callables.
+The host can include a third-party integration adapter here without changing the source application.
+
+`ENGINE_OPTIONS` maps stable engine keys to host configuration values.
+Each engine validates these values against its `configuration_fields` definition.
+An omitted engine options entry supplies an empty dictionary.
+Options for an unregistered engine produce a configuration error.
+These host values do not replace individual user preferences.
+
+The default configuration is equivalent to `NOTIFIER = {"ENGINES": [], "PROVIDERS": []}`.
+Omitted lists default to empty lists. Omitted limits use the values shown above.
+`TIME_ZONE` defaults to `Europe/London`. Other values remain outside the initial scope.
+Unknown top-level fields produce configuration errors to expose spelling errors.
+New Notifier settings can become additional documented dictionary fields.
+
+### Startup sequence
+
+The host includes the proposed `notifier.apps.NotifierConfig` class in `INSTALLED_APPS`.
+Django calls its `ready()` method during startup of web processes and management commands.
+That method coordinates the following registration steps within each process.
+
+1. Read and validate the `NOTIFIER` dictionary structure.
+2. Create the process-local registry.
+3. Import and call each `PROVIDERS` registration callable in list order.
+4. Import and call each `ENGINES` registration callable in list order.
+5. Validate registrations and host engine options without accessing database records.
+6. Make the registry available to runtime Notifier services.
+
+Each callable receives the registry as its only argument.
+It declares definitions and factories without querying subscriptions, creating engine instances, or sending messages.
+Registration must not depend on another application's `ready()` method having completed.
+Definition modules must have no database or delivery side effects during import.
+
+The registry distinguishes identical repeated declarations from conflicting declarations.
+Each configured path runs once per registry initialization.
+Repeated startup calls reuse the completed registry instead of connecting receivers again.
+Each worker process has its own registry. Registration does not require a global database lock.
+
+List order controls registration and default settings display order.
+It does not define a delivery pipeline, execution priority, or dependencies between engines.
+Removing a path takes effect after process restart. It does not delete stored notifications or preferences.
+User preference changes take effect at runtime without process restart.
+
+An invalid top-level setting prevents registry initialization with `NotifierConfigurationError`.
+A failed component registration discards that component's declarations and records an unavailable component.
+Other valid components remain usable. Configuration inspection reports each unavailable component.
+No runtime operation can use a partially registered provider or engine.
+Missing database configuration or subscription tables is a runtime configuration problem, not a reason for startup database writes.
+
+Engine factories run only when a runtime operation needs an enabled engine.
+Factory construction must not send notifications. `process(context)` controls processing.
+The delivery command supplies `scheduled` invocations after startup completes.
+The intake service supplies optional `after_accept` invocations after accepted entries commit.
+The host UI supplies `interactive` invocations through the engine's declared adapter.
+
+### Engine registration example
+
+This proposed module is `example_email/notifier.py`.
+The illustrative engine package supplies `EMAIL_DEFINITION` and `EmailEngine`.
+Its definition includes configuration fields, preference fields, collation choices, and invocation modes described below.
+
+```python
+from .engine import EMAIL_DEFINITION, EmailEngine
+
+
+def register(registry):
+    """Declare the email engine without constructing it or sending messages."""
+    registry.register_engine(
+        definition=EMAIL_DEFINITION,
+        factory=EmailEngine,
+    )
+```
+
+The proposed factory signature is `EmailEngine(configuration, services) -> Engine`.
+`configuration` contains validated host values. `services` supplies the engine's authorized Notifier services.
+The factory can raise `EngineConfigurationError` for unavailable external configuration.
+That error disables the affected operation, not notification intake or other engines.
+
 ## 1. Application registration and signals
 
 ### Registration interface
@@ -40,6 +154,7 @@ Proposed assumptions:
 | --- | --- |
 | `register_provider(definition) -> ProviderRef` | Declare a provider and return its reference. |
 | `ProviderRef.register_stream(definition) -> StreamRef` | Declare a stream and return its reference. |
+| `get_stream(key) -> StreamRef` | Obtain a registered stream at runtime, or raise `StreamUnavailable`. |
 | `StreamRef.subscriptions(cursor=None, limit=500) -> SubscriptionPage` | Read current eligible subscriptions and their application settings. |
 | `StreamRef.settings_for(user_id) -> SubscriptionView` | Read effective settings and eligibility for one user. |
 | `StreamRef.publish(signals) -> BatchResult` | Validate signals and store eligible recipient entries. |
@@ -186,6 +301,129 @@ A provider submits only successful business changes.
 An after-commit callback is a possible integration, but a process failure can lose its notification.
 A durable pending-event record remains an optional separate design decision.
 
+### Provider registration and message example
+
+The following proposed module is `example_app/notifications.py`.
+The fictional application reports a record assignment to its new owner.
+It has no additional application settings. Its subscription still contains `enabled` and selected engines.
+The earlier Sponsor declaration separately illustrates configurable application fields.
+
+The example imports proposed Notifier types from `notifier.api`.
+Its application supplies `can_view_record(user_id, source) -> bool` through a public access interface.
+The Notifier uses this callable during intake, presentation, and delivery.
+The callable checks current source access without changing records.
+
+```python
+from functools import partial
+
+from django.db import transaction
+
+from notifier.api import (
+    ProviderDefinition,
+    Recipient,
+    Signal,
+    SourceRef,
+    StreamDefinition,
+    get_stream,
+)
+
+from .access import can_view_record
+
+
+def register(registry):
+    """Declare the example provider and assignment stream without database access."""
+    provider = registry.register_provider(
+        ProviderDefinition(
+            key="example_app",
+            label="Example application",
+            description="Notifications about example records.",
+        )
+    )
+    provider.register_stream(
+        StreamDefinition(
+            key="example_app.record_assigned",
+            label="Record assigned",
+            description="A record was assigned to you.",
+            schema_version=1,
+            fields=[],
+            access_policy=can_view_record,
+            payload_schema={
+                "version": 1,
+                "type": "object",
+                "properties": {"record_label": {"type": "string"}},
+                "required": ["record_label"],
+                "additionalProperties": False,
+            },
+        )
+    )
+
+
+def notify_after_assignment(event, *, using):
+    """Schedule assignment reporting after commit on the specified database connection."""
+    transaction.on_commit(partial(publish_assignment, event), using=using)
+
+
+def publish_assignment(event):
+    """Read current preferences and submit a committed assignment, returning its batch result."""
+    stream = get_stream("example_app.record_assigned")
+    subscription = stream.settings_for(event.new_owner_id)
+
+    # Disabled or ineligible subscriptions must not produce a notification.
+    if not subscription.enabled or not subscription.eligible:
+        return None
+
+    return stream.publish([
+        Signal(
+            occurrence_key=f"assignment:{event.operation_id}:new_owner",
+            occurred_at=event.occurred_at,
+            source=SourceRef(
+                type="example_app.record",
+                identifier=str(event.record_id),
+                revision=str(event.record_revision),
+            ),
+            recipients=[
+                Recipient(
+                    user_id=event.new_owner_id,
+                    subscription_revision=subscription.revision,
+                ),
+            ],
+            payload_version=1,
+            data={"record_label": event.record_label},
+            title="Record assigned",
+            text=f"The record {event.record_label} was assigned to you.",
+            action=None,
+        ),
+    ])
+```
+
+`payload_schema` uses the illustrated JSON Schema subset for versioned structured data.
+The exact schema dialect remains a proposed interface decision.
+Omitted `allowed_groups` applies the normal authorized-user rule.
+The access policy still restricts each record individually.
+
+The application's assignment service first authorizes the actor, validates the change, and saves the assignment within its transaction.
+It then calls `notify_after_assignment(event, using=record_database_alias)` before that transaction exits.
+`record_database_alias` identifies the connection used for the assignment write.
+A rollback removes the callback. Without an active transaction, Django runs the callback immediately.
+The application must therefore call this helper only after a successful save.
+
+`event` is an immutable application value containing the identifiers, revision, label, and time used above.
+`operation_id` identifies the saved assignment operation. Repeated processing must reuse that identifier.
+The callback must not capture a mutable model instance or an unevaluated source query.
+The example reports assignment only. A separate removal occurrence can report the previous owner's loss of ownership.
+
+`publish_assignment` returns `None` when the current subscription prevents reporting.
+Otherwise, it returns the `BatchResult` described above.
+It can raise `StreamUnavailable` or the documented intake exceptions.
+The direct caller inspects recipient results, including `settings_changed` and `ineligible`.
+An after-commit callback has no synchronous business-operation result. Its execution wrapper records failures for diagnosis.
+The host must provide that wrapper before production use. This minimal example does not implement monitoring or retry.
+Callback failure occurs after commit and cannot undo the assignment.
+
+The provider does not choose an engine, construct an email, or calculate a delivery interval.
+The Notifier stores an accepted entry even when the host has no engines.
+Configured engines later apply current user delivery preferences and access checks.
+
 ## 2. Communication engine registration and interface
 
 ### Registration and configuration
@@ -320,6 +558,8 @@ Earlier entries remain stored. Historical delivery requires a separate explicit 
 | Subject | Proposed decision or remaining question |
 | --- | --- |
 | Naming | Use `stream` for application channels and `engine` for delivery channels. |
+| Host settings | Use one `NOTIFIER` dictionary with an ordered `ENGINES` list, explicit `PROVIDERS`, and engine options. |
+| Startup | Load registration callables from `NotifierConfig.ready()` without database access or delivery side effects. |
 | Settings | Approve field types, validation rules, and schema migration ownership. |
 | Bulk intake | Approve limits, independent acceptance, and occurrence conflict behavior. |
 | Access | Approve group semantics and failure behavior when a source access policy is unavailable. |
