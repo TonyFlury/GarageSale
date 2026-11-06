@@ -160,8 +160,6 @@ That error disables the affected operation, not notification intake or other eng
 | `register_provider(definition) -> ProviderRef` | Declare a provider and return its reference. |
 | `ProviderRef.register_stream(definition) -> StreamRef` | Declare a stream and return its reference. |
 | `get_stream(key) -> StreamRef` | Obtain a registered stream at runtime, or raise `StreamUnavailable`. |
-| `StreamRef.subscriptions(cursor=None, limit=500) -> SubscriptionPage` | Read current eligible subscriptions and their application settings. |
-| `StreamRef.settings_for(user_id) -> SubscriptionView` | Read effective settings and eligibility for one user. |
 | `StreamRef.publish(signals) -> BatchResult` | Validate signals and store eligible recipient entries. |
 
 Registration is repeatable within each process.
@@ -269,19 +267,28 @@ The values above are examples, not approved Sponsor behavior or field limits.
 An equivalent Diary adapter would use confirmed public Diary interfaces and host-supplied group references.
 This proposal does not require changes to the Diary package.
 
-### Reading subscriptions
+### Provider and Notifier responsibilities
 
-A `SubscriptionView` contains `user_id`, `enabled`, `eligible`, `values`, and `revision`.
-It also contains `schema_version` and `observed_at`.
-`SubscriptionPage` contains subscription views and an opaque continuation cursor.
-The page excludes disabled or ineligible subscriptions.
-`settings_for` can return an ineligible view, but must not disclose restricted settings to an unauthorized caller.
+An event provider reports what happened and identifies the intended recipients.
+It submits the message without reading subscriptions, testing group membership, or checking stream enablement.
+It does not supply a subscription revision or select delivery engines.
 
-Subscription pages do not provide a permanent preference snapshot.
-A provider uses the returned revision when evaluating each recipient.
-Acceptance rechecks current settings, eligibility, and source access.
-A changed revision returns `settings_changed` for that recipient. The provider can evaluate that recipient again.
-There is no automatic reevaluation or guaranteed retry.
+The Notifier validates the message and resolves each recipient's current subscription.
+It checks stream enablement, Notifier authorization, allowed groups, and current source access before accepting a recipient entry.
+The Notifier invokes the registered source access callable because the source application owns its access rules.
+The provider does not call that policy as a separate notification step.
+Normal authorization of the original business operation remains the source application's responsibility.
+
+Disabled and ineligible recipients produce skipped results without stored feed entries.
+The provider can record submission results for diagnosis. It must not implement a second eligibility decision from those results.
+The Notifier repeats applicable checks during presentation and delivery because permissions and preferences can change after collection.
+
+Application-specific reminder settings need a separate evaluation interface.
+For example, a notice period affects whether a task reminder condition has occurred.
+This differs from deciding whether a user may receive an existing occurrence.
+An event provider needs no settings query to submit an assignment message.
+The scheduled reminder design must define how evaluators receive application settings without transferring eligibility enforcement to providers.
+The exact evaluation interface remains open under NOT-008. It is not a prerequisite for the event submission API.
 
 ### Signal payload and bulk submission
 
@@ -292,7 +299,7 @@ Each `Signal` contains the following fields.
 | `occurrence_key` | Stable identity for the business occurrence or reminder threshold. |
 | `occurred_at` | Time of the business occurrence, with a UTC offset. |
 | `source` | Stable source type, identifier, and optional revision. |
-| `recipients` | Explicit user identifiers and their evaluated subscription revisions. |
+| `recipients` | Intended user identifiers, without subscription settings or revisions. |
 | `payload_version`, `data` | Versioned structured facts validated against the stream schema. |
 | `title`, `text` | Stored plain-text presentation that remains usable without the provider. |
 | `action` | Optional label and validated local URL. |
@@ -313,7 +320,7 @@ A storage failure raises `IntakeUnavailable`; earlier entries can already be com
 The caller can repeat the batch with the same occurrence keys.
 
 `BatchResult` includes one result for every input index and recipient.
-Result statuses are `accepted`, `duplicate`, `disabled`, `ineligible`, `settings_changed`, and `invalid`.
+Result statuses are `accepted`, `duplicate`, `disabled`, `ineligible`, and `invalid`.
 Each result includes a machine-readable reason and an accepted or duplicate entry identifier where applicable.
 No result reveals another user's restricted content.
 
@@ -422,13 +429,8 @@ def notify_after_assignment(event, *, using):
 
 
 def publish_assignment(event):
-    """Read current preferences and submit a committed assignment, returning its batch result."""
+    """Submit a committed assignment and return the Notifier's batch result."""
     stream = get_stream("example_app.record_assigned")
-    subscription = stream.settings_for(event.new_owner_id)
-
-    # Disabled or ineligible subscriptions must not produce a notification.
-    if not subscription.enabled or not subscription.eligible:
-        return None
 
     return stream.publish([
         Signal(
@@ -442,7 +444,6 @@ def publish_assignment(event):
             recipients=[
                 Recipient(
                     user_id=event.new_owner_id,
-                    subscription_revision=subscription.revision,
                 ),
             ],
             payload_version=1,
@@ -470,10 +471,10 @@ The application must therefore call this helper only after a successful save.
 The callback must not capture a mutable model instance or an unevaluated source query.
 The example reports assignment only. A separate removal occurrence can report the previous owner's loss of ownership.
 
-`publish_assignment` returns `None` when the current subscription prevents reporting.
-Otherwise, it returns the `BatchResult` described above.
+`publish_assignment` always submits the event and returns the `BatchResult` described above.
+The Notifier decides whether to accept or skip the intended recipient.
 It can raise `StreamUnavailable` or the documented intake exceptions.
-The direct caller inspects recipient results, including `settings_changed` and `ineligible`.
+The direct caller can record recipient results, including `disabled` and `ineligible`.
 An after-commit callback has no synchronous business-operation result. Its execution wrapper records failures for diagnosis.
 The host must provide that wrapper before production use. This minimal example does not implement monitoring or retry.
 Callback failure occurs after commit and cannot undo the assignment.
@@ -619,6 +620,8 @@ Earlier entries remain stored. Historical delivery requires a separate explicit 
 | Host settings | Keep the ordered `ENGINES` list and engine options in `NOTIFIER`. Do not require a provider list. |
 | Startup | Providers register from their own `AppConfig.ready()` methods. Notifier startup loads only configured engines. |
 | Registration storage | Hold declarations in memory without database access. Save subscription rows only when users change their settings. |
+| Responsibility boundary | Providers submit occurrences and intended recipients. The Notifier enforces subscriptions and eligibility. |
+| Reminder evaluation | Define application-setting inputs separately from the simple event submission API under NOT-008. |
 | Settings | Approve field types, validation rules, and schema migration ownership. |
 | Bulk intake | Approve limits, independent acceptance, and occurrence conflict behavior. |
 | Access | Approve group semantics and failure behavior when a source access policy is unavailable. |

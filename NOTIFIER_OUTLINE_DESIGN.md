@@ -36,7 +36,8 @@ A Django signal is a possible integration mechanism. It is not the notification 
 A provider registers the streams that it can supply.
 Registration includes each stream's identity, display information, configurable fields, and optional allowed groups.
 The Notifier returns a key or reference for each registered stream.
-The provider uses that reference to submit notifications and obtain user settings.
+The provider uses that reference to submit notifications with intended recipients.
+The Notifier checks current subscriptions and eligibility.
 
 Registration defines the fields that users can change.
 Each field needs a type and validation rules.
@@ -53,7 +54,9 @@ Users must opt in before receiving notifications from a stream.
 
 Different users can select different settings for the same stream.
 For example, Task Due can support seven days, three days, or the due date itself.
-The provider obtains user settings when it runs and applies them to source data.
+Reminder evaluation applies application settings to source data.
+The interface for supplying these settings remains open.
+Event submission does not require a provider to read subscriptions.
 
 The example field Notice Period uses an integer number of days.
 Its validation must permit zero if zero represents the due date itself.
@@ -135,14 +138,16 @@ Garage Sale owns the integration receiver and its use of that interface.
 This outline does not assert that the installed package already supplies every required signal.
 Package interface changes remain separate dependency work.
 
-Both components use shared subscription, eligibility, recipient, and notification construction rules.
+Both components identify occurrences and intended recipients.
+The Notifier applies shared subscription and eligibility rules to their submissions.
 Both report through the same Notifier intake API.
 Real-time collection does not bypass the user's email collation settings.
 The website can display collected notifications when its notification UI next refreshes.
 Live browser updates remain a UI design decision.
 
-The provider needs current user settings before it evaluates reminders.
+Reminder evaluation needs current application settings, such as the notice period.
 Different settings can require different source queries or different checks against shared query results.
+This evaluation does not transfer subscription or eligibility enforcement to the provider.
 
 The Diary provider records when its last run completed successfully.
 Its next run uses that point to catch up on due-date changes since completion.
@@ -195,8 +200,8 @@ The following division is proposed. It does not define approved interfaces.
 | Component | Proposed responsibility |
 | --- | --- |
 | Source application | Own business records and enforce source access rules. |
-| Provider | Declare streams, obtain settings, identify occurrences, and select eligible recipients. |
-| Notifier | Validate preferences, store subscriptions, combine feed entries, and coordinate delivery. |
+| Provider | Declare streams, identify occurrences, and submit messages with intended recipients. |
+| Notifier | Validate preferences, enforce subscriptions and eligibility, store accepted entries, and coordinate delivery. |
 | Delivery engine | Present or send eligible notifications through one channel. |
 | Hosting project | Configure providers, permissions, delivery engines, and scheduled execution. |
 
@@ -211,8 +216,9 @@ These are example technical names, not an approved naming scheme.
 Registration should be repeatable without creating duplicate streams.
 
 Registration would define capabilities rather than return a permanent snapshot of user preferences.
-The returned reference would provide access to current subscriptions when the provider executes.
-Changes to preferences would therefore take effect without an application restart.
+The returned reference provides message submission without a subscription query.
+The Notifier reads current preferences when it processes the submission.
+Preference changes take effect without an application restart.
 
 An optional schema version could support later changes to registered fields.
 The treatment of removed fields and invalid saved values remains open.
@@ -235,7 +241,8 @@ An explicit empty group list could disable the stream for everyone.
 These combination and empty-list rules require confirmation.
 
 Eligibility should be checked when settings are accessed, notifications are accepted, feed entries are displayed, and delivery occurs.
-The provider should also check access to each source record.
+The Notifier invokes the source application's registered access policy for each source record.
+The provider does not repeat this check before submission.
 Saved preferences must not act as an access grant after group membership changes.
 
 Preferences could remain stored while a user is ineligible.
@@ -244,13 +251,14 @@ The design must define behavior for inactive users and deleted source records.
 
 ## Provider execution proposals
 
-A provider does not necessarily need one database query for each user.
-It could group subscriptions with the same notice period.
-It could also query a shared date range and evaluate each user's settings against the results.
-The provider should choose the query strategy because it understands its source application.
+An event provider submits a message when a successful business event occurs.
+It supplies intended recipients without checking subscriptions, stream enablement, or allowed groups.
+The Notifier decides which recipient entries to accept.
 
-The settings API needs rules for large subscription sets, including pagination and concurrent preference changes.
-Date calculations use London time. Exact evaluation boundaries remain part of the provider contract.
+Scheduled reminder evaluation can require application settings and efficient source queries.
+Its separate interface remains open under NOT-008.
+That interface must preserve Notifier ownership of subscriptions and eligibility enforcement.
+Date calculations use London time. Exact evaluation boundaries remain open.
 
 Event-driven providers could use explicit calls or documented application signals.
 Scheduled providers would evaluate conditions that become true as time passes.
