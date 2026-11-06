@@ -49,9 +49,6 @@ NOTIFIER = {
         "example_email.notifier.register",
         "example_user_icon.notifier.register",
     ],
-    "PROVIDERS": [
-        "example_app.notifications.register",
-    ],
     "ENGINE_OPTIONS": {
         "email": {
             "sender": "notifications@example.org",
@@ -68,8 +65,9 @@ NOTIFIER = {
 
 `ENGINES` is the complete engine allowlist for this deployment.
 An engine package does not register itself merely because the host installed it.
-`PROVIDERS` explicitly identifies application registration callables.
-The host can include a third-party integration adapter here without changing the source application.
+Providers register themselves when their Django applications start.
+The Notifier does not require a provider list in settings.
+An integration adapter can register from its own application without changing a third-party source package.
 
 `ENGINE_OPTIONS` maps stable engine keys to host configuration values.
 Each engine validates these values against its `configuration_fields` definition.
@@ -77,8 +75,8 @@ An omitted engine options entry supplies an empty dictionary.
 Options for an unregistered engine produce a configuration error.
 These host values do not replace individual user preferences.
 
-The default configuration is equivalent to `NOTIFIER = {"ENGINES": [], "PROVIDERS": []}`.
-Omitted lists default to empty lists. Omitted limits use the values shown above.
+The default configuration is equivalent to `NOTIFIER = {"ENGINES": []}`.
+An omitted engine list defaults to an empty list. Omitted limits use the values shown above.
 `TIME_ZONE` defaults to `Europe/London`. Other values remain outside the initial scope.
 Unknown top-level fields produce configuration errors to expose spelling errors.
 New Notifier settings can become additional documented dictionary fields.
@@ -87,33 +85,40 @@ New Notifier settings can become additional documented dictionary fields.
 
 The host includes the proposed `notifier.apps.NotifierConfig` class in `INSTALLED_APPS`.
 Django calls its `ready()` method during startup of web processes and management commands.
-That method coordinates the following registration steps within each process.
+That method coordinates engine registration within each process.
 
 1. Read and validate the `NOTIFIER` dictionary structure.
-2. Create the process-local registry.
-3. Import and call each `PROVIDERS` registration callable in list order.
-4. Import and call each `ENGINES` registration callable in list order.
-5. Validate registrations and host engine options without accessing database records.
-6. Make the registry available to runtime Notifier services.
+2. Obtain the shared process-local registry without clearing existing provider declarations.
+3. Import and call each `ENGINES` registration callable in list order.
+4. Validate engine registrations and host engine options without accessing database records.
 
-Each callable receives the registry as its only argument.
+Each engine registration callable receives the registry as its only argument.
 It declares definitions and factories without querying subscriptions, creating engine instances, or sending messages.
+Each provider application calls its registration function from its own `AppConfig.ready()` method.
+The public `get_registry()` function returns the same registry before or after `NotifierConfig.ready()` runs.
+It creates the registry on first use without accessing Django models or the database.
 Registration must not depend on another application's `ready()` method having completed.
+Provider registration does not require engine registration to have completed.
+Runtime collection and delivery start only after Django application initialization completes.
 Definition modules must have no database or delivery side effects during import.
 
 The registry distinguishes identical repeated declarations from conflicting declarations.
 Each configured path runs once per registry initialization.
-Repeated startup calls reuse the completed registry instead of connecting receivers again.
+Repeated startup calls reuse the registry instead of clearing declarations or connecting receivers again.
 Each worker process has its own registry. Registration does not require a global database lock.
 
-List order controls registration and default settings display order.
+Engine list order controls engine registration and default engine settings display order.
 It does not define a delivery pipeline, execution priority, or dependencies between engines.
-Removing a path takes effect after process restart. It does not delete stored notifications or preferences.
+Removing an engine path takes effect after process restart.
+Removing a provider application removes its declarations from the next process's registry.
+Neither change deletes stored notifications or preferences.
 User preference changes take effect at runtime without process restart.
 
-An invalid top-level setting prevents registry initialization with `NotifierConfigurationError`.
-A failed component registration discards that component's declarations and records an unavailable component.
-Other valid components remain usable. Configuration inspection reports each unavailable component.
+An invalid top-level setting raises `NotifierConfigurationError` during Notifier startup.
+A failed engine registration discards that engine's declarations and records an unavailable engine.
+Other valid engines remain usable. Configuration inspection reports each unavailable engine.
+The provider registration wrapper stages declarations and discards them if registration fails.
+A provider registration error propagates from its application's `ready()` method and prevents that process from starting.
 No runtime operation can use a partially registered provider or engine.
 Missing database configuration or subscription tables is a runtime configuration problem, not a reason for startup database writes.
 
@@ -163,7 +168,29 @@ Registration is repeatable within each process.
 An identical declaration returns the existing reference.
 A conflicting declaration raises `RegistrationConflict`.
 Registration does not create subscriptions or enable delivery.
-The host explicitly supplies provider imports. The Notifier does not scan arbitrary installed packages.
+Each installed provider application explicitly registers its definitions during startup.
+The Notifier does not scan packages for providers or require a provider setting.
+
+### In-memory declarations and stored preferences
+
+Provider and stream registration performs no database reads or writes.
+The registry holds definitions, field defaults, access callables, and stable keys in memory.
+It does not create database rows for providers, streams, or default subscriptions.
+Each process reconstructs these definitions during startup.
+
+At runtime, the settings service reads saved preferences by `(user_id, stream_key)`.
+Without a saved row, it returns declared defaults with `enabled=false`.
+Opening the settings page does not create a subscription row.
+An authorized settings change validates values and creates or updates the user's preference row.
+Subscription queries read saved enabled preferences rather than creating rows for every user and stream.
+Schema validation of saved preferences occurs during runtime access, not registration.
+
+Allowed-group declarations use stable names or host configuration references rather than database queries during startup.
+Eligibility checks resolve those references at runtime.
+Group inspection that requires database access belongs in a separate configuration check.
+
+Accepted notifications and engine processing state still require their own database writes.
+These writes do not persist registration definitions or create default subscriptions.
 
 A `ProviderDefinition` contains `key`, `label`, and `description`.
 A `StreamDefinition` contains the following fields.
@@ -302,6 +329,37 @@ An after-commit callback is a possible integration, but a process failure can lo
 A durable pending-event record remains an optional separate design decision.
 
 ### Provider registration and message example
+
+The provider's proposed `example_app/apps.py` module connects registration to application startup.
+The host includes `example_app.apps.ExampleAppConfig` in `INSTALLED_APPS`.
+It does not add the provider to `NOTIFIER` settings.
+
+```python
+from django.apps import AppConfig
+
+
+class ExampleAppConfig(AppConfig):
+    """Configure the example application and declare its notification streams."""
+
+    name = "example_app"
+
+    def ready(self):
+        """Register provider declarations in memory without database access."""
+        from notifier.api import get_registry
+
+        from .notifications import register
+
+        registry = get_registry()
+        with registry.provider_registration():
+            register(registry)
+```
+
+`provider_registration()` stages declarations until its context exits successfully.
+It uses an in-memory operation, not a database transaction.
+An exception discards the staged declarations and propagates to Django startup.
+Repeated identical declarations succeed without creating duplicate streams.
+Conflicting declarations raise `RegistrationConflict`.
+Event receivers, when needed, use stable Django `dispatch_uid` values to prevent duplicate connections.
 
 The following proposed module is `example_app/notifications.py`.
 The fictional application reports a record assignment to its new owner.
@@ -558,8 +616,9 @@ Earlier entries remain stored. Historical delivery requires a separate explicit 
 | Subject | Proposed decision or remaining question |
 | --- | --- |
 | Naming | Use `stream` for application channels and `engine` for delivery channels. |
-| Host settings | Use one `NOTIFIER` dictionary with an ordered `ENGINES` list, explicit `PROVIDERS`, and engine options. |
-| Startup | Load registration callables from `NotifierConfig.ready()` without database access or delivery side effects. |
+| Host settings | Keep the ordered `ENGINES` list and engine options in `NOTIFIER`. Do not require a provider list. |
+| Startup | Providers register from their own `AppConfig.ready()` methods. Notifier startup loads only configured engines. |
+| Registration storage | Hold declarations in memory without database access. Save subscription rows only when users change their settings. |
 | Settings | Approve field types, validation rules, and schema migration ownership. |
 | Bulk intake | Approve limits, independent acceptance, and occurrence conflict behavior. |
 | Access | Approve group semantics and failure behavior when a source access policy is unavailable. |

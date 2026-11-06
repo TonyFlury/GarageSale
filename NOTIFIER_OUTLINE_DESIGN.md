@@ -218,9 +218,11 @@ An optional schema version could support later changes to registered fields.
 The treatment of removed fields and invalid saved values remains open.
 An absent provider does not remove notifications already collected.
 
-Declaration during application initialization could remain separate from database synchronization.
-This would avoid database writes during application imports.
-The registration lifecycle and any required management command remain open.
+The API proposal places provider registration in each provider application's `AppConfig.ready()` method.
+Registration holds declarations in memory without database reads or writes.
+The proposal does not require a provider list in settings or database synchronization of declarations.
+The Notifier creates subscription rows only when users change their settings.
+Notification collection and engine processing can still write their own records.
 
 ## Permission proposals
 
