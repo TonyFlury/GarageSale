@@ -200,6 +200,7 @@ A `StreamDefinition` contains the following fields.
 | `schema_version` | Positive integer identifying the settings definition. |
 | `fields` | Ordered definitions of application settings. |
 | `allowed_groups` | Optional group references supplied by host configuration. |
+| `recipient_resolver` | Optional callable that identifies potential recipients from a signal. Defaults to `None`. |
 | `access_policy` | Public callable that checks source access for a user and source reference. |
 | `payload_schema` | Versioned definition of permitted signal data. |
 
@@ -269,11 +270,12 @@ This proposal does not require changes to the Diary package.
 
 ### Provider and Notifier responsibilities
 
-An event provider reports what happened and identifies the intended recipients.
+An event provider reports what happened through its registered stream.
+The stream optionally declares how to identify potential recipients.
 It submits the message without reading subscriptions, testing group membership, or checking stream enablement.
 It does not supply a subscription revision or select delivery engines.
 
-The Notifier validates the message and resolves each recipient's current subscription.
+The Notifier validates the message, resolves potential recipients, and reads their current subscriptions.
 It checks stream enablement, Notifier authorization, allowed groups, and current source access before accepting a recipient entry.
 The Notifier invokes the registered source access callable because the source application owns its access rules.
 The provider does not call that policy as a separate notification step.
@@ -290,6 +292,28 @@ An event provider needs no settings query to submit an assignment message.
 The scheduled reminder design must define how evaluators receive application settings without transferring eligibility enforcement to providers.
 The exact evaluation interface remains open under NOT-008. It is not a prerequisite for the event submission API.
 
+### Optional recipient resolver
+
+Registration can omit `recipient_resolver` or set it to `None`.
+Without a resolver, all authorized Notifier users can subscribe, subject to the stream's optional allowed-group restrictions.
+For each submitted signal, the Notifier selects users with an enabled subscription to that stream.
+It then checks current eligibility and source access.
+This default does not enable subscriptions automatically or send messages to unsubscribed accounts.
+
+A resolver narrows the potential audience for an occurrence, not the users permitted to configure subscriptions.
+Its proposed signature is `recipient_resolver(signal) -> Iterable[UserId]`.
+The Notifier calls it at intake after payload validation. Registration stores the callable without executing it.
+The resolver uses source facts, such as ownership, without reading Notifier subscriptions or filtering Notifier eligibility.
+It can query source data at runtime but must not change records or send messages.
+The Notifier removes duplicate identifiers before applying its subscription and eligibility checks.
+An empty result means no potential recipients. It must not select all subscribers.
+A resolver exception produces an invalid signal result with reason `recipient_resolution_failed`, without accepting entries for that signal.
+Resolver failure must never widen the audience.
+
+Allowed groups and source access remain independent restrictions with or without a resolver.
+The Notifier stores the accepted recipient entries. Engines do not rerun the resolver to add recipients later.
+Signals do not contain recipient lists or override the registered resolver.
+
 ### Signal payload and bulk submission
 
 Each `Signal` contains the following fields.
@@ -299,7 +323,6 @@ Each `Signal` contains the following fields.
 | `occurrence_key` | Stable identity for the business occurrence or reminder threshold. |
 | `occurred_at` | Time of the business occurrence, with a UTC offset. |
 | `source` | Stable source type, identifier, and optional revision. |
-| `recipients` | Intended user identifiers, without subscription settings or revisions. |
 | `payload_version`, `data` | Versioned structured facts validated against the stream schema. |
 | `title`, `text` | Stored plain-text presentation that remains usable without the provider. |
 | `action` | Optional label and validated local URL. |
@@ -309,9 +332,11 @@ Engines can combine signals from several streams and providers.
 The Notifier validates content size and action URLs before storage.
 Engines escape content for their output format.
 
-One call can contain many occurrences and many recipients.
+One call can contain many occurrences, each with its own resolved potential recipients.
 The proposed maximum is 500 signals and 5,000 expanded recipient entries per call.
 Exceeding either limit rejects the whole call with `BatchLimitExceeded` before storage.
+The Notifier resolves audiences before storage and stops expansion when the configured recipient limit is exceeded.
+This limit also applies to streams without resolvers. Larger audiences require a future paginated intake contract.
 
 Malformed batch structure raises `InvalidBatch` before storage.
 Otherwise, validation and acceptance operate per signal and recipient.
@@ -319,7 +344,9 @@ Each accepted recipient entry commits independently. The batch is not atomic.
 A storage failure raises `IntakeUnavailable`; earlier entries can already be committed.
 The caller can repeat the batch with the same occurrence keys.
 
-`BatchResult` includes one result for every input index and recipient.
+`BatchResult` includes a result for every input index and each resolved recipient processed by intake.
+An occurrence with no potential recipients returns `no_recipients` at signal level.
+Without a resolver, users without enabled subscriptions are not enumerated in results.
 Result statuses are `accepted`, `duplicate`, `disabled`, `ineligible`, and `invalid`.
 Each result includes a machine-readable reason and an accepted or duplicate entry identifier where applicable.
 No result reveals another user's restricted content.
@@ -385,7 +412,6 @@ from django.db import transaction
 
 from notifier.api import (
     ProviderDefinition,
-    Recipient,
     Signal,
     SourceRef,
     StreamDefinition,
@@ -393,6 +419,11 @@ from notifier.api import (
 )
 
 from .access import can_view_record
+
+
+def assignment_recipients(signal):
+    """Return the new owner's identifier from the validated assignment facts."""
+    return [signal.data["new_owner_id"]]
 
 
 def register(registry):
@@ -411,12 +442,16 @@ def register(registry):
             description="A record was assigned to you.",
             schema_version=1,
             fields=[],
+            recipient_resolver=assignment_recipients,
             access_policy=can_view_record,
             payload_schema={
                 "version": 1,
                 "type": "object",
-                "properties": {"record_label": {"type": "string"}},
-                "required": ["record_label"],
+                "properties": {
+                    "record_label": {"type": "string"},
+                    "new_owner_id": {"type": "string"},
+                },
+                "required": ["record_label", "new_owner_id"],
                 "additionalProperties": False,
             },
         )
@@ -441,13 +476,11 @@ def publish_assignment(event):
                 identifier=str(event.record_id),
                 revision=str(event.record_revision),
             ),
-            recipients=[
-                Recipient(
-                    user_id=event.new_owner_id,
-                ),
-            ],
             payload_version=1,
-            data={"record_label": event.record_label},
+            data={
+                "record_label": event.record_label,
+                "new_owner_id": str(event.new_owner_id),
+            },
             title="Record assigned",
             text=f"The record {event.record_label} was assigned to you.",
             action=None,
@@ -459,6 +492,8 @@ def publish_assignment(event):
 The exact schema dialect remains a proposed interface decision.
 Omitted `allowed_groups` applies the normal authorized-user rule.
 The access policy still restricts each record individually.
+For a general announcement stream, omit `recipient_resolver` and declare a payload schema for its announcement facts.
+The Notifier then considers every enabled subscriber instead of calling `assignment_recipients`.
 
 The application's assignment service first authorizes the actor, validates the change, and saves the assignment within its transaction.
 It then calls `notify_after_assignment(event, using=record_database_alias)` before that transaction exits.
@@ -620,7 +655,8 @@ Earlier entries remain stored. Historical delivery requires a separate explicit 
 | Host settings | Keep the ordered `ENGINES` list and engine options in `NOTIFIER`. Do not require a provider list. |
 | Startup | Providers register from their own `AppConfig.ready()` methods. Notifier startup loads only configured engines. |
 | Registration storage | Hold declarations in memory without database access. Save subscription rows only when users change their settings. |
-| Responsibility boundary | Providers submit occurrences and intended recipients. The Notifier enforces subscriptions and eligibility. |
+| Responsibility boundary | Providers submit occurrences. Registered optional resolvers identify potential recipients. The Notifier enforces subscriptions and eligibility. |
+| Default audience | Without a resolver, consider all enabled subscribers, subject to current eligibility and source access. |
 | Reminder evaluation | Define application-setting inputs separately from the simple event submission API under NOT-008. |
 | Settings | Approve field types, validation rules, and schema migration ownership. |
 | Bulk intake | Approve limits, independent acceptance, and occurrence conflict behavior. |

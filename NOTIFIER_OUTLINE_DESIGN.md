@@ -36,7 +36,10 @@ A Django signal is a possible integration mechanism. It is not the notification 
 A provider registers the streams that it can supply.
 Registration includes each stream's identity, display information, configurable fields, and optional allowed groups.
 The Notifier returns a key or reference for each registered stream.
-The provider uses that reference to submit notifications with intended recipients.
+The provider uses that reference to submit notifications.
+Registration can supply an optional resolver that identifies potential recipients for each occurrence.
+Without a resolver, all authorized Notifier users can subscribe, subject to allowed-group restrictions.
+The Notifier considers enabled subscribers and applies current eligibility and source access checks.
 The Notifier checks current subscriptions and eligibility.
 
 Registration defines the fields that users can change.
@@ -138,7 +141,8 @@ Garage Sale owns the integration receiver and its use of that interface.
 This outline does not assert that the installed package already supplies every required signal.
 Package interface changes remain separate dependency work.
 
-Both components identify occurrences and intended recipients.
+Both components identify occurrences and submit their source facts.
+Their registered streams can declare optional recipient resolvers.
 The Notifier applies shared subscription and eligibility rules to their submissions.
 Both report through the same Notifier intake API.
 Real-time collection does not bypass the user's email collation settings.
@@ -159,7 +163,7 @@ Recovery of elapsed reminder thresholds also needs a precise evaluation rule.
 
 The reporting API supports multiple notifications in one call for a registered stream.
 A Task Due submission can contain multiple tasks for one user or multiple users.
-Each item must identify its intended recipient or recipients without applying one user's settings to the entire submission.
+The Notifier resolves each item's potential recipients independently without applying one user's settings to the entire submission.
 The API must not require a separate call for every task or user.
 Batch size, validation, partial failure behavior, and response details remain open.
 
@@ -200,7 +204,7 @@ The following division is proposed. It does not define approved interfaces.
 | Component | Proposed responsibility |
 | --- | --- |
 | Source application | Own business records and enforce source access rules. |
-| Provider | Declare streams, identify occurrences, and submit messages with intended recipients. |
+| Provider | Declare streams and optional recipient resolvers, identify occurrences, and submit messages. |
 | Notifier | Validate preferences, enforce subscriptions and eligibility, store accepted entries, and coordinate delivery. |
 | Delivery engine | Present or send eligible notifications through one channel. |
 | Hosting project | Configure providers, permissions, delivery engines, and scheduled execution. |
@@ -252,7 +256,8 @@ The design must define behavior for inactive users and deleted source records.
 ## Provider execution proposals
 
 An event provider submits a message when a successful business event occurs.
-It supplies intended recipients without checking subscriptions, stream enablement, or allowed groups.
+It supplies source facts without checking subscriptions, stream enablement, or allowed groups.
+The Notifier invokes the stream's optional recipient resolver or considers all enabled subscribers when no resolver exists.
 The Notifier decides which recipient entries to accept.
 
 Scheduled reminder evaluation can require application settings and efficient source queries.
