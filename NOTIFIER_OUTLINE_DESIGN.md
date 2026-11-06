@@ -7,6 +7,9 @@ Status: Outline design for a future feature. No Notifier implementation is inclu
 This document separates agreed requirements from proposals and open decisions.
 Example technical names do not define a final API.
 
+[The API proposal](NOTIFIER_API_PROPOSAL.md) develops application registration, signal submission, engine registration, and engine processing.
+Its interfaces remain proposals for review.
+
 ## Purpose and terms
 
 The Notifier collects notifications from multiple applications into one feed for each user.
