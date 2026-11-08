@@ -10,3 +10,6 @@
 .diary.diary-personal .diary-task-panel { box-sizing: border-box; width: 100%; max-width: none; margin-inline: 0; }
 .diary .diary-personal-status-links { display: inline-flex; max-width: 100%; vertical-align: middle; margin-top: 1rem; }
 .diary .diary-personal-result-count { display: inline-block; vertical-align: middle; margin: 1rem 0 0 1rem; }
+
+/* HOST-003: Align Diary field labels with the form controls. */
+.diary .diary-field-label { text-align: left; }

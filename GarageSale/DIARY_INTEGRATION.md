@@ -340,6 +340,7 @@ The selector `.diary .diary-personal-status-links` adds a top margin of `1rem`.
 The status links and `.diary-personal-result-count` share a line when sufficient width is available.
 They move to separate lines when the available width is too small.
 These host rules preserve the package classes and use no additional CSS variables.
+The technical selector `.diary .diary-field-label` aligns field label text to the left.
 The package manager filter panel includes Apply filters and Clear filters within its control row.
 Its checkboxes and buttons share one row when sufficient width is available. They wrap on narrow screens.
 Its rules remain within the `.diary` namespace. They add no CSS variables and change no dependency class names.
