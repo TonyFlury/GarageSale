@@ -83,5 +83,8 @@ These rules apply throughout the project, including tests and private implementa
 ## Deployment
 
 - Read `General Deployment Instructions` before work on this project.
-- Commit and push task changes. Include applicable documents, templates, static files, and migrations.
+- Leave task changes uncommitted by default.
+- Commit changes only when the user explicitly requests a commit.
+- Push changes only when the user explicitly requests a push.
+- Include applicable documents, templates, static files, and migrations in requested commits.
 - Keep unrelated user changes.
