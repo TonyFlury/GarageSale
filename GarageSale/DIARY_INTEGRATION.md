@@ -341,6 +341,8 @@ The status links and `.diary-personal-result-count` share a line when sufficient
 They move to separate lines when the available width is too small.
 These host rules preserve the package classes and use no additional CSS variables.
 The technical selector `.diary .diary-field-label` aligns field label text to the left.
+The technical selector `.diary.diary-template-editor` sets the editor width to 95% of its containing block.
+Both classes belong to the editor element. The rule removes the package's maximum width limit.
 The technical template `GarageSale/diary/toolbar_icons.html` declares the host navigator icons and their alternative text.
 The host reuses the New and Save image assets for Add task and Save template.
 Settings uses a gear image. Help uses the existing question mark image.
