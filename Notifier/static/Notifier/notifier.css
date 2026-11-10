@@ -26,6 +26,8 @@
 .notifier .notifier-clear-filters { padding-block: .6rem; }
 .notifier .notifier-settings fieldset { min-width: 0; }
 .notifier .notifier-channel { margin-block: 1rem; }
+.notifier .notifier-severity-controls { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
+.notifier .notifier-severity-controls .notifier-severity-toggle { display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; }
 .notifier .notifier-channel-options { border: 0; padding: 0; margin: 0; }
 .notifier .notifier-setting-field { margin-block: .75rem; }
 .notifier .notifier-setting-field label { display: block; margin-bottom: .35rem; }

@@ -12,7 +12,7 @@ from django.utils import timezone
 from PIL import Image
 
 from Notifier.api import ProviderDefinition, Signal, SourceRef, StreamDefinition
-from Notifier.models import Notification, SeverityPreference, Subscription
+from Notifier.models import Notification, Subscription
 from Notifier.preferences import save_subscription
 from Notifier.registry import Registry
 from user_management.models import TeamMember
@@ -38,7 +38,6 @@ class ProfileNotificationTests(TestCase):
     def make_user(self, email):
         """Create an account with its own profile and notification access without team administration privileges."""
         user = get_user_model().objects.create_user(email=email, is_verified=True)
-        SeverityPreference.objects.create(user=user, urgent=True, warning=True, information=True)
         user.user_permissions.add(Permission.objects.get(content_type__app_label='GarageSale', codename='manage_own_team_profile'),
                                   Permission.objects.get(content_type__app_label='Notifier', codename='use_notifier'))
         return user

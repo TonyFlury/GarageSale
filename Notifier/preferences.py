@@ -110,19 +110,6 @@ def saved_subscription(user, key):
     return Subscription.objects.filter(user=user, stream_key=key).first()
 
 
-def enabled_severities(user):
-    """Return personal severity switches or the default Urgent-only selection without creating rows."""
-    from .models import SeverityPreference
-    row = SeverityPreference.objects.filter(user=user).first()
-
-    # Missing preferences use defaults without writing during collection or page reads.
-    if row is None:
-        return ('urgent',)
-
-    # Only explicitly enabled severity switches permit collection and review.
-    return tuple(item.value for item in Severity if getattr(row, item.value))
-
-
 def subscription_is_valid(subscription, definition):
     """Reject disabled or incompatible saved settings without modifying them."""
 

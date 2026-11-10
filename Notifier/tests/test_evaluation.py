@@ -8,7 +8,7 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from Notifier.api import FieldDefinition, ProviderDefinition, Signal, SourceRef, StreamDefinition
-from Notifier.models import Notification, SeverityPreference, Subscription
+from Notifier.models import Notification, Subscription
 from Notifier.preferences import save_subscription
 from Notifier.registry import Registry
 
@@ -34,7 +34,6 @@ class EvaluationTests(TestCase):
     def make_user(self, email):
         """Create a user with only the default personal Notifier capability."""
         user = get_user_model().objects.create_user(email=email, is_verified=True)
-        SeverityPreference.objects.create(user=user, urgent=True, warning=True, information=True)
         user.user_permissions.add(Permission.objects.get(content_type__app_label='Notifier', codename='use_notifier'))
         return user
 

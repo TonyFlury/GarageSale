@@ -203,11 +203,12 @@ if you have a new database :
         Language review limit: The new Diary deployment instructions have not received a full ASD-STE100 Issue 9 dictionary review.
 
 2e) Notifier personal review:
-        Apply Notifier migration 0004_severity_preference for personal severity switches.
-        Urgent defaults to enabled. Warning and Information default to disabled.
-        Enable each required severity on Notification settings.
-        Select Save severities to save the switches.
-        Each channel and its severity must both be enabled.
+        Apply Notifier migration 0005_remove_severity_preference to remove obsolete severity gates.
+        Existing channel subscriptions and notification records remain unchanged.
+        Collect the updated Notifier/settings.js script for severity bulk selection.
+        Select a severity to select or clear matching channels within its provider group.
+        Adjust individual channel selections as required.
+        Select Save all to apply that provider group's final selections.
         Apply Notifier migration 0003_notification_severity for generic notification severity.
         Existing notifications receive Information severity unless a provider-specific update changes them.
         Collect Notifier/notifier.css for severity labels, icons, and borders.

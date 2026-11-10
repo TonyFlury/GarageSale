@@ -480,8 +480,9 @@ Their identifiers remain unchanged.
   Reminder actions: `GarageSale/diary_monitor/evaluator.py`: `reminder_signal`.
   Reminder ordering: `reminder_signal` supplies the due date through the generic `Signal.sort_at` field.
   Channel severity: `GarageSale/diary_notifier.py`: `register` declares `Severity.WARNING` for Task Due and `Severity.URGENT` for Task Late.
-  Personal severity switches also gate reminder evaluation through `Notifier/evaluation.py`: `evaluate_subscription`.
-  Verification: `DiaryMonitorTests.test_disabled_severity_skips_background_reminder_evaluation`.
+  Final channel selections govern reminder evaluation through `Notifier/evaluation.py`: `evaluate_subscription`.
+  Severity bulk selection does not add a separate reminder gate.
+  Verification: `DiaryMonitorTests.test_disabled_channel_skips_background_reminder_evaluation`.
   Verification: `DiaryMonitorTests.test_due_windows_use_each_users_notice_and_include_zero_day_notice` and `test_late_begins_after_due_date_and_daily_retries_preserve_read_state`.
   Verification: `DiaryMonitorTests.test_first_monitor_pass_orders_overdue_tasks_by_due_date`.
   Link handling: `GarageSale/views/diary_views.py`: `LinkedEventTaskDetailView` and `GarageSale/diary_urls.py`: `Diary:linked-task`.

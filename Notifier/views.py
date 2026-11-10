@@ -14,9 +14,9 @@ from django.urls import reverse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import ReviewFilterForm, SeverityPreferenceForm, SubscriptionForm
-from .models import SeverityPreference, Subscription
-from .preferences import can_use, eligible_for_stream, enabled_severities, save_subscription
+from .forms import ReviewFilterForm, SubscriptionForm
+from .models import Subscription
+from .preferences import can_use, eligible_for_stream, save_subscription
 from .registry import get_registry
 from .review import mark_read, visible_notifications
 
@@ -118,7 +118,16 @@ def preference_groups(user, *, selected=None, data=None):
 
         # Providers with no eligible channels must not expose an empty settings group.
         if sections:
-            groups.append({'provider': provider.definition, 'sections': sections})
+            severities = []
+            for key, label in (('urgent', 'Urgent'), ('warning', 'Warning'), ('information', 'Information')):
+
+                # Each bulk control summarizes only matching eligible channels in its own provider group.
+                matching = [section['form'].channel_enabled for section in sections if section['stream'].severity == key]
+
+                # Empty severity groups must not offer controls that change no channels.
+                if matching:
+                    severities.append({'key': key, 'label': label, 'checked': all(matching)})
+            groups.append({'provider': provider.definition, 'sections': sections, 'severities': severities})
     return groups
 
 
@@ -135,24 +144,10 @@ def preferences(request):
     """Read provider groups or validate and save every eligible channel in one personal group."""
     selected = request.POST.get('provider_key')
     groups = preference_groups(request.user, selected=selected, data=request.POST)
-    enabled = enabled_severities(request.user)
-    severity_form = SeverityPreferenceForm(initial={key: key in enabled for key in ('urgent', 'warning', 'information')},
-                                           prefix='severity')
-
-    # Severity switches have an independent save action and must not overwrite channel subscriptions.
-    if request.method == 'POST' and request.POST.get('settings_section') == 'severity':
-        severity_form = SeverityPreferenceForm(request.POST, prefix='severity')
-
-        # Only validated boolean switches become personal preferences.
-        if severity_form.is_valid():
-            SeverityPreference.objects.update_or_create(user=request.user, defaults=severity_form.cleaned_data)
-            messages.success(request, 'Severity settings saved.')
-            return redirect('Notifier:preferences')
-        return render_review(request, 'Notifier/preferences.html', {'groups': groups, 'severity_form': severity_form}, status=400)
 
     # GET requests only present declarations and must not create default preference rows.
     if request.method != 'POST':
-        return render_review(request, 'Notifier/preferences.html', {'groups': groups, 'severity_form': severity_form})
+        return render_review(request, 'Notifier/preferences.html', {'groups': groups})
 
     # Match only a provider group already selected through current eligibility checks.
     group = next((item for item in groups if item['provider'].key == selected), None)
@@ -169,4 +164,4 @@ def preferences(request):
         return redirect('Notifier:preferences')
 
     # Invalid settings remain visible for correction without changing the saved group.
-    return render_review(request, 'Notifier/preferences.html', {'groups': groups, 'severity_form': severity_form}, status=400)
+    return render_review(request, 'Notifier/preferences.html', {'groups': groups}, status=400)

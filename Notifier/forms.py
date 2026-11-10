@@ -19,14 +19,6 @@ class ReviewFilterForm(forms.Form):
             field.widget.attrs['class'] = 'notifier-filter-control'
 
 
-class SeverityPreferenceForm(forms.Form):
-    """Present independent personal master switches for all notification severities."""
-
-    urgent = forms.BooleanField(required=False, initial=True, label='Urgent')
-    warning = forms.BooleanField(required=False, initial=False, label='Warning')
-    information = forms.BooleanField(required=False, initial=False, label='Information')
-
-
 class SubscriptionForm(forms.Form):
     """Present opt-in and the fields declared by one eligible registered stream."""
 
@@ -36,7 +28,7 @@ class SubscriptionForm(forms.Form):
         """Build fields from current declarations without creating a subscription row."""
         kwargs.setdefault('prefix', definition.key)
         super().__init__(*args, **kwargs)
-        self.initial['enabled'] = False
+        self.initial['enabled'] = definition.severity == 'urgent'
         for field in definition.fields:
             self.fields[field.key] = form_field(field)
             self.initial[field.key] = field.default

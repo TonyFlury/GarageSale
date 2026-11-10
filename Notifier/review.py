@@ -7,19 +7,18 @@ from django.utils import timezone
 from .collection import source_is_visible
 from .definitions import SourceRef
 from .models import Notification, Subscription
-from .preferences import eligible_for_stream, enabled_severities, subscription_is_valid
+from .preferences import eligible_for_stream, subscription_is_valid
 from .registry import get_registry
 
 
 def visible_notifications(user, *, unread=False, severity='', channel=''):
     """Return only this user's currently eligible entries without deleting hidden history."""
     subscriptions = {row.stream_key: row for row in Subscription.objects.filter(user=user)}
-    severities = enabled_severities(user)
 
     # Urgent conditions precede warnings. Information follows both groups, with oldest dates first inside each group.
     rank = Case(When(severity='urgent', then=Value(0)), When(severity='warning', then=Value(1)),
                 default=Value(2), output_field=IntegerField())
-    records = Notification.objects.filter(user=user, severity__in=severities).order_by(rank, Coalesce('sort_at', 'occurred_at'), 'created_at', 'pk')
+    records = Notification.objects.filter(user=user).order_by(rank, Coalesce('sort_at', 'occurred_at'), 'created_at', 'pk')
 
     # The unread filter changes presentation without changing stored review state.
     if unread:
@@ -34,10 +33,10 @@ def visible_notifications(user, *, unread=False, severity='', channel=''):
         records = records.filter(stream_key=channel)
 
     # A stored entry must pass current source access checks before pagination or rendering.
-    return [record for record in records.iterator() if notification_is_visible(user, record, subscriptions, severities)]
+    return [record for record in records.iterator() if notification_is_visible(user, record, subscriptions)]
 
 
-def notification_is_visible(user, record, subscriptions=None, severities=None):
+def notification_is_visible(user, record, subscriptions=None):
     """Fail closed for missing providers, disabled streams, or lost source access."""
     reference = get_registry().streams.get(record.stream_key)
 
@@ -45,14 +44,6 @@ def notification_is_visible(user, record, subscriptions=None, severities=None):
     if reference is None or record.user_id != user.pk:
         return False
     definition = reference.definition
-
-    # Direct read actions must use the same current severity switches as the review list.
-    if severities is None:
-        severities = enabled_severities(user)
-
-    # Hiding a severity preserves existing notifications and their read state.
-    if record.severity not in severities:
-        return False
 
     # Review callers may reuse a preference snapshot for one request.
     if subscriptions is None:

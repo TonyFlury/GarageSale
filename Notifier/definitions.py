@@ -1,11 +1,11 @@
 """Define the public registration and message values without database access."""
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Callable
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     """Define notification conditions independently of application task priority."""
 
     INFORMATION = 'information'

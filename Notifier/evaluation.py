@@ -7,7 +7,7 @@ from django.db import DatabaseError, transaction
 from .collection import IntakeUnavailable, accept_recipient, validate_signal
 from .configuration import configuration
 from .models import Subscription
-from .preferences import clean_values, eligible_for_stream, enabled_severities, subscription_is_valid
+from .preferences import clean_values, eligible_for_stream, subscription_is_valid
 
 
 def signal_chunks(signals, size):
@@ -32,9 +32,6 @@ def evaluate_subscription(stream, identifier, build_signals, limit):
     if not subscription_is_valid(row, definition) or not eligible_for_stream(row.user, definition):
         return Counter(subscriptions_skipped=1)
 
-    # A disabled severity must not trigger provider evaluation or accept new reminders.
-    if definition.severity not in enabled_severities(row.user):
-        return Counter(subscriptions_skipped=1)
     values = clean_values(definition, row.values)
     result = Counter(subscriptions_evaluated=1)
     for batch in signal_chunks(build_signals(values), limit):
