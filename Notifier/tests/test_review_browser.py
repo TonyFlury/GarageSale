@@ -36,6 +36,7 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.addCleanup(registry_patch.stop)
         provider = self.registry.register_provider(ProviderDefinition('browser', 'Browser example'))
         self.stream = provider.register_stream(StreamDefinition('browser.changed', 'Example changes',
+            severity='urgent',
             fields=(FieldDefinition('notice_days', 'Notice Period (days)', type='integer', default=0, minimum=0),)))
         self.secondary_stream = provider.register_stream(StreamDefinition('browser.progress', 'Example progress'))
         self.user = get_user_model().objects.create_user(email='notifier-browser@example.test', is_verified=True)
@@ -117,7 +118,7 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.check_notice_period_retention()
         self.stream.publish([Signal('browser:1', timezone.now(), SourceRef('example.record', '1'),
                                     'Ready for review', 'The example record changed.',
-                                    url=reverse('Notifier:preferences'), url_text='Open item', severity='urgent')])
+                                    url=reverse('Notifier:preferences'), url_text='Open item')])
         self.open_page('Notifier:feed')
         self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.notifier-title').text, 'Ready for review')
         self.driver.set_window_size(390, 844)

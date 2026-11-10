@@ -67,16 +67,12 @@ def validate_action(action):
         raise ValidationError('Supply a labeled local action URL.')
 
 
-def validate_signal(signal):
-    """Validate content and return its JSON-compatible source and stable content hash."""
+def validate_signal(signal, *, severity=Severity.INFORMATION):
+    """Validate content with registered channel severity and return its source and stable content hash."""
 
     # Only declared messages can cross the callable intake interface.
     if not isinstance(signal, Signal) or not isinstance(signal.source, SourceRef):
         raise ValidationError('Supply a Signal and SourceRef.')
-
-    # Unknown severities cannot bypass the defined review groups or their ordering.
-    if not isinstance(signal.severity, str) or signal.severity not in tuple(Severity):
-        raise ValidationError('Supply information, warning, or urgent severity.')
 
     # Stable identities and bounded plain text keep feed records valid and displayable.
     if (not isinstance(signal.occurrence_key, str) or not signal.occurrence_key or len(signal.occurrence_key) > 200 or
@@ -114,8 +110,8 @@ def validate_signal(signal):
         content['sort_at'] = signal.sort_at.isoformat()
 
     # Default Information messages preserve the content hashes accepted before severity support.
-    if signal.severity != Severity.INFORMATION:
-        content['severity'] = signal.severity
+    if severity != Severity.INFORMATION:
+        content['severity'] = severity
     encoded = json.dumps(content, sort_keys=True, allow_nan=False)
 
     # Large arbitrary payloads must not bypass the plain-text field limits.
@@ -179,7 +175,7 @@ def prepare_items(stream, signals, limits):
     prepared, total = [], 0
     for index, signal in enumerate(supplied):
         try:
-            source, digest = validate_signal(signal)
+            source, digest = validate_signal(signal, severity=stream.definition.severity)
             recipients = potential_recipients(stream.definition, signal, limits['recipient_entries'])
         except BatchLimitExceeded:
             raise
@@ -202,7 +198,7 @@ def notification_defaults(definition, signal, source, digest):
     values = {'stream_label': definition.label, 'title': signal.title, 'text': signal.text,
               'source': source, 'data': signal.data, 'payload_version': signal.payload_version,
               'content_hash': digest, 'occurred_at': signal.occurred_at, 'sort_at': signal.sort_at,
-              'severity': signal.severity}
+              'severity': definition.severity}
 
     action = signal_action(signal)
 

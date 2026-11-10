@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, Validat
 from django.utils import timezone
 from django.urls import reverse
 
-from Notifier.api import FieldDefinition, ProviderDefinition, Signal, SourceRef, StreamDefinition, get_registry, get_stream
+from Notifier.api import FieldDefinition, ProviderDefinition, Severity, Signal, SourceRef, StreamDefinition, get_registry, get_stream
 
 logger = logging.getLogger(__name__)
 EVENTS = (
@@ -146,6 +146,7 @@ def register():
                 fields = (FieldDefinition('notice_days', 'Notice Period (days)', type='integer', default=0, minimum=0,
                     help_text='Days before the due date. Use 0 for the due date itself.'),)
             provider.register_stream(StreamDefinition(key='diary.' + name, label=label, description=text,
+                severity={'task_due': Severity.WARNING, 'task_late': Severity.URGENT}.get(name, Severity.INFORMATION),
                 fields=fields, allowed_groups=(settings.DIARY_USER, settings.DIARY_MANAGER), access_policy=source_is_visible))
     for name, _, _ in EVENTS:
         getattr(signals, name).connect(partial(receive_task_event, event_name=name),

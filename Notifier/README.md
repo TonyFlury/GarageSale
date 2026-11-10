@@ -132,6 +132,7 @@ def register():
                 key='example.record_changed',
                 label='Record changes',
                 description='Changes to shared records.',
+                severity='information',
             )
         )
 ```
@@ -223,7 +224,7 @@ Signals contain plain text and JSON-compatible object data.
 The review page groups notifications by severity before pagination.
 The groups appear in this order: Urgent, Warning, Information.
 Each group displays notifications from oldest to newest.
-The optional field `Signal.severity` defaults to `Severity.INFORMATION`.
+The optional field `StreamDefinition.severity` defaults to `Severity.INFORMATION`.
 Providers can also supply `Severity.WARNING` or `Severity.URGENT` from `Notifier.api`.
 The equivalent string values are `information`, `warning`, and `urgent`.
 The Notifier rejects other values.
@@ -241,9 +242,12 @@ The `feed` and `read_notification` functions retain selections in `Notifier/view
 The `visible_notifications` function applies selections in `Notifier/review.py`.
 The `.notifier-review-filters`, `.notifier-filter-field`, and `.notifier-filter-control` classes control filter layout.
 The `.notifier-filter-error`, `.notifier-apply-filters`, and `.notifier-clear-filters` classes identify filter actions and errors.
-Severity forms part of each accepted notification snapshot.
+Providers declare severity once when registering a channel.
+`Signal` has no severity field and cannot override the channel declaration.
+Collection copies channel severity into each accepted notification snapshot.
+Later declaration changes affect new notifications. Existing snapshots retain their collected severity.
 The Notifier does not infer severity from task dates or task priority.
-Diary supplies Warning for Task Due and Urgent for Task Late.
+Diary registers Task Due with Warning severity and Task Late with Urgent severity.
 Other Diary progress notifications use Information.
 Visible group headings and notification labels identify severity with text and decorative icons.
 The `.notifier-severity-heading`, `.notifier-group-title`, `.notifier-severity-label`, and `.notifier-severity-icon` classes control these components.

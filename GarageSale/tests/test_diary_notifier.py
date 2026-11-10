@@ -129,6 +129,7 @@ class DiaryNotifierTests(TestCase):
                 self.assertEqual(reference.definition.label, label)
                 self.assertEqual(reference.definition.access_policy, diary_notifier.source_is_visible)
                 self.assertEqual(reference.definition.allowed_groups, ('ExecMember', 'Officer'))
+                self.assertEqual(reference.definition.severity, {'diary.task_due': 'warning', 'diary.task_late': 'urgent'}[key])
         self.assertEqual(len(self.registry.streams), 7)
         self.assertFalse(Subscription.objects.exists())
         self.assertFalse(Notification.objects.exists())

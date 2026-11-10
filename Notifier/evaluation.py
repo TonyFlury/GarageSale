@@ -34,7 +34,7 @@ def evaluate_subscription(stream, identifier, build_signals, limit):
     values = clean_values(definition, row.values)
     result = Counter(subscriptions_evaluated=1)
     for batch in signal_chunks(build_signals(values), limit):
-        prepared = [(message, *validate_signal(message)) for message in batch]
+        prepared = [(message, *validate_signal(message, severity=definition.severity)) for message in batch]
         for index, (message, source, digest) in enumerate(prepared):
             outcome = accept_recipient(index, definition, message, row.user_id, source, digest, keep_existing=True)
             result[outcome.status] += 1

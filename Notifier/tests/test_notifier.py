@@ -57,6 +57,12 @@ class NotifierTests(TestCase):
         """Submit one occurrence without reading preferences in provider code."""
         return (stream or self.stream).publish([message or self.message])
 
+    def severity_stream(self, key, severity):
+        """Register and enable a test channel with a fixed severity."""
+        stream = self.provider.register_stream(StreamDefinition(f'example.{key}', key, severity=severity))
+        self.enable(stream=stream)
+        return stream
+
     def test_registration_is_repeatable_and_uses_no_database(self):
         """Repeat declarations without reading or writing subscription or provider records."""
         with self.assertNumQueries(0):
@@ -257,25 +263,26 @@ class NotifierTests(TestCase):
 
     def test_review_filters_combine_channel_severity_and_unread_state(self):
         """Apply all review filters together without changing subscriptions or notification state."""
-        secondary = self.provider.register_stream(StreamDefinition('example.secondary', 'Second channel'))
+        urgent = self.severity_stream('urgent', 'urgent')
+        secondary = self.provider.register_stream(StreamDefinition('example.secondary', 'Second channel', severity='urgent'))
         self.enable()
         self.enable(stream=secondary)
-        self.publish(replace(self.message, occurrence_key='urgent', severity='urgent'))
+        self.publish(replace(self.message, occurrence_key='urgent'), stream=urgent)
         self.publish(replace(self.message, occurrence_key='info'))
-        self.publish(replace(self.message, occurrence_key='other-channel', severity='urgent'), stream=secondary)
-        self.publish(replace(self.message, occurrence_key='already-read', severity='urgent'))
+        self.publish(replace(self.message, occurrence_key='other-channel'), stream=secondary)
+        self.publish(replace(self.message, occurrence_key='already-read'), stream=urgent)
         Notification.objects.filter(occurrence_key='already-read').update(read_at=timezone.now())
-        filters = {'severity': 'urgent', 'channel': self.stream.key, 'state': 'unread'}
+        filters = {'severity': 'urgent', 'channel': urgent.key, 'state': 'unread'}
         response = self.client.get(reverse('Notifier:feed'), filters)
         self.assertEqual([row.occurrence_key for row in response.context['page_obj']], ['urgent'])
         self.assertEqual(response.context['filter_form']['severity'].value(), 'urgent')
         self.assertContains(response, 'Example: Second channel')
         self.assertEqual(Notification.objects.count(), 4)
-        self.assertEqual(Subscription.objects.filter(enabled=True).count(), 2)
+        self.assertEqual(Subscription.objects.filter(enabled=True).count(), 3)
         record = Notification.objects.get(occurrence_key='urgent')
         saved = self.client.post(reverse('Notifier:read', args=[record.pk]), {**filters, 'page': '1'})
         self.assertIn('severity=urgent', saved.url)
-        self.assertIn('channel=example.changed', saved.url)
+        self.assertIn('channel=example.urgent', saved.url)
         self.assertIn('state=unread', saved.url)
         self.assertEqual(len(self.client.get(saved.url).context['page_obj']), 0)
 
@@ -294,14 +301,15 @@ class NotifierTests(TestCase):
 
     def test_review_pagination_retains_combined_filters(self):
         """Filter before pagination and retain selections in page and unread navigation links."""
-        self.enable()
+        warning = self.severity_stream('warning', 'warning')
+        urgent = self.severity_stream('urgent', 'urgent')
         for index in range(26):
-            self.publish(replace(self.message, occurrence_key=f'warning:{index}', severity='warning'))
-        self.publish(replace(self.message, occurrence_key='urgent', severity='urgent'))
-        filters = {'severity': 'warning', 'channel': self.stream.key, 'state': 'unread'}
+            self.publish(replace(self.message, occurrence_key=f'warning:{index}'), stream=warning)
+        self.publish(replace(self.message, occurrence_key='urgent'), stream=urgent)
+        filters = {'severity': 'warning', 'channel': warning.key, 'state': 'unread'}
         response = self.client.get(reverse('Notifier:feed'), filters)
         self.assertEqual(response.context['page_obj'].paginator.count, 26)
-        self.assertContains(response, 'severity=warning&amp;channel=example.changed&amp;state=unread&amp;page=2')
+        self.assertContains(response, 'severity=warning&amp;channel=example.warning&amp;state=unread&amp;page=2')
         second = self.client.get(reverse('Notifier:feed'), {**filters, 'page': '2'})
         self.assertEqual(len(second.context['page_obj']), 1)
 
@@ -309,10 +317,11 @@ class NotifierTests(TestCase):
         """Show urgent conditions before older information while retaining chronological order inside each severity."""
         self.enable()
         now = timezone.now()
+        streams = {severity: self.severity_stream(severity.value, severity) for severity in Severity}
         for key, severity, days in (('info', Severity.INFORMATION, 10), ('warning', Severity.WARNING, 5),
                                     ('urgent-new', Severity.URGENT, 1), ('urgent-old', Severity.URGENT, 2)):
-            self.publish(replace(self.message, occurrence_key=key, severity=severity,
-                                 occurred_at=now - timedelta(days=days)))
+            self.publish(replace(self.message, occurrence_key=key,
+                                 occurred_at=now - timedelta(days=days)), stream=streams[severity])
         response = self.client.get(reverse('Notifier:feed'))
         self.assertEqual([row.occurrence_key for row in response.context['page_obj']],
                          ['urgent-old', 'urgent-new', 'warning', 'info'])
@@ -321,16 +330,21 @@ class NotifierTests(TestCase):
         self.assertContains(response, 'notifier-severity-heading notifier-severity-information', count=1)
         self.assertContains(response, 'aria-hidden="true"')
 
-    def test_invalid_severity_is_rejected_and_omitted_severity_defaults_to_information(self):
-        """Reject undeclared severities and preserve Information as the optional field default."""
+    def test_channel_severity_is_validated_and_messages_cannot_override_it(self):
+        """Reject invalid channel declarations and prevent message-specific severity overrides."""
         self.enable()
         for severity in ('critical', '', None, 3, []):
             with self.subTest(severity=severity):
-                self.assertEqual(self.publish(replace(self.message, severity=severity)).items[0].status, 'invalid')
+                with self.assertRaises(ImproperlyConfigured):
+                    self.provider.register_stream(StreamDefinition('example.invalid', 'Invalid', severity=severity))
         self.publish()
         self.assertEqual(Notification.objects.get().severity, 'information')
-        changed = replace(self.message, severity=Severity.URGENT)
-        self.assertEqual(self.publish(changed).items[0].reason, 'occurrence_conflict')
+        with self.assertRaises(TypeError):
+            replace(self.message, severity=Severity.URGENT)
+        urgent = self.severity_stream('urgent', Severity.URGENT)
+        self.publish(replace(self.message, occurrence_key='urgent:1'), stream=urgent)
+        self.publish(replace(self.message, occurrence_key='urgent:2'), stream=urgent)
+        self.assertEqual(set(Notification.objects.filter(stream_key=urgent.key).values_list('severity', flat=True)), {'urgent'})
 
     def test_severity_ordering_applies_before_pagination_and_unread_filtering(self):
         """Keep a new urgent notification on the first page ahead of many old informational notifications."""
@@ -339,7 +353,8 @@ class NotifierTests(TestCase):
         for index in range(26):
             self.publish(replace(self.message, occurrence_key=f'information:{index}',
                                  occurred_at=now - timedelta(days=10)))
-        self.publish(replace(self.message, occurrence_key='urgent', severity=Severity.URGENT))
+        urgent = self.severity_stream('urgent', Severity.URGENT)
+        self.publish(replace(self.message, occurrence_key='urgent'), stream=urgent)
         response = self.client.get(reverse('Notifier:feed'), {'state': 'unread'})
         self.assertEqual(response.context['page_obj'][0].occurrence_key, 'urgent')
         self.assertEqual(response.context['page_obj'].paginator.count, 27)

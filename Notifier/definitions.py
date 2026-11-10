@@ -49,6 +49,7 @@ class StreamDefinition:
     allowed_groups: tuple | None = None
     recipient_resolver: Callable | None = None
     access_policy: Callable | None = None
+    severity: str = Severity.INFORMATION
 
 
 @dataclass(frozen=True)
@@ -83,7 +84,6 @@ class Signal:
     url: str = ''
     url_text: str = ''
     sort_at: datetime | None = None
-    severity: str = Severity.INFORMATION
 
 
 @dataclass(frozen=True)

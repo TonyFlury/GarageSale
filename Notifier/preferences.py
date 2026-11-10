@@ -3,7 +3,7 @@ from django import forms
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 from django.db import transaction
 
-from .definitions import FieldDefinition, StreamDefinition
+from .definitions import FieldDefinition, Severity, StreamDefinition
 from .configuration import access_permissions
 from .registry import validate_key
 
@@ -37,6 +37,10 @@ def validate_definition(definition):
     if not isinstance(definition, StreamDefinition):
         raise ImproperlyConfigured('Supply a StreamDefinition.')
     validate_key(definition.key)
+
+    # Channel severity must be valid before registration can expose the channel to providers or users.
+    if not isinstance(definition.severity, str) or definition.severity not in tuple(Severity):
+        raise ImproperlyConfigured('Supply information, warning, or urgent channel severity.')
 
     # Labels and positive versions keep stored settings and display snapshots meaningful.
     if (not isinstance(definition.label, str) or not definition.label.strip() or len(definition.label) > 200 or
