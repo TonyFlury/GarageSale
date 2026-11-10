@@ -83,8 +83,8 @@ def feed(request):
     return render_review(request, 'Notifier/feed.html', {'page_obj': page, 'unread_only': unread,
         'filter_form': form, 'filter_query': filter_query, 'unread_query': unread_query,
         'page_query': urlencode(page_filters),
-        'filters_active': bool(filters.get('severity') or filters.get('channel')),
-        'filters_require_open': bool(form.errors or filters.get('severity') or filters.get('channel'))}, status=status)
+        'filters_active': bool(unread or filters.get('severity') or filters.get('channel')),
+        'filters_require_open': bool(unread or form.errors or filters.get('severity') or filters.get('channel'))}, status=status)
 
 
 @personal_access_required
@@ -158,10 +158,16 @@ def preferences(request):
     """Read provider groups or validate and save every eligible channel in one personal group."""
     selected = request.POST.get('provider_key')
     groups = preference_groups(request.user, selected=selected, data=request.POST)
+    dialog = request.GET.get('display') == 'dialog' or request.POST.get('display') == 'dialog'
+    template = 'Notifier/preferences.html'
+
+    # The optional fragment uses the same authorization, forms, and save operation as the full settings page.
+    if dialog:
+        template = 'Notifier/settings_fragment.html'
 
     # GET requests only present declarations and must not create default preference rows.
     if request.method != 'POST':
-        return render_review(request, 'Notifier/preferences.html', {'groups': groups})
+        return render_review(request, template, {'groups': groups, 'settings_dialog': dialog})
 
     # Match only a provider group already selected through current eligibility checks.
     group = next((item for item in groups if item['provider'].key == selected), None)
@@ -174,8 +180,13 @@ def preferences(request):
     # Every channel must validate before any setting in the selected group changes.
     if all(valid):
         save_preference_group(request.user, group['sections'])
+
+        # Dialog saves retain the open editor and return fresh forms without redirecting the underlying review page.
+        if dialog:
+            return render_review(request, template, {'groups': preference_groups(request.user),
+                'settings_dialog': True, 'settings_saved': True})
         messages.success(request, 'Notification settings saved.')
         return redirect('Notifier:preferences')
 
     # Invalid settings remain visible for correction without changing the saved group.
-    return render_review(request, 'Notifier/preferences.html', {'groups': groups}, status=400)
+    return render_review(request, template, {'groups': groups, 'settings_dialog': dialog}, status=400)

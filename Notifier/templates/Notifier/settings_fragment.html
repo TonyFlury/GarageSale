@@ -1,0 +1,4 @@
+<div class="notifier-settings-content"{% if settings_saved %} data-notifier-saved="true"{% endif %}>
+    {% if settings_saved %}<p class="notifier-message" role="status">Notification settings saved.</p>{% endif %}
+    {% include 'Notifier/_channel_settings.html' %}
+</div>

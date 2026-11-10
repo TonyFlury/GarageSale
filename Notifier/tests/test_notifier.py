@@ -103,6 +103,21 @@ class NotifierTests(TestCase):
         self.assertIs(registered, self.stream)
         self.assertFalse(Subscription.objects.exists())
 
+    def test_settings_dialog_reuses_authorized_group_validation_and_saving(self):
+        """Return a settings fragment and validate complete groups before accepting dialog saves."""
+        stream = self.provider.register_stream(StreamDefinition('example.days', 'Days', fields=(
+            FieldDefinition('days', 'Days', type='integer', default=0, minimum=0),)))
+        response = self.client.get(reverse('Notifier:preferences'), {'display': 'dialog'})
+        self.assertContains(response, 'notifier-settings-content')
+        self.assertNotContains(response, '<html')
+        data = {'display': 'dialog', 'provider_key': 'example', 'example.days-enabled': 'on', 'example.days-days': '-1'}
+        response = self.client.post(reverse('Notifier:preferences'), data)
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Subscription.objects.exists())
+        response = self.client.post(reverse('Notifier:preferences'), {**data, 'example.days-days': '3'})
+        self.assertContains(response, 'data-notifier-saved="true"')
+        self.assertEqual(Subscription.objects.get(user=self.user, stream_key=stream.key).values, {'days': 3})
+
     def test_conflicting_registration_and_failed_provider_leave_no_partial_declarations(self):
         """Preserve existing meanings and discard a provider's incomplete registration block."""
         with self.assertRaises(RegistrationConflict):

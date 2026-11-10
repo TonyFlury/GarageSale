@@ -181,13 +181,36 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.dismiss_banner()
         self.assertIsNotNone(Notification.objects.get(user=self.user).read_at)
         self.assertTrue(self.driver.find_elements(By.CSS_SELECTOR, '.notifier-read'))
-        self.driver.find_element(By.LINK_TEXT, 'Unread').click()
+        self.driver.find_element(By.CSS_SELECTOR, '.notifier-unread-checkbox').click()
+        apply_button = self.driver.find_element(By.CSS_SELECTOR, '.notifier-apply-filters')
+        apply_button.click()
+        self.wait.until(expected_conditions.staleness_of(apply_button))
         self.wait.until(expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '.notifier-empty')))
         self.dismiss_banner()
-        self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.notifier-filter-tab[aria-current="page"]').text,
-                         'Unread')
+        self.assertTrue(self.driver.find_element(By.CSS_SELECTOR, '.notifier-unread-checkbox').is_selected())
+        self.driver.set_window_size(1440, 1100)
         self.driver.find_element(By.CSS_SELECTOR, '.profile-tab[href="' + reverse('user_management:profile') + '"]').click()
         self.wait.until(expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '.profile-personal')))
+
+    def test_mobile_settings_gear_opens_dialog_and_saves_channel_settings(self):
+        """Edit and save existing provider settings in a modal without displaying mobile tab rows."""
+        self.driver.set_window_size(390, 844)
+        self.open_page('Notifier:feed')
+        self.assertFalse(self.driver.find_element(By.CSS_SELECTOR, '.profile-heading').is_displayed())
+        self.assertFalse(self.driver.find_element(By.CSS_SELECTOR, '.notifier-navigation').is_displayed())
+        self.assertFalse(self.driver.find_element(By.CSS_SELECTOR, '.notifier-filters').is_displayed())
+        self.driver.find_element(By.CSS_SELECTOR, '.notifier-settings-launch').click()
+        notice = self.wait.until(expected_conditions.element_to_be_clickable((By.NAME, 'browser.changed-notice_days')))
+        notice.clear()
+        notice.send_keys('3')
+        self.save_settings()
+        self.assertEqual(Subscription.objects.get(user=self.user, stream_key=self.stream.key).values, {'notice_days': 3})
+        self.assertTrue(self.driver.find_element(By.CSS_SELECTOR, '.notifier-settings-dialog').get_attribute('open'))
+        old_dialog = self.driver.find_element(By.CSS_SELECTOR, '.notifier-settings-dialog')
+        self.driver.find_element(By.CSS_SELECTOR, '.notifier-dialog-close').click()
+        self.wait.until(expected_conditions.staleness_of(old_dialog))
+        self.assertFalse(self.driver.find_element(By.CSS_SELECTOR, '.notifier-settings-dialog').get_attribute('open'))
+        self.assertTrue(self.driver.execute_script('return document.documentElement.scrollWidth <= innerWidth'))
 
     def test_warning_bulk_off_updates_channels_options_and_saved_subscriptions(self):
         """Clear warning channels through the bulk control and preserve individual exceptions after saving."""

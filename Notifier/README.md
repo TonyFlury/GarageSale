@@ -252,8 +252,8 @@ Providers can also supply `Severity.WARNING` or `Severity.URGENT` from `Notifier
 The equivalent string values are `information`, `warning`, and `urgent`.
 The Notifier rejects other values.
 The review page provides Severity and Channel filters.
-At widths up to 600 pixels, the review page uses shorter tab labels and reduced spacing.
-The host class `.notifier-profile-heading` removes the repeated User Profile heading only on these pages.
+At widths up to 600 pixels, the review page hides tab rows and shows a plain heading with a settings gear.
+The host class `.notifier-profile-heading` hides the profile tabs only on mobile notification pages.
 The `profile_heading_classes` template block supplies this optional host styling hook.
 The `.notifier-label-full` and `.notifier-label-short` classes select full or compact navigation labels.
 The `.notifier-heading` and `.notifier-introduction` classes identify the page heading and optional guidance.
@@ -263,7 +263,8 @@ All mobile presentation rules reside in `GarageSale/static/GarageSale/styles/sma
 The `.notifier-compact-header` class selects 48-pixel charity logos on mobile notification pages.
 The complete site header remains visible, including charity logos, the countdown, and account controls.
 The small-screen stylesheet moves the username slightly downward with `top: .25rem` without increasing header height.
-The `.notifier-review-controls` class places All, Unread, and Filters on one mobile row.
+The `.notifier-review-controls` class contains the compact mobile Filters control.
+The `.notifier-unread-option` and `.notifier-unread-checkbox` classes identify Unread only inside the mobile filters.
 Expanded filter fields use the full row beneath these controls.
 The ordering hint remains available on desktop.
 The `.notifier-filter-toggle` checkbox controls mobile filter expansion through CSS.
@@ -271,6 +272,19 @@ The `.notifier-filter-expand-icon` class supplies its decorative expansion marke
 Keyboard focus on the checkbox produces a visible outline around the Filters label.
 Active filters and validation errors remain expanded. Desktop filters remain expanded.
 Filter expansion and responsive layout require no JavaScript.
+The `.notifier-page-heading`, `.notifier-settings-launch`, and `.notifier-settings-icon` classes identify the mobile heading and gear.
+The `.notifier-settings-dialog` class identifies the native modal dialog.
+The `.notifier-dialog-header`, `.notifier-dialog-heading`, and `.notifier-dialog-close` classes identify its heading and close control.
+The `.notifier-dialog-body`, `.notifier-dialog-error`, and `.notifier-dialog-fallback` classes identify content, loading errors, and the full-page link.
+The `.notifier-settings-content` class identifies the returned settings fragment.
+The `.notifier-mobile-back` class identifies the return link on the full mobile settings page.
+The `initializeNotifierSettingsDialog` function in `Notifier/settings_dialog.js` loads and submits the existing settings forms.
+The existing preferences route accepts `display=dialog` for its authorized HTML fragment.
+Shared channel forms live in `Notifier/_channel_settings.html`.
+Dialog saves use the same CSRF protection, eligibility checks, validation, and atomic provider save as the full page.
+Closing after a successful save refreshes the review while retaining its current URL filters.
+Without JavaScript, the gear opens the full settings page.
+Desktop tabs remain available.
 Mobile navigation links, filter controls, and notification action buttons retain touch targets at least 44 pixels high.
 Notification metadata displays the provider name before the channel name, such as `Diary: Task Late`.
 The Garage Sale host sidebar includes a Team Pages link when `GarageSale.access_team_pages` permits access.

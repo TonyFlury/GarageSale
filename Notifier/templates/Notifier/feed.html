@@ -1,6 +1,10 @@
 {% extends 'Notifier/base.html' %}
+{% load static %}
 {% block notifier_content %}
-<h1 class="notifier-heading">Notifications</h1>
+<div class="notifier-page-heading">
+    <h1 class="notifier-heading">Notifications</h1>
+    <a class="notifier-settings-launch" href="{% url 'Notifier:preferences' %}" aria-label="Notification settings" title="Notification settings" aria-haspopup="dialog"><img class="notifier-settings-icon" src="{% static 'Notifier/settings-gear.svg' %}" alt=""></a>
+</div>
 <p class="notifier-order">Urgent first. Oldest first within each severity.</p>
 <p class="notifier-introduction">Notifications appear here after collection. Enable the channels you want in Notification settings.</p>
 <div class="notifier-review-controls">
@@ -13,7 +17,7 @@
 <input class="notifier-filter-toggle" id="notifier-filter-toggle" type="checkbox" aria-controls="notifier-filter-fields"{% if filters_require_open %} checked{% endif %}>
 <label class="notifier-filter-summary" for="notifier-filter-toggle"><span class="notifier-filter-expand-icon" aria-hidden="true"></span>Filters{% if filters_active %}<span class="notifier-filter-status">Active</span>{% endif %}</label>
 <form class="notifier-review-filters" id="notifier-filter-fields" method="get" action="{% url 'Notifier:feed' %}">
-    {% if unread_only %}<input type="hidden" name="state" value="unread">{% endif %}
+    <label class="notifier-unread-option"><input class="notifier-unread-checkbox" type="checkbox" name="state" value="unread"{% if unread_only %} checked{% endif %}> Unread only</label>
     {% for field in filter_form %}
     <div class="notifier-filter-field">
         {{ field.label_tag }} {{ field }}
@@ -65,4 +69,14 @@
     {% if page_obj.has_next %}<a href="?{{ page_query }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% endif %}
 </nav>
 {% endif %}
+<dialog class="notifier-settings-dialog" aria-labelledby="notifier-dialog-heading">
+    <div class="notifier-dialog-header"><h2 class="notifier-dialog-heading" id="notifier-dialog-heading">Notification settings</h2><button class="notifier-dialog-close" type="button" aria-label="Close notification settings">Close</button></div>
+    <div class="notifier-dialog-body" aria-live="polite"></div>
+    <p class="notifier-dialog-fallback"><a href="{% url 'Notifier:preferences' %}">Open full settings page</a></p>
+</dialog>
+{% endblock %}
+{% block PageScripts %}
+    {{ block.super }}
+    <script src="{% static 'Notifier/settings.js' %}?v=severity-bulk-2" defer></script>
+    <script src="{% static 'Notifier/settings_dialog.js' %}?v=1" defer></script>
 {% endblock %}

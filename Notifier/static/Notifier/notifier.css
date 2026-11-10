@@ -59,3 +59,4 @@
 .notifier :focus-visible { outline: 3px solid #3333dd; outline-offset: 3px; }
 .notifier .notifier-label-short, .notifier .notifier-filter-summary, .notifier .notifier-filter-toggle { display: none; }
 .notifier .notifier-filter-status { margin-inline-start: .5rem; font-size: .85em; font-weight: bold; }
+.notifier .notifier-settings-launch, .notifier .notifier-mobile-back, .notifier .notifier-unread-option { display: none; }

@@ -203,6 +203,8 @@ if you have a new database :
         Language review limit: The new Diary deployment instructions have not received a full ASD-STE100 Issue 9 dictionary review.
 
 2e) Notifier personal review:
+        Collect Notifier/settings_dialog.js and Notifier/settings-gear.svg for the mobile settings dialog.
+        Deploy the shared channel forms and dialog fragment with the updated preferences view.
         Collect GarageSale/styles/smallscreen.css and Notifier/notifier.css for the compact mobile review page.
         Deploy the updated Notifier and profile host templates together.
         Collect user_management/styles/account_indicator.css for the account badge demonstration.

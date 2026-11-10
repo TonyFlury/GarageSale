@@ -123,7 +123,7 @@ div#Buttons {
     display: flex;
     span#UserButtons span#user_name {
         align-self: center;
-        top: .25rem;
+        top: -0.1rem;
         position: relative;
     }
     span#mobile.BurgerDropDown {
@@ -289,7 +289,7 @@ img#Burger{
 /* Keep private notification controls compact without changing the desktop layout. */
 @media (max-width: 600px) {
     .notifier-compact-header img.supporting_logo { height: 48px; }
-    .notifier-profile-heading { margin-block: .4rem 0; }
+    .notifier-profile-heading { display: none; }
     .notifier-profile-heading h1 { display: none; }
     .notifier-profile-heading .profile-tabs { margin-block: .35rem; gap: .35rem; }
     .notifier-profile-heading .profile-tab { box-sizing: border-box; min-height: 44px; padding: .55rem .65rem; }
@@ -298,9 +298,21 @@ img#Burger{
     .notifier .notifier-label-short { display: inline; }
     .notifier .notifier-heading { margin-block: .45rem .25rem; font-size: 1.35rem; }
     .notifier .notifier-order { display: none; }
-    .notifier .notifier-navigation { margin-block: .3rem .5rem; gap: .35rem; }
+    .notifier .notifier-navigation, .notifier .notifier-filters { display: none; }
+    .notifier .notifier-page-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .notifier .notifier-settings-launch { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border: 1px solid #687777; border-radius: .3rem; background: #f4f7f7; }
+    .notifier .notifier-settings-icon { width: 24px; height: 24px; }
+    .notifier .notifier-mobile-back { display: inline-flex; align-items: center; min-height: 44px; }
+    .notifier .notifier-unread-option { display: flex; align-items: center; gap: .4rem; grid-column: 1 / -1; min-height: 44px; }
+    .notifier .notifier-settings-dialog { box-sizing: border-box; width: calc(100vw - 1rem); max-width: 36rem; max-height: calc(100dvh - 1rem); padding: 0; border: 1px solid #687777; border-radius: .5rem; background: #fff; color: #222; overflow-y: auto; }
+    .notifier .notifier-settings-dialog::backdrop { background: #0008; }
+    .notifier .notifier-dialog-header { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .65rem; border-bottom: 1px solid #c1cccc; background: #fff; }
+    .notifier .notifier-dialog-heading { margin: 0; font-size: 1.2rem; }
+    .notifier .notifier-dialog-close { min-height: 44px; }
+    .notifier .notifier-dialog-body, .notifier .notifier-dialog-fallback { padding-inline: .65rem; }
+    .notifier .notifier-dialog-error { color: #7d1717; }
     .notifier .notifier-page-tab { flex: 1; justify-content: center; padding: .5rem .6rem; }
-    .notifier .notifier-review-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; gap: .35rem; margin-block: .3rem .4rem; }
+    .notifier .notifier-review-controls { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: .35rem; margin-block: .3rem .4rem; }
     .notifier .notifier-filters { margin: 0; padding: .25rem; gap: .3rem; }
     .notifier .notifier-filter-tab { flex: 1; justify-content: center; padding: .4rem .6rem; }
     .notifier .notifier-filter-panel { display: contents; }
