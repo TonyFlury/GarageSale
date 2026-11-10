@@ -206,6 +206,7 @@ if you have a new database :
         Apply Notifier migration 0005_remove_severity_preference to remove obsolete severity gates.
         Existing channel subscriptions and notification records remain unchanged.
         Collect the updated Notifier/settings.js script for severity bulk selection.
+        Deploy the matching settings template with its versioned script URL.
         Select a severity to select or clear matching channels within its provider group.
         Adjust individual channel selections as required.
         Select Save all to apply that provider group's final selections.

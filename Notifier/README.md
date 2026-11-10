@@ -239,6 +239,8 @@ The `.notifier-severity-controls`, `.notifier-severity-bulk`, and `.notifier-sev
 The `.notifier-severity-help` class identifies the instruction shown without JavaScript.
 The `data-notifier-severity` attribute associates controls with matching channels inside their provider form.
 The technical function `initializeNotifierSettings` manages bulk selection and mixed indicators in `Notifier/settings.js`.
+The settings template versions this script URL to replace browser copies from the previous settings interface.
+Verification: `NotifierBrowserTests.test_warning_bulk_off_updates_channels_options_and_saved_subscriptions` checks Warning bulk selection and saved individual exceptions.
 Providers can also supply `Severity.WARNING` or `Severity.URGENT` from `Notifier.api`.
 The equivalent string values are `information`, `warning`, and `urgent`.
 The Notifier rejects other values.

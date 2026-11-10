@@ -16,9 +16,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import Select, WebDriverWait
 
-from Notifier.api import FieldDefinition, ProviderDefinition, Signal, SourceRef, StreamDefinition
+from Notifier.api import FieldDefinition, ProviderDefinition, Severity, Signal, SourceRef, StreamDefinition
 from Notifier.models import Notification, Subscription
 from Notifier.registry import Registry
+from Notifier.preferences import save_subscription
 
 
 @unittest.skipUnless(os.environ.get('DIARY_CHROMEDRIVER'), 'Set DIARY_CHROMEDRIVER for the optional Chrome test.')
@@ -171,3 +172,30 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.dismiss_banner()
         self.driver.find_element(By.CSS_SELECTOR, '.profile-tab[href="' + reverse('user_management:profile') + '"]').click()
         self.wait.until(expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '.profile-personal')))
+
+    def test_warning_bulk_off_updates_channels_options_and_saved_subscriptions(self):
+        """Clear warning channels through the bulk control and preserve individual exceptions after saving."""
+        provider = self.registry.providers['browser']
+        due = provider.register_stream(StreamDefinition('browser.due', 'Task Due', severity=Severity.WARNING,
+            fields=(FieldDefinition('notice_days', 'Notice Period (days)', type='integer', default=7, minimum=0),)))
+        other = provider.register_stream(StreamDefinition('browser.warning', 'Another warning', severity=Severity.WARNING))
+        save_subscription(self.user, due.definition, enabled=True, values={'notice_days': 7})
+        save_subscription(self.user, other.definition, enabled=True, values={})
+        self.open_page('Notifier:preferences')
+        warning = self.driver.find_element(By.CSS_SELECTOR, '.notifier-severity-bulk[data-notifier-severity="warning"]')
+        self.assertTrue(warning.is_selected())
+        warning.click()
+        self.assertFalse(self.driver.find_element(By.NAME, 'browser.due-enabled').is_selected())
+        self.assertFalse(self.driver.find_element(By.NAME, 'browser.warning-enabled').is_selected())
+        self.assertFalse(self.driver.find_element(By.NAME, 'browser.due-notice_days').is_enabled())
+        self.save_settings()
+        self.assertFalse(Subscription.objects.get(user=self.user, stream_key=due.key).enabled)
+        self.assertFalse(Subscription.objects.get(user=self.user, stream_key=other.key).enabled)
+        warning = self.driver.find_element(By.CSS_SELECTOR, '.notifier-severity-bulk[data-notifier-severity="warning"]')
+        warning.click()
+        self.driver.find_element(By.NAME, 'browser.warning-enabled').click()
+        self.assertTrue(self.driver.execute_script('return arguments[0].indeterminate', warning))
+        self.save_settings()
+        self.assertTrue(Subscription.objects.get(user=self.user, stream_key=due.key).enabled)
+        self.assertFalse(Subscription.objects.get(user=self.user, stream_key=other.key).enabled)
+        self.assertEqual(Subscription.objects.get(user=self.user, stream_key=due.key).values, {'notice_days': 7})
