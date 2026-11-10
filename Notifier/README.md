@@ -235,6 +235,8 @@ Each provider group has severity controls that select or clear its matching chan
 Users can then change individual channel selections.
 The severity control shows a mixed state when some matching channels are selected.
 Select Save all to save the final channel selections and declared settings together.
+Each provider form has matching Save all buttons beside the severity controls and below its channels.
+Both buttons submit the same channel selections and settings.
 No separate severity setting restricts collection, background evaluation, or review.
 Unsaved Urgent channels start selected. Saved channel choices take precedence.
 Defaults become subscriptions only after Save all. Page reads do not create subscriptions.

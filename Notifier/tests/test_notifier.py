@@ -493,7 +493,7 @@ class NotifierTests(TestCase):
         self.enable(stream=unrelated)
         self.enable(user=self.other)
         response = self.client.get(reverse('Notifier:preferences'))
-        self.assertContains(response, 'class="notifier-save-all"', count=2)
+        self.assertContains(response, 'class="notifier-save-all"', count=4)
         self.assertNotContains(response, 'Restricted')
         response = self.client.post(reverse('Notifier:preferences'), {
             'provider_key': 'example', self.stream.key + '-enabled': 'on',

@@ -143,7 +143,7 @@ class DiaryNotifierTests(TestCase):
                 response = self.client.get(url)
                 self.assertContains(response, 'Task Due')
                 self.assertContains(response, 'Task Late')
-                self.assertContains(response, 'class="notifier-save-all"', count=1)
+                self.assertContains(response, 'class="notifier-save-all"', count=2)
                 self.assertEqual(self.client.post(url, {'provider_key': 'diary',
                     'diary.task_due-enabled': 'on', 'diary.task_due-notice_days': '0',
                     'diary.task_late-enabled': 'on'}).status_code, 302)

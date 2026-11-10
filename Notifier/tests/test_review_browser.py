@@ -104,7 +104,7 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.assertTrue(urgent.is_selected())
         self.assertFalse(self.driver.find_element(By.CSS_SELECTOR, '.notifier-severity-bulk[data-notifier-severity="information"]').is_selected())
         self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.notifier-provider-heading').text, 'Browser example')
-        self.assertEqual(len(self.driver.find_elements(By.CSS_SELECTOR, '.notifier-save-all')), 1)
+        self.assertEqual(len(self.driver.find_elements(By.CSS_SELECTOR, '.notifier-save-all')), 2)
         control = self.driver.find_element(By.NAME, 'browser.changed-enabled')
         self.assertTrue(control.is_selected())
         notice = self.driver.find_element(By.NAME, 'browser.changed-notice_days')

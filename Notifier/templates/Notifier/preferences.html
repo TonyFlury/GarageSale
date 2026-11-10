@@ -14,6 +14,7 @@
     {% for severity in group.severities %}
         <label class="notifier-severity-toggle"><input class="notifier-severity-bulk" type="checkbox" data-notifier-severity="{{ severity.key }}"{% if severity.checked %} checked{% endif %}> {{ severity.label }}</label>
     {% endfor %}
+    <button class="notifier-save-all" type="submit" aria-label="Save all {{ group.provider.label }} channels">Save all</button>
     </fieldset>
     <noscript><p class="notifier-severity-help">Use individual channel checkboxes when JavaScript is unavailable.</p></noscript>
     <div class="notifier-provider-channels">
