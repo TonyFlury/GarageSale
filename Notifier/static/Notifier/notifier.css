@@ -18,6 +18,12 @@
 .notifier .notifier-action:hover { background: #103740; border-color: #103740; color: #fff; text-decoration: underline; }
 .notifier .notifier-metadata, .notifier .notifier-state { color: #505050; }
 .notifier .notifier-settings label { display: inline-block; text-align: left; }
+.notifier .notifier-review-filters { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; margin-block: 1rem; }
+.notifier .notifier-filter-field { min-width: 0; max-width: 100%; }
+.notifier .notifier-filter-field label { display: block; margin-bottom: .3rem; }
+.notifier .notifier-filter-control { box-sizing: border-box; max-width: 100%; min-height: 44px; font: inherit; padding: .4rem; }
+.notifier .notifier-filter-error { color: #7d1717; }
+.notifier .notifier-clear-filters { padding-block: .6rem; }
 .notifier .notifier-settings fieldset { min-width: 0; }
 .notifier .notifier-channel { margin-block: 1rem; }
 .notifier .notifier-channel-options { border: 0; padding: 0; margin: 0; }

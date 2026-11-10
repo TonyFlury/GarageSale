@@ -4,6 +4,21 @@ from django import forms
 from .preferences import form_field
 
 
+class ReviewFilterForm(forms.Form):
+    """Validate optional review filters against current authorized channel choices."""
+
+    severity = forms.ChoiceField(required=False, choices=(('', 'All severities'),
+        ('urgent', 'Urgent'), ('warning', 'Warning'), ('information', 'Information')))
+    channel = forms.ChoiceField(required=False, choices=())
+
+    def __init__(self, *args, channels, **kwargs):
+        """Supply authorized channels without exposing unavailable provider declarations."""
+        super().__init__(*args, **kwargs)
+        self.fields['channel'].choices = [('', 'All channels'), *channels]
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'notifier-filter-control'
+
+
 class SubscriptionForm(forms.Form):
     """Present opt-in and the fields declared by one eligible registered stream."""
 

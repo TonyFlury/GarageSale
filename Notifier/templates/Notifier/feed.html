@@ -4,9 +4,20 @@
 <p class="notifier-order">Urgent first, then Warning, then Information. Oldest first within each group.</p>
 <p>Notifications appear here after collection. Enable the channels you want in Notification settings.</p>
 <nav class="notifier-filters" aria-label="Review filter">
-    <a href="{% url 'Notifier:feed' %}"{% if not unread_only %} aria-current="page"{% endif %}>All notifications</a>
-    <a href="?state=unread"{% if unread_only %} aria-current="page"{% endif %}>Unread notifications</a>
+    <a href="?{{ filter_query }}"{% if not unread_only %} aria-current="page"{% endif %}>All notifications</a>
+    <a href="?{{ unread_query }}"{% if unread_only %} aria-current="page"{% endif %}>Unread notifications</a>
 </nav>
+<form class="notifier-review-filters" method="get" action="{% url 'Notifier:feed' %}">
+    {% if unread_only %}<input type="hidden" name="state" value="unread">{% endif %}
+    {% for field in filter_form %}
+    <div class="notifier-filter-field">
+        {{ field.label_tag }} {{ field }}
+        {% for error in field.errors %}<p class="notifier-filter-error" role="alert">{{ error }}</p>{% endfor %}
+    </div>
+    {% endfor %}
+    <button class="notifier-apply-filters" type="submit">Apply filters</button>
+    <a class="notifier-clear-filters" href="{% url 'Notifier:feed' %}">Clear filters</a>
+</form>
 <ul class="notifier-list">
 {% for notification in page_obj %}
     {% ifchanged notification.severity %}
@@ -23,6 +34,10 @@
         {% if notification.read_at %}<p class="notifier-state">Read</p>{% else %}
             <form class="notifier-read-form" method="post" action="{% url 'Notifier:read' notification.pk %}">
                 {% csrf_token %}<button type="submit">Mark as read</button>
+                <input type="hidden" name="severity" value="{{ filter_form.severity.value|default:'' }}">
+                <input type="hidden" name="channel" value="{{ filter_form.channel.value|default:'' }}">
+                {% if unread_only %}<input type="hidden" name="state" value="unread">{% endif %}
+                <input type="hidden" name="page" value="{{ page_obj.number }}">
             </form>
         {% endif %}
     </li>
@@ -30,9 +45,9 @@
 </ul>
 {% if page_obj.has_other_pages %}
 <nav class="notifier-pagination" aria-label="Notification pages">
-    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if unread_only %}&amp;state=unread{% endif %}">Previous</a>{% endif %}
+    {% if page_obj.has_previous %}<a href="?{{ page_query }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
     <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if unread_only %}&amp;state=unread{% endif %}">Next</a>{% endif %}
+    {% if page_obj.has_next %}<a href="?{{ page_query }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% endif %}
 </nav>
 {% endif %}
 {% endblock %}

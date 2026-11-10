@@ -11,7 +11,7 @@ from .preferences import eligible_for_stream, subscription_is_valid
 from .registry import get_registry
 
 
-def visible_notifications(user, *, unread=False):
+def visible_notifications(user, *, unread=False, severity='', channel=''):
     """Return only this user's currently eligible entries without deleting hidden history."""
     subscriptions = {row.stream_key: row for row in Subscription.objects.filter(user=user)}
 
@@ -23,6 +23,14 @@ def visible_notifications(user, *, unread=False):
     # The unread filter changes presentation without changing stored review state.
     if unread:
         records = records.filter(read_at__isnull=True)
+
+    # Exact filters reduce the authorized review set without changing subscription or read settings.
+    if severity:
+        records = records.filter(severity=severity)
+
+    # A requested channel never bypasses the source and subscription checks below.
+    if channel:
+        records = records.filter(stream_key=channel)
 
     # A stored entry must pass current source access checks before pagination or rendering.
     return [record for record in records.iterator() if notification_is_visible(user, record, subscriptions)]

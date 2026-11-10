@@ -14,7 +14,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select, WebDriverWait
 
 from Notifier.api import FieldDefinition, ProviderDefinition, Signal, SourceRef, StreamDefinition
 from Notifier.models import Notification, Subscription
@@ -127,6 +127,15 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.assertEqual(severity_label.text.split(), ['!', 'Urgent'])
         self.assertGreaterEqual(link.size['height'], 44)
         self.assertEqual(link.value_of_css_property('color'), 'rgba(255, 255, 255, 1)')
+        Select(self.driver.find_element(By.NAME, 'severity')).select_by_value('urgent')
+        Select(self.driver.find_element(By.NAME, 'channel')).select_by_value('browser.changed')
+        apply_button = self.driver.find_element(By.CSS_SELECTOR, '.notifier-apply-filters')
+        apply_button.click()
+        self.wait.until(expected_conditions.staleness_of(apply_button))
+        self.dismiss_banner()
+        self.assertEqual(Select(self.driver.find_element(By.NAME, 'severity')).first_selected_option.text, 'Urgent')
+        self.assertEqual(Select(self.driver.find_element(By.NAME, 'channel')).first_selected_option.get_attribute('value'),
+                         'browser.changed')
         self.driver.save_screenshot('/tmp/notifier-review-mobile.png')
 
         # Report elements outside the viewport when a narrow layout fails its width check.

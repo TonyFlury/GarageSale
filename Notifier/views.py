@@ -1,5 +1,7 @@
 """Provide an engine-free personal review page and stream preferences."""
 from functools import wraps
+from operator import itemgetter
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -8,10 +10,11 @@ from django.conf import settings
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import Http404
+from django.urls import reverse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import SubscriptionForm
+from .forms import ReviewFilterForm, SubscriptionForm
 from .models import Subscription
 from .preferences import can_use, eligible_for_stream, save_subscription
 from .registry import get_registry
@@ -40,9 +43,34 @@ def personal_access_required(view):
 @personal_access_required
 def feed(request):
     """Render the user's eligible notifications without accepting another user's identifier."""
-    entries = visible_notifications(request.user, unread=request.GET.get('state') == 'unread')
+    channels = []
+    for reference in get_registry().streams.values():
+
+        # Filter choices disclose only channel declarations currently available to this user.
+        if eligible_for_stream(request.user, reference.definition):
+            provider = get_registry().providers[reference.provider_key].definition
+            channels.append((reference.definition.key, f'{provider.label}: {reference.definition.label}'))
+    form = ReviewFilterForm(request.GET, channels=sorted(channels, key=itemgetter(1, 0)))
+    unread = request.GET.get('state') == 'unread'
+    entries, filters, status = [], {}, 200
+
+    # Invalid or unavailable choices must show errors instead of silently broadening the results.
+    if form.is_valid():
+        filters = form.cleaned_data
+        entries = visible_notifications(request.user, unread=unread, **filters)
+    else:
+        status = 400
     page = Paginator(entries, 25).get_page(request.GET.get('page'))
-    return render_review(request, 'Notifier/feed.html', {'page_obj': page, 'unread_only': request.GET.get('state') == 'unread'})
+    filter_query = urlencode(filters)
+    unread_query = urlencode({**filters, 'state': 'unread'})
+    page_filters = dict(filters)
+
+    # Pagination retains unread state along with the validated severity and channel selections.
+    if unread:
+        page_filters['state'] = 'unread'
+    return render_review(request, 'Notifier/feed.html', {'page_obj': page, 'unread_only': unread,
+        'filter_form': form, 'filter_query': filter_query, 'unread_query': unread_query,
+        'page_query': urlencode(page_filters)}, status=status)
 
 
 @personal_access_required
@@ -50,7 +78,15 @@ def feed(request):
 def read_notification(request, identifier):
     """Update only the requesting user's visible notification through a CSRF-protected POST."""
     mark_read(request.user, identifier)
-    return redirect('Notifier:feed')
+
+    # Retain only review filters and page state. The fixed destination prevents external redirects.
+    query = urlencode({key: request.POST[key] for key in ('severity', 'channel', 'state', 'page')
+                       if request.POST.get(key)})
+
+    # Existing callers without filter fields keep the original review destination.
+    if not query:
+        return redirect('Notifier:feed')
+    return redirect(reverse('Notifier:feed') + '?' + query)
 
 
 def provider_sections(user, provider_key, subscriptions, *, data=None):

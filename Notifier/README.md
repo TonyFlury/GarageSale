@@ -227,6 +227,20 @@ The optional field `Signal.severity` defaults to `Severity.INFORMATION`.
 Providers can also supply `Severity.WARNING` or `Severity.URGENT` from `Notifier.api`.
 The equivalent string values are `information`, `warning`, and `urgent`.
 The Notifier rejects other values.
+The review page provides Severity and Channel filters.
+Both filters work with the existing unread filter.
+Channel choices contain only currently authorized channel declarations.
+Filtering retains subscription and source access checks before pagination.
+Unknown filter values produce a validation error instead of broader results.
+Pagination, unread navigation, and read actions retain the current selections.
+The Apply filters button starts at the first page.
+The Clear filters link restores the complete authorized review list.
+Filtering does not change channel subscriptions or notification severity.
+The `ReviewFilterForm` class validates selections in `Notifier/forms.py`.
+The `feed` and `read_notification` functions retain selections in `Notifier/views.py`.
+The `visible_notifications` function applies selections in `Notifier/review.py`.
+The `.notifier-review-filters`, `.notifier-filter-field`, and `.notifier-filter-control` classes control filter layout.
+The `.notifier-filter-error`, `.notifier-apply-filters`, and `.notifier-clear-filters` classes identify filter actions and errors.
 Severity forms part of each accepted notification snapshot.
 The Notifier does not infer severity from task dates or task priority.
 Diary supplies Warning for Task Due and Urgent for Task Late.

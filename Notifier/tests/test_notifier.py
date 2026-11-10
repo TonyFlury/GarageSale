@@ -255,6 +255,56 @@ class NotifierTests(TestCase):
         self.assertEqual(self.publish(message).items[0].status, 'invalid')
         self.assertFalse(Notification.objects.exists())
 
+    def test_review_filters_combine_channel_severity_and_unread_state(self):
+        """Apply all review filters together without changing subscriptions or notification state."""
+        secondary = self.provider.register_stream(StreamDefinition('example.secondary', 'Second channel'))
+        self.enable()
+        self.enable(stream=secondary)
+        self.publish(replace(self.message, occurrence_key='urgent', severity='urgent'))
+        self.publish(replace(self.message, occurrence_key='info'))
+        self.publish(replace(self.message, occurrence_key='other-channel', severity='urgent'), stream=secondary)
+        self.publish(replace(self.message, occurrence_key='already-read', severity='urgent'))
+        Notification.objects.filter(occurrence_key='already-read').update(read_at=timezone.now())
+        filters = {'severity': 'urgent', 'channel': self.stream.key, 'state': 'unread'}
+        response = self.client.get(reverse('Notifier:feed'), filters)
+        self.assertEqual([row.occurrence_key for row in response.context['page_obj']], ['urgent'])
+        self.assertEqual(response.context['filter_form']['severity'].value(), 'urgent')
+        self.assertContains(response, 'Example: Second channel')
+        self.assertEqual(Notification.objects.count(), 4)
+        self.assertEqual(Subscription.objects.filter(enabled=True).count(), 2)
+        record = Notification.objects.get(occurrence_key='urgent')
+        saved = self.client.post(reverse('Notifier:read', args=[record.pk]), {**filters, 'page': '1'})
+        self.assertIn('severity=urgent', saved.url)
+        self.assertIn('channel=example.changed', saved.url)
+        self.assertIn('state=unread', saved.url)
+        self.assertEqual(len(self.client.get(saved.url).context['page_obj']), 0)
+
+    def test_review_filters_reject_unknown_or_unauthorized_channels_and_severities(self):
+        """Reject unavailable filter choices without exposing declarations or broadening the feed."""
+        self.enable()
+        self.publish()
+        self.provider.register_stream(StreamDefinition('example.private', 'Private channel', allowed_groups=('Hidden',)))
+        response = self.client.get(reverse('Notifier:feed'))
+        self.assertNotContains(response, 'Private channel')
+        for filters in ({'channel': 'example.private'}, {'channel': 'unknown'}, {'severity': 'critical'}):
+            with self.subTest(filters=filters):
+                response = self.client.get(reverse('Notifier:feed'), filters)
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(len(response.context['page_obj']), 0)
+
+    def test_review_pagination_retains_combined_filters(self):
+        """Filter before pagination and retain selections in page and unread navigation links."""
+        self.enable()
+        for index in range(26):
+            self.publish(replace(self.message, occurrence_key=f'warning:{index}', severity='warning'))
+        self.publish(replace(self.message, occurrence_key='urgent', severity='urgent'))
+        filters = {'severity': 'warning', 'channel': self.stream.key, 'state': 'unread'}
+        response = self.client.get(reverse('Notifier:feed'), filters)
+        self.assertEqual(response.context['page_obj'].paginator.count, 26)
+        self.assertContains(response, 'severity=warning&amp;channel=example.changed&amp;state=unread&amp;page=2')
+        second = self.client.get(reverse('Notifier:feed'), {**filters, 'page': '2'})
+        self.assertEqual(len(second.context['page_obj']), 1)
+
     def test_severity_groups_precede_age_and_preserve_oldest_first_within_each_group(self):
         """Show urgent conditions before older information while retaining chronological order inside each severity."""
         self.enable()
