@@ -24,7 +24,8 @@ from .review import mark_read, visible_notifications
 def render_review(request, template, context, *, status=200):
     """Render review content through the configured host shell or the independent default document."""
     base = getattr(settings, 'NOTIFIER', {}).get('BASE_TEMPLATE', 'Notifier/document.html')
-    return render(request, template, {**context, 'notifier_base_template': base}, status=status)
+    section = {'Notifier/feed.html': 'feed', 'Notifier/preferences.html': 'preferences'}.get(template, '')
+    return render(request, template, {**context, 'notifier_base_template': base, 'notifier_section': section}, status=status)
 
 
 def personal_access_required(view):

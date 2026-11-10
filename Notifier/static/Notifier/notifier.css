@@ -2,6 +2,14 @@
 /* Contain the host toolbar's border and padding within narrow browser widths. */
 .notifier-host-topbar .ToolBar { box-sizing: border-box; max-width: 100%; }
 .notifier .notifier-navigation, .notifier .notifier-filters, .notifier .notifier-pagination { display: flex; flex-wrap: wrap; gap: 1rem; margin-block: 1rem; }
+.notifier .notifier-navigation { gap: .5rem; border-bottom: 2px solid #2f4f4f; }
+.notifier .notifier-page-tab, .notifier .notifier-filter-tab { display: inline-flex; align-items: center; box-sizing: border-box; min-height: 44px; padding: .65rem 1rem; border: 1px solid #687777; background: #f4f7f7; color: #253d3d; text-decoration: none; }
+.notifier .notifier-page-tab { border-radius: .4rem .4rem 0 0; border-bottom-width: 3px; }
+.notifier .notifier-filters { align-items: center; gap: .5rem; padding: .6rem; background: #edf2f2; border: 1px solid #c1cccc; border-radius: .4rem; }
+.notifier .notifier-filter-caption { font-weight: bold; margin-inline: .2rem; }
+.notifier .notifier-filter-tab { border-radius: .3rem; border-bottom-width: 3px; }
+.notifier .notifier-page-tab:hover, .notifier .notifier-filter-tab:hover { text-decoration: underline; border-color: #2f4f4f; }
+.notifier .notifier-page-tab-active, .notifier .notifier-filter-tab-active { background: #2f4f4f; border-color: #2f4f4f; color: #fff; font-weight: bold; border-bottom-color: #122929; }
 .notifier .notifier-list { list-style: none; padding: 0; }
 .notifier .notifier-entry, .notifier .notifier-settings { border: 1px solid #bbb; border-radius: .5rem; padding: 1rem; margin-block: 1rem; overflow-wrap: anywhere; }
 .notifier .notifier-unread { border-inline-start: .35rem solid #2f4f4f; }

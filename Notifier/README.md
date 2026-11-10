@@ -252,6 +252,11 @@ Providers can also supply `Severity.WARNING` or `Severity.URGENT` from `Notifier
 The equivalent string values are `information`, `warning`, and `urgent`.
 The Notifier rejects other values.
 The review page provides Severity and Channel filters.
+The `.notifier-page-tab` and `.notifier-page-tab-active` classes identify page links and the current subsection.
+The `.notifier-filter-tab` and `.notifier-filter-tab-active` classes identify All and Unread links and the selected filter.
+Current links also expose `aria-current="page"` for assistive technology.
+The `.notifier-filter-caption` class identifies the visible Show label.
+Both navigation groups use visible borders and selected backgrounds with touch controls at least 44 pixels high.
 Both filters work with the existing unread filter.
 Channel choices contain only currently authorized channel declarations.
 Filtering retains subscription and source access checks before pagination.

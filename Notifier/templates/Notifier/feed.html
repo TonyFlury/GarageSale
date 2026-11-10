@@ -4,8 +4,9 @@
 <p class="notifier-order">Urgent first, then Warning, then Information. Oldest first within each group.</p>
 <p>Notifications appear here after collection. Enable the channels you want in Notification settings.</p>
 <nav class="notifier-filters" aria-label="Review filter">
-    <a href="?{{ filter_query }}"{% if not unread_only %} aria-current="page"{% endif %}>All notifications</a>
-    <a href="?{{ unread_query }}"{% if unread_only %} aria-current="page"{% endif %}>Unread notifications</a>
+    <span class="notifier-filter-caption">Show:</span>
+    <a class="notifier-filter-tab{% if not unread_only %} notifier-filter-tab-active{% endif %}" href="?{{ filter_query }}"{% if not unread_only %} aria-current="page"{% endif %}>All notifications</a>
+    <a class="notifier-filter-tab{% if unread_only %} notifier-filter-tab-active{% endif %}" href="?{{ unread_query }}"{% if unread_only %} aria-current="page"{% endif %}>Unread notifications</a>
 </nav>
 <form class="notifier-review-filters" method="get" action="{% url 'Notifier:feed' %}">
     {% if unread_only %}<input type="hidden" name="state" value="unread">{% endif %}

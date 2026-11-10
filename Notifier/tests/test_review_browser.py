@@ -76,11 +76,15 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         """Disable and enable a configured channel while retaining its value, then save a zero-day notice."""
         notice = self.driver.find_element(By.NAME, 'browser.changed-notice_days')
         self.assertEqual(notice.get_attribute('value'), '7')
-        self.driver.find_element(By.NAME, 'browser.changed-enabled').click()
+        enabled = self.driver.find_element(By.NAME, 'browser.changed-enabled')
+        self.driver.execute_script('arguments[0].scrollIntoView({block: "center"})', enabled)
+        enabled.click()
         self.assertFalse(notice.is_enabled())
         self.save_settings()
         self.assertEqual(Subscription.objects.get(user=self.user, stream_key=self.stream.key).values, {'notice_days': 7})
-        self.driver.find_element(By.NAME, 'browser.changed-enabled').click()
+        enabled = self.driver.find_element(By.NAME, 'browser.changed-enabled')
+        self.driver.execute_script('arguments[0].scrollIntoView({block: "center"})', enabled)
+        enabled.click()
         notice = self.wait.until(expected_conditions.element_to_be_clickable((By.NAME, 'browser.changed-notice_days')))
         notice.clear()
         notice.send_keys('0')
@@ -96,9 +100,13 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.wait.until(expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '.notifier')))
         self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.profile-tab[aria-current="page"]').text,
                          'Notifications')
+        self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.notifier-page-tab[aria-current="page"]').text,
+                         'Review notifications')
         self.driver.find_element(By.LINK_TEXT, 'Notification settings').click()
         self.wait.until(expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '.notifier-channel-settings')))
         self.dismiss_banner()
+        self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.notifier-page-tab[aria-current="page"]').text,
+                         'Notification settings')
         self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, '.notifier-engine-settings'))
         urgent = self.driver.find_element(By.CSS_SELECTOR, '.notifier-severity-bulk[data-notifier-severity="urgent"]')
         self.assertTrue(urgent.is_selected())
@@ -135,6 +143,8 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
                                     url=reverse('Notifier:preferences'), url_text='Open item')])
         self.open_page('Notifier:feed')
         self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.notifier-title').text, 'Ready for review')
+        self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.notifier-filter-tab[aria-current="page"]').text,
+                         'All notifications')
         self.driver.set_window_size(390, 844)
         link = self.driver.find_element(By.CSS_SELECTOR, '.notifier-action')
         self.assertTrue(link.is_displayed())
@@ -170,6 +180,8 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.driver.find_element(By.LINK_TEXT, 'Unread notifications').click()
         self.wait.until(expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '.notifier-empty')))
         self.dismiss_banner()
+        self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.notifier-filter-tab[aria-current="page"]').text,
+                         'Unread notifications')
         self.driver.find_element(By.CSS_SELECTOR, '.profile-tab[href="' + reverse('user_management:profile') + '"]').click()
         self.wait.until(expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '.profile-personal')))
 
