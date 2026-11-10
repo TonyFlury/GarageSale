@@ -1,5 +1,6 @@
 """Provide an engine-free personal review page and stream preferences."""
 from functools import wraps
+from datetime import date
 from operator import itemgetter
 from urllib.parse import urlencode
 
@@ -66,6 +67,12 @@ def feed(request):
     for record in page:
         reference = registry.streams[record.stream_key]
         record.provider_label = registry.providers[reference.provider_key].definition.label
+
+        # Optional provider dates enhance the heading. Invalid or absent values must not prevent notification review.
+        try:
+            record.due_date = date.fromisoformat(record.data.get('due_date', ''))
+        except (ValueError, TypeError):
+            record.due_date = None
     filter_query = urlencode(filters)
     unread_query = urlencode({**filters, 'state': 'unread'})
     page_filters = dict(filters)

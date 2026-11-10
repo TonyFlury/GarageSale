@@ -21,6 +21,16 @@
 .notifier .notifier-severity-icon { font-weight: bold; }
 .notifier .notifier-group-title { margin-block: 1.5rem .5rem; font-size: 1.35rem; }
 .notifier .notifier-title { margin-block: 0 .5rem; font-size: 1.2rem; }
+.notifier .notifier-entry-header { display: flex; align-items: baseline; gap: .6rem; }
+.notifier .notifier-entry-header .notifier-severity-label { flex: none; margin: 0; }
+.notifier .notifier-entry-header .notifier-title { flex: 1; min-width: 0; margin: 0; }
+.notifier .notifier-due-date { font-size: .85em; font-weight: normal; }
+.notifier .notifier-entry .notifier-metadata { margin-block: .4rem; font-size: .9em; }
+.notifier .notifier-entry-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; margin-block: .4rem; }
+.notifier .notifier-entry-actions .notifier-action, .notifier .notifier-entry-actions .notifier-read-form, .notifier .notifier-entry-actions .notifier-state { margin: 0; }
+.notifier .notifier-details { font-size: .9em; color: #505050; }
+.notifier .notifier-details-toggle { cursor: pointer; padding-block: .25rem; }
+.notifier .notifier-collected { font-size: .9em; margin-block: .4rem; }
 .notifier .notifier-text { white-space: pre-wrap; }
 .notifier .notifier-action { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; box-sizing: border-box; padding: .6rem 1rem; margin-block: .25rem .75rem; border: 2px solid #174e59; border-radius: .35rem; background: #174e59; color: #fff; font-weight: bold; text-decoration: none; }
 .notifier .notifier-action:hover { background: #103740; border-color: #103740; color: #fff; text-decoration: underline; }

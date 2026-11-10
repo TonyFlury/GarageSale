@@ -403,6 +403,18 @@ class NotifierTests(TestCase):
         legacy = replace(self.message, action=Action('Open <record>', '/records/42/'))
         self.assertEqual(self.publish(legacy).items[0].status, 'duplicate')
 
+    def test_optional_provider_due_date_appears_in_heading_and_invalid_dates_are_omitted(self):
+        """Show a generic provider date beside the title while retaining safe review for malformed optional dates."""
+        self.enable()
+        self.publish(replace(self.message, data={'due_date': '2030-06-20'}))
+        for index, value in enumerate(('2030-02-31', 'invalid', None)):
+            self.publish(replace(self.message, occurrence_key=f'invalid-date:{index}', data={'due_date': value}))
+        response = self.client.get(reverse('Notifier:feed'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="notifier-due-date"', count=1)
+        self.assertContains(response, '<time datetime="2030-06-20">20 Jun 2030</time>')
+        self.assertContains(response, '<details class="notifier-details">', count=4)
+
     def test_generic_signal_rejects_incomplete_unsafe_and_conflicting_links(self):
         """Reject malformed link fields before storing any notification."""
         self.enable()

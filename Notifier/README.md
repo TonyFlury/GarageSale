@@ -253,6 +253,14 @@ The equivalent string values are `information`, `warning`, and `urgent`.
 The Notifier rejects other values.
 The review page provides Severity and Channel filters.
 Notification metadata displays the provider name before the channel name, such as `Diary: Task Late`.
+The `.notifier-entry-header` class places severity and title together.
+Providers can supply an optional ISO calendar date in `Signal.data['due_date']`.
+The `.notifier-due-date` class displays valid dates immediately after the title.
+Missing or invalid dates do not produce a date label.
+This convention applies to all providers. Diary reminders already supply this value.
+The `.notifier-entry-actions` class places the destination link beside the read control.
+The `.notifier-details` and `.notifier-details-toggle` classes identify expandable message details.
+The `.notifier-collected` class identifies the less prominent collection timestamp inside Details.
 This display applies to existing notifications without changing their saved content.
 The `.notifier-page-tab` and `.notifier-page-tab-active` classes identify page links and the current subsection.
 The `.notifier-filter-tab` and `.notifier-filter-tab-active` classes identify All and Unread links and the selected filter.
