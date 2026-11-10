@@ -286,20 +286,84 @@ class NotifierTests(TestCase):
         stream = self.provider.register_stream(StreamDefinition('example.due', 'Due',
             fields=(FieldDefinition('notice_days', 'Notice Period', type='integer', default=0, minimum=0, maximum=30),)))
         url = reverse('Notifier:preferences')
-        bad = {'stream_key': stream.key, stream.key + '-enabled': 'on', stream.key + '-notice_days': '-1'}
+        bad = {'provider_key': 'example', stream.key + '-enabled': 'on', stream.key + '-notice_days': '-1'}
         self.assertEqual(self.client.post(url, bad).status_code, 400)
         self.assertFalse(Subscription.objects.exists())
         good = {**bad, stream.key + '-notice_days': '0', 'user_id': self.other.pk}
         self.assertEqual(self.client.post(url, good).status_code, 302)
-        record = Subscription.objects.get()
+        record = Subscription.objects.get(stream_key=stream.key)
         self.assertEqual(record.user, self.user)
         self.assertEqual(record.values, {'notice_days': 0})
+        self.assertFalse(Subscription.objects.filter(user=self.other).exists())
 
     def test_stale_schema_is_disabled_until_the_user_saves_current_settings(self):
         """Do not silently apply incompatible saved preferences after a schema update."""
         self.enable()
         Subscription.objects.update(schema_version=99)
         self.assertEqual(self.publish().items[0].status, 'disabled')
+
+    def test_save_all_updates_only_eligible_channels_in_the_selected_provider(self):
+        """Save a complete provider group without changing another provider, user, or restricted channel."""
+        second = self.provider.register_stream(StreamDefinition('example.second', 'Second channel'))
+        restricted = self.provider.register_stream(StreamDefinition('example.restricted', 'Restricted', allowed_groups=()))
+        other_provider = self.registry.register_provider(ProviderDefinition('unrelated', 'Unrelated'))
+        unrelated = other_provider.register_stream(StreamDefinition('unrelated.changed', 'Unrelated channel'))
+        self.enable(stream=second)
+        self.enable(stream=unrelated)
+        self.enable(user=self.other)
+        response = self.client.get(reverse('Notifier:preferences'))
+        self.assertContains(response, 'class="notifier-save-all"', count=2)
+        self.assertNotContains(response, 'Restricted')
+        response = self.client.post(reverse('Notifier:preferences'), {
+            'provider_key': 'example', self.stream.key + '-enabled': 'on',
+            restricted.key + '-enabled': 'on', unrelated.key + '-enabled': '', 'user_id': self.other.pk,
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Subscription.objects.get(user=self.user, stream_key=self.stream.key).enabled)
+        self.assertFalse(Subscription.objects.get(user=self.user, stream_key=second.key).enabled)
+        self.assertTrue(Subscription.objects.get(user=self.user, stream_key=unrelated.key).enabled)
+        self.assertTrue(Subscription.objects.get(user=self.other, stream_key=self.stream.key).enabled)
+        self.assertFalse(Subscription.objects.filter(user=self.user, stream_key=restricted.key).exists())
+
+    def test_invalid_group_field_prevents_all_changes_and_displays_each_error(self):
+        """Validate every channel before writing any settings and preserve earlier saved subscriptions on failure."""
+        for name in ('first', 'second'):
+            self.provider.register_stream(StreamDefinition('example.' + name, name,
+                fields=(FieldDefinition('days', 'Days', type='integer', default=0, minimum=0),)))
+        self.enable()
+        response = self.client.post(reverse('Notifier:preferences'), {
+            'provider_key': 'example', 'example.first-days': '-1', 'example.second-days': '-2',
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, 'Ensure this value is greater than or equal to 0.', count=2, status_code=400)
+        self.assertEqual(Subscription.objects.count(), 1)
+        self.assertTrue(Subscription.objects.get().enabled)
+
+    def test_group_save_rolls_back_if_a_later_subscription_write_fails(self):
+        """Keep the entire provider group unchanged when storage fails after its first successful write."""
+        self.provider.register_stream(StreamDefinition('example.second', 'Second channel'))
+        original = save_subscription
+        calls = []
+
+        def fail_second(user, definition, **kwargs):
+            """Save the first channel and simulate a storage failure for the next channel."""
+            calls.append(definition.key)
+
+            # A later failure must roll back the first channel's successful preference write.
+            if len(calls) == 2:
+                raise DatabaseError('Unavailable')
+            return original(user, definition, **kwargs)
+
+        with patch('Notifier.views.save_subscription', side_effect=fail_second), self.assertRaises(DatabaseError):
+            self.client.post(reverse('Notifier:preferences'), {'provider_key': 'example', 'example.changed-enabled': 'on'})
+        self.assertFalse(Subscription.objects.exists())
+
+    def test_unknown_provider_or_individual_channel_submission_cannot_save_preferences(self):
+        """Reject forged group selections and old individual-channel submissions without changing preferences."""
+        for data in ({'provider_key': 'missing'}, {'stream_key': self.stream.key}):
+            with self.subTest(data=data):
+                self.assertEqual(self.client.post(reverse('Notifier:preferences'), data).status_code, 404)
+        self.assertFalse(Subscription.objects.exists())
 
     def test_empty_engine_configuration_is_valid_and_engines_are_not_implemented(self):
         """Require no engine package for collection or review and reject unsupported engine configuration."""

@@ -38,11 +38,11 @@ class AccessPolicyTests(TestCase):
                 self.assertContains(self.client.get(reverse('user_management:profile')), reverse('Notifier:feed'))
                 self.assertContains(self.client.get(url), 'Task progress note added')
                 other = self.users['Volunteer']
-                response = self.client.post(url, {'stream_key': key, key + '-enabled': 'on', 'user_id': other.pk})
+                response = self.client.post(url, {'provider_key': 'diary', key + '-enabled': 'on', 'user_id': other.pk})
                 self.assertEqual(response.status_code, 302)
                 self.assertTrue(Subscription.objects.get(user=user, stream_key=key).enabled)
                 self.assertFalse(Subscription.objects.filter(user=other).exists())
-                self.assertEqual(self.client.post(url, {'stream_key': key}).status_code, 302)
+                self.assertEqual(self.client.post(url, {'provider_key': 'diary'}).status_code, 302)
                 self.assertFalse(Subscription.objects.get(user=user, stream_key=key).enabled)
 
     def test_market_booking_permissions_are_scoped_to_market_and_exec_roles(self):

@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
@@ -52,49 +53,69 @@ def read_notification(request, identifier):
     return redirect('Notifier:feed')
 
 
-def preference_sections(user, *, selected=None, data=None):
-    """Build forms only for streams currently available to the user."""
-    subscriptions = {row.stream_key: row for row in Subscription.objects.filter(user=user)}
+def provider_sections(user, provider_key, subscriptions, *, data=None):
+    """Build forms for one provider's channels that are currently available to the user."""
     sections = []
     for reference in get_registry().streams.values():
         definition = reference.definition
 
-        # Restricted streams must not expose their descriptions or configurable fields.
-        if not eligible_for_stream(user, definition):
+        # Only this provider's eligible channels belong in its form and save operation.
+        if reference.provider_key != provider_key or not eligible_for_stream(user, definition):
             continue
-        bound = None
-
-        # Only the selected form consumes submitted data. Other streams remain unchanged.
-        if selected == definition.key:
-            bound = data
-        form = SubscriptionForm(bound, definition=definition, subscription=subscriptions.get(definition.key))
+        form = SubscriptionForm(data, definition=definition, subscription=subscriptions.get(definition.key))
         sections.append({'stream': definition, 'form': form})
     return sections
 
 
+def preference_groups(user, *, selected=None, data=None):
+    """Group eligible channel forms by their registered provider without creating default subscriptions."""
+    subscriptions = {row.stream_key: row for row in Subscription.objects.filter(user=user)}
+    groups = []
+    for provider in get_registry().providers.values():
+        bound = None
+
+        # Submitted values must bind only the selected provider's group.
+        if selected == provider.definition.key:
+            bound = data
+        sections = provider_sections(user, provider.definition.key, subscriptions, data=bound)
+
+        # Providers with no eligible channels must not expose an empty settings group.
+        if sections:
+            groups.append({'provider': provider.definition, 'sections': sections})
+    return groups
+
+
+@transaction.atomic
+def save_preference_group(user, sections):
+    """Save all validated channels in one personal provider group or roll back the complete group."""
+    for section in sections:
+        form = section['form']
+        save_subscription(user, section['stream'], enabled=form.cleaned_data['enabled'], values=form.setting_values())
+
+
 @personal_access_required
 def preferences(request):
-    """Read personal stream forms or save one authorized stream's validated settings."""
-    selected = request.POST.get('stream_key')
-    sections = preference_sections(request.user, selected=selected, data=request.POST)
+    """Read provider groups or validate and save every eligible channel in one personal group."""
+    selected = request.POST.get('provider_key')
+    groups = preference_groups(request.user, selected=selected, data=request.POST)
 
     # GET requests only present declarations and must not create default preference rows.
     if request.method != 'POST':
-        return render_review(request, 'Notifier/preferences.html', {'sections': sections})
+        return render_review(request, 'Notifier/preferences.html', {'groups': groups})
 
-    # Match only a form already selected through current eligibility checks.
-    section = next((item for item in sections if item['stream'].key == selected), None)
+    # Match only a provider group already selected through current eligibility checks.
+    group = next((item for item in groups if item['provider'].key == selected), None)
 
-    # A forged or unavailable stream cannot create or modify saved preferences.
-    if section is None:
-        raise Http404('Stream unavailable.')
+    # A forged or unavailable provider cannot create or modify saved preferences.
+    if group is None:
+        raise Http404('Provider unavailable.')
+    valid = [section['form'].is_valid() for section in group['sections']]
 
-    # Valid settings change only this user's selected stream and return to the settings page.
-    if section['form'].is_valid():
-        save_subscription(request.user, section['stream'], enabled=section['form'].cleaned_data['enabled'],
-                          values=section['form'].setting_values())
+    # Every channel must validate before any setting in the selected group changes.
+    if all(valid):
+        save_preference_group(request.user, group['sections'])
         messages.success(request, 'Notification settings saved.')
         return redirect('Notifier:preferences')
 
-    # Invalid settings remain visible for correction without changing the saved subscription.
-    return render_review(request, 'Notifier/preferences.html', {'sections': sections}, status=400)
+    # Invalid settings remain visible for correction without changing the saved group.
+    return render_review(request, 'Notifier/preferences.html', {'groups': groups}, status=400)

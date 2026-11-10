@@ -218,7 +218,8 @@ if you have a new database :
         The profile tab does not require a separate Notifier permission grant.
         Open Notification settings.
         Enable each required Diary channel.
-        Save each changed channel separately.
+        Select Save all under the Diary heading to save the complete channel group.
+        Engine settings remain hidden while no engines are installed.
         Only later committed task events produce notifications.
         Confirm that task signals include diary_key and task from version 0.1.10.2.
         The adapter uses this pair to distinguish copied tasks across event Diaries.

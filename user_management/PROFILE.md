@@ -22,9 +22,15 @@ Mark as read changes only the signed-in user's notification state.
 Notification settings remains within the Notifications tab.
 Channel settings lists eligible registered channels and their declared fields.
 The user interface calls each technical Notifier stream a channel.
-Save settings changes one channel for the signed-in user.
+Channels appear together under their provider's heading.
+All Diary channels share the Diary heading and one Save all button.
+Save all changes every eligible channel in that group for the signed-in user.
+Unchecked channels become disabled.
+Every channel must pass validation before any setting changes.
+A storage failure cancels all changes in the group.
+Other provider groups and other users' settings remain unchanged.
 
-Delivery settings shows an empty state when no engines exist.
+The settings page hides the engine section when no engines exist.
 This implementation has no communication engines, engine registration, or engine settings forms.
 Future engine settings require the separate engine implementation.
 
@@ -83,7 +89,7 @@ New styling uses classes instead of those identifiers.
 ## Verification and deployment
 
 The technical test class `ProfileNotificationTests` checks navigation, uploads, personal settings, and profile ownership.
-The technical test class `NotifierBrowserTests` navigates both tabs, changes channel settings, and marks a notification as read.
+The technical test class `NotifierBrowserTests` navigates both tabs, saves multiple channels together, and marks a notification as read.
 The affected regression run passed 82 tests against a separate PostgreSQL database.
 The run included the existing team access, navigation, and Diary signal tests.
 The browser workflow passed at desktop and phone widths.
@@ -93,6 +99,9 @@ Default Notifier installations still require their own capability unless the hos
 The technical test `AccessPolicyTests.test_exec_members_and_officers_manage_only_their_own_notification_settings` checks both approved roles.
 It verifies enablement, disablement, and rejection of a different user identifier in settings submissions.
 All 30 access-policy and profile tests passed in this verification run.
+The grouped settings update passed 76 affected tests against a separate PostgreSQL database.
+Browser verification saved two channels through one Save all button and confirmed that the engine section was absent.
+Service tests verify complete validation, transaction rollback, provider isolation, and user isolation during grouped saves.
 
 Collect static files after deployment.
 Reload the application after updating templates.

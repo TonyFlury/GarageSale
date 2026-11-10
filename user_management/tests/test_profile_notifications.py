@@ -86,15 +86,15 @@ class ProfileNotificationTests(TestCase):
         self.assertContains(response, 'profile-tab-active')
         self.assertNotContains(response, 'Another biography')
 
-    def test_settings_show_channel_controls_and_empty_delivery_section(self):
-        """Save only this account's channel preferences while no delivery engines exist."""
+    def test_settings_show_grouped_channels_and_omit_empty_delivery_section(self):
+        """Save only this account's provider group and omit settings for nonexistent delivery engines."""
         url = reverse('Notifier:preferences')
         response = self.client.get(url)
         self.assertContains(response, 'Channel settings')
-        self.assertContains(response, 'Delivery settings')
-        self.assertContains(response, 'No delivery engines are available')
+        self.assertNotContains(response, 'Delivery settings')
+        self.assertNotContains(response, 'notifier-engine-settings')
         self.assertFalse(Subscription.objects.exists())
-        self.assertEqual(self.client.post(url, {'stream_key': self.stream.key,
+        self.assertEqual(self.client.post(url, {'provider_key': 'profile',
             self.stream.key + '-enabled': 'on', 'user_id': self.other.pk}).status_code, 302)
         self.assertEqual(Subscription.objects.get().user, self.user)
 
@@ -128,7 +128,7 @@ class ProfileNotificationTests(TestCase):
                 self.assertContains(response, 'href="' + reverse('Notifier:feed') + '"')
                 self.assertEqual(self.client.get(reverse('Notifier:feed')).status_code, 200)
                 self.assertEqual(self.client.get(reverse('Notifier:preferences')).status_code, 200)
-                self.assertEqual(self.client.post(reverse('Notifier:preferences'), {'stream_key': self.stream.key,
+                self.assertEqual(self.client.post(reverse('Notifier:preferences'), {'provider_key': 'profile',
                     self.stream.key + '-enabled': 'on'}).status_code, 302)
                 self.stream.publish([Signal(codename, timezone.now(), SourceRef('example.record', '1'),
                                             'Profile owner notification', 'Personal notification')])

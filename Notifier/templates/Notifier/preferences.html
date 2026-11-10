@@ -1,21 +1,20 @@
 {% extends 'Notifier/base.html' %}
 {% block notifier_content %}
 <h1>Notification settings</h1>
-<section class="notifier-engine-settings" aria-labelledby="notifier-engine-heading">
-    <h2 id="notifier-engine-heading">Delivery settings</h2>
-    <p class="notifier-engines-empty">No delivery engines are available. Review your notifications on the Notifications tab.</p>
-</section>
 <section class="notifier-channel-settings" aria-labelledby="notifier-channel-heading">
 <h2 id="notifier-channel-heading">Channel settings</h2>
 <p>Channels are disabled until you enable them.</p>
-{% for section in sections %}
-<form class="notifier-settings" method="post" action="{% url 'Notifier:preferences' %}">
-    {% csrf_token %}<input type="hidden" name="stream_key" value="{{ section.stream.key }}">
-    <fieldset><legend>{{ section.stream.label }}</legend>
+{% for group in groups %}
+<form class="notifier-settings notifier-provider-settings" method="post" action="{% url 'Notifier:preferences' %}">
+    {% csrf_token %}<input type="hidden" name="provider_key" value="{{ group.provider.key }}">
+    <h3 class="notifier-provider-heading">{{ group.provider.label }}</h3>
+    {% for section in group.sections %}
+    <fieldset class="notifier-channel"><legend>{{ section.stream.label }}</legend>
         <p>{{ section.stream.description }}</p>
         {{ section.form.as_p }}
-        <button type="submit">Save settings</button>
     </fieldset>
+    {% endfor %}
+    <button class="notifier-save-all" type="submit" aria-label="Save all {{ group.provider.label }} channels">Save all</button>
 </form>
 {% empty %}<p class="notifier-empty">No notification streams are available.</p>{% endfor %}
 </section>

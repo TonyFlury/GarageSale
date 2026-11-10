@@ -34,10 +34,11 @@ The Personal Information tab retains biography editing, picture uploads, and ID 
 The Notifications tab supplies personal review and Notification settings links.
 Both notification pages keep the Notifications tab selected.
 
-Notification settings separates Delivery settings from Channel settings.
+Notification settings groups channels under their registered provider headings.
 The user interface calls each technical stream a channel.
 Channel settings uses the existing registered field declarations and personal subscriptions.
-Delivery settings currently shows an empty state because this version has no engines.
+Each group has one Save all button for all its eligible channels.
+The settings page hides the engine section because this version has no engines.
 Future engine registration and engine settings forms remain separate implementation work.
 
 Profile navigation accepts existing own-profile authorization without requiring an additional Notifier permission grant.
@@ -54,7 +55,7 @@ Do not use a subscription as an authorization grant.
 
 Open Notification settings.
 Enable each required stream.
-Select Save settings for each changed stream.
+Select Save all for each changed provider group.
 Future occurrences appear on the review page.
 Enabling a stream does not recreate earlier occurrences.
 
@@ -237,6 +238,13 @@ No automatic settings migration is supplied.
 Registration and settings GET requests do not create subscription rows.
 All streams start disabled.
 Only an explicit personal settings save creates or changes a subscription row.
+Each settings form submits the technical value `provider_key` and the group's prefixed channel fields.
+The server selects group membership from registration and current eligibility.
+It validates every channel before saving the complete group in one database transaction.
+An invalid field or storage failure preserves the complete group's previous settings.
+An unchecked enable control disables its channel when the user saves the group.
+Other provider groups and users remain unchanged.
+Old individual-channel submissions with only `stream_key` return HTTP 404 without changing settings.
 Notifications are created only for enabled eligible recipients.
 
 The review page shows 25 authorized entries per page.

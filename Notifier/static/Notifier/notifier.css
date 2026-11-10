@@ -10,5 +10,6 @@
 .notifier .notifier-metadata, .notifier .notifier-state { color: #505050; }
 .notifier .notifier-settings label { display: inline-block; text-align: left; }
 .notifier .notifier-settings fieldset { min-width: 0; }
+.notifier .notifier-channel { margin-block: 1rem; }
 .notifier button { font: inherit; padding: .5rem .75rem; cursor: pointer; }
 .notifier :focus-visible { outline: 3px solid #3333dd; outline-offset: 3px; }

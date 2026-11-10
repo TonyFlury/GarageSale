@@ -34,10 +34,11 @@ class ProviderRef:
 class StreamRef:
     """Expose message submission through a registered stream."""
 
-    def __init__(self, registry, definition):
-        """Retain the registry and stream definition for runtime submission."""
+    def __init__(self, registry, definition, provider_key):
+        """Retain the registry, owning provider, and stream definition for runtime submission."""
         self.registry = registry
         self.definition = definition
+        self.provider_key = provider_key
         self.key = definition.key
 
     def publish(self, signals):
@@ -96,9 +97,9 @@ class Registry:
             existing = self.streams.get(definition.key)
 
             # A conflict must remain visible instead of silently changing saved preference meanings.
-            if existing and existing.definition != definition:
+            if existing and (existing.definition != definition or existing.provider_key != provider_key):
                 raise RegistrationConflict(definition.key)
-            reference = existing or StreamRef(self, definition)
+            reference = existing or StreamRef(self, definition, provider_key)
             self.streams[definition.key] = reference
             return reference
 
