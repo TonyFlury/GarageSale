@@ -288,9 +288,7 @@ img#Burger{
 
 /* Keep private notification controls compact without changing the desktop layout. */
 @media (max-width: 600px) {
-    .notifier-compact-header .supporting, .notifier-compact-header #clock, .notifier-compact-header .account-greeting, .notifier-compact-header .TopBar .icon { display: none; }
-    .notifier-compact-header #ToolBar { padding-block: .6rem; }
-    .notifier-compact-header #ToolBar h1 { box-sizing: border-box; margin: 0; padding-inline: 3rem; min-height: 2.4em; line-height: 1.2; font-size: 1rem; }
+    .notifier-compact-header img.supporting_logo { height: 48px; }
     .notifier-profile-heading { margin-block: .4rem 0; }
     .notifier-profile-heading h1 { display: none; }
     .notifier-profile-heading .profile-tabs { margin-block: .35rem; gap: .35rem; }
