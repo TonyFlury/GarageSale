@@ -305,6 +305,11 @@ The registration update passed 78 affected tests against a separate PostgreSQL d
 
 Diary emits these signals after successful transaction commit.
 Template editing signals do not produce event Diary notifications.
+Initial dependency snapshots copied from a template do not produce dependency-change notifications.
+The adapter identifies these snapshots through the public task fields `source='template'` and `revision=0`.
+It retains creation notifications and dependency events for later task revisions or Diary additions.
+This rule matches the current package's initial snapshot behavior.
+An explicit initialization marker in future package signals would make that distinction independent of task revision.
 The adapter submits progress summaries without copying note text or actor email addresses.
 All eligible subscribers can enable each stream.
 The Notifier checks `GarageSale.view_eventdata` and current package task visibility for each recipient.

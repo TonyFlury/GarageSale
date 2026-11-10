@@ -93,6 +93,13 @@ def source_is_visible(user, source):
     return True
 
 
+def initial_dependency_snapshot(event_name, entry):
+    """Identify the initial dependency snapshot emitted for an unchanged copied template task."""
+
+    # The current public API reports copied tasks at revision 0 before any subsequent task edit.
+    return event_name == 'task_dependency_changed' and entry.get('source') == 'template' and entry.get('revision') == 0
+
+
 def receive_task_event(sender, *, event_name, user, task, diary_key=None, **kwargs):
     """Translate one committed instance event without reading subscriptions or selecting delivery engines."""
 
@@ -105,6 +112,10 @@ def receive_task_event(sender, *, event_name, user, task, diary_key=None, **kwar
     if match is None:
         return
     event_id, diary_key, entry = match
+
+    # Initial template graph construction establishes prerequisites rather than changing an existing task graph.
+    if initial_dependency_snapshot(event_name, entry):
+        return
     description = dict((name, text) for name, _, text in EVENTS)[event_name]
     source = task_source(event_id, diary_key, entry)
     message = Signal(occurrence_key=str(uuid4()), occurred_at=timezone.now(), source=source,

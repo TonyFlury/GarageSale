@@ -228,6 +228,54 @@ class DiaryNotifierTests(TestCase):
         resolve.assert_not_called()
         self.assertFalse(Notification.objects.exists())
 
+    def dependency_template(self):
+        """Create an approved two-task template through the package API with one dependency."""
+        self.api.define_milestones(definitions={'event_date': 'Event date'})
+        template = self.api.create_template(name='Notifier dependency fixture')
+        first = EntrySpec('First template task', 'relative', milestone_name='event_date', day_offset=-1)
+        second = EntrySpec('Second template task', 'source', milestone_name='event_date')
+        version = template.save_version(entries=(first, second),
+            predecessors={first.entry_key: (), second.entry_key: (first.entry_key,)}, expected_version_key=None,
+            milestone_names=('event_date',))
+        return version, second.entry_key
+
+    def test_new_diary_template_snapshot_does_not_report_dependency_changes(self):
+        """Copy real template dependencies while collecting task creation events without dependency-change noise."""
+        version, key = self.dependency_template()
+        self.subscribe(self.member, 'task_dependency_changed')
+        self.subscribe(self.member, 'task_created')
+        with self.captureOnCommitCallbacks(execute=True):
+            with transaction.atomic():
+                diary = self.api.create_diary(name='New template Diary', template_version_key=version.key,
+                                              milestone_dates={'event_date': date(2031, 6, 23)})
+                EventData.objects.create(event_date=date(2031, 6, 23), use_from=date(2030, 1, 1), diary_key=diary.key)
+        self.assertEqual(Notification.objects.filter(stream_key='diary.task_created').count(), 2)
+        self.assertFalse(Notification.objects.filter(stream_key='diary.task_dependency_changed').exists())
+        task = diary_notifier.service_client({diary.key}).diary(key=diary.key).task(entry_key=key)
+        self.assertEqual(len(task['predecessors']), 1)
+
+    def test_template_application_to_empty_diary_does_not_report_dependency_changes(self):
+        """Keep initial graph notifications quiet when an approved template is applied to an existing empty Diary."""
+        version, key = self.dependency_template()
+        self.subscribe(self.member, 'task_dependency_changed')
+        with self.captureOnCommitCallbacks(execute=True):
+            self.diary.apply_template(template_version_key=version.key, milestone_dates={'event_date': self.event.event_date})
+        self.assertFalse(Notification.objects.exists())
+        self.assertEqual(len(self.diary.task(entry_key=key)['predecessors']), 1)
+
+    def test_dependency_events_for_later_template_task_revisions_still_reach_the_channel(self):
+        """Preserve the dependency-change signal contract for copied tasks that have already been edited."""
+        from Diary.signals import task_dependency_changed
+        version, key = self.dependency_template()
+        self.subscribe(self.member, 'task_dependency_changed')
+        with self.captureOnCommitCallbacks(execute=True):
+            self.diary.apply_template(template_version_key=version.key, milestone_dates={'event_date': self.event.event_date})
+        self.diary.update_due_date(entry_key=key, due_date=date(2030, 6, 24),
+                                   expected_revision=self.diary.task(entry_key=key)['revision'])
+        task_dependency_changed.send(sender=type('CalendarEntry', (), {}), user=self.manager.email,
+                                     task=key, diary_key=self.diary.key, template_version_key=None)
+        self.assertEqual(Notification.objects.get().stream_key, 'diary.task_dependency_changed')
+
     def test_dependency_and_ownership_signal_contracts_use_registered_streams(self):
         """Translate the remaining public signal contracts for an authorized existing task."""
         from Diary import signals

@@ -469,6 +469,10 @@ Their identifiers remain unchanged.
 
 - [ ] **HOST-005: Diary progress notifications.**
   The first implementation connects five committed package signals to the engine-free Notifier.
+  Initial dependency filtering: `GarageSale/diary_notifier.py`: `initial_dependency_snapshot` and `receive_task_event`.
+  Copied template tasks at public revision 0 do not generate dependency-change notifications during graph initialization.
+  Verification: `DiaryNotifierTests.test_new_diary_template_snapshot_does_not_report_dependency_changes` and `test_template_application_to_empty_diary_does_not_report_dependency_changes`.
+  Later revision verification: `DiaryNotifierTests.test_dependency_events_for_later_template_task_revisions_still_reach_the_channel`.
   Startup also registers `diary.task_due` and `diary.task_late` for background reminder evaluation.
   Both channels appear in the Diary settings group before any background task runs.
   Task Due declares the `notice_days` integer setting with a default of 0 and a minimum of 0.
