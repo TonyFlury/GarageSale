@@ -3,6 +3,7 @@
 <h1 class="notifier-heading">Notifications</h1>
 <p class="notifier-order">Urgent first. Oldest first within each severity.</p>
 <p class="notifier-introduction">Notifications appear here after collection. Enable the channels you want in Notification settings.</p>
+<div class="notifier-review-controls">
 <nav class="notifier-filters" aria-label="Review filter">
     <span class="notifier-filter-caption">Show:</span>
     <a class="notifier-filter-tab{% if not unread_only %} notifier-filter-tab-active{% endif %}" href="?{{ filter_query }}"{% if not unread_only %} aria-current="page"{% endif %}><span class="notifier-label-full">All notifications</span><span class="notifier-label-short">All</span></a>
@@ -23,6 +24,7 @@
     <a class="notifier-clear-filters" href="{% url 'Notifier:feed' %}">Clear filters</a>
 </form>
 </section>
+</div>
 <ul class="notifier-list">
 {% for notification in page_obj %}
     {% ifchanged notification.severity %}

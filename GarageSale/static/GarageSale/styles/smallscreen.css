@@ -288,6 +288,9 @@ img#Burger{
 
 /* Keep private notification controls compact without changing the desktop layout. */
 @media (max-width: 600px) {
+    .notifier-compact-header .supporting, .notifier-compact-header #clock, .notifier-compact-header .account-greeting, .notifier-compact-header .TopBar .icon { display: none; }
+    .notifier-compact-header #ToolBar { padding-block: .6rem; }
+    .notifier-compact-header #ToolBar h1 { box-sizing: border-box; margin: 0; padding-inline: 3rem; min-height: 2.4em; line-height: 1.2; font-size: 1rem; }
     .notifier-profile-heading { margin-block: .4rem 0; }
     .notifier-profile-heading h1 { display: none; }
     .notifier-profile-heading .profile-tabs { margin-block: .35rem; gap: .35rem; }
@@ -296,18 +299,19 @@ img#Burger{
     .notifier .notifier-label-full, .notifier .notifier-introduction, .notifier .notifier-filter-caption { display: none; }
     .notifier .notifier-label-short { display: inline; }
     .notifier .notifier-heading { margin-block: .45rem .25rem; font-size: 1.35rem; }
-    .notifier .notifier-order { margin-block: .25rem .45rem; font-size: .85em; }
+    .notifier .notifier-order { display: none; }
     .notifier .notifier-navigation { margin-block: .3rem .5rem; gap: .35rem; }
     .notifier .notifier-page-tab { flex: 1; justify-content: center; padding: .5rem .6rem; }
-    .notifier .notifier-filters { margin-block: .4rem; padding: .25rem; gap: .3rem; }
+    .notifier .notifier-review-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; gap: .35rem; margin-block: .3rem .4rem; }
+    .notifier .notifier-filters { margin: 0; padding: .25rem; gap: .3rem; }
     .notifier .notifier-filter-tab { flex: 1; justify-content: center; padding: .4rem .6rem; }
-    .notifier .notifier-filter-panel { margin-block: .3rem .5rem; border-bottom: 1px solid #c1cccc; }
-    .notifier .notifier-filter-summary { display: flex; align-items: center; gap: .35rem; cursor: pointer; box-sizing: border-box; min-height: 44px; padding-block: .65rem; font-weight: bold; }
+    .notifier .notifier-filter-panel { display: contents; }
+    .notifier .notifier-filter-summary { display: flex; align-items: center; gap: .35rem; cursor: pointer; box-sizing: border-box; min-height: 44px; padding: .5rem; border: 1px solid #c1cccc; border-radius: .3rem; font-weight: bold; }
     .notifier .notifier-filter-toggle { display: block; position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
     .notifier .notifier-filter-toggle:focus-visible + .notifier-filter-summary { outline: 3px solid #3333dd; outline-offset: 3px; }
     .notifier .notifier-filter-expand-icon::before { content: '▸'; }
     .notifier .notifier-filter-toggle:checked + .notifier-filter-summary .notifier-filter-expand-icon::before { content: '▾'; }
-    .notifier .notifier-review-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin-block: 0 .6rem; }
+    .notifier .notifier-review-filters { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin-block: 0 .6rem; }
     .notifier .notifier-filter-toggle:not(:checked) ~ .notifier-review-filters { display: none; }
     .notifier .notifier-filter-control { width: 100%; }
     .notifier .notifier-review-filters button, .notifier .notifier-entry-actions button { min-height: 44px; }

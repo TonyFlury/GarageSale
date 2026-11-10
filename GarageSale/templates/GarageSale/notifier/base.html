@@ -1,6 +1,7 @@
 {% extends 'user_profile/base.html' %}
 {% load static %}
 {% block profile_heading_classes %} notifier-profile-heading{% endblock %}
+{% block TopBar %}<div class="notifier-compact-header">{{ block.super }}</div>{% endblock %}
 {% block sidebar %}
     {{ block.super }}
 

@@ -260,6 +260,12 @@ The `.notifier-heading` and `.notifier-introduction` classes identify the page h
 The `.notifier-filter-panel` and `.notifier-filter-summary` classes identify expandable filters.
 The `.notifier-filter-status` class marks active filters.
 All mobile presentation rules reside in `GarageSale/static/GarageSale/styles/smallscreen.css`.
+The `.notifier-compact-header` class selects a compact site header on mobile notification pages.
+The header omits decorative logos, supporting organizations, the `.event-countdown` element, and the `.account-greeting` element.
+The site title, event date, account badge, and menu controls remain available.
+The `.notifier-review-controls` class places All, Unread, and Filters on one mobile row.
+Expanded filter fields use the full row beneath these controls.
+The ordering hint remains available on desktop.
 The `.notifier-filter-toggle` checkbox controls mobile filter expansion through CSS.
 The `.notifier-filter-expand-icon` class supplies its decorative expansion marker.
 Keyboard focus on the checkbox produces a visible outline around the Filters label.
