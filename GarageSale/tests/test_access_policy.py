@@ -23,6 +23,28 @@ from user_management.models import TeamMember
 
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
 class AccessPolicyTests(TestCase):
+    """Verify canonical group permissions and authorization for direct application requests."""
+
+    def test_exec_members_and_officers_manage_only_their_own_notification_settings(self):
+        """Allow both approved roles to change personal Diary subscriptions without changing another account's preferences."""
+        from Notifier.models import Subscription
+        key = 'diary.task_note_added'
+        url = reverse('Notifier:preferences')
+        for role in ('ExecMember', 'Officer'):
+            with self.subTest(role=role):
+                user = self.users[role]
+                self.assertTrue(user.has_perm('Notifier.use_notifier'))
+                self.client.force_login(user)
+                self.assertContains(self.client.get(reverse('user_management:profile')), reverse('Notifier:feed'))
+                self.assertContains(self.client.get(url), 'Task progress note added')
+                other = self.users['Volunteer']
+                response = self.client.post(url, {'stream_key': key, key + '-enabled': 'on', 'user_id': other.pk})
+                self.assertEqual(response.status_code, 302)
+                self.assertTrue(Subscription.objects.get(user=user, stream_key=key).enabled)
+                self.assertFalse(Subscription.objects.filter(user=other).exists())
+                self.assertEqual(self.client.post(url, {'stream_key': key}).status_code, 302)
+                self.assertFalse(Subscription.objects.get(user=user, stream_key=key).enabled)
+
     def test_market_booking_permissions_are_scoped_to_market_and_exec_roles(self):
         permissions = ('CraftMarket.record_pitch_payment', 'CraftMarket.cancel_market_booking',
                        'CraftMarket.reinstate_market_booking')

@@ -35,6 +35,8 @@ Garage Sale accepts its existing own-profile permissions for personal notificati
 An additional `Notifier.use_notifier` grant is not required for existing profile owners.
 The navigation tab, review views, settings views, and intake checks use the same configured authorization rule.
 Channel group restrictions and source record access checks still apply.
+Every ExecMember and Officer can change their own eligible notification channel settings.
+This capability does not grant permission to change another user's settings or account permissions.
 An unavailable tab has no destination link and has an explanatory hover label.
 A user who can inspect another member's personal information cannot inspect that member's notification settings through these tabs.
 The other member's profile omits Notifications navigation.
@@ -88,6 +90,9 @@ The browser workflow passed at desktop and phone widths.
 The access correction passed 85 affected regression tests, including a browser account with only existing own-profile permission.
 The tests verify navigation, settings changes, collection, and read actions without the separate Notifier capability.
 Default Notifier installations still require their own capability unless the host configures alternatives.
+The technical test `AccessPolicyTests.test_exec_members_and_officers_manage_only_their_own_notification_settings` checks both approved roles.
+It verifies enablement, disablement, and rejection of a different user identifier in settings submissions.
+All 30 access-policy and profile tests passed in this verification run.
 
 Collect static files after deployment.
 Reload the application after updating templates.
