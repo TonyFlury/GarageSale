@@ -31,8 +31,9 @@ def read_tasks():
     for event_id, diary_key in events:
         try:
             diary = client.diary(key=diary_key).read()
-        except (ObjectDoesNotExist, PermissionDenied, ValidationError):
-            logger.warning('Diary monitor skipped an unavailable host Diary: event=%s diary=%s', event_id, diary_key)
+        except (ObjectDoesNotExist, PermissionDenied, ValidationError) as error:
+            logger.warning('Diary monitor skipped an unavailable host Diary: event=%s diary=%s reason=%s: %s',
+                           event_id, diary_key, type(error).__name__, error)
             counts['diaries_unavailable'] += 1
             continue
 

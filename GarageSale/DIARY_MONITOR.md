@@ -248,6 +248,26 @@ The technical command `manage.py makemigrations --check --dry-run` reported no c
 No migration was applied to application data during implementation.
 No monitor was left running against application data.
 
+## Missing source Diaries
+
+A warning with `diaries_unavailable` means that a linked Diary could not be read.
+The warning includes the event key, Diary key, exception type, and reason.
+It distinguishes a missing Diary from access rejection or invalid source data.
+Subscription evaluation counts do not mean that task data was available or notifications were created.
+
+When the reason says `EventCalendar matching query does not exist`, the host retains a link to a missing Diary.
+Check the dependency's administration command before changing that link:
+
+```bash
+python manage.py manage_diaries list --event-ref garagesale:event:3 --json
+```
+
+Replace 3 with the affected event key.
+Restore the original Diary data when its task history must be retained.
+Creating a replacement starts a new task history and requires an approved template version.
+The monitor does not create replacement Diaries or approve draft templates.
+After restoring or preparing the correct Diary link, run the monitor once to evaluate current conditions immediately.
+
 ## Remaining work
 
 User-selectable reminder frequencies remain open.

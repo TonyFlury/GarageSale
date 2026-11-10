@@ -178,10 +178,11 @@ class DiaryMonitorTests(TestCase):
         self.assertEqual(counts['diaries_read'], 1)
         with patch('GarageSale.diary_monitor.evaluator.service_client') as client:
             client.return_value.diary.return_value.read.side_effect = ObjectDoesNotExist
-            with self.assertLogs('GarageSale.diary_monitor.evaluator', level='WARNING'):
+            with self.assertLogs('GarageSale.diary_monitor.evaluator', level='WARNING') as captured:
                 tasks, counts = read_tasks()
         self.assertEqual(tasks, [])
         self.assertEqual(counts['diaries_unavailable'], 1)
+        self.assertIn('reason=ObjectDoesNotExist', captured.output[0])
 
 
 class MonitorScheduleTests(SimpleTestCase):
