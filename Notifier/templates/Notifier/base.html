@@ -1,13 +1,13 @@
 {% extends notifier_base_template %}
 {% load static %}
 {% block Title %}Notifications{% endblock %}
-{% block PageStyles %}{{ block.super }}<link rel="stylesheet" href="{% static 'Notifier/notifier.css' %}?v=compact-notifications-1">{% endblock %}
+{% block PageStyles %}{{ block.super }}<link rel="stylesheet" href="{% static 'Notifier/notifier.css' %}?v=mobile-review-1">{% endblock %}
 {% block SnappableSections %}
 {{ block.super }}
 <section class="notifier" aria-label="Personal notifications">
     <nav class="notifier-navigation" aria-label="Notification pages">
-        <a class="notifier-page-tab{% if notifier_section == 'feed' %} notifier-page-tab-active{% endif %}" href="{% url 'Notifier:feed' %}"{% if notifier_section == 'feed' %} aria-current="page"{% endif %}>Review notifications</a>
-        <a class="notifier-page-tab{% if notifier_section == 'preferences' %} notifier-page-tab-active{% endif %}" href="{% url 'Notifier:preferences' %}"{% if notifier_section == 'preferences' %} aria-current="page"{% endif %}>Notification settings</a>
+        <a class="notifier-page-tab{% if notifier_section == 'feed' %} notifier-page-tab-active{% endif %}" href="{% url 'Notifier:feed' %}"{% if notifier_section == 'feed' %} aria-current="page"{% endif %}><span class="notifier-label-full">Review notifications</span><span class="notifier-label-short">Notifications</span></a>
+        <a class="notifier-page-tab{% if notifier_section == 'preferences' %} notifier-page-tab-active{% endif %}" href="{% url 'Notifier:preferences' %}"{% if notifier_section == 'preferences' %} aria-current="page"{% endif %}><span class="notifier-label-full">Notification settings</span><span class="notifier-label-short">Settings</span></a>
     </nav>
     {% for message in messages %}<p class="notifier-message" role="status">{{ message }}</p>{% endfor %}
     {% block notifier_content %}{% endblock %}

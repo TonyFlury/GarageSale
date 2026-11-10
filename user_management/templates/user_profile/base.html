@@ -13,7 +13,7 @@
 </div>
 {% endblock %}
 {% block SnappableSections %}
-<section class="profile-heading">
+<section class="profile-heading{% block profile_heading_classes %}{% endblock %}">
     <h1>User Profile</h1>
     {% include 'user_profile/tabs.html' %}
 </section>

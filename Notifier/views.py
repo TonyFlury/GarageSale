@@ -82,7 +82,9 @@ def feed(request):
         page_filters['state'] = 'unread'
     return render_review(request, 'Notifier/feed.html', {'page_obj': page, 'unread_only': unread,
         'filter_form': form, 'filter_query': filter_query, 'unread_query': unread_query,
-        'page_query': urlencode(page_filters)}, status=status)
+        'page_query': urlencode(page_filters),
+        'filters_active': bool(filters.get('severity') or filters.get('channel')),
+        'filters_require_open': bool(form.errors or filters.get('severity') or filters.get('channel'))}, status=status)
 
 
 @personal_access_required

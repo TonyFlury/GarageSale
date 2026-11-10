@@ -252,6 +252,17 @@ Providers can also supply `Severity.WARNING` or `Severity.URGENT` from `Notifier
 The equivalent string values are `information`, `warning`, and `urgent`.
 The Notifier rejects other values.
 The review page provides Severity and Channel filters.
+At widths up to 600 pixels, the review page uses shorter tab labels and reduced spacing.
+The host class `.notifier-profile-heading` removes the repeated User Profile heading only on these pages.
+The `profile_heading_classes` template block supplies this optional host styling hook.
+The `.notifier-label-full` and `.notifier-label-short` classes select full or compact navigation labels.
+The `.notifier-heading` and `.notifier-introduction` classes identify the page heading and optional guidance.
+The `.notifier-filter-panel` and `.notifier-filter-summary` classes identify expandable filters.
+The `.notifier-filter-status` class marks active filters.
+The `initializeNotifierReview` function in `Notifier/review.js` collapses unused filters on mobile.
+Active filters and validation errors remain expanded. Desktop filters remain expanded.
+Without JavaScript, filters remain expanded and usable.
+Mobile navigation links, filter controls, and notification action buttons retain touch targets at least 44 pixels high.
 Notification metadata displays the provider name before the channel name, such as `Diary: Task Late`.
 The Garage Sale host sidebar includes a Team Pages link when `GarageSale.access_team_pages` permits access.
 The `.notifier-team-navigation` class identifies this host link on review and settings pages.
