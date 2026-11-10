@@ -62,6 +62,10 @@ def feed(request):
     else:
         status = 400
     page = Paginator(entries, 25).get_page(request.GET.get('page'))
+    registry = get_registry()
+    for record in page:
+        reference = registry.streams[record.stream_key]
+        record.provider_label = registry.providers[reference.provider_key].definition.label
     filter_query = urlencode(filters)
     unread_query = urlencode({**filters, 'state': 'unread'})
     page_filters = dict(filters)

@@ -252,6 +252,8 @@ Providers can also supply `Severity.WARNING` or `Severity.URGENT` from `Notifier
 The equivalent string values are `information`, `warning`, and `urgent`.
 The Notifier rejects other values.
 The review page provides Severity and Channel filters.
+Notification metadata displays the provider name before the channel name, such as `Diary: Task Late`.
+This display applies to existing notifications without changing their saved content.
 The `.notifier-page-tab` and `.notifier-page-tab-active` classes identify page links and the current subsection.
 The `.notifier-filter-tab` and `.notifier-filter-tab-active` classes identify All and Unread links and the selected filter.
 Current links also expose `aria-current="page"` for assistive technology.

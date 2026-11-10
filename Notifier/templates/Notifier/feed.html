@@ -29,7 +29,7 @@
     <li class="notifier-entry notifier-severity-{{ notification.severity }} {% if notification.read_at %}notifier-read{% else %}notifier-unread{% endif %}">
         <p class="notifier-severity-label"><span class="notifier-severity-icon" aria-hidden="true">{{ notification.severity_icon }}</span> {{ notification.get_severity_display }}</p>
         <h2 class="notifier-title">{{ notification.title }}</h2>
-        <p class="notifier-metadata">{{ notification.stream_label }} · Collected {{ notification.created_at|date:'j M Y H:i' }}</p>
+        <p class="notifier-metadata">{{ notification.provider_label }}: {{ notification.stream_label }} · Collected {{ notification.created_at|date:'j M Y H:i' }}</p>
         <p class="notifier-text">{{ notification.text }}</p>
         {% if notification.action_url %}<a class="notifier-action" href="{{ notification.action_url }}">{{ notification.action_label }}</a>{% endif %}
         {% if notification.read_at %}<p class="notifier-state">Read</p>{% else %}
