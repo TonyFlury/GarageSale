@@ -16,6 +16,7 @@ from Notifier.models import Notification, Subscription
 from Notifier.preferences import save_subscription
 from Notifier.registry import Registry
 from user_management.models import TeamMember
+from user_management.templatetags.profile_navigation import account_notification_indicator
 
 
 class ProfileNotificationTests(TestCase):
@@ -46,6 +47,24 @@ class ProfileNotificationTests(TestCase):
         """Enable one personal channel and submit a distinct occurrence for that user's review."""
         save_subscription(user, self.stream.definition, enabled=True, values={})
         self.stream.publish([Signal(str(user.pk), timezone.now(), SourceRef('example.record', str(user.pk)), title, title)])
+
+    def test_account_indicator_counts_only_personal_visible_unread_notifications(self):
+        """Hide foreign, read, disabled, and unauthorized notifications from the demonstration account badge."""
+        self.collect_for(self.other, 'Another account notification')
+        self.collect_for(self.user, 'Personal notification')
+        indicator = account_notification_indicator(self.user)
+        self.assertEqual(indicator['count'], 1)
+        self.assertEqual(indicator['url'], reverse('Notifier:feed') + '?state=unread')
+        response = self.client.get(reverse('user_management:profile'))
+        self.assertContains(response, 'account-indicator-badge account-indicator-information')
+        self.assertContains(response, 'aria-label="1 unread notification (Information)"')
+        Subscription.objects.filter(user=self.user).update(enabled=False)
+        self.assertIsNone(account_notification_indicator(self.user))
+        Subscription.objects.filter(user=self.user).update(enabled=True)
+        Notification.objects.filter(user=self.user).update(read_at=timezone.now())
+        self.assertIsNone(account_notification_indicator(self.user))
+        self.user.user_permissions.clear()
+        self.assertIsNone(account_notification_indicator(get_user_model().objects.get(pk=self.user.pk)))
 
     def test_personal_information_retains_bio_picture_and_id_card_actions(self):
         """Present both profile sections while retaining existing personal information and ID card links."""

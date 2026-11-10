@@ -452,6 +452,21 @@ The scoped signal update passed 74 Notifier and Diary integration tests with pac
 This run included both browser workflows and copied task identities across event Diaries.
 The adapter rejected missing source keys and tasks outside the supplied Diary.
 
+## Account indicator demonstration
+
+This preview adds an unread count overlay to the existing account icon.
+The `account_notification_indicator` template tag lives in `user_management/templatetags/profile_navigation.py`.
+It reads the authorized personal review list and uses its highest severity for the badge color.
+The badge links to unread notifications and includes an accessible label and hover text.
+It remains absent when no authorized unread notifications exist.
+The current account menu remains available.
+The `.account-indicator` class anchors the overlay.
+The `.account-indicator-badge`, `.account-indicator-urgent`, and `.account-indicator-warning` classes control its appearance.
+The stylesheet is `user_management/styles/account_indicator.css`.
+The tag calculates the count during page rendering. It does not update an already open page.
+This demonstration calls Notifier directly and registers no engine.
+The proposed generic indicator registration API remains future work.
+
 ## Language review
 
 Reference: ASD-STE100, Issue 9.

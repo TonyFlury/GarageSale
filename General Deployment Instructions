@@ -203,6 +203,8 @@ if you have a new database :
         Language review limit: The new Diary deployment instructions have not received a full ASD-STE100 Issue 9 dictionary review.
 
 2e) Notifier personal review:
+        Collect user_management/styles/account_indicator.css for the account badge demonstration.
+        Deploy the updated host template and profile_navigation template tags together.
         Apply Notifier migration 0005_remove_severity_preference to remove obsolete severity gates.
         Existing channel subscriptions and notification records remain unchanged.
         Collect the updated Notifier/settings.js script for severity bulk selection.

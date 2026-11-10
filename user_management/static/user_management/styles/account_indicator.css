@@ -1,0 +1,6 @@
+.account-indicator { position: relative; display: inline-block; }
+.account-indicator .account-indicator-badge { position: absolute; inset-block-start: -5px; inset-inline-end: 0; z-index: 2; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 20px; min-height: 20px; padding: 1px 4px; border: 2px solid #fff; border-radius: 999px; background: #234f75; color: #fff; font: bold 12px/1.1 sans-serif; text-decoration: none; box-shadow: 0 1px 3px #0005; }
+.account-indicator .account-indicator-urgent { background: #a32121; }
+.account-indicator .account-indicator-warning { background: #805b00; }
+.account-indicator .account-indicator-badge:hover { text-decoration: underline; }
+.account-indicator .account-indicator-badge:focus-visible { outline: 3px solid #3333dd; outline-offset: 3px; }
