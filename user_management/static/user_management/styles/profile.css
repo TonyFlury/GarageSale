@@ -1,0 +1,14 @@
+.profile-heading, .profile-personal { box-sizing: border-box; width: 95%; margin: 1rem auto; text-align: left; overflow-wrap: anywhere; }
+.profile-host-topbar .ToolBar { box-sizing: border-box; max-width: 100%; }
+.profile-tabs { display: flex; flex-wrap: wrap; gap: .5rem; border-bottom: 1px solid #777; margin-block: 1rem; }
+.profile-tabs .profile-tab { display: inline-block; padding: .75rem 1rem; border: 1px solid #777; border-radius: .5rem .5rem 0 0; text-decoration: none; background: #f4f4f4; color: #222; }
+.profile-tabs .profile-tab-active { background: #2f4f4f; color: white; font-weight: bold; }
+.profile-tabs .profile-tab-disabled { color: #595959; background: #eee; }
+.profile-personal .profile-picture { max-width: min(200px, 100%); height: auto; }
+.profile-personal .profile-bio { margin-block: 1rem; }
+.profile-personal .profile-field { margin-block: 1rem; }
+.profile-personal .profile-field label { display: block; margin-bottom: .4rem; text-align: left; }
+.profile-personal .profile-field input, .profile-personal .profile-field textarea { box-sizing: border-box; max-width: 100%; }
+.profile-personal .profile-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }
+.profile-personal .profile-action { display: inline-block; padding: .75rem 1rem; border: 1px solid #777; border-radius: .5rem; background: #e2f1f5; color: #222; font: inherit; text-decoration: none; cursor: pointer; }
+.profile-heading :focus-visible, .profile-personal :focus-visible { outline: 3px solid #3333dd; outline-offset: 3px; }

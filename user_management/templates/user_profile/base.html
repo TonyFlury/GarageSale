@@ -1,0 +1,21 @@
+{% extends '_snap_slider_base.html' %}
+{% load static %}
+{% block Title %}Brantham Garage Sale - User Profile{% endblock %}
+{% block PageStyles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'user_management/styles/profile.css' %}">
+{% endblock %}
+{% block TopBar %}<div class="profile-host-topbar">{{ block.super }}</div>{% endblock %}
+{% block sidebar %}
+<div class="sidebar entry direct tooltip">
+    <a href="{% url 'home' %}"><img class="sidebar icon" alt="Home Page" src="{% static 'GarageSale/images/icons/menu/home-svgrepo-com.svg' %}"><span>Home Page</span></a>
+    <span class="tooltiptext arrow right">Return to Home Page</span>
+</div>
+{% endblock %}
+{% block SnappableSections %}
+<section class="profile-heading">
+    <h1>User Profile</h1>
+    {% include 'user_profile/tabs.html' %}
+</section>
+{% block profile_content %}{% endblock %}
+{% endblock %}

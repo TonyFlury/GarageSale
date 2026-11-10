@@ -210,10 +210,13 @@ if you have a new database :
         Keep NOTIFIER['ENGINES'] equal to an empty list.
         This release does not include communication engines.
         Reload the application after these steps.
-        Open Notifications from the Overview group.
+        Collect the new user_management/styles/profile.css asset for the profile tabs.
+        Open User Profile from the account menu.
+        Select the Notifications tab.
+        Notifications in Overview remains an alternative entry point.
         Open Notification settings.
-        Enable each required Diary stream.
-        Save each changed stream separately.
+        Enable each required Diary channel.
+        Save each changed channel separately.
         Only later committed task events produce notifications.
         Confirm that task signals include diary_key and task from version 0.1.10.2.
         The adapter uses this pair to distinguish copied tasks across event Diaries.

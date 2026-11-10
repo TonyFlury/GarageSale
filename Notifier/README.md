@@ -29,6 +29,21 @@ Garage Sale already supplies these application and route settings.
 Its review route is `/notifications/`.
 Its settings route is `/notifications/settings/`.
 The Overview navigation includes Notifications for authorized users.
+Garage Sale also includes Notifications as a tab within the user's existing profile.
+The Personal Information tab retains biography editing, picture uploads, and ID card links.
+The Notifications tab supplies personal review and Notification settings links.
+Both notification pages keep the Notifications tab selected.
+
+Notification settings separates Delivery settings from Channel settings.
+The user interface calls each technical stream a channel.
+Channel settings uses the existing registered field declarations and personal subscriptions.
+Delivery settings currently shows an empty state because this version has no engines.
+Future engine registration and engine settings forms remain separate implementation work.
+
+Profile navigation preserves existing permissions.
+An unavailable tab has no destination link and includes an explanatory hover label.
+Viewing another member's profile does not expose their notifications or notification settings.
+Profile behavior, styling classes, and verification: [Personal profile sections](../user_management/PROFILE.md).
 
 Grant the technical permission `Notifier.use_notifier` through the approved host access policy.
 Garage Sale assigns this permission to `ExecMember`, `Officer`, and `WebAdmin`.
@@ -56,7 +71,7 @@ NOTIFIER = {
 The limits shown above are the defaults.
 The optional `BASE_TEMPLATE` name selects the host document shell.
 The default is the independent technical template `Notifier/document.html`.
-Garage Sale selects `GarageSale/notifier/base.html` to preserve its team-page shell.
+Garage Sale selects `GarageSale/notifier/base.html` to use its shared personal profile shell.
 Host templates supply the technical blocks `Title`, `PageStyles`, and `SnappableSections`.
 A batch cannot exceed either limit.
 The Notifier checks these limits before storing its first recipient entry.

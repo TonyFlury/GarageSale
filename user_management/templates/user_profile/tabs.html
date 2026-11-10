@@ -1,0 +1,26 @@
+{% load profile_navigation %}
+{% profile_notifications_available request.user as notifications_available %}
+<nav class="profile-tabs" aria-label="Profile sections">
+{% with request.resolver_match.namespace as namespace %}
+
+    {# Existing member links retain that profile's scope. Notification pages link to the current user's profile when permitted. #}
+    {% if member_data %}
+        <a class="profile-tab{% if namespace != 'Notifier' %} profile-tab-active{% endif %}" href="{% url 'user_management:profile' member_data.team_member_id %}"{% if namespace != 'Notifier' %} aria-current="page"{% endif %}>Personal Information</a>
+    {% elif perms.user_management.manage_own_profile or perms.GarageSale.manage_own_team_profile %}
+        <a class="profile-tab" href="{% url 'user_management:profile' %}">Personal Information</a>
+    {% else %}
+        <span class="profile-tab profile-tab-disabled" aria-disabled="true" title="Personal profile access is not enabled for your account.">Personal Information</span>
+    {% endif %}
+
+    {# Another member's personal information must not expose notification navigation for that member. #}
+    {% if not member_data or member_data.user_id == request.user.pk %}
+
+        {# Only installed and authorized notification routes can supply a usable destination. Other accounts receive an unavailable label. #}
+        {% if notifications_available %}
+            <a class="profile-tab{% if namespace == 'Notifier' %} profile-tab-active{% endif %}" href="{% url 'Notifier:feed' %}"{% if namespace == 'Notifier' %} aria-current="page"{% endif %}>Notifications</a>
+        {% else %}
+            <span class="profile-tab profile-tab-disabled" aria-disabled="true" title="Notification access is not enabled for your account.">Notifications</span>
+        {% endif %}
+    {% endif %}
+{% endwith %}
+</nav>

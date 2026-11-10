@@ -1,7 +1,7 @@
 {% extends 'Notifier/base.html' %}
 {% block notifier_content %}
 <h1>Notifications</h1>
-<p>Notifications appear here after collection. Enable the streams you want in Notification settings.</p>
+<p>Notifications appear here after collection. Enable the channels you want in Notification settings.</p>
 <nav class="notifier-filters" aria-label="Review filter">
     <a href="{% url 'Notifier:feed' %}"{% if not unread_only %} aria-current="page"{% endif %}>All notifications</a>
     <a href="?state=unread"{% if unread_only %} aria-current="page"{% endif %}>Unread notifications</a>

@@ -37,7 +37,8 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         provider = self.registry.register_provider(ProviderDefinition('browser', 'Browser example'))
         self.stream = provider.register_stream(StreamDefinition('browser.changed', 'Example changes'))
         self.user = get_user_model().objects.create_user(email='notifier-browser@example.test', is_verified=True)
-        self.user.user_permissions.add(Permission.objects.get(content_type__app_label='Notifier', codename='use_notifier'))
+        self.user.user_permissions.add(Permission.objects.get(content_type__app_label='Notifier', codename='use_notifier'),
+            Permission.objects.get(content_type__app_label='GarageSale', codename='manage_own_team_profile'))
         self.client.force_login(self.user)
         self.driver = webdriver.Chrome(service=Service(os.environ['DIARY_CHROMEDRIVER']))
         self.addCleanup(self.driver.quit)
@@ -61,7 +62,17 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
 
     def test_opt_in_collect_and_mark_read_on_desktop_and_mobile(self):
         """Save opt-in, collect an occurrence, and review it without external engine behavior."""
-        self.open_page('Notifier:preferences')
+        self.open_page('user_management:profile')
+        self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.profile-tab[aria-current="page"]').text,
+                         'Personal Information')
+        self.driver.find_element(By.CSS_SELECTOR, '.profile-tab[href="' + reverse('Notifier:feed') + '"]').click()
+        self.wait.until(expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '.notifier')))
+        self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.profile-tab[aria-current="page"]').text,
+                         'Notifications')
+        self.driver.find_element(By.LINK_TEXT, 'Notification settings').click()
+        self.wait.until(expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '.notifier-channel-settings')))
+        self.dismiss_banner()
+        self.assertTrue(self.driver.find_element(By.CSS_SELECTOR, '.notifier-engines-empty').is_displayed())
         control = self.driver.find_element(By.NAME, 'browser.changed-enabled')
         self.assertFalse(control.is_selected())
         self.assertFalse(Subscription.objects.exists())
@@ -93,3 +104,6 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.assertTrue(self.driver.find_elements(By.CSS_SELECTOR, '.notifier-read'))
         self.driver.find_element(By.LINK_TEXT, 'Unread notifications').click()
         self.wait.until(expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '.notifier-empty')))
+        self.dismiss_banner()
+        self.driver.find_element(By.CSS_SELECTOR, '.profile-tab[href="' + reverse('user_management:profile') + '"]').click()
+        self.wait.until(expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '.profile-personal')))

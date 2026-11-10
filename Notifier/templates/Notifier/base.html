@@ -3,6 +3,7 @@
 {% block Title %}Notifications{% endblock %}
 {% block PageStyles %}{{ block.super }}<link rel="stylesheet" href="{% static 'Notifier/notifier.css' %}">{% endblock %}
 {% block SnappableSections %}
+{{ block.super }}
 <section class="notifier" aria-label="Personal notifications">
     <nav class="notifier-navigation" aria-label="Notification pages">
         <a href="{% url 'Notifier:feed' %}">Review notifications</a>

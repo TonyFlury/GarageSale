@@ -1,7 +1,13 @@
 {% extends 'Notifier/base.html' %}
 {% block notifier_content %}
 <h1>Notification settings</h1>
-<p>Streams are disabled until you enable them. No email or other delivery engine is configured.</p>
+<section class="notifier-engine-settings" aria-labelledby="notifier-engine-heading">
+    <h2 id="notifier-engine-heading">Delivery settings</h2>
+    <p class="notifier-engines-empty">No delivery engines are available. Review your notifications on the Notifications tab.</p>
+</section>
+<section class="notifier-channel-settings" aria-labelledby="notifier-channel-heading">
+<h2 id="notifier-channel-heading">Channel settings</h2>
+<p>Channels are disabled until you enable them.</p>
 {% for section in sections %}
 <form class="notifier-settings" method="post" action="{% url 'Notifier:preferences' %}">
     {% csrf_token %}<input type="hidden" name="stream_key" value="{{ section.stream.key }}">
@@ -12,4 +18,5 @@
     </fieldset>
 </form>
 {% empty %}<p class="notifier-empty">No notification streams are available.</p>{% endfor %}
+</section>
 {% endblock %}
