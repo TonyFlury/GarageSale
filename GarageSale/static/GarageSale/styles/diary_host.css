@@ -50,6 +50,6 @@
 .diary .diary-graph-viewport {
     box-sizing: border-box;
     min-height: 0;
-    max-height: 80vh;
-    max-height: 80dvh;
+    max-height: 55vh;
+    max-height: 55dvh;
 }
