@@ -253,6 +253,8 @@ The equivalent string values are `information`, `warning`, and `urgent`.
 The Notifier rejects other values.
 The review page provides Severity and Channel filters.
 Notification metadata displays the provider name before the channel name, such as `Diary: Task Late`.
+The Garage Sale host sidebar includes a Team Pages link when `GarageSale.access_team_pages` permits access.
+The `.notifier-team-navigation` class identifies this host link on review and settings pages.
 The `.notifier-entry-header` class places severity and title together.
 Providers can supply an optional ISO calendar date in `Signal.data['due_date']`.
 The `.notifier-due-date` class displays valid dates immediately after the title.

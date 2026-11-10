@@ -1,1 +1,13 @@
 {% extends 'user_profile/base.html' %}
+{% load static %}
+{% block sidebar %}
+    {{ block.super }}
+
+    {# Team navigation remains available only to users with the existing team access permission. #}
+    {% if perms.GarageSale.access_team_pages %}
+    <div class="sidebar entry direct tooltip notifier-team-navigation" item="{% url 'TeamPages:Root' %}">
+        <a href="{% url 'TeamPages:Root' %}"><img class="sidebar icon" alt="" src="{% static 'GarageSale/images/icons/menu/team-3-svgrepo-com.svg' %}"><span>Team Pages</span></a>
+        <span class="tooltiptext arrow right">Return to Team Pages</span>
+    </div>
+    {% endif %}
+{% endblock %}
