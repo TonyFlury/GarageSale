@@ -225,6 +225,18 @@ The review page groups notifications by severity before pagination.
 The groups appear in this order: Urgent, Warning, Information.
 Each group displays notifications from oldest to newest.
 The optional field `StreamDefinition.severity` defaults to `Severity.INFORMATION`.
+Notification settings display each channel's severity.
+Personal severity switches apply in addition to channel opt-in.
+Urgent defaults to enabled. Warning and Information default to disabled.
+Select Save severities to save these switches without changing channel settings.
+A disabled severity prevents new collection and background condition evaluation.
+It also hides saved notifications without deleting them or changing their read state.
+Enable the severity again to review saved notifications that still pass current access checks.
+Channel Save all actions do not change severity switches.
+The `SeverityPreference` model stores switches only after the user saves them.
+The `enabled_severities` function supplies defaults without creating database rows.
+The `SeverityPreferenceForm` class renders the three switches.
+The `.notifier-severity-settings`, `.notifier-severity-form`, `.notifier-severity-toggle`, and `.notifier-save-severities` classes identify these controls.
 Providers can also supply `Severity.WARNING` or `Severity.URGENT` from `Notifier.api`.
 The equivalent string values are `information`, `warning`, and `urgent`.
 The Notifier rejects other values.

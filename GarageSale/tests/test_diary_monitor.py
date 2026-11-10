@@ -12,7 +12,7 @@ from GarageSale.diary_monitor.evaluator import read_tasks
 from GarageSale.diary_monitor.runtime import run_once
 from GarageSale.models import DiaryMonitorState, EventData
 from GarageSale.tests import test_diary_notifier as fixtures
-from Notifier.models import Notification, Subscription
+from Notifier.models import Notification, SeverityPreference, Subscription
 from Notifier.preferences import save_subscription
 from Notifier.review import visible_notifications
 
@@ -52,6 +52,15 @@ class DiaryMonitorTests(TestCase):
         self.assertEqual(set(Notification.objects.filter(user=self.member).values_list('title', flat=True)), {'Due today'})
         self.assertEqual(set(Notification.objects.filter(user=self.other).values_list('title', flat=True)), {'Due today', 'Due soon'})
         self.assertEqual(DiaryMonitorState.objects.get().last_successful_date, self.day)
+
+    def test_disabled_severity_skips_background_reminder_evaluation(self):
+        """Do not evaluate or collect reminders while their personal severity switch is disabled."""
+        self.task('Late task', self.day - timedelta(days=1))
+        self.enable(self.member, 'task_late')
+        SeverityPreference.objects.filter(user=self.member).update(urgent=False)
+        result = run_once(self.day)
+        self.assertEqual(result['task_late_subscriptions_skipped'], 1)
+        self.assertFalse(Notification.objects.exists())
 
     def test_first_monitor_pass_orders_overdue_tasks_by_due_date(self):
         """Show the oldest overdue task first regardless of task creation or monitor collection order."""

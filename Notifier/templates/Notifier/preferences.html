@@ -2,6 +2,17 @@
 {% load static %}
 {% block notifier_content %}
 <h1>Notification settings</h1>
+<section class="notifier-severity-settings" aria-labelledby="notifier-severity-heading">
+<h2 id="notifier-severity-heading">Severity settings</h2>
+<p>A channel and its severity must both be enabled. Urgent is enabled by default.</p>
+<form class="notifier-settings notifier-severity-form" method="post" action="{% url 'Notifier:preferences' %}">
+    {% csrf_token %}<input type="hidden" name="settings_section" value="severity">
+    {% for field in severity_form %}
+    <p class="notifier-severity-toggle">{{ field.errors }}{{ field }} {{ field.label_tag }}</p>
+    {% endfor %}
+    <button class="notifier-save-severities" type="submit">Save severities</button>
+</form>
+</section>
 <section class="notifier-channel-settings" aria-labelledby="notifier-channel-heading">
 <h2 id="notifier-channel-heading">Channel settings</h2>
 <p>Channels are disabled until you enable them.</p>
@@ -10,7 +21,8 @@
     {% csrf_token %}<input type="hidden" name="provider_key" value="{{ group.provider.key }}">
     <h3 class="notifier-provider-heading">{{ group.provider.label }}</h3>
     {% for section in group.sections %}
-    <fieldset class="notifier-channel"><legend>{{ section.stream.label }}</legend>
+    <fieldset class="notifier-channel notifier-severity-{{ section.stream.severity }}"><legend>{{ section.stream.label }}</legend>
+        <p class="notifier-severity-label">{{ section.severity_label }}</p>
         <p>{{ section.stream.description }}</p>
         {{ section.form.non_field_errors }}
         <p class="notifier-channel-toggle">{{ section.form.enabled.errors }}{{ section.form.enabled }} {{ section.form.enabled.label_tag }}</p>

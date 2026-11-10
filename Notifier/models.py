@@ -5,6 +5,20 @@ from django.conf import settings
 from django.db import models
 
 
+class SeverityPreference(models.Model):
+    """Store personal severity switches without creating rows for default settings."""
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    urgent = models.BooleanField(default=True)
+    warning = models.BooleanField(default=False)
+    information = models.BooleanField(default=False)
+
+    class Meta:
+        """Use personal Notifier access rather than separate administrative permissions."""
+
+        default_permissions = ()
+
+
 class Subscription(models.Model):
     """Persist settings only after a user changes a registered stream's preferences."""
 

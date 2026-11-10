@@ -12,7 +12,7 @@ from django.urls import reverse
 from Diary.api import Actor, DiaryAPI, EntrySpec
 from GarageSale import diary_notifier
 from GarageSale.models import EventData
-from Notifier.models import Notification, Subscription
+from Notifier.models import Notification, SeverityPreference, Subscription
 from Notifier.preferences import save_subscription
 from Notifier.registry import Registry
 
@@ -50,6 +50,7 @@ class DiaryNotifierTests(TestCase):
     def make_user(self, email, group_name):
         """Create a real host identity with event and Notifier access plus the selected Diary group."""
         user = get_user_model().objects.create_user(email=email, is_verified=True)
+        SeverityPreference.objects.create(user=user, urgent=True, warning=True, information=True)
         group, _ = Group.objects.get_or_create(name=group_name)
         user.groups.add(group)
         user.user_permissions.add(Permission.objects.get(content_type__app_label='Notifier', codename='use_notifier'),

@@ -14,7 +14,7 @@ from django.utils import timezone
 from .configuration import configuration
 from .definitions import Action, BatchResult, ItemResult, Severity, Signal, SourceRef
 from .models import Notification, Subscription
-from .preferences import eligible_for_stream, subscription_is_valid
+from .preferences import eligible_for_stream, enabled_severities, subscription_is_valid
 
 logger = logging.getLogger(__name__)
 
@@ -220,6 +220,10 @@ def accept_recipient(index, definition, signal, recipient_id, source, digest, *,
     if not subscription_is_valid(subscription, definition):
         return ItemResult(index, 'disabled', recipient_id, reason='No enabled compatible subscription.')
     user = get_user_model().objects.filter(pk=recipient_id).first()
+
+    # Severity master switches cannot enable a disabled channel or grant source access.
+    if user is not None and definition.severity not in enabled_severities(user):
+        return ItemResult(index, 'disabled', recipient_id, reason='Severity disabled.')
 
     # Current user permissions, groups, and source privacy apply at acceptance time.
     if user is None or not eligible_for_stream(user, definition) or not source_is_visible(user, definition, signal.source):

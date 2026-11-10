@@ -15,7 +15,7 @@ from django.utils import timezone
 from Notifier.api import Action, FieldDefinition, ProviderDefinition, Severity, Signal, SourceRef, StreamDefinition
 from Notifier.collection import BatchLimitExceeded, IntakeUnavailable
 from Notifier.configuration import configuration
-from Notifier.models import Notification, Subscription
+from Notifier.models import Notification, SeverityPreference, Subscription
 from Notifier.preferences import save_subscription
 from Notifier.registry import Registry, RegistrationConflict, StreamUnavailable
 from Notifier.review import visible_notifications
@@ -46,6 +46,7 @@ class NotifierTests(TestCase):
     def make_user(self, email):
         """Create an active user with personal Notifier access but no administrative flags."""
         user = get_user_model().objects.create_user(email=email, is_verified=True)
+        SeverityPreference.objects.create(user=user, urgent=True, warning=True, information=True)
         user.user_permissions.add(Permission.objects.get(content_type__app_label='Notifier', codename='use_notifier'))
         return user
 
@@ -62,6 +63,45 @@ class NotifierTests(TestCase):
         stream = self.provider.register_stream(StreamDefinition(f'example.{key}', key, severity=severity))
         self.enable(stream=stream)
         return stream
+
+    def test_severity_settings_default_to_urgent_without_creating_preferences(self):
+        """Display Urgent-only defaults and channel severity without writing during a settings read."""
+        SeverityPreference.objects.filter(user=self.user).delete()
+        response = self.client.get(reverse('Notifier:preferences'))
+        form = response.context['severity_form']
+        self.assertTrue(form['urgent'].value())
+        self.assertFalse(form['warning'].value())
+        self.assertFalse(form['information'].value())
+        self.assertContains(response, 'notifier-severity-label">Information')
+        self.assertFalse(SeverityPreference.objects.filter(user=self.user).exists())
+
+    def test_severity_switches_gate_collection_and_review_without_changing_channels(self):
+        """Apply personal master switches while preserving channel settings, saved history, and other users."""
+        urgent = self.severity_stream('urgent', 'urgent')
+        warning = self.severity_stream('warning', 'warning')
+        self.enable()
+        SeverityPreference.objects.filter(user=self.user).delete()
+        self.assertEqual(self.publish(stream=urgent).items[0].status, 'accepted')
+        self.assertEqual(self.publish(stream=warning).items[0].status, 'disabled')
+        self.assertEqual(self.publish().items[0].status, 'disabled')
+        response = self.client.post(reverse('Notifier:preferences'), {'settings_section': 'severity',
+            'severity-urgent': 'on', 'severity-warning': 'on', 'severity-information': 'on'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.publish(stream=warning).items[0].status, 'accepted')
+        warning_record = Notification.objects.get(stream_key=warning.key)
+        self.client.post(reverse('Notifier:preferences'), {'settings_section': 'severity', 'severity-urgent': 'on'})
+        self.assertEqual([row.stream_key for row in visible_notifications(self.user)], [urgent.key])
+        self.assertEqual(self.client.post(reverse('Notifier:read', args=[warning_record.pk])).status_code, 404)
+        self.assertTrue(Notification.objects.filter(pk=warning_record.pk, read_at__isnull=True).exists())
+        self.assertEqual(Subscription.objects.filter(user=self.user, enabled=True).count(), 3)
+        self.assertTrue(SeverityPreference.objects.get(user=self.other).warning)
+
+    def test_urgent_default_does_not_enable_an_unsubscribed_channel(self):
+        """Keep channel opt-in independent of the default Urgent master switch."""
+        stream = self.provider.register_stream(StreamDefinition('example.urgent', 'Urgent', severity='urgent'))
+        SeverityPreference.objects.filter(user=self.user).delete()
+        self.publish(stream=stream)
+        self.assertFalse(Notification.objects.exists())
 
     def test_registration_is_repeatable_and_uses_no_database(self):
         """Repeat declarations without reading or writing subscription or provider records."""
