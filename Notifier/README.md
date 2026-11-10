@@ -304,6 +304,11 @@ The notice-period update passed 80 affected tests, including generic field gener
 The registration update passed 78 affected tests against a separate PostgreSQL database.
 
 Diary emits these signals after successful transaction commit.
+New task progress and Due/Late notifications include an `Open task` action.
+The action URL identifies the original event, Diary, and task.
+Opening the link requires current host event access and package task access.
+The link does not depend on session selection or the current event.
+Existing notifications retain their collected content.
 Template editing signals do not produce event Diary notifications.
 Initial dependency snapshots copied from a template do not produce dependency-change notifications.
 The adapter identifies these snapshots through the public task fields `source='template'` and `revision=0`.

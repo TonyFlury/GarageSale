@@ -78,6 +78,45 @@ class DiaryNotifierTests(TestCase):
         self.assertEqual(Notification.objects.count(), 1)
         self.assertEqual(Notification.objects.get().user, self.member)
 
+    def test_task_action_opens_exact_task_without_session_or_current_event_selection(self):
+        """Open the collected task link without changing session navigation or selecting another event."""
+        self.subscribe(self.member, 'task_created')
+        key = self.add_task()
+        record = Notification.objects.get()
+        expected = reverse('Diary:linked-task', kwargs={'event_id': self.event.pk,
+            'diary_key': self.event.diary_key, 'task_key': key})
+        self.assertEqual(record.action_url, expected)
+        self.assertEqual(record.action_label, 'Open task')
+        self.client.force_login(self.member)
+        session = self.client.session
+        session['diary_task_key'] = str(uuid4())
+        session.save()
+        with patch('GarageSale.models.EventData.get_current', return_value=None):
+            response = self.client.get(record.action_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(str(response.context['task']['entry_key']), str(key))
+        self.assertEqual(self.client.session['diary_task_key'], session['diary_task_key'])
+        self.assertContains(self.client.get(reverse('Notifier:feed')), f'href="{expected}"')
+        self.client.force_login(self.manager)
+        response = self.client.get(expected)
+        saved = self.client.post(expected, {'action': 'save_date', 'revision': response.context['task']['revision'],
+            'due_date': '2030-06-21', 'diary_target': response.context['diary_target']})
+        self.assertRedirects(saved, expected)
+        self.assertEqual(self.diary.task(entry_key=key)['date'], date(2030, 6, 21))
+        self.client.logout()
+        self.assertEqual(self.client.get(expected).status_code, 302)
+
+    def test_task_action_rejects_changed_host_link_and_lost_event_access(self):
+        """Reject obsolete event links and callers without host event permission."""
+        key = self.add_task()
+        url = diary_notifier.task_action(self.event.pk, self.event.diary_key, {'entry_key': key}).url
+        self.client.force_login(self.member)
+        self.member.user_permissions.clear()
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.client.force_login(self.manager)
+        EventData.objects.filter(pk=self.event.pk).update(diary_key=uuid4())
+        self.assertEqual(self.client.get(url).status_code, 404)
+
     def test_scheduled_channels_register_without_database_work_or_event_receivers(self):
         """Declare Due and Late channels at startup without requiring a background evaluator or writing preferences."""
         with self.assertNumQueries(0):
@@ -206,8 +245,11 @@ class DiaryNotifierTests(TestCase):
         """Apply package privacy for personal additions before accepting recipient entries."""
         for user in (self.member, self.other, self.manager):
             self.subscribe(user, 'task_created')
-        self.add_task('Private task', owner_kind='person', person_ref=f'user:{self.member.pk}')
+        key = self.add_task('Private task', owner_kind='person', person_ref=f'user:{self.member.pk}')
         self.assertSetEqual(set(Notification.objects.values_list('user_id', flat=True)), {self.member.pk, self.manager.pk})
+        url = diary_notifier.task_action(self.event.pk, self.event.diary_key, {'entry_key': key}).url
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(url).status_code, 404)
 
     def test_access_change_hides_existing_notification_without_deleting_it(self):
         """Recheck current Diary groups when a user opens previously collected content."""

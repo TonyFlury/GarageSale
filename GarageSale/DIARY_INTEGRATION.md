@@ -236,10 +236,11 @@ Invalid host navigation selections raise the Django exception `BadRequest`.
 Unexpected package exceptions retain normal server-error handling.
 The inherited package handlers process GET and POST requests and render the package templates.
 The host has no handler map and does not invoke nested views through `as_view()`.
-Event identifiers, task keys, template names, and Diary UUIDs do not appear in these routes or their query strings.
+Ordinary navigation routes omit event identifiers, task keys, template names, and Diary UUIDs.
+Notifier task links use a separate record path, as described below.
 Ordinary display filters can remain in query strings.
 
-The host derives its event from the trusted `request.current_event` value on each request.
+Ordinary navigation derives its event from the trusted `request.current_event` value on each request.
 Old session event selections cannot change that scope.
 The selection endpoint rejects event selection actions with HTTP 400.
 Task buttons and template buttons also use POST actions. Their values belong in form data, not browser URLs.
@@ -299,10 +300,16 @@ The inherited package handler reads its form target on POST.
 `DiarySelectionView` handles host navigation actions separately from Diary edit forms.
 The current host session selections remain in place. Their replacement is a separate design change.
 
-No record-specific URL aliases are supplied.
+Notifier task links use the additional `Diary:linked-task` route.
+Its path contains the host event ID, Diary UUID, and task UUID.
+The host verifies the stored event and Diary relationship before supplying package scope.
+The host requires `GarageSale.view_eventdata` permission.
+The package checks current group membership and task privacy.
+These links support historical events without changing session selection or the current event.
+Task forms retain their signed targets and return to the same link after successful changes.
 The host retains the `Diary` URL namespace because the supplied components use those route names.
 These are Garage Sale routes, not an inclusion of the dependency's default URL configuration.
-Package redirects use the configured fixed destinations.
+Ordinary package redirects use the configured fixed destinations.
 Task creation uses Django messages without a task identifier in its success URL.
 The read-only JSON routes are not mounted by this host HTML adapter.
 
@@ -469,6 +476,12 @@ Their identifiers remain unchanged.
 
 - [ ] **HOST-005: Diary progress notifications.**
   The first implementation connects five committed package signals to the engine-free Notifier.
+  Task actions: `GarageSale/diary_notifier.py`: `task_action` and `receive_task_event`.
+  Reminder actions: `GarageSale/diary_monitor/evaluator.py`: `reminder_signal`.
+  Link handling: `GarageSale/views/diary_views.py`: `LinkedEventTaskDetailView` and `GarageSale/diary_urls.py`: `Diary:linked-task`.
+  Verification: `DiaryNotifierTests.test_task_action_opens_exact_task_without_session_or_current_event_selection` and `test_task_action_rejects_changed_host_link_and_lost_event_access`.
+  Privacy verification: `DiaryNotifierTests.test_private_personal_task_never_reaches_another_subscriber`.
+  Reminder verification: `DiaryMonitorTests.test_late_begins_after_due_date_and_daily_retries_preserve_read_state`.
   Initial dependency filtering: `GarageSale/diary_notifier.py`: `initial_dependency_snapshot` and `receive_task_event`.
   Copied template tasks at public revision 0 do not generate dependency-change notifications during graph initialization.
   Verification: `DiaryNotifierTests.test_new_diary_template_snapshot_does_not_report_dependency_changes` and `test_template_application_to_empty_diary_does_not_report_dependency_changes`.

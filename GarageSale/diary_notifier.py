@@ -6,8 +6,9 @@ from uuid import UUID, uuid4
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.utils import timezone
+from django.urls import reverse
 
-from Notifier.api import FieldDefinition, ProviderDefinition, Signal, SourceRef, StreamDefinition, get_registry, get_stream
+from Notifier.api import Action, FieldDefinition, ProviderDefinition, Signal, SourceRef, StreamDefinition, get_registry, get_stream
 
 logger = logging.getLogger(__name__)
 EVENTS = (
@@ -66,6 +67,12 @@ def task_source(event_id, diary_key, entry):
     return SourceRef(type='diary.task', identifier=f'{event_id}:{diary_key}:{entry["entry_key"]}')
 
 
+def task_action(event_id, diary_key, entry):
+    """HOST-005: Link a notification to its task without using session selection state."""
+    return Action('Open task', reverse('Diary:linked-task', kwargs={
+        'event_id': event_id, 'diary_key': diary_key, 'task_key': entry['entry_key']}))
+
+
 def source_is_visible(user, source):
     """Enforce host event access and current Diary task privacy through public package reads."""
     from Diary.api import Actor, DiaryAPI
@@ -119,6 +126,7 @@ def receive_task_event(sender, *, event_name, user, task, diary_key=None, **kwar
     description = dict((name, text) for name, _, text in EVENTS)[event_name]
     source = task_source(event_id, diary_key, entry)
     message = Signal(occurrence_key=str(uuid4()), occurred_at=timezone.now(), source=source,
+        action=task_action(event_id, diary_key, entry),
         title=entry['name'], text=f'{description}\nDiary: {entry["diary_name"]}',
         data={'event_id': event_id, 'diary_key': str(diary_key), 'task_key': str(entry['entry_key'])})
     get_stream('diary.' + event_name).publish([message])

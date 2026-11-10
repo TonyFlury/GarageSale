@@ -6,7 +6,7 @@ from uuid import UUID
 from django.conf import settings
 from django.core.exceptions import BadRequest, ObjectDoesNotExist
 from django.http import Http404
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
 
@@ -176,6 +176,27 @@ class EventTaskDetailView(DiaryHostContextMixin, TaskDetailView):
     uses_task = True
 
     success_url = 'Diary:task-detail'
+
+
+class LinkedEventTaskDetailView(EventTaskDetailView):
+    """HOST-005: Open a task link after host authorization and package privacy checks."""
+
+    def resolve_host_event(self):
+        """Resolve the exact stored event link or return HTTP 404 without disclosing task content."""
+        from GarageSale.models import EventData
+
+        # A URL identifies a record. It cannot grant host event access.
+        if not self.request.user.has_perm('GarageSale.view_eventdata'):
+            raise Http404('The selected Diary item is unavailable.')
+        return get_object_or_404(EventData, pk=self.kwargs['event_id'], diary_key=self.kwargs['diary_key'])
+
+    def add_task_target(self, context):
+        """Keep the linked task independent of session navigation and submitted form targets."""
+        context['entry_key'] = self.kwargs['task_key']
+
+    def get_success_url(self, *, result):
+        """Return to the same authorized task link after a successful package form submission."""
+        return self.request.path
 
 
 class EventTemplateListView(DiaryHostContextMixin, TemplateEditorView):
