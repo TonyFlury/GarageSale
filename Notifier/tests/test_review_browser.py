@@ -37,7 +37,7 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         provider = self.registry.register_provider(ProviderDefinition('browser', 'Browser example'))
         self.stream = provider.register_stream(StreamDefinition('browser.changed', 'Example changes'))
         self.user = get_user_model().objects.create_user(email='notifier-browser@example.test', is_verified=True)
-        self.user.user_permissions.add(Permission.objects.get(content_type__app_label='Notifier', codename='use_notifier'),
+        self.user.user_permissions.add(
             Permission.objects.get(content_type__app_label='GarageSale', codename='manage_own_team_profile'))
         self.client.force_login(self.user)
         self.driver = webdriver.Chrome(service=Service(os.environ['DIARY_CHROMEDRIVER']))

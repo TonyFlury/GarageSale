@@ -4,6 +4,7 @@ from django.core.exceptions import ImproperlyConfigured, PermissionDenied, Valid
 from django.db import transaction
 
 from .definitions import FieldDefinition, StreamDefinition
+from .configuration import access_permissions
 from .registry import validate_key
 
 
@@ -72,7 +73,8 @@ def validate_definition(definition):
 
 def can_use(user):
     """Return whether the active authenticated user has Notifier access."""
-    return bool(user.is_authenticated and user.is_active and user.has_perm('Notifier.use_notifier'))
+    return bool(user.is_authenticated and user.is_active and
+                any(user.has_perm(permission) for permission in access_permissions()))
 
 
 def eligible_for_stream(user, definition):

@@ -115,4 +115,24 @@ class ProfileNotificationTests(TestCase):
         self.assertNotContains(response, 'href="' + reverse('Notifier:feed') + '"')
         self.user.user_permissions.remove(Permission.objects.get(content_type__app_label='Notifier', codename='use_notifier'))
         self.assertContains(self.client.get(reverse('user_management:profile')), 'My existing biography')
+        self.assertEqual(self.client.get(reverse('Notifier:feed')).status_code, 200)
+        self.user.user_permissions.clear()
         self.assertEqual(self.client.get(reverse('Notifier:feed')).status_code, 403)
+
+    def test_existing_profile_permissions_allow_notification_review_and_settings(self):
+        """Allow existing profile owners to open notifications without the separately introduced Notifier capability."""
+        for app_label, codename in (('GarageSale', 'manage_own_team_profile'), ('user_management', 'manage_own_profile')):
+            with self.subTest(permission=codename):
+                self.user.user_permissions.set([Permission.objects.get(content_type__app_label=app_label, codename=codename)])
+                response = self.client.get(reverse('Notifier:feed'))
+                self.assertContains(response, 'href="' + reverse('Notifier:feed') + '"')
+                self.assertEqual(self.client.get(reverse('Notifier:feed')).status_code, 200)
+                self.assertEqual(self.client.get(reverse('Notifier:preferences')).status_code, 200)
+                self.assertEqual(self.client.post(reverse('Notifier:preferences'), {'stream_key': self.stream.key,
+                    self.stream.key + '-enabled': 'on'}).status_code, 302)
+                self.stream.publish([Signal(codename, timezone.now(), SourceRef('example.record', '1'),
+                                            'Profile owner notification', 'Personal notification')])
+                record = Notification.objects.get(user=self.user, occurrence_key=codename)
+                self.assertEqual(self.client.post(reverse('Notifier:read', args=[record.pk])).status_code, 302)
+                record.refresh_from_db()
+                self.assertIsNotNone(record.read_at)

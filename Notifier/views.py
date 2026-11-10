@@ -1,6 +1,9 @@
 """Provide an engine-free personal review page and stream preferences."""
+from functools import wraps
+
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.http import Http404
@@ -9,7 +12,7 @@ from django.views.decorators.http import require_POST
 
 from .forms import SubscriptionForm
 from .models import Subscription
-from .preferences import eligible_for_stream, save_subscription
+from .preferences import can_use, eligible_for_stream, save_subscription
 from .registry import get_registry
 from .review import mark_read, visible_notifications
 
@@ -20,8 +23,20 @@ def render_review(request, template, context, *, status=200):
     return render(request, template, {**context, 'notifier_base_template': base}, status=status)
 
 
-@login_required
-@permission_required('Notifier.use_notifier', raise_exception=True)
+def personal_access_required(view):
+    """Require authentication and one configured personal capability before calling a notification view."""
+    @wraps(view)
+    def authorized(request, *args, **kwargs):
+        """Deny unauthorized requests before notification records or settings are accessed."""
+
+        # Profile navigation and direct requests must use the same current authorization rule.
+        if not can_use(request.user):
+            raise PermissionDenied('Notification access is unavailable.')
+        return view(request, *args, **kwargs)
+    return login_required(authorized)
+
+
+@personal_access_required
 def feed(request):
     """Render the user's eligible notifications without accepting another user's identifier."""
     entries = visible_notifications(request.user, unread=request.GET.get('state') == 'unread')
@@ -29,8 +44,7 @@ def feed(request):
     return render_review(request, 'Notifier/feed.html', {'page_obj': page, 'unread_only': request.GET.get('state') == 'unread'})
 
 
-@login_required
-@permission_required('Notifier.use_notifier', raise_exception=True)
+@personal_access_required
 @require_POST
 def read_notification(request, identifier):
     """Update only the requesting user's visible notification through a CSRF-protected POST."""
@@ -58,8 +72,7 @@ def preference_sections(user, *, selected=None, data=None):
     return sections
 
 
-@login_required
-@permission_required('Notifier.use_notifier', raise_exception=True)
+@personal_access_required
 def preferences(request):
     """Read personal stream forms or save one authorized stream's validated settings."""
     selected = request.POST.get('stream_key')

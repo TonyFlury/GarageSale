@@ -306,3 +306,17 @@ class NotifierTests(TestCase):
         self.assertEqual(configuration()['signals'], 500)
         with self.settings(NOTIFIER={'ENGINES': ['unimplemented.engine']}), self.assertRaises(ImproperlyConfigured):
             configuration()
+
+    @override_settings(NOTIFIER={'ENGINES': []})
+    def test_generic_installation_does_not_assume_host_profile_authorization(self):
+        """Keep the default Notifier capability requirement when a host does not configure alternatives."""
+        permission = Permission.objects.get(content_type__app_label='GarageSale', codename='manage_own_team_profile')
+        self.user.user_permissions.set([permission])
+        self.assertEqual(self.client.get(reverse('Notifier:feed')).status_code, 403)
+
+    def test_access_permission_configuration_rejects_empty_or_malformed_values(self):
+        """Reject invalid alternatives instead of weakening the personal notification access check."""
+        for permissions in ([], (), '', None, ['']):
+            with self.subTest(permissions=permissions), self.settings(NOTIFIER={'ENGINES': [], 'ACCESS_PERMISSIONS': permissions}):
+                with self.assertRaises(ImproperlyConfigured):
+                    configuration()

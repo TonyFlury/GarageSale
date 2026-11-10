@@ -30,7 +30,11 @@ Future engine settings require the separate engine implementation.
 
 ## Access
 
-The existing profile and Notifier permissions remain unchanged.
+Existing account permission grants remain unchanged.
+Garage Sale accepts its existing own-profile permissions for personal notification access.
+An additional `Notifier.use_notifier` grant is not required for existing profile owners.
+The navigation tab, review views, settings views, and intake checks use the same configured authorization rule.
+Channel group restrictions and source record access checks still apply.
 An unavailable tab has no destination link and has an explanatory hover label.
 A user who can inspect another member's personal information cannot inspect that member's notification settings through these tabs.
 The other member's profile omits Notifications navigation.
@@ -81,6 +85,9 @@ The technical test class `NotifierBrowserTests` navigates both tabs, changes cha
 The affected regression run passed 82 tests against a separate PostgreSQL database.
 The run included the existing team access, navigation, and Diary signal tests.
 The browser workflow passed at desktop and phone widths.
+The access correction passed 85 affected regression tests, including a browser account with only existing own-profile permission.
+The tests verify navigation, settings changes, collection, and read actions without the separate Notifier capability.
+Default Notifier installations still require their own capability unless the host configures alternatives.
 
 Collect static files after deployment.
 Reload the application after updating templates.

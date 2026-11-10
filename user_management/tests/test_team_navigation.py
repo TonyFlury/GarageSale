@@ -78,7 +78,8 @@ class TeamNavigationTests(TestCase):
         self.assertEqual([entry['url_path'] for entry in overview], ['EventDashboard', 'Notifier:feed'])
         self.assertEqual(overview[0]['name'], 'Dashboard')
         self.assertTrue(overview[0]['icon_path'].endswith('/dashboard.svg'))
-        self.assertEqual(overview[1]['permission'], 'Notifier.use_notifier')
+        self.assertEqual(overview[1]['permission'], ('Notifier.use_notifier', 'GarageSale.manage_own_team_profile',
+                                                   'user_management.manage_own_profile'))
         self.assertFalse(overview[1]['needs_event'])
 
     def test_navigation_supports_team_access_capability(self):

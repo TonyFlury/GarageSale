@@ -214,6 +214,8 @@ if you have a new database :
         Open User Profile from the account menu.
         Select the Notifications tab.
         Notifications in Overview remains an alternative entry point.
+        Existing own-profile permissions also authorize personal notification review and settings.
+        The profile tab does not require a separate Notifier permission grant.
         Open Notification settings.
         Enable each required Diary channel.
         Save each changed channel separately.

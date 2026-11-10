@@ -3,13 +3,30 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 
+def access_permissions():
+    """Return host-selected alternative permissions for personal notification access."""
+    config = getattr(settings, 'NOTIFIER', {})
+
+    # Invalid settings must not convert notification access into an unrestricted permission check.
+    if not isinstance(config, dict):
+        raise ImproperlyConfigured('NOTIFIER must be a dictionary.')
+    permissions = config.get('ACCESS_PERMISSIONS', ('Notifier.use_notifier',))
+
+    # Require at least one named capability and reject strings treated as character sequences.
+    if (not isinstance(permissions, (tuple, list)) or not permissions or
+            not all(isinstance(permission, str) and permission.strip() for permission in permissions)):
+        raise ImproperlyConfigured('ACCESS_PERMISSIONS must contain at least one permission name.')
+    return tuple(permissions)
+
+
 def configuration():
-    """Return validated batch limits and an explicitly empty delivery engine list."""
+    """Validate host configuration and return positive collection limits."""
     config = getattr(settings, 'NOTIFIER', {})
 
     # Invalid host settings must not silently enable unsupported delivery behavior.
-    if not isinstance(config, dict) or set(config) - {'ENGINES', 'INTAKE_LIMITS', 'BASE_TEMPLATE'}:
-        raise ImproperlyConfigured('NOTIFIER accepts ENGINES, INTAKE_LIMITS, and BASE_TEMPLATE.')
+    if not isinstance(config, dict) or set(config) - {'ENGINES', 'INTAKE_LIMITS', 'BASE_TEMPLATE', 'ACCESS_PERMISSIONS'}:
+        raise ImproperlyConfigured('NOTIFIER accepts ENGINES, INTAKE_LIMITS, BASE_TEMPLATE, and ACCESS_PERMISSIONS.')
+    access_permissions()
 
     # The generic review page needs no Garage Sale or Team Pages template dependency.
     if not isinstance(config.get('BASE_TEMPLATE', ''), str) or not config.get('BASE_TEMPLATE', 'Notifier/document.html'):

@@ -12,7 +12,7 @@ A subscription contains one user's saved settings for one stream.
 A notification is an accepted occurrence stored for one user.
 
 The Notifier collects signals and supplies a personal review page.
-The technical setting `NOTIFIER` contains `ENGINES`, optional `INTAKE_LIMITS`, and optional `BASE_TEMPLATE` fields.
+The technical setting `NOTIFIER` contains `ENGINES`, optional `INTAKE_LIMITS`, optional `BASE_TEMPLATE`, and optional `ACCESS_PERMISSIONS` fields.
 This version requires `ENGINES: []`.
 It does not supply an engine interface, engine registration, email delivery, or scheduled delivery.
 Future engines can use collected occurrences without requiring providers to select delivery methods.
@@ -40,13 +40,15 @@ Channel settings uses the existing registered field declarations and personal su
 Delivery settings currently shows an empty state because this version has no engines.
 Future engine registration and engine settings forms remain separate implementation work.
 
-Profile navigation preserves existing permissions.
+Profile navigation accepts existing own-profile authorization without requiring an additional Notifier permission grant.
 An unavailable tab has no destination link and includes an explanatory hover label.
 Viewing another member's profile does not expose their notifications or notification settings.
 Profile behavior, styling classes, and verification: [Personal profile sections](../user_management/PROFILE.md).
 
-Grant the technical permission `Notifier.use_notifier` through the approved host access policy.
+The default Notifier authorization requires the technical permission `Notifier.use_notifier`.
 Garage Sale assigns this permission to `ExecMember`, `Officer`, and `WebAdmin`.
+Garage Sale also accepts `GarageSale.manage_own_team_profile` and `user_management.manage_own_profile` for personal notifications.
+This setting changes no account permission grants and does not authorize access to another user's notifications.
 Apply that policy with the documented `sync_access_policy` procedure after migrations.
 Do not use a subscription as an authorization grant.
 
@@ -73,6 +75,11 @@ The optional `BASE_TEMPLATE` name selects the host document shell.
 The default is the independent technical template `Notifier/document.html`.
 Garage Sale selects `GarageSale/notifier/base.html` to use its shared personal profile shell.
 Host templates supply the technical blocks `Title`, `PageStyles`, and `SnappableSections`.
+The optional technical setting `ACCESS_PERMISSIONS` declares alternative personal access permissions.
+An active authenticated user must have at least one listed permission.
+The default list contains only `Notifier.use_notifier`.
+Garage Sale adds its existing own-profile permissions to that list.
+Channel restrictions and source access checks remain independent of this list.
 A batch cannot exceed either limit.
 The Notifier checks these limits before storing its first recipient entry.
 Resolver output counts toward the recipient limit before duplicate removal.
