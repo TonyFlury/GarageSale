@@ -1,7 +1,16 @@
 """Define the public registration and message values without database access."""
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
 from typing import Callable
+
+
+class Severity(str, Enum):
+    """Define notification conditions independently of application task priority."""
+
+    INFORMATION = 'information'
+    WARNING = 'warning'
+    URGENT = 'urgent'
 
 
 @dataclass(frozen=True)
@@ -74,6 +83,7 @@ class Signal:
     url: str = ''
     url_text: str = ''
     sort_at: datetime | None = None
+    severity: str = Severity.INFORMATION
 
 
 @dataclass(frozen=True)

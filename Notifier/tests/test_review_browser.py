@@ -117,12 +117,14 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.check_notice_period_retention()
         self.stream.publish([Signal('browser:1', timezone.now(), SourceRef('example.record', '1'),
                                     'Ready for review', 'The example record changed.',
-                                    url=reverse('Notifier:preferences'), url_text='Open item')])
+                                    url=reverse('Notifier:preferences'), url_text='Open item', severity='urgent')])
         self.open_page('Notifier:feed')
         self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.notifier-title').text, 'Ready for review')
         self.driver.set_window_size(390, 844)
         link = self.driver.find_element(By.CSS_SELECTOR, '.notifier-action')
         self.assertTrue(link.is_displayed())
+        severity_label = self.driver.find_element(By.CSS_SELECTOR, '.notifier-severity-label')
+        self.assertEqual(severity_label.text.split(), ['!', 'Urgent'])
         self.assertGreaterEqual(link.size['height'], 44)
         self.assertEqual(link.value_of_css_property('color'), 'rgba(255, 255, 255, 1)')
         self.driver.save_screenshot('/tmp/notifier-review-mobile.png')

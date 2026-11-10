@@ -12,7 +12,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from Notifier.api import Action, FieldDefinition, ProviderDefinition, Signal, SourceRef, StreamDefinition
+from Notifier.api import Action, FieldDefinition, ProviderDefinition, Severity, Signal, SourceRef, StreamDefinition
 from Notifier.collection import BatchLimitExceeded, IntakeUnavailable
 from Notifier.configuration import configuration
 from Notifier.models import Notification, Subscription
@@ -254,6 +254,45 @@ class NotifierTests(TestCase):
         message = replace(self.message, sort_at=timezone.now().replace(tzinfo=None))
         self.assertEqual(self.publish(message).items[0].status, 'invalid')
         self.assertFalse(Notification.objects.exists())
+
+    def test_severity_groups_precede_age_and_preserve_oldest_first_within_each_group(self):
+        """Show urgent conditions before older information while retaining chronological order inside each severity."""
+        self.enable()
+        now = timezone.now()
+        for key, severity, days in (('info', Severity.INFORMATION, 10), ('warning', Severity.WARNING, 5),
+                                    ('urgent-new', Severity.URGENT, 1), ('urgent-old', Severity.URGENT, 2)):
+            self.publish(replace(self.message, occurrence_key=key, severity=severity,
+                                 occurred_at=now - timedelta(days=days)))
+        response = self.client.get(reverse('Notifier:feed'))
+        self.assertEqual([row.occurrence_key for row in response.context['page_obj']],
+                         ['urgent-old', 'urgent-new', 'warning', 'info'])
+        self.assertContains(response, 'notifier-severity-heading notifier-severity-urgent', count=1)
+        self.assertContains(response, 'notifier-severity-heading notifier-severity-warning', count=1)
+        self.assertContains(response, 'notifier-severity-heading notifier-severity-information', count=1)
+        self.assertContains(response, 'aria-hidden="true"')
+
+    def test_invalid_severity_is_rejected_and_omitted_severity_defaults_to_information(self):
+        """Reject undeclared severities and preserve Information as the optional field default."""
+        self.enable()
+        for severity in ('critical', '', None, 3, []):
+            with self.subTest(severity=severity):
+                self.assertEqual(self.publish(replace(self.message, severity=severity)).items[0].status, 'invalid')
+        self.publish()
+        self.assertEqual(Notification.objects.get().severity, 'information')
+        changed = replace(self.message, severity=Severity.URGENT)
+        self.assertEqual(self.publish(changed).items[0].reason, 'occurrence_conflict')
+
+    def test_severity_ordering_applies_before_pagination_and_unread_filtering(self):
+        """Keep a new urgent notification on the first page ahead of many old informational notifications."""
+        self.enable()
+        now = timezone.now()
+        for index in range(26):
+            self.publish(replace(self.message, occurrence_key=f'information:{index}',
+                                 occurred_at=now - timedelta(days=10)))
+        self.publish(replace(self.message, occurrence_key='urgent', severity=Severity.URGENT))
+        response = self.client.get(reverse('Notifier:feed'), {'state': 'unread'})
+        self.assertEqual(response.context['page_obj'][0].occurrence_key, 'urgent')
+        self.assertEqual(response.context['page_obj'].paginator.count, 27)
 
     def test_generic_signal_link_is_stored_rendered_and_compatible_with_action(self):
         """Display a provider link and preserve occurrence identity across the compatible interfaces."""

@@ -38,10 +38,17 @@ class Notification(models.Model):
     content_hash = models.CharField(max_length=64)
     occurred_at = models.DateTimeField()
     sort_at = models.DateTimeField(null=True, blank=True)
+    severity = models.CharField(max_length=11, default='information',
+        choices=(('information', 'Information'), ('warning', 'Warning'), ('urgent', 'Urgent')))
     created_at = models.DateTimeField(auto_now_add=True)
     read_at = models.DateTimeField(null=True, blank=True)
     action_label = models.CharField(max_length=80, blank=True)
     action_url = models.CharField(max_length=500, blank=True)
+
+    @property
+    def severity_icon(self):
+        """Return a decorative symbol for the visible severity label."""
+        return {'information': 'ⓘ', 'warning': '⚠', 'urgent': '!'}.get(self.severity, 'ⓘ')
 
     class Meta:
         """Enforce occurrence identity and index the personal review list."""

@@ -12,7 +12,7 @@ from django.db import DatabaseError, transaction
 from django.utils import timezone
 
 from .configuration import configuration
-from .definitions import Action, BatchResult, ItemResult, Signal, SourceRef
+from .definitions import Action, BatchResult, ItemResult, Severity, Signal, SourceRef
 from .models import Notification, Subscription
 from .preferences import eligible_for_stream, subscription_is_valid
 
@@ -74,6 +74,10 @@ def validate_signal(signal):
     if not isinstance(signal, Signal) or not isinstance(signal.source, SourceRef):
         raise ValidationError('Supply a Signal and SourceRef.')
 
+    # Unknown severities cannot bypass the defined review groups or their ordering.
+    if not isinstance(signal.severity, str) or signal.severity not in tuple(Severity):
+        raise ValidationError('Supply information, warning, or urgent severity.')
+
     # Stable identities and bounded plain text keep feed records valid and displayable.
     if (not isinstance(signal.occurrence_key, str) or not signal.occurrence_key or len(signal.occurrence_key) > 200 or
             not isinstance(signal.title, str) or not signal.title.strip() or len(signal.title) > 200 or
@@ -108,6 +112,10 @@ def validate_signal(signal):
     # Omitted ordering metadata preserves the content hashes of existing provider messages.
     if signal.sort_at is not None:
         content['sort_at'] = signal.sort_at.isoformat()
+
+    # Default Information messages preserve the content hashes accepted before severity support.
+    if signal.severity != Severity.INFORMATION:
+        content['severity'] = signal.severity
     encoded = json.dumps(content, sort_keys=True, allow_nan=False)
 
     # Large arbitrary payloads must not bypass the plain-text field limits.
@@ -193,7 +201,8 @@ def notification_defaults(definition, signal, source, digest):
     """Store accepted content independently of the provider's continued availability."""
     values = {'stream_label': definition.label, 'title': signal.title, 'text': signal.text,
               'source': source, 'data': signal.data, 'payload_version': signal.payload_version,
-              'content_hash': digest, 'occurred_at': signal.occurred_at, 'sort_at': signal.sort_at}
+              'content_hash': digest, 'occurred_at': signal.occurred_at, 'sort_at': signal.sort_at,
+              'severity': signal.severity}
 
     action = signal_action(signal)
 

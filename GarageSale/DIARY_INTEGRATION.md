@@ -479,6 +479,8 @@ Their identifiers remain unchanged.
   Task links: `GarageSale/diary_notifier.py`: `task_url` and `receive_task_event`.
   Reminder actions: `GarageSale/diary_monitor/evaluator.py`: `reminder_signal`.
   Reminder ordering: `reminder_signal` supplies the due date through the generic `Signal.sort_at` field.
+  Reminder severity: `reminder_signal` supplies `Severity.WARNING` for Task Due and `Severity.URGENT` for Task Late.
+  Verification: `DiaryMonitorTests.test_due_windows_use_each_users_notice_and_include_zero_day_notice` and `test_late_begins_after_due_date_and_daily_retries_preserve_read_state`.
   Verification: `DiaryMonitorTests.test_first_monitor_pass_orders_overdue_tasks_by_due_date`.
   Link handling: `GarageSale/views/diary_views.py`: `LinkedEventTaskDetailView` and `GarageSale/diary_urls.py`: `Diary:linked-task`.
   Verification: `DiaryNotifierTests.test_task_action_opens_exact_task_without_session_or_current_event_selection` and `test_task_action_rejects_changed_host_link_and_lost_event_access`.

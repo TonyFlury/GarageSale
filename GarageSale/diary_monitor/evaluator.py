@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from GarageSale.diary_notifier import service_client, task_url, task_source
 from GarageSale.models import EventData
-from Notifier.api import Signal, SourceRef, get_stream
+from Notifier.api import Severity, Signal, SourceRef, get_stream
 from .configuration import LONDON
 
 logger = logging.getLogger(__name__)
@@ -61,12 +61,15 @@ def reminder_signal(task, kind, run_date):
     source = SourceRef('diary.reminder', source.identifier, due.isoformat())
     identity = f'{task.event_id}:{task.diary_key}:{entry["entry_key"]}:{due.isoformat()}:{run_date.isoformat()}'
     status = 'Task Due'
+    severity = Severity.WARNING
 
     # The two registered streams retain separate occurrence identities and user-facing descriptions.
     if kind == 'task_late':
         status = 'Task Late'
+        severity = Severity.URGENT
     return Signal(occurrence_key=identity, occurred_at=timezone.now(), source=source, title=entry['name'],
         sort_at=datetime.combine(due, time.min, tzinfo=LONDON),
+        severity=severity,
         url=task_url(task.event_id, task.diary_key, entry), url_text='Open task',
         text=f'{status}. Due date: {due.isoformat()}.\nDiary: {task.diary_name}',
         data={'event_id': task.event_id, 'diary_key': str(task.diary_key), 'task_key': str(entry['entry_key']),

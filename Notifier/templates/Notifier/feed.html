@@ -1,7 +1,7 @@
 {% extends 'Notifier/base.html' %}
 {% block notifier_content %}
 <h1>Notifications</h1>
-<p class="notifier-order">Oldest first.</p>
+<p class="notifier-order">Urgent first, then Warning, then Information. Oldest first within each group.</p>
 <p>Notifications appear here after collection. Enable the channels you want in Notification settings.</p>
 <nav class="notifier-filters" aria-label="Review filter">
     <a href="{% url 'Notifier:feed' %}"{% if not unread_only %} aria-current="page"{% endif %}>All notifications</a>
@@ -9,7 +9,13 @@
 </nav>
 <ul class="notifier-list">
 {% for notification in page_obj %}
-    <li class="notifier-entry {% if notification.read_at %}notifier-read{% else %}notifier-unread{% endif %}">
+    {% ifchanged notification.severity %}
+    <li class="notifier-severity-heading notifier-severity-{{ notification.severity }}">
+        <h2 class="notifier-group-title"><span class="notifier-severity-icon" aria-hidden="true">{{ notification.severity_icon }}</span> {{ notification.get_severity_display }}</h2>
+    </li>
+    {% endifchanged %}
+    <li class="notifier-entry notifier-severity-{{ notification.severity }} {% if notification.read_at %}notifier-read{% else %}notifier-unread{% endif %}">
+        <p class="notifier-severity-label"><span class="notifier-severity-icon" aria-hidden="true">{{ notification.severity_icon }}</span> {{ notification.get_severity_display }}</p>
         <h2 class="notifier-title">{{ notification.title }}</h2>
         <p class="notifier-metadata">{{ notification.stream_label }} · Collected {{ notification.created_at|date:'j M Y H:i' }}</p>
         <p class="notifier-text">{{ notification.text }}</p>

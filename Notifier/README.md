@@ -220,7 +220,20 @@ Earlier independent entries can exist when collection stops with `IntakeUnavaila
 Retry with the original occurrence identifiers.
 
 Signals contain plain text and JSON-compatible object data.
-The review page displays notifications from oldest to newest before pagination.
+The review page groups notifications by severity before pagination.
+The groups appear in this order: Urgent, Warning, Information.
+Each group displays notifications from oldest to newest.
+The optional field `Signal.severity` defaults to `Severity.INFORMATION`.
+Providers can also supply `Severity.WARNING` or `Severity.URGENT` from `Notifier.api`.
+The equivalent string values are `information`, `warning`, and `urgent`.
+The Notifier rejects other values.
+Severity forms part of each accepted notification snapshot.
+The Notifier does not infer severity from task dates or task priority.
+Diary supplies Warning for Task Due and Urgent for Task Late.
+Other Diary progress notifications use Information.
+Visible group headings and notification labels identify severity with text and decorative icons.
+The `.notifier-severity-heading`, `.notifier-group-title`, `.notifier-severity-label`, and `.notifier-severity-icon` classes control these components.
+The `.notifier-severity-information`, `.notifier-severity-warning`, and `.notifier-severity-urgent` classes select their presentation.
 Providers can supply the optional aware timestamp `Signal.sort_at` for domain-specific ordering.
 The default ordering timestamp is `occurred_at`.
 Collection time and record ID provide stable tie breakers.
