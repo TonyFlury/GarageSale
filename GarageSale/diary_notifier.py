@@ -17,6 +17,10 @@ EVENTS = (
     ('task_closed', 'Task completed', 'This task was completed.'),
     ('task_ownership_changed', 'Task ownership changed', 'The owner of this task changed.'),
 )
+SCHEDULED_CHANNELS = (
+    ('task_due', 'Task Due', 'Reminders about task due dates.'),
+    ('task_late', 'Task Late', 'Reminders about tasks that are late.'),
+)
 
 
 def service_client(keys):
@@ -106,12 +110,12 @@ def receive_task_event(sender, *, event_name, user, task, diary_key=None, **kwar
 
 
 def register():
-    """Declare five streams and connect their receivers once per process without database access."""
+    """Declare seven streams and connect only progress event receivers without database access."""
     from Diary import signals
     registry = get_registry()
     with registry.provider_registration():
         provider = registry.register_provider(ProviderDefinition('diary', 'Diary', 'Progress on event Diary tasks.'))
-        for name, label, text in EVENTS:
+        for name, label, text in EVENTS + SCHEDULED_CHANNELS:
             provider.register_stream(StreamDefinition(key='diary.' + name, label=label, description=text,
                 allowed_groups=(settings.DIARY_USER, settings.DIARY_MANAGER), access_policy=source_is_visible))
     for name, _, _ in EVENTS:

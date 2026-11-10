@@ -277,6 +277,16 @@ It does not modify the separately supplied Diary package.
 | `task_closed` | `diary.task_closed` |
 | `task_ownership_changed` | `diary.task_ownership_changed` |
 
+The provider also registers `diary.task_due` and `diary.task_late` during application startup.
+Their interface labels are Task Due and Task Late.
+They appear in the Diary settings group and use its Save all button.
+They start disabled and use the same Diary group and source access restrictions as progress channels.
+Registration does not depend on a background task or create subscription rows.
+These two channels have no progress signal receivers.
+The background evaluator remains responsible for generating their notification occurrences.
+This change adds registration and personal enablement settings only.
+The registration update passed 78 affected tests against a separate PostgreSQL database.
+
 Diary emits these signals after successful transaction commit.
 Template editing signals do not produce event Diary notifications.
 The adapter submits progress summaries without copying note text or actor email addresses.

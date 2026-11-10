@@ -78,6 +78,39 @@ class DiaryNotifierTests(TestCase):
         self.assertEqual(Notification.objects.count(), 1)
         self.assertEqual(Notification.objects.get().user, self.member)
 
+    def test_scheduled_channels_register_without_database_work_or_event_receivers(self):
+        """Declare Due and Late channels at startup without requiring a background evaluator or writing preferences."""
+        with self.assertNumQueries(0):
+            diary_notifier.register()
+            diary_notifier.register()
+        for key, label in (('diary.task_due', 'Task Due'), ('diary.task_late', 'Task Late')):
+            with self.subTest(key=key):
+                reference = self.registry.get_stream(key)
+                self.assertEqual(reference.provider_key, 'diary')
+                self.assertEqual(reference.definition.label, label)
+                self.assertEqual(reference.definition.access_policy, diary_notifier.source_is_visible)
+                self.assertEqual(reference.definition.allowed_groups, ('ExecMember', 'Officer'))
+        self.assertEqual(len(self.registry.streams), 7)
+        self.assertFalse(Subscription.objects.exists())
+        self.assertFalse(Notification.objects.exists())
+
+    def test_due_and_late_settings_share_the_diary_save_all_group(self):
+        """Show and save scheduled channel subscriptions for both Diary roles without generating reminders."""
+        url = reverse('Notifier:preferences')
+        for user in (self.member, self.manager):
+            with self.subTest(user=user.pk):
+                self.client.force_login(user)
+                response = self.client.get(url)
+                self.assertContains(response, 'Task Due')
+                self.assertContains(response, 'Task Late')
+                self.assertContains(response, 'class="notifier-save-all"', count=1)
+                self.assertEqual(self.client.post(url, {'provider_key': 'diary',
+                    'diary.task_due-enabled': 'on', 'diary.task_late-enabled': 'on'}).status_code, 302)
+                enabled = set(Subscription.objects.filter(user=user, enabled=True).values_list('stream_key', flat=True))
+                self.assertEqual(enabled, {'diary.task_due', 'diary.task_late'})
+        self.add_task()
+        self.assertFalse(Notification.objects.exists())
+
     def test_task_creation_requires_opt_in_and_records_a_bound_host_source(self):
         """Collect committed tasks only for enabled subscribers and preserve their source identity."""
         self.add_task('Not subscribed')
