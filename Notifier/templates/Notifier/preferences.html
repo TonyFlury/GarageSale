@@ -1,0 +1,15 @@
+{% extends 'Notifier/base.html' %}
+{% block notifier_content %}
+<h1>Notification settings</h1>
+<p>Streams are disabled until you enable them. No email or other delivery engine is configured.</p>
+{% for section in sections %}
+<form class="notifier-settings" method="post" action="{% url 'Notifier:preferences' %}">
+    {% csrf_token %}<input type="hidden" name="stream_key" value="{{ section.stream.key }}">
+    <fieldset><legend>{{ section.stream.label }}</legend>
+        <p>{{ section.stream.description }}</p>
+        {{ section.form.as_p }}
+        <button type="submit">Save settings</button>
+    </fieldset>
+</form>
+{% empty %}<p class="notifier-empty">No notification streams are available.</p>{% endfor %}
+{% endblock %}

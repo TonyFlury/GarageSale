@@ -1,0 +1,196 @@
+"""HOST-005: Verify committed Diary events through public APIs and the engine-free Notifier."""
+from datetime import date
+from unittest.mock import patch
+from uuid import uuid4
+
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group, Permission
+from django.db import transaction
+from django.test import TestCase, override_settings
+from django.urls import reverse
+
+from Diary.api import Actor, DiaryAPI, EntrySpec
+from GarageSale import diary_notifier
+from GarageSale.models import EventData
+from Notifier.models import Notification, Subscription
+from Notifier.preferences import save_subscription
+from Notifier.registry import Registry
+
+
+class HostOwnerDirectory:
+    """Resolve test person references through host users rather than dependency model internals."""
+
+    def person_in_groups(self, reference, group_names):
+        """Return whether the referenced active host user has one of the required groups."""
+        return get_user_model().objects.filter(pk=reference.removeprefix('user:'), is_active=True,
+                                               groups__name__in=group_names).exists()
+
+
+@override_settings(DIARY_MANAGER='Officer', DIARY_USER='ExecMember', DIARY_TASK_OWNER_ROLES=())
+class DiaryNotifierTests(TestCase):
+    """Keep progress collection separate from package implementation and delivery engines."""
+
+    def setUp(self):
+        """Prepare an isolated registry, authorized users, and one host-linked empty Diary."""
+        self.registry = Registry()
+        registry_patch = patch('Notifier.registry._registry', self.registry)
+        registry_patch.start()
+        self.addCleanup(registry_patch.stop)
+        diary_notifier.register()
+        self.manager = self.make_user('notifier-manager@example.test', 'Officer')
+        self.member = self.make_user('notifier-member@example.test', 'ExecMember')
+        self.other = self.make_user('notifier-other@example.test', 'ExecMember')
+        self.actor = Actor(reference=f'user:{self.manager.pk}', groups=frozenset({'Officer'}), email=self.manager.email)
+        self.api = DiaryAPI(actor=self.actor)
+        diary = self.api.create_diary(name='Event tasks', without_template=True)
+        self.event = EventData.objects.create(event_date=date(2030, 6, 23), use_from=date(2029, 1, 1), diary_key=diary.key)
+        self.diary = DiaryAPI(actor=Actor(reference=self.actor.reference, groups=self.actor.groups,
+                                         calendar_keys=frozenset({diary.key}), email=self.manager.email)).diary(key=diary.key)
+
+    def make_user(self, email, group_name):
+        """Create a real host identity with event and Notifier access plus the selected Diary group."""
+        user = get_user_model().objects.create_user(email=email, is_verified=True)
+        group, _ = Group.objects.get_or_create(name=group_name)
+        user.groups.add(group)
+        user.user_permissions.add(Permission.objects.get(content_type__app_label='Notifier', codename='use_notifier'),
+                                  Permission.objects.get(content_type__app_label='GarageSale', codename='view_eventdata'))
+        return user
+
+    def subscribe(self, user, stream_name):
+        """Opt a host user into one progress stream through the generic Notifier."""
+        definition = self.registry.get_stream('diary.' + stream_name).definition
+        return save_subscription(user, definition, enabled=True, values={})
+
+    def add_task(self, name='Prepare the event', **kwargs):
+        """Create an actual task through the package API and execute its committed callbacks."""
+        spec = EntrySpec(name, 'once', fixed_date=date(2030, 6, 20), **kwargs)
+        with self.captureOnCommitCallbacks(execute=True):
+            key = self.diary.add_entry(spec=spec, directory=HostOwnerDirectory())
+        return key
+
+    def test_registration_connects_once_without_database_work(self):
+        """Repeat application startup without reading records or connecting duplicate receivers."""
+        with self.assertNumQueries(0):
+            diary_notifier.register()
+            diary_notifier.register()
+        self.subscribe(self.member, 'task_created')
+        self.add_task()
+        self.assertEqual(Notification.objects.count(), 1)
+        self.assertEqual(Notification.objects.get().user, self.member)
+
+    def test_task_creation_requires_opt_in_and_records_a_bound_host_source(self):
+        """Collect committed tasks only for enabled subscribers and preserve their source identity."""
+        self.add_task('Not subscribed')
+        self.assertFalse(Notification.objects.exists())
+        self.subscribe(self.member, 'task_created')
+        key = self.add_task()
+        record = Notification.objects.get()
+        self.assertEqual(record.title, 'Prepare the event')
+        self.assertEqual(record.source['identifier'], f'{self.event.pk}:{self.diary.key}:{key}')
+        self.assertEqual(record.data['task_key'], str(key))
+        self.assertFalse(record.read_at)
+
+    def test_progress_note_and_completion_use_the_same_intake(self):
+        """Collect note and completion events through registered streams without a delivery engine."""
+        for name in ('task_note_added', 'task_closed'):
+            self.subscribe(self.member, name)
+        key = self.add_task()
+        with self.captureOnCommitCallbacks(execute=True):
+            self.diary.add_note(entry_key=key, text='The preparations are ready.')
+        state = self.diary.task(entry_key=key)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.diary.complete(entry_key=key, expected_revision=state['revision'])
+        self.assertSetEqual(set(Notification.objects.values_list('stream_key', flat=True)),
+                            {'diary.task_note_added', 'diary.task_closed'})
+        self.assertNotIn('The preparations are ready.', str(list(Notification.objects.values_list('data', flat=True))))
+
+    def test_rolled_back_changes_do_not_collect_notifications(self):
+        """Discard package callbacks when the surrounding source transaction rolls back."""
+        self.subscribe(self.member, 'task_created')
+        with self.captureOnCommitCallbacks(execute=True):
+            try:
+                with transaction.atomic():
+                    self.diary.add_entry(spec=EntrySpec('Rolled back', 'once', fixed_date=date(2030, 6, 20)))
+                    raise RuntimeError('Rollback')
+            except RuntimeError:
+                pass
+        self.assertFalse(Notification.objects.exists())
+
+    def test_private_personal_task_never_reaches_another_subscriber(self):
+        """Apply package privacy for personal additions before accepting recipient entries."""
+        for user in (self.member, self.other, self.manager):
+            self.subscribe(user, 'task_created')
+        self.add_task('Private task', owner_kind='person', person_ref=f'user:{self.member.pk}')
+        self.assertSetEqual(set(Notification.objects.values_list('user_id', flat=True)), {self.member.pk, self.manager.pk})
+
+    def test_access_change_hides_existing_notification_without_deleting_it(self):
+        """Recheck current Diary groups when a user opens previously collected content."""
+        self.subscribe(self.member, 'task_created')
+        self.add_task('Previously available')
+        self.member.groups.clear()
+        self.client.force_login(self.member)
+        response = self.client.get(reverse('Notifier:feed'))
+        self.assertNotContains(response, 'Previously available')
+        self.assertEqual(Notification.objects.count(), 1)
+
+    def test_template_signals_are_not_instance_notifications(self):
+        """Ignore template authoring events even when users subscribe to task creation."""
+        from Diary.signals import task_created
+        self.subscribe(self.member, 'task_created')
+        with patch.object(diary_notifier, 'resolve_task') as resolve:
+            task_created.send(sender=type('TemplateEntry', (), {}), user=self.manager.email, task=uuid4(), **{'task-name': 'Draft'})
+        resolve.assert_not_called()
+        self.assertFalse(Notification.objects.exists())
+
+    def test_dependency_and_ownership_signal_contracts_use_registered_streams(self):
+        """Translate the remaining public signal contracts for an authorized existing task."""
+        from Diary import signals
+        key = self.add_task()
+        sender = type('CalendarEntry', (), {})
+        for name in ('task_dependency_changed', 'task_ownership_changed'):
+            self.subscribe(self.member, name)
+            getattr(signals, name).send(sender=sender, user=self.manager.email, task=key,
+                                        **{'task-name': 'Prepare the event'})
+        self.assertSetEqual(set(Notification.objects.values_list('stream_key', flat=True)),
+                            {'diary.task_dependency_changed', 'diary.task_ownership_changed'})
+
+    def test_changed_host_diary_link_hides_the_original_source(self):
+        """Keep old notifications bound to their original event Diary after a link changes."""
+        self.subscribe(self.member, 'task_created')
+        self.add_task('Original source')
+        EventData.objects.filter(pk=self.event.pk).update(diary_key=uuid4())
+        self.client.force_login(self.member)
+        self.assertNotContains(self.client.get(reverse('Notifier:feed')), 'Original source')
+        self.assertEqual(Notification.objects.count(), 1)
+
+    def test_ambiguous_task_keys_are_skipped_without_guessing_an_event(self):
+        """Reject repeated task identities because the package signal has no Diary identifier."""
+        self.subscribe(self.member, 'task_created')
+        key = self.add_task()
+        other = self.api.create_diary(name='Another event', without_template=True)
+        EventData.objects.create(event_date=date(2031, 6, 23), use_from=date(2030, 1, 1), diary_key=other.key)
+        from Diary.api import DiaryInstance
+        second = DiaryInstance(actor=Actor(self.actor.reference, self.actor.groups, frozenset({other.key})), key=other.key)
+        with self.assertLogs('GarageSale.diary_notifier', level='WARNING'), self.captureOnCommitCallbacks(execute=True):
+            second.add_entry(spec=EntrySpec('Copied task', 'once', fixed_date=date(2031, 6, 20), entry_key=key))
+        self.assertEqual(Notification.objects.count(), 1)
+        self.assertEqual(Notification.objects.get().data['diary_key'], str(self.diary.key))
+
+    def test_host_event_permission_is_required_in_addition_to_diary_membership(self):
+        """Prevent a stream subscription from expanding source application permissions."""
+        self.subscribe(self.member, 'task_created')
+        self.member.user_permissions.remove(Permission.objects.get(content_type__app_label='GarageSale', codename='view_eventdata'))
+        self.add_task()
+        self.assertFalse(Notification.objects.exists())
+
+    def test_feed_never_copies_private_note_content_or_actor_email(self):
+        """Display a progress summary while leaving note details in the authorized Diary UI."""
+        self.subscribe(self.member, 'task_note_added')
+        key = self.add_task()
+        with self.captureOnCommitCallbacks(execute=True):
+            self.diary.add_note(entry_key=key, text='Confidential discussion')
+        self.client.force_login(self.member)
+        response = self.client.get(reverse('Notifier:feed'))
+        self.assertContains(response, 'A progress note was added')
+        self.assertNotContains(response, 'Confidential discussion')
+        self.assertNotContains(response, self.manager.email)

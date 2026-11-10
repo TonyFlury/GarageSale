@@ -1,0 +1,14 @@
+{% extends notifier_base_template %}
+{% load static %}
+{% block Title %}Notifications{% endblock %}
+{% block PageStyles %}{{ block.super }}<link rel="stylesheet" href="{% static 'Notifier/notifier.css' %}">{% endblock %}
+{% block SnappableSections %}
+<section class="notifier" aria-label="Personal notifications">
+    <nav class="notifier-navigation" aria-label="Notification pages">
+        <a href="{% url 'Notifier:feed' %}">Review notifications</a>
+        <a href="{% url 'Notifier:preferences' %}">Notification settings</a>
+    </nav>
+    {% for message in messages %}<p class="notifier-message" role="status">{{ message }}</p>{% endfor %}
+    {% block notifier_content %}{% endblock %}
+</section>
+{% endblock %}

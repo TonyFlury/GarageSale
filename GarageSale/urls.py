@@ -57,6 +57,7 @@ urlpatterns = [
     path('CraftMarket/', include('CraftMarket.urls')),
     path('Account/', include('Accounts.urls')),
     path('contributors/', include('Contributors.urls')),
+    path('notifications/', include('Notifier.urls')),
 
     path('mapping/', include('DjangoGoogleMap.urls')),
     path('summernote/', include('django_summernote.urls')),

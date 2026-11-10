@@ -1,0 +1,14 @@
+.notifier { box-sizing: border-box; width: 95%; margin: 1rem auto; text-align: left; }
+/* Contain the host toolbar's border and padding within narrow browser widths. */
+.notifier-host-topbar .ToolBar { box-sizing: border-box; max-width: 100%; }
+.notifier .notifier-navigation, .notifier .notifier-filters, .notifier .notifier-pagination { display: flex; flex-wrap: wrap; gap: 1rem; margin-block: 1rem; }
+.notifier .notifier-list { list-style: none; padding: 0; }
+.notifier .notifier-entry, .notifier .notifier-settings { border: 1px solid #bbb; border-radius: .5rem; padding: 1rem; margin-block: 1rem; overflow-wrap: anywhere; }
+.notifier .notifier-unread { border-inline-start: .35rem solid #2f4f4f; }
+.notifier .notifier-title { margin-block: 0 .5rem; font-size: 1.2rem; }
+.notifier .notifier-text { white-space: pre-wrap; }
+.notifier .notifier-metadata, .notifier .notifier-state { color: #505050; }
+.notifier .notifier-settings label { display: inline-block; text-align: left; }
+.notifier .notifier-settings fieldset { min-width: 0; }
+.notifier button { font: inherit; padding: .5rem .75rem; cursor: pointer; }
+.notifier :focus-visible { outline: 3px solid #3333dd; outline-offset: 3px; }

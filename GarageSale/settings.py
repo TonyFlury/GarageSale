@@ -148,6 +148,7 @@ INSTALLED_APPS = [
     'user_management.apps.user_managementConfig',
     'News.apps.NewsConfig',
     'Diary.apps.DiaryConfig',
+    'Notifier.apps.NotifierConfig',
     'django.forms',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -162,6 +163,9 @@ INSTALLED_APPS = [
 
 
 AUTH_USER_MODEL = "user_management.UserExtended"
+
+# Notification collection and personal review do not require delivery engines.
+NOTIFIER = {'ENGINES': [], 'BASE_TEMPLATE': 'GarageSale/notifier/base.html'}
 
 # HOST-003: Configure the independently supplied Diary application through its public settings interface.
 DIARY_MANAGER = 'Officer'

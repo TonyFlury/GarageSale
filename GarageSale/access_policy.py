@@ -7,7 +7,7 @@ from django.core.exceptions import PermissionDenied
 
 # Explicit ownership prevents a newly installed library being swept into cleanup.
 PROJECT_APPS = frozenset({"Accounts", "Billboard", "Contributors", "CraftMarket", "DjangoGoogleMap",
-                          "GarageSale", "GoogleDrive", "Location", "News", "SaleLocation", "Sponsors", "user_management"})
+                          "GarageSale", "GoogleDrive", "Location", "News", "Notifier", "SaleLocation", "Sponsors", "user_management"})
 GROUP_NAMES = ("ExecMember", "Officer", "SponsorshipManager", "PrizeDrawManager", "CraftMarketManager", "Financier", "WebAdmin", "Volunteer")
 GROUP_RENAMES = {"PrizeAllocationManager": "PrizeDrawManager"}
 CUSTOM_CODES = (
@@ -51,7 +51,7 @@ FINANCE_WORK = FINANCE_READ | {"Accounts.upload_transaction", "Accounts.change_t
                                "Accounts.view_uploadhistory", "Accounts.view_uploaderror", "Accounts.change_uploaderror",
                                "Accounts.add_uploadhistory", "Accounts.add_uploaderror", custom("close_financialyear")} | \
     crud("Accounts", "account") | crud("Accounts", "categories") | crud("Accounts", "financialyear")
-EXEC = TEAM | SPONSOR_WORK | MARKET_WORK | TEMPLATE_WORK | PRIZES | {"Contributors.view_prize_allocation"} | crud("GarageSale", "eventdata", "view add change") | \
+EXEC = TEAM | SPONSOR_WORK | MARKET_WORK | TEMPLATE_WORK | PRIZES | {"Contributors.view_prize_allocation", "Notifier.use_notifier"} | crud("GarageSale", "eventdata", "view add change") | \
     crud("News", "newsarticle") | crud("News", "newslettermailinglist") | crud("GarageSale", "motd") | \
     crud("GarageSale", "supporting") | {"News.publish_news", "Accounts.report_transaction", "Location.view_location",
     "Location.change_location", "Location.add_location", "user_management.view_teammember", "user_management.generate_id_card",
@@ -61,7 +61,7 @@ EXEC = TEAM | SPONSOR_WORK | MARKET_WORK | TEMPLATE_WORK | PRIZES | {"Contributo
 GROUP_PERMISSIONS = {
     "ExecMember": EXEC,
     # Redundant grants are avoided: every Officer is explicitly also an ExecMember.
-    "Officer": TEAM | FINANCE_READ | {"user_management.manage_team_access"} | crud("GarageSale", "nomination", "view change"),
+    "Officer": TEAM | FINANCE_READ | {"user_management.manage_team_access", "Notifier.use_notifier"} | crud("GarageSale", "nomination", "view change"),
     "PrizeDrawManager": TEAM | PRIZE_DRAW_WORK,
     "SponsorshipManager": TEAM | SPONSOR_WORK | TEMPLATE_WORK | PRIZES | {"GarageSale.view_eventdata",
         custom("view_sponsor_templates"), custom("manage_sponsor_templates")},

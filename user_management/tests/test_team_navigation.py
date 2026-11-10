@@ -54,10 +54,18 @@ class EntryPointOrderingTests(SimpleTestCase):
 
 @override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
 class TeamNavigationTests(TestCase):
+    """Verify feature navigation order and permission requirements in the team-page shell."""
+
     def test_framework_registrations_define_task_homes_and_priority(self):
+        """Keep feature entry order stable while exposing the personal Notifier review page."""
         from django.urls import get_resolver
         get_resolver().url_patterns
-        user = SimpleNamespace(has_perm=lambda permission: True)
+
+        def permit_all(permission):
+            """Allow each registered capability for the navigation structure check."""
+            return True
+
+        user = SimpleNamespace(has_perm=permit_all)
         participation = list(get_entry_points(user, 'Event participation'))
         self.assertEqual([entry['url_path'] for entry in participation], [
             'TeamPages:SponsorEntryPoint', 'CraftMarket:EntryPoint',
@@ -67,9 +75,11 @@ class TeamNavigationTests(TestCase):
         self.assertEqual(participation[-1]['name'], 'Ad-board CSV download')
         self.assertEqual([entry['order'] for entry in participation], [10, 20, 30, 40])
         overview = list(get_entry_points(user, 'Overview'))
-        self.assertEqual([entry['url_path'] for entry in overview], ['EventDashboard'])
+        self.assertEqual([entry['url_path'] for entry in overview], ['EventDashboard', 'Notifier:feed'])
         self.assertEqual(overview[0]['name'], 'Dashboard')
         self.assertTrue(overview[0]['icon_path'].endswith('/dashboard.svg'))
+        self.assertEqual(overview[1]['permission'], 'Notifier.use_notifier')
+        self.assertFalse(overview[1]['needs_event'])
 
     def test_navigation_supports_team_access_capability(self):
         for model, codename in [('applicationaccess', 'access_team_pages')]:

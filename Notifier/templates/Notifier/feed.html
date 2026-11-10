@@ -1,0 +1,31 @@
+{% extends 'Notifier/base.html' %}
+{% block notifier_content %}
+<h1>Notifications</h1>
+<p>Notifications appear here after collection. Enable the streams you want in Notification settings.</p>
+<nav class="notifier-filters" aria-label="Review filter">
+    <a href="{% url 'Notifier:feed' %}"{% if not unread_only %} aria-current="page"{% endif %}>All notifications</a>
+    <a href="?state=unread"{% if unread_only %} aria-current="page"{% endif %}>Unread notifications</a>
+</nav>
+<ul class="notifier-list">
+{% for notification in page_obj %}
+    <li class="notifier-entry {% if notification.read_at %}notifier-read{% else %}notifier-unread{% endif %}">
+        <h2 class="notifier-title">{{ notification.title }}</h2>
+        <p class="notifier-metadata">{{ notification.stream_label }} · Collected {{ notification.created_at|date:'j M Y H:i' }}</p>
+        <p class="notifier-text">{{ notification.text }}</p>
+        {% if notification.action_url %}<a class="notifier-action" href="{{ notification.action_url }}">{{ notification.action_label }}</a>{% endif %}
+        {% if notification.read_at %}<p class="notifier-state">Read</p>{% else %}
+            <form class="notifier-read-form" method="post" action="{% url 'Notifier:read' notification.pk %}">
+                {% csrf_token %}<button type="submit">Mark as read</button>
+            </form>
+        {% endif %}
+    </li>
+{% empty %}<li class="notifier-empty">No notifications are available.</li>{% endfor %}
+</ul>
+{% if page_obj.has_other_pages %}
+<nav class="notifier-pagination" aria-label="Notification pages">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if unread_only %}&amp;state=unread{% endif %}">Previous</a>{% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if unread_only %}&amp;state=unread{% endif %}">Next</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

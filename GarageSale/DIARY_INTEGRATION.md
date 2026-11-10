@@ -1,7 +1,8 @@
 # Garage Sale integration with Diary
 
-Status: Event creation and host-framed Diary pages are implemented. Dashboard integration and closure policy remain open.
-Date: 4 November 2026.
+Status: Event creation, host-framed Diary pages, and the first progress adapter are implemented.
+Dashboard integration, complete signal source identity, and closure policy remain open.
+Date: November 10, 2026.
 
 ## Scope and technical names
 
@@ -10,7 +11,7 @@ Garage Sale creates a Diary during event creation. This confirmed behavior belon
 Garage Sale treats Diary as an independently supplied dependency with the Python import name `Diary`.
 This integration branch excludes Diary Python source, migrations, static files, and implementation history.
 It contains host-owned template adaptations for the external Diary UI.
-The installed distribution is `django-task-calendar` version `0.1.9.3`.
+The installed distribution is `django-task-calendar` version `0.1.10.1`.
 The separate DjangoTaskCalendar repository contains its source, migrations, and documentation.
 
 ## Dependency boundary and current implementation
@@ -465,10 +466,22 @@ Their identifiers remain unchanged.
   Exclude whole-team tasks and completed tasks. Give Late priority so the counts do not overlap.
   Preserve zero-count links and the explicit absent-Diary state.
 
+- [ ] **HOST-005: Diary progress notifications.**
+  The first implementation connects five committed package signals to the engine-free Notifier.
+  Implementation: `GarageSale/diary_notifier.py`: `register`, `receive_task_event`, `resolve_task`, `task_source`, and `source_is_visible`.
+  Startup: `GarageSale/apps.py`: `GarageSaleConfig.ready`. Navigation: `GarageSale/notifier_integration.py`: `configure_notifier`.
+  Verification: `GarageSale/tests/test_diary_notifier.py`: `DiaryNotifierTests`.
+  The technical test `test_ambiguous_task_keys_are_skipped_without_guessing_an_event` verifies rejection of ambiguous source identities.
+  Remaining: Obtain source Diary and stable occurrence identifiers from a future package signal contract.
+  Shared task UUIDs across event Diaries prevent reliable source selection with version `0.1.10.1`.
+  The adapter logs and skips these signals.
+  Remaining: Define scheduled reminders, previous-owner messages, and durable collection retries separately.
+  Implementation details, provider examples, and open decisions: [Notifier documentation](../Notifier/README.md).
+
 Existing event records without a Diary key remain unprepared. No automatic backfill is implemented.
 The current-event selection rule remains unchanged.
 Milestone changes and their impact review remain outside the supported V1 host workflow.
-Reminders are not added by this integration change.
+The Notifier adapter adds progress summaries only. It does not add scheduled reminders.
 
 ## Verification of the dependency boundary
 
@@ -493,3 +506,5 @@ Reference: ASD-STE100, Issue 9.
 A local copy of the standard was available.
 A full dictionary and technical-name review remains necessary.
 This document does not claim full ASD-STE100 compliance.
+The official reference returned HTTP 403 during review of the Notifier additions.
+Those additions have not received a full dictionary review.
