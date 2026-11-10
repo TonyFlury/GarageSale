@@ -234,6 +234,31 @@ class NotifierTests(TestCase):
         self.assertContains(response, '&lt;script&gt;alert(1)&lt;/script&gt;')
         self.assertNotContains(response, '<script>alert(1)</script>')
 
+    def test_generic_signal_link_is_stored_rendered_and_compatible_with_action(self):
+        """Display a provider link and preserve occurrence identity across the compatible interfaces."""
+        self.enable()
+        message = replace(self.message, url='/records/42/', url_text='Open <record>')
+        self.publish(message)
+        record = Notification.objects.get()
+        self.assertEqual(record.action_url, '/records/42/')
+        self.assertEqual(record.action_label, 'Open <record>')
+        response = self.client.get(reverse('Notifier:feed'))
+        self.assertContains(response, 'href="/records/42/">Open &lt;record&gt;</a>')
+        legacy = replace(self.message, action=Action('Open <record>', '/records/42/'))
+        self.assertEqual(self.publish(legacy).items[0].status, 'duplicate')
+
+    def test_generic_signal_rejects_incomplete_unsafe_and_conflicting_links(self):
+        """Reject malformed link fields before storing any notification."""
+        self.enable()
+        for values in ({'url': '/records/42/'}, {'url_text': 'Open record'},
+                       {'url': 'javascript:alert(1)', 'url_text': 'Open'},
+                       {'url': '//example.test/record', 'url_text': 'Open'},
+                       {'url': None, 'url_text': 'Open'},
+                       {'url': '/records/42/', 'url_text': 'Open', 'action': Action('Other', '/other/')}):
+            with self.subTest(values=values):
+                self.assertEqual(self.publish(replace(self.message, **values)).items[0].status, 'invalid')
+        self.assertFalse(Notification.objects.exists())
+
     def test_personal_feed_and_read_actions_never_expose_another_user(self):
         """Render only personal entries and reject forged review identifiers through POST."""
         self.enable()

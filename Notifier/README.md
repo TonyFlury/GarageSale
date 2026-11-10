@@ -179,6 +179,8 @@ def send_record_changed(record, occurrence_id):
         title='Shared record changed',
         text='A shared record changed. Review its current details.',
         data={'record_id': record.pk},
+        url=f'/records/{record.pk}/',
+        url_text='Open record',
     )
 
     def collect():
@@ -219,7 +221,14 @@ Retry with the original occurrence identifiers.
 
 Signals contain plain text and JSON-compatible object data.
 The review page escapes provider text.
-The optional technical value `Action(label, url)` accepts a local absolute path only.
+The optional `Signal.url` and `Signal.url_text` fields define a generic notification link.
+Omit both fields for a notification without a link.
+Supply both fields for a labeled link to a local absolute path.
+The provider chooses the destination and link text.
+The Notifier stores and displays these values without application-specific routing.
+The destination application must check current access when the user opens the link.
+The previous `Action(label, url)` interface remains available for compatibility.
+Do not combine `action` with `url` or `url_text`.
 The destination application must check access independently.
 
 ## Stream settings and persistence

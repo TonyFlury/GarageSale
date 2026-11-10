@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.utils import timezone
 
-from GarageSale.diary_notifier import service_client, task_action, task_source
+from GarageSale.diary_notifier import service_client, task_url, task_source
 from GarageSale.models import EventData
 from Notifier.api import Signal, SourceRef, get_stream
 
@@ -64,7 +64,7 @@ def reminder_signal(task, kind, run_date):
     if kind == 'task_late':
         status = 'Task Late'
     return Signal(occurrence_key=identity, occurred_at=timezone.now(), source=source, title=entry['name'],
-        action=task_action(task.event_id, task.diary_key, entry),
+        url=task_url(task.event_id, task.diary_key, entry), url_text='Open task',
         text=f'{status}. Due date: {due.isoformat()}.\nDiary: {task.diary_name}',
         data={'event_id': task.event_id, 'diary_key': str(task.diary_key), 'task_key': str(entry['entry_key']),
               'due_date': due.isoformat(), 'evaluation_date': run_date.isoformat()})

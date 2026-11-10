@@ -109,7 +109,7 @@ class DiaryNotifierTests(TestCase):
     def test_task_action_rejects_changed_host_link_and_lost_event_access(self):
         """Reject obsolete event links and callers without host event permission."""
         key = self.add_task()
-        url = diary_notifier.task_action(self.event.pk, self.event.diary_key, {'entry_key': key}).url
+        url = diary_notifier.task_url(self.event.pk, self.event.diary_key, {'entry_key': key})
         self.client.force_login(self.member)
         self.member.user_permissions.clear()
         self.assertEqual(self.client.get(url).status_code, 404)
@@ -247,7 +247,7 @@ class DiaryNotifierTests(TestCase):
             self.subscribe(user, 'task_created')
         key = self.add_task('Private task', owner_kind='person', person_ref=f'user:{self.member.pk}')
         self.assertSetEqual(set(Notification.objects.values_list('user_id', flat=True)), {self.member.pk, self.manager.pk})
-        url = diary_notifier.task_action(self.event.pk, self.event.diary_key, {'entry_key': key}).url
+        url = diary_notifier.task_url(self.event.pk, self.event.diary_key, {'entry_key': key})
         self.client.force_login(self.other)
         self.assertEqual(self.client.get(url).status_code, 404)
 

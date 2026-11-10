@@ -12,7 +12,7 @@ from django.db import DatabaseError, transaction
 from django.utils import timezone
 
 from .configuration import configuration
-from .definitions import BatchResult, ItemResult, Signal, SourceRef
+from .definitions import Action, BatchResult, ItemResult, Signal, SourceRef
 from .models import Notification, Subscription
 from .preferences import eligible_for_stream, subscription_is_valid
 
@@ -31,12 +31,33 @@ class IntakeUnavailable(RuntimeError):
     """Report a storage failure after zero or more independent entries were accepted."""
 
 
+def signal_action(signal):
+    """Convert optional generic link fields while retaining the previous Action interface."""
+
+    # Both public fields must be strings before link validation or storage can proceed.
+    if not isinstance(signal.url, str) or not isinstance(signal.url_text, str):
+        raise ValidationError('Supply string url and url_text values.')
+
+    # Mixed interfaces cannot select different destinations for one occurrence.
+    if signal.action is not None and (signal.url or signal.url_text):
+        raise ValidationError('Supply url and url_text without action.')
+
+    # An omitted link preserves the previous content hash and collected record behavior.
+    if not signal.url and not signal.url_text:
+        return signal.action
+    return Action(signal.url_text, signal.url)
+
+
 def validate_action(action):
     """Permit only a labeled local path without schemes, hostnames, or control characters."""
 
     # An occurrence may have no application navigation destination.
     if action is None:
         return
+
+    # Malformed provider values must produce validation errors before URL parsing.
+    if not isinstance(action, Action) or not isinstance(action.url, str) or not isinstance(action.label, str):
+        raise ValidationError('Supply string URL and link text values.')
     parsed = urlsplit(action.url)
 
     # External, escaped, and oversized paths must not turn review links into open redirects.
@@ -71,13 +92,14 @@ def validate_signal(signal):
     # Payload versions and object values must remain safe for JSON storage.
     if type(signal.payload_version) is not int or signal.payload_version < 1 or not isinstance(signal.data, dict):
         raise ValidationError('Supply a positive payload version and object data.')
-    validate_action(signal.action)
+    action = signal_action(signal)
+    validate_action(action)
     content = {'title': signal.title, 'text': signal.text, 'source': source, 'data': signal.data,
                'payload_version': signal.payload_version, 'action': None}
 
     # Navigation is part of the immutable content of an accepted occurrence.
-    if signal.action is not None:
-        content['action'] = asdict(signal.action)
+    if action is not None:
+        content['action'] = asdict(action)
     encoded = json.dumps(content, sort_keys=True, allow_nan=False)
 
     # Large arbitrary payloads must not bypass the plain-text field limits.
@@ -165,9 +187,11 @@ def notification_defaults(definition, signal, source, digest):
               'source': source, 'data': signal.data, 'payload_version': signal.payload_version,
               'content_hash': digest, 'occurred_at': signal.occurred_at}
 
+    action = signal_action(signal)
+
     # Optional local navigation must retain its validated label and destination together.
-    if signal.action is not None:
-        values.update(action_label=signal.action.label, action_url=signal.action.url)
+    if action is not None:
+        values.update(action_label=action.label, action_url=action.url)
     return values
 
 

@@ -71,6 +71,8 @@ class Signal:
     data: dict = field(default_factory=dict)
     payload_version: int = 1
     action: Action | None = None
+    url: str = ''
+    url_text: str = ''
 
 
 @dataclass(frozen=True)
