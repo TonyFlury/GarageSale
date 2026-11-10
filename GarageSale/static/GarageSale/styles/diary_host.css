@@ -17,7 +17,7 @@
 /* HOST-003: Use Diary 0.1.9.3 toolbar hooks for host icons, labels, and hover text. */
 .diary .diary-graph-toolbar {
     --diary-toolbar-icon-size: 1.5rem;
-    --diary-toolbar-label-display: block;
+    --diary-toolbar-label-display: none;
     --diary-toolbar-button-width: auto;
 }
 .diary .diary-toolbar-add {

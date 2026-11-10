@@ -364,7 +364,7 @@ The host no longer loads `GarageSale/js/diary_toolbar.js` or `GarageSale/diary/t
 | `--diary-toolbar-label` | Visible action label. |
 | `--diary-toolbar-tooltip` | Hover and keyboard focus text. |
 | `--diary-toolbar-icon-size` | Icon width and height of `1.5rem`. |
-| `--diary-toolbar-label-display` | `block` to retain visible action labels. |
+| `--diary-toolbar-label-display` | `none` to hide action labels while preserving tooltips and accessible names. |
 | `--diary-toolbar-button-width` | `auto` to accommodate icons and labels. |
 
 The host sets the last three variables on `.diary .diary-graph-toolbar`.
