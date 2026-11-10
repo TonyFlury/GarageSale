@@ -46,6 +46,15 @@ class StreamRef:
         from .collection import publish
         return publish(self, signals)
 
+    def evaluate(self, build_signals, *, progress=None):
+        """Evaluate source conditions against each eligible user's current settings through central intake.
+
+        Give build_signals one normalized settings mapping per subscriber. Return counts of collection outcomes.
+        Preserve existing occurrence snapshots during retries. Propagate provider failures after rolling back the current recipient.
+        """
+        from .evaluation import evaluate
+        return evaluate(self, build_signals, progress=progress)
+
 
 class Registry:
     """Hold declarations without storing provider or default subscription rows."""

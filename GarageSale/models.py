@@ -545,3 +545,25 @@ class ApplicationAccess(models.Model):
         managed = False
         default_permissions = ()
         permissions = CUSTOM_PERMISSIONS
+
+
+class DiaryMonitorState(models.Model):
+    """Retain worker health and the last successful reminder date without granting web access."""
+
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    process_id = models.PositiveIntegerField(null=True, blank=True)
+    instance_key = models.UUIDField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    heartbeat_at = models.DateTimeField(null=True, blank=True)
+    stop_requested = models.BooleanField(default=False)
+    last_successful_date = models.DateField(null=True, blank=True)
+    last_run_at = models.DateTimeField(null=True, blank=True)
+    last_finished_at = models.DateTimeField(null=True, blank=True)
+    last_result = models.JSONField(default=dict)
+    last_error = models.TextField(blank=True)
+
+    class Meta:
+        """Keep one private monitor record for the application database."""
+
+        default_permissions = ()
+        constraints = [models.CheckConstraint(check=models.Q(id=1), name='diary_monitor_singleton')]

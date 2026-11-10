@@ -298,7 +298,8 @@ It displays the saved value and permits changes while the channel is enabled.
 Disabled channels retain their saved values and ignore submitted option changes.
 Existing subscriptions without `notice_days` use the declared default without losing enablement.
 Saving uses the existing Diary Save all transaction.
-Reminder evaluation remains background work and does not run when settings change.
+The Diary monitor evaluates reminders in the background and does not run when settings change.
+Its worker and management commands are documented in [Diary reminder monitor](../GarageSale/DIARY_MONITOR.md).
 The notice-period update passed 80 affected tests, including generic field generation, browser editing, validation, and existing subscription compatibility.
 The registration update passed 78 affected tests against a separate PostgreSQL database.
 
@@ -329,8 +330,10 @@ Replayed package callbacks can therefore produce separate notifications.
 Ownership notifications describe the current task without separate previous-owner removal messages.
 Proposed package improvement: Include a stable occurrence UUID in each task signal to support replay deduplication.
 
-Scheduled reminders, task-date evaluation, previous-owner messages, and durable callback retries remain outside this implementation.
-They require separate design and implementation work.
+Scheduled Due and Late evaluation is implemented by the host's Diary monitor.
+The technical method `StreamRef.evaluate(build_signals, progress=None)` supplies current normalized settings without transferring authorization to the provider.
+It targets each subscriber independently, retains accepted daily identities, and rechecks normal Notifier source access.
+Additional reminder frequencies, previous-owner messages, and durable event callback retries remain separate work.
 
 ## Verification
 

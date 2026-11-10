@@ -172,8 +172,11 @@ def notification_defaults(definition, signal, source, digest):
 
 
 @transaction.atomic
-def accept_recipient(index, definition, signal, recipient_id, source, digest):
-    """Recheck one recipient and store at most one occurrence inside a short transaction."""
+def accept_recipient(index, definition, signal, recipient_id, source, digest, *, keep_existing=False):
+    """Recheck one recipient and store at most one occurrence inside a short transaction.
+
+    Retain accepted snapshots when scheduled evaluation sets keep_existing. Reject conflicting content by default.
+    """
     subscription = Subscription.objects.select_for_update().filter(user_id=recipient_id, stream_key=definition.key).first()
 
     # Resolver audiences do not override opt-in or incompatible saved settings.
@@ -188,7 +191,7 @@ def accept_recipient(index, definition, signal, recipient_id, source, digest):
         occurrence_key=signal.occurrence_key, defaults=notification_defaults(definition, signal, source, digest))
 
     # Reusing an identity must never replace content already collected for the user.
-    if not created and notification.content_hash != digest:
+    if not created and notification.content_hash != digest and not keep_existing:
         return ItemResult(index, 'invalid', recipient_id, reason='occurrence_conflict')
 
     # Identical repeats reuse the same stored occurrence and its review state.

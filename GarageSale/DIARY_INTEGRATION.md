@@ -1,6 +1,6 @@
 # Garage Sale integration with Diary
 
-Status: Event creation, host-framed Diary pages, and the first progress adapter are implemented.
+Status: Event creation, host-framed Diary pages, progress notifications, and the daily reminder monitor are implemented.
 Dashboard integration, stable signal occurrence identifiers, and closure policy remain open.
 Date: November 10, 2026.
 
@@ -483,13 +483,20 @@ Their identifiers remain unchanged.
   The technical test `test_missing_or_invalid_diary_keys_do_not_use_a_task_only_fallback` verifies rejection of incomplete source identities.
   The technical test `test_task_in_another_diary_cannot_replace_the_supplied_source` verifies the absence of a cross-Diary fallback.
   Remaining: Obtain stable occurrence identifiers from a future package signal contract.
-  Remaining: Define scheduled reminders, previous-owner messages, and durable collection retries separately.
+  Monitor implementation: `GarageSale/diary_monitor/evaluator.py`: `read_tasks`, `due_signals`, `late_signals`, and `evaluate_day`.
+  Worker implementation: `GarageSale/diary_monitor/runtime.py`: `run_once`, `worker_cycle`, and `serve`.
+  Process controls: `GarageSale/diary_monitor/control.py`: `ensure_running`, `status`, and `request_stop`.
+  Central settings evaluation: `Notifier/evaluation.py`: `evaluate` and `evaluate_subscription`.
+  Verification: `GarageSale/tests/test_diary_monitor.py`: `DiaryMonitorTests` and `MonitorScheduleTests`.
+  Process verification: `GarageSale/tests/test_diary_monitor_control.py`: `MonitorControlTests`.
+  Remaining: Define additional user-selectable reminder frequencies, previous-owner messages, and durable event callback retries separately.
+  Monitor schedule, management commands, and current rules: [Diary reminder monitor](DIARY_MONITOR.md).
   Implementation details, provider examples, and open decisions: [Notifier documentation](../Notifier/README.md).
 
 Existing event records without a Diary key remain unprepared. No automatic backfill is implemented.
 The current-event selection rule remains unchanged.
 Milestone changes and their impact review remain outside the supported V1 host workflow.
-The Notifier adapter adds progress summaries only. It does not add scheduled reminders.
+The Notifier adapter adds progress summaries and scheduled Due and Late reminders through separate components.
 
 ## Verification of the dependency boundary
 
@@ -506,7 +513,8 @@ Earlier disabled-configuration checks used a separate run without Diary on the i
 The integration tests also verify explicit edit targets and safe rejection of malformed selection values.
 No migration was applied to application data, and no deployed service changed during verification.
 This change requires collection of the new `GarageSale/styles/diary_host.css` asset and the supplied Diary static assets.
-It adds no database migration beyond the existing host UUID migration.
+The earlier host UI required only the existing UUID migration.
+The reminder monitor also requires `GarageSale/migrations/0027_diarymonitorstate_and_more.py` for its private diagnostic state.
 
 ## Language review
 

@@ -175,6 +175,8 @@ NOTIFIER = {
 DIARY_MANAGER = 'Officer'
 DIARY_USER = 'ExecMember'
 DIARY_TIME_ZONE = 'Europe/London'
+DIARY_MONITOR = {'POLL_SECONDS': 60, 'RUN_HOUR': 1, 'RUN_MINUTE': 0, 'START_TIMEOUT_SECONDS': 10,
+                 'LOG_FILE': BASE_DIR / 'diary_monitor.log'}
 DIARY_TEMPLATE_NAME = 'Garage Sale calendar'
 DIARY_TASK_OWNER_ROLES = (
     'ExecMember', 'Officer', 'SponsorshipManager', 'PrizeDrawManager',

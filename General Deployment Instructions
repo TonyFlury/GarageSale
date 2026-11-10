@@ -229,6 +229,39 @@ if you have a new database :
         Full instructions and provider examples: Notifier/README.md.
         These new instructions have not received a full ASD-STE100 Issue 9 dictionary review.
 
+2f) Diary reminder monitor:
+        Apply GarageSale migration 0027_diarymonitorstate_and_more before starting the monitor.
+        Use the site's configured virtual environment, project directory, and database credentials.
+        Run one evaluation on demand:
+
+        python manage.py diary_monitor --once
+
+        Ensure that one detached worker is running:
+
+        python manage.py ensure_diary_monitor
+
+        Inspect its database lock, heartbeat, checkpoint, and last result:
+
+        python manage.py diary_monitor --status
+
+        Request a cooperative stop:
+
+        python manage.py diary_monitor --stop
+
+        Wait until status reports running=false before starting another worker.
+        The worker defaults to 01:00 Europe/London with 60-second control checks.
+        A new worker evaluates immediately when no successful checkpoint exists.
+        Current Due and Late conditions determine catch-up notifications.
+        Enable the required Diary channels and save notice settings before expecting personal reminders.
+        The monitor adds review-page notifications without sending email or using an engine.
+        For an always-on task or process supervisor, run python manage.py diary_monitor in the foreground.
+        Configure process restarts through the hosting supervisor.
+        For nightly scheduled hosting tasks, use python manage.py diary_monitor --once instead.
+        Independent background processes depend on the hosting platform's process policy.
+        Restart the worker after deploying code or monitor setting changes.
+        Full instructions, retry behavior, and configuration: GarageSale/DIARY_MONITOR.md.
+        These instructions have not received a full ASD-STE100 Issue 9 dictionary review.
+
 3) Credentials files :
     Using the files app on the python anywhere website
     Copy the appropriate files to the credentials folder

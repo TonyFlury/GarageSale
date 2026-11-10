@@ -72,7 +72,7 @@ def source_is_visible(user, source):
     from GarageSale.models import EventData
 
     # Host event visibility is separate from general Notifier permission and Diary membership.
-    if not user.has_perm('GarageSale.view_eventdata') or source.type != 'diary.task':
+    if not user.has_perm('GarageSale.view_eventdata') or source.type not in {'diary.task', 'diary.reminder'}:
         return False
     try:
         event_id, diary_text, task_text = source.identifier.split(':')
@@ -83,7 +83,11 @@ def source_is_visible(user, source):
             return False
         actor = Actor(reference=f'user:{user.pk}', groups=frozenset(user.groups.values_list('name', flat=True)),
                       calendar_keys=frozenset({diary_key}), email=user.email)
-        DiaryAPI(actor=actor).diary(key=diary_key).task(entry_key=task_key)
+        task = DiaryAPI(actor=actor).diary(key=diary_key).task(entry_key=task_key)
+
+        # Reminders must still refer to an open task and its evaluated date during intake and later review.
+        if source.type == 'diary.reminder':
+            return not task['closed'] and task['completed_at'] is None and str(task['date']) == source.revision
     except (ValueError, TypeError, ObjectDoesNotExist, PermissionDenied, ValidationError):
         return False
     return True

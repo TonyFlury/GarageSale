@@ -36,6 +36,8 @@ Enable Task Due to change the displayed value.
 Select Save all under Diary to save the change.
 Disabling a channel preserves its last saved settings.
 Changing the notice period does not run the background evaluator immediately.
+The implemented Diary monitor checks these settings during scheduled or on-demand evaluation.
+Its management commands and daily reminder rules are documented in [Diary reminder monitor](../GarageSale/DIARY_MONITOR.md).
 
 The settings page hides the engine section when no engines exist.
 This implementation has no communication engines, engine registration, or engine settings forms.
