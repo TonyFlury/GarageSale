@@ -10,12 +10,13 @@ Garage Sale creates a Diary during event creation. This confirmed behavior belon
 Garage Sale treats Diary as an independently supplied dependency with the Python import name `Diary`.
 This integration branch excludes Diary Python source, migrations, static files, and implementation history.
 It contains host-owned template adaptations for the external Diary UI.
-The installed distribution is `django-task-calendar` version `0.1.4.1`.
+The installed distribution is `django-task-calendar` version `0.1.9.3`.
 The separate DjangoTaskCalendar repository contains its source, migrations, and documentation.
 
 ## Dependency boundary and current implementation
 
-The dependency must provide the version `0.1.4.1` view interface and `Diary.apps.DiaryConfig`.
+The dependency must preserve the host view interface and provide `Diary.apps.DiaryConfig`.
+The host toolbar requires the CSS hooks supplied by version `0.1.9.3`.
 Garage Sale configures that application and supplies its own routes and team-page template wrapper.
 The nullable technical field `EventData.diary_key` stores the external Diary UUID without a foreign key.
 The Garage Sale migration depends only on Garage Sale migrations.
@@ -343,14 +344,30 @@ These host rules preserve the package classes and use no additional CSS variable
 The technical selector `.diary .diary-field-label` aligns field label text to the left.
 The technical selector `.diary.diary-template-editor` sets the editor width to 95% of its containing block.
 Both classes belong to the editor element. The rule removes the package's maximum width limit.
-The technical template `GarageSale/diary/toolbar_icons.html` declares the host navigator icons and their alternative text.
+Diary 0.1.9.3 supplies toolbar icon, label, and tooltip elements with CSS variables for host overrides.
 The host reuses the New and Save image assets for Add task and Save template.
 Settings uses a gear image. Help uses the existing question mark image.
-The technical script `GarageSale/js/diary_toolbar.js` adds images without replacing package controls or their event handlers.
-Its technical functions `decorateToolbars` and `decorateButton` preserve visible labels and add `title` and `aria-label` attributes.
-The technical selector `.diary .diary-graph-toolbar .diary-host-toolbar-icon` sets icon dimensions and alignment.
-The technical class `diary-host-toolbar-icons` identifies the host icon declarations.
-These additions preserve existing package classes and add no CSS variables.
+The technical stylesheet `GarageSale/styles/diary_host.css` supplies these overrides without host JavaScript or replacement toolbar templates.
+The package retains its accessible button names through HTML `aria-label` attributes.
+Its tooltip elements appear on hover and visible keyboard focus.
+CSS tooltip and label changes do not change those accessible names.
+The host retains the package classes and removes the former `diary-host-toolbar-icons` and `diary-host-toolbar-icon` classes.
+The host no longer loads `GarageSale/js/diary_toolbar.js` or `GarageSale/diary/toolbar_icons.html`.
+
+| Technical selector or variable | Host use |
+| --- | --- |
+| `.diary .diary-toolbar-add` | Existing New icon, Add task label, and tooltip. |
+| `.diary .diary-toolbar-save` | Existing Save icon, Save template label, and tooltip. |
+| `.diary .diary-toolbar-settings` | Gear icon, Settings label, and tooltip. |
+| `.diary .diary-toolbar-help` | Question mark icon, Help label, and tooltip. |
+| `--diary-toolbar-icon` | Image URL for the selected action. |
+| `--diary-toolbar-label` | Visible action label. |
+| `--diary-toolbar-tooltip` | Hover and keyboard focus text. |
+| `--diary-toolbar-icon-size` | Icon width and height of `1.5rem`. |
+| `--diary-toolbar-label-display` | `block` to retain visible action labels. |
+| `--diary-toolbar-button-width` | `auto` to accommodate icons and labels. |
+
+The host sets the last three variables on `.diary .diary-graph-toolbar`.
 The package manager filter panel includes Apply filters and Clear filters within its control row.
 Its checkboxes and buttons share one row when sufficient width is available. They wrap on narrow screens.
 Its rules remain within the `.diary` namespace. They add no CSS variables and change no dependency class names.

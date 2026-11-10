@@ -14,9 +14,32 @@
 /* HOST-003: Align Diary field labels with the form controls. */
 .diary .diary-field-label { text-align: left; }
 
-/* HOST-003: Keep navigator icons aligned with their visible action labels. */
-.diary .diary-graph-toolbar .diary-button { display: inline-flex; align-items: center; gap: .4rem; }
-.diary .diary-graph-toolbar .diary-host-toolbar-icon { display: inline-block; width: 1.5rem; height: 1.5rem; flex: 0 0 auto; object-fit: contain; }
+/* HOST-003: Use Diary 0.1.9.3 toolbar hooks for host icons, labels, and hover text. */
+.diary .diary-graph-toolbar {
+    --diary-toolbar-icon-size: 1.5rem;
+    --diary-toolbar-label-display: block;
+    --diary-toolbar-button-width: auto;
+}
+.diary .diary-toolbar-add {
+    --diary-toolbar-icon: url("../images/icons/create-note-alt-svgrepo-com.svg");
+    --diary-toolbar-label: "Add task";
+    --diary-toolbar-tooltip: "Add task";
+}
+.diary .diary-toolbar-save {
+    --diary-toolbar-icon: url("../images/icons/save-svgrepo-com.svg");
+    --diary-toolbar-label: "Save template";
+    --diary-toolbar-tooltip: "Save template";
+}
+.diary .diary-toolbar-settings {
+    --diary-toolbar-icon: url("../images/icons/settings-gear.svg");
+    --diary-toolbar-label: "Settings";
+    --diary-toolbar-tooltip: "Settings";
+}
+.diary .diary-toolbar-help {
+    --diary-toolbar-icon: url("../images/icons/help-circle-svgrepo-com.svg");
+    --diary-toolbar-label: "Help";
+    --diary-toolbar-tooltip: "Help";
+}
 
 /* HOST-003: Size the editor root against the host content area without the package width cap. */
 .diary.diary-template-editor { box-sizing: border-box; width: 95%; max-width: none; min-width: 0; }
