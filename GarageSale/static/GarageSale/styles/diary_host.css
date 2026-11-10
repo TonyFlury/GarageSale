@@ -21,22 +21,22 @@
     --diary-toolbar-button-width: auto;
 }
 .diary .diary-toolbar-add {
-    --diary-toolbar-icon: url("../images/icons/create-note-alt-svgrepo-com.svg");
+    --diary-toolbar-icon: url("/static/GarageSale/images/icons/create-note-alt-svgrepo-com.svg");
     --diary-toolbar-label: "Add task";
     --diary-toolbar-tooltip: "Add task";
 }
 .diary .diary-toolbar-save {
-    --diary-toolbar-icon: url("../images/icons/save-svgrepo-com.svg");
+    --diary-toolbar-icon: url("/static/GarageSale/images/icons/save-svgrepo-com.svg");
     --diary-toolbar-label: "Save template";
     --diary-toolbar-tooltip: "Save template";
 }
 .diary .diary-toolbar-settings {
-    --diary-toolbar-icon: url("../images/icons/settings-gear.svg");
+    --diary-toolbar-icon: url("/static/GarageSale/images/icons/settings-gear.svg");
     --diary-toolbar-label: "Settings";
     --diary-toolbar-tooltip: "Settings";
 }
 .diary .diary-toolbar-help {
-    --diary-toolbar-icon: url("../images/icons/help-circle-svgrepo-com.svg");
+    --diary-toolbar-icon: url("/static/GarageSale/images/icons/help-circle-svgrepo-com.svg");
     --diary-toolbar-label: "Help";
     --diary-toolbar-tooltip: "Help";
 }

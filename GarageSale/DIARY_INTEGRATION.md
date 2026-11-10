@@ -368,6 +368,10 @@ The host no longer loads `GarageSale/js/diary_toolbar.js` or `GarageSale/diary/t
 | `--diary-toolbar-button-width` | `auto` to accommodate icons and labels. |
 
 The host sets the last three variables on `.diary .diary-graph-toolbar`.
+Icon URLs use the host's `/static/GarageSale/images/icons/` path, matching the current `STATIC_URL` setting.
+Relative URLs in these variables resolve against the package stylesheet that uses them, not the host stylesheet that declares them.
+Update these URLs if the deployment changes `STATIC_URL`.
+Firefox verification confirmed that all four host icons load through the corrected paths.
 The package manager filter panel includes Apply filters and Clear filters within its control row.
 Its checkboxes and buttons share one row when sufficient width is available. They wrap on narrow screens.
 Its rules remain within the `.diary` namespace. They add no CSS variables and change no dependency class names.
