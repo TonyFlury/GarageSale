@@ -344,6 +344,8 @@ These host rules preserve the package classes and use no additional CSS variable
 The technical selector `.diary .diary-field-label` aligns field label text to the left.
 The technical selector `.diary.diary-template-editor` sets the editor width to 95% of its containing block.
 Both classes belong to the editor element. The rule removes the package's maximum width limit.
+The technical selector `.diary .diary-graph-viewport` limits the navigator viewport height to `80dvh`, with an `80vh` fallback.
+This limit includes its borders and follows visible browser height changes. The package retains scrolling and graph navigation.
 Diary 0.1.9.3 supplies toolbar icon, label, and tooltip elements with CSS variables for host overrides.
 The host reuses the New and Save image assets for Add task and Save template.
 The Save template button uses a light background to keep the existing black Save icon visible.

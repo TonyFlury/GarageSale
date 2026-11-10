@@ -45,3 +45,11 @@
 
 /* HOST-003: Size the editor root against the host content area without the package width cap. */
 .diary.diary-template-editor { box-sizing: border-box; width: 95%; max-width: none; min-width: 0; }
+
+/* HOST-003: Cap the navigator viewport at 80% of the visible browser height. */
+.diary .diary-graph-viewport {
+    box-sizing: border-box;
+    min-height: 0;
+    max-height: 80vh;
+    max-height: 80dvh;
+}
