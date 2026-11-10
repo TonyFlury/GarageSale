@@ -1,5 +1,4 @@
 {% extends 'Notifier/base.html' %}
-{% load static %}
 {% block notifier_content %}
 <h1 class="notifier-heading">Notifications</h1>
 <p class="notifier-order">Urgent first. Oldest first within each severity.</p>
@@ -9,9 +8,10 @@
     <a class="notifier-filter-tab{% if not unread_only %} notifier-filter-tab-active{% endif %}" href="?{{ filter_query }}"{% if not unread_only %} aria-current="page"{% endif %}><span class="notifier-label-full">All notifications</span><span class="notifier-label-short">All</span></a>
     <a class="notifier-filter-tab{% if unread_only %} notifier-filter-tab-active{% endif %}" href="?{{ unread_query }}"{% if unread_only %} aria-current="page"{% endif %}><span class="notifier-label-full">Unread notifications</span><span class="notifier-label-short">Unread</span></a>
 </nav>
-<details class="notifier-filter-panel" data-notifier-filter-required="{{ filters_require_open|yesno:'true,false' }}" open>
-<summary class="notifier-filter-summary">Filters{% if filters_active %}<span class="notifier-filter-status">Active</span>{% endif %}</summary>
-<form class="notifier-review-filters" method="get" action="{% url 'Notifier:feed' %}">
+<section class="notifier-filter-panel" aria-label="Notification filters">
+<input class="notifier-filter-toggle" id="notifier-filter-toggle" type="checkbox" aria-controls="notifier-filter-fields"{% if filters_require_open %} checked{% endif %}>
+<label class="notifier-filter-summary" for="notifier-filter-toggle"><span class="notifier-filter-expand-icon" aria-hidden="true"></span>Filters{% if filters_active %}<span class="notifier-filter-status">Active</span>{% endif %}</label>
+<form class="notifier-review-filters" id="notifier-filter-fields" method="get" action="{% url 'Notifier:feed' %}">
     {% if unread_only %}<input type="hidden" name="state" value="unread">{% endif %}
     {% for field in filter_form %}
     <div class="notifier-filter-field">
@@ -22,7 +22,7 @@
     <button class="notifier-apply-filters" type="submit">Apply filters</button>
     <a class="notifier-clear-filters" href="{% url 'Notifier:feed' %}">Clear filters</a>
 </form>
-</details>
+</section>
 <ul class="notifier-list">
 {% for notification in page_obj %}
     {% ifchanged notification.severity %}
@@ -63,8 +63,4 @@
     {% if page_obj.has_next %}<a href="?{{ page_query }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% endif %}
 </nav>
 {% endif %}
-{% endblock %}
-{% block PageScripts %}
-    {{ block.super }}
-    <script src="{% static 'Notifier/review.js' %}?v=mobile-review-1" defer></script>
 {% endblock %}

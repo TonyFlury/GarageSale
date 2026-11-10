@@ -259,9 +259,12 @@ The `.notifier-label-full` and `.notifier-label-short` classes select full or co
 The `.notifier-heading` and `.notifier-introduction` classes identify the page heading and optional guidance.
 The `.notifier-filter-panel` and `.notifier-filter-summary` classes identify expandable filters.
 The `.notifier-filter-status` class marks active filters.
-The `initializeNotifierReview` function in `Notifier/review.js` collapses unused filters on mobile.
+All mobile presentation rules reside in `GarageSale/static/GarageSale/styles/smallscreen.css`.
+The `.notifier-filter-toggle` checkbox controls mobile filter expansion through CSS.
+The `.notifier-filter-expand-icon` class supplies its decorative expansion marker.
+Keyboard focus on the checkbox produces a visible outline around the Filters label.
 Active filters and validation errors remain expanded. Desktop filters remain expanded.
-Without JavaScript, filters remain expanded and usable.
+Filter expansion and responsive layout require no JavaScript.
 Mobile navigation links, filter controls, and notification action buttons retain touch targets at least 44 pixels high.
 Notification metadata displays the provider name before the channel name, such as `Diary: Task Late`.
 The Garage Sale host sidebar includes a Team Pages link when `GarageSale.access_team_pages` permits access.
