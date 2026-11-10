@@ -115,16 +115,21 @@ div.TopBar span.icon {
 
 div.TopBar{
     height:auto;
+    padding-bottom: 1.4rem;
 }
 
 div#Buttons {
-    bottom: 0;
+    bottom: 1.4rem;
     position: absolute;
     display: flex;
-    span#user_name {
-        align-self: center;
-        top: -0.5rem;
-        position: relative;
+    span#UserButtons span#user_name {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: .15rem;
+        white-space: nowrap;
+        font-size: .85rem;
+        line-height: 1.2;
     }
     span#mobile.BurgerDropDown {
         align-self:center;
