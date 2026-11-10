@@ -226,6 +226,11 @@ The groups appear in this order: Urgent, Warning, Information.
 Each group displays notifications from oldest to newest.
 The optional field `StreamDefinition.severity` defaults to `Severity.INFORMATION`.
 Notification settings display each channel's severity.
+The `.notifier-channel-heading` class places the title and severity badge on one line when space permits.
+The `.notifier-channel-title` class identifies the title inside the fieldset legend.
+The `.notifier-provider-channels` class indents channels beneath the provider heading.
+Long headings can wrap on narrow screens.
+The existing `.notifier-severity-label` class remains available on the badge inside the legend.
 Each provider group has severity controls that select or clear its matching channels.
 Users can then change individual channel selections.
 The severity control shows a mixed state when some matching channels are selected.

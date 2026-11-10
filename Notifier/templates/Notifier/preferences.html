@@ -16,9 +16,10 @@
     {% endfor %}
     </fieldset>
     <noscript><p class="notifier-severity-help">Use individual channel checkboxes when JavaScript is unavailable.</p></noscript>
+    <div class="notifier-provider-channels">
     {% for section in group.sections %}
-    <fieldset class="notifier-channel notifier-severity-{{ section.stream.severity }}" data-notifier-severity="{{ section.stream.severity }}"><legend>{{ section.stream.label }}</legend>
-        <p class="notifier-severity-label">{{ section.severity_label }}</p>
+    <fieldset class="notifier-channel notifier-severity-{{ section.stream.severity }}" data-notifier-severity="{{ section.stream.severity }}">
+        <legend class="notifier-channel-heading"><span class="notifier-channel-title">{{ section.stream.label }}</span><span class="notifier-severity-label">{{ section.severity_label }}</span></legend>
         <p>{{ section.stream.description }}</p>
         {{ section.form.non_field_errors }}
         <p class="notifier-channel-toggle">{{ section.form.enabled.errors }}{{ section.form.enabled }} {{ section.form.enabled.label_tag }}</p>
@@ -42,6 +43,7 @@
         {% endif %}
     </fieldset>
     {% endfor %}
+    </div>
     <button class="notifier-save-all" type="submit" aria-label="Save all {{ group.provider.label }} channels">Save all</button>
 </form>
 {% empty %}<p class="notifier-empty">No notification streams are available.</p>{% endfor %}
