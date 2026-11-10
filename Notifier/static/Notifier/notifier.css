@@ -7,6 +7,8 @@
 .notifier .notifier-unread { border-inline-start: .35rem solid #2f4f4f; }
 .notifier .notifier-title { margin-block: 0 .5rem; font-size: 1.2rem; }
 .notifier .notifier-text { white-space: pre-wrap; }
+.notifier .notifier-action { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; box-sizing: border-box; padding: .6rem 1rem; margin-block: .25rem .75rem; border: 2px solid #174e59; border-radius: .35rem; background: #174e59; color: #fff; font-weight: bold; text-decoration: none; }
+.notifier .notifier-action:hover { background: #103740; border-color: #103740; color: #fff; text-decoration: underline; }
 .notifier .notifier-metadata, .notifier .notifier-state { color: #505050; }
 .notifier .notifier-settings label { display: inline-block; text-align: left; }
 .notifier .notifier-settings fieldset { min-width: 0; }

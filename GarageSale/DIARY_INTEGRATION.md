@@ -478,6 +478,8 @@ Their identifiers remain unchanged.
   The first implementation connects five committed package signals to the engine-free Notifier.
   Task links: `GarageSale/diary_notifier.py`: `task_url` and `receive_task_event`.
   Reminder actions: `GarageSale/diary_monitor/evaluator.py`: `reminder_signal`.
+  Reminder ordering: `reminder_signal` supplies the due date through the generic `Signal.sort_at` field.
+  Verification: `DiaryMonitorTests.test_first_monitor_pass_orders_overdue_tasks_by_due_date`.
   Link handling: `GarageSale/views/diary_views.py`: `LinkedEventTaskDetailView` and `GarageSale/diary_urls.py`: `Diary:linked-task`.
   Verification: `DiaryNotifierTests.test_task_action_opens_exact_task_without_session_or_current_event_selection` and `test_task_action_rejects_changed_host_link_and_lost_event_access`.
   Privacy verification: `DiaryNotifierTests.test_private_personal_task_never_reaches_another_subscriber`.

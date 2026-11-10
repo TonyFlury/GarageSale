@@ -1,6 +1,7 @@
 {% extends 'Notifier/base.html' %}
 {% block notifier_content %}
 <h1>Notifications</h1>
+<p class="notifier-order">Oldest first.</p>
 <p>Notifications appear here after collection. Enable the channels you want in Notification settings.</p>
 <nav class="notifier-filters" aria-label="Review filter">
     <a href="{% url 'Notifier:feed' %}"{% if not unread_only %} aria-current="page"{% endif %}>All notifications</a>

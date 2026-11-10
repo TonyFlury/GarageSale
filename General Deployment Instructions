@@ -203,6 +203,8 @@ if you have a new database :
         Language review limit: The new Diary deployment instructions have not received a full ASD-STE100 Issue 9 dictionary review.
 
 2e) Notifier personal review:
+        Apply Notifier migration 0002_notification_sort_at for optional provider ordering dates.
+        Collect the updated Notifier/notifier.css stylesheet for prominent notification links.
         Install django-task-calendar version 0.1.10.2 from the approved dependency source.
         Apply the Notifier migration with the normal migrate command.
         Complete the access policy procedure in step 2a.

@@ -220,6 +220,14 @@ Earlier independent entries can exist when collection stops with `IntakeUnavaila
 Retry with the original occurrence identifiers.
 
 Signals contain plain text and JSON-compatible object data.
+The review page displays notifications from oldest to newest before pagination.
+Providers can supply the optional aware timestamp `Signal.sort_at` for domain-specific ordering.
+The default ordering timestamp is `occurred_at`.
+Collection time and record ID provide stable tie breakers.
+Diary reminders supply their due dates as London midnight timestamps.
+Their actual occurrence and collection timestamps remain unchanged.
+The generic Notifier does not inspect Diary data for ordering.
+The `.notifier-action` CSS class displays optional links as prominent buttons with visible keyboard focus.
 The review page escapes provider text.
 The optional `Signal.url` and `Signal.url_text` fields define a generic notification link.
 Omit both fields for a notification without a link.

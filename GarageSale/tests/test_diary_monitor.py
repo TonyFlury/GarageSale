@@ -7,7 +7,7 @@ from django.test import TestCase, SimpleTestCase, override_settings
 from django.utils import timezone
 
 from Diary.api import Actor, DiaryAPI, EntrySpec
-from GarageSale.diary_monitor.configuration import configuration, local_now, should_run
+from GarageSale.diary_monitor.configuration import LONDON, configuration, local_now, should_run
 from GarageSale.diary_monitor.evaluator import read_tasks
 from GarageSale.diary_monitor.runtime import run_once
 from GarageSale.models import DiaryMonitorState, EventData
@@ -51,6 +51,19 @@ class DiaryMonitorTests(TestCase):
         self.assertEqual(set(Notification.objects.filter(user=self.member).values_list('title', flat=True)), {'Due today'})
         self.assertEqual(set(Notification.objects.filter(user=self.other).values_list('title', flat=True)), {'Due today', 'Due soon'})
         self.assertEqual(DiaryMonitorState.objects.get().last_successful_date, self.day)
+
+    def test_first_monitor_pass_orders_overdue_tasks_by_due_date(self):
+        """Show the oldest overdue task first regardless of task creation or monitor collection order."""
+        self.task('Recently late', self.day - timedelta(days=1))
+        self.task('Oldest late', self.day - timedelta(days=20))
+        self.task('Middle late', self.day - timedelta(days=5))
+        self.enable(self.member, 'task_late')
+        before = timezone.now()
+        run_once(self.day)
+        records = visible_notifications(self.member)
+        self.assertEqual([row.title for row in records], ['Oldest late', 'Middle late', 'Recently late'])
+        self.assertTrue(all(row.occurred_at >= before for row in records))
+        self.assertEqual(records[0].sort_at.astimezone(LONDON).date(), self.day - timedelta(days=20))
 
     def test_late_begins_after_due_date_and_daily_retries_preserve_read_state(self):
         """Create daily overdue occurrences without duplicating a day's accepted content or resetting read state."""

@@ -37,6 +37,7 @@ class Notification(models.Model):
     payload_version = models.PositiveIntegerField(default=1)
     content_hash = models.CharField(max_length=64)
     occurred_at = models.DateTimeField()
+    sort_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     read_at = models.DateTimeField(null=True, blank=True)
     action_label = models.CharField(max_length=80, blank=True)

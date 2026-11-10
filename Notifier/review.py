@@ -1,5 +1,6 @@
 """Select personal notifications with current preference and source access checks."""
 from django.http import Http404
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from .collection import source_is_visible
@@ -12,7 +13,7 @@ from .registry import get_registry
 def visible_notifications(user, *, unread=False):
     """Return only this user's currently eligible entries without deleting hidden history."""
     subscriptions = {row.stream_key: row for row in Subscription.objects.filter(user=user)}
-    records = Notification.objects.filter(user=user)
+    records = Notification.objects.filter(user=user).order_by(Coalesce('sort_at', 'occurred_at'), 'created_at', 'pk')
 
     # The unread filter changes presentation without changing stored review state.
     if unread:

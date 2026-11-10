@@ -83,6 +83,10 @@ def validate_signal(signal):
     # Aware occurrence times avoid ambiguous daylight-saving boundaries.
     if not hasattr(signal.occurred_at, 'utcoffset') or timezone.is_naive(signal.occurred_at):
         raise ValidationError('Supply an aware occurrence time.')
+
+    # Provider ordering dates must be unambiguous without replacing the actual occurrence time.
+    if signal.sort_at is not None and (not hasattr(signal.sort_at, 'utcoffset') or timezone.is_naive(signal.sort_at)):
+        raise ValidationError('Supply an aware sort_at time.')
     source = asdict(signal.source)
 
     # Source references remain opaque strings rather than application model objects.
@@ -100,6 +104,10 @@ def validate_signal(signal):
     # Navigation is part of the immutable content of an accepted occurrence.
     if action is not None:
         content['action'] = asdict(action)
+
+    # Omitted ordering metadata preserves the content hashes of existing provider messages.
+    if signal.sort_at is not None:
+        content['sort_at'] = signal.sort_at.isoformat()
     encoded = json.dumps(content, sort_keys=True, allow_nan=False)
 
     # Large arbitrary payloads must not bypass the plain-text field limits.
@@ -185,7 +193,7 @@ def notification_defaults(definition, signal, source, digest):
     """Store accepted content independently of the provider's continued availability."""
     values = {'stream_label': definition.label, 'title': signal.title, 'text': signal.text,
               'source': source, 'data': signal.data, 'payload_version': signal.payload_version,
-              'content_hash': digest, 'occurred_at': signal.occurred_at}
+              'content_hash': digest, 'occurred_at': signal.occurred_at, 'sort_at': signal.sort_at}
 
     action = signal_action(signal)
 

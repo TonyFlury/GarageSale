@@ -116,10 +116,15 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.assertTrue(Subscription.objects.get(user=self.user, stream_key=self.secondary_stream.key).enabled)
         self.check_notice_period_retention()
         self.stream.publish([Signal('browser:1', timezone.now(), SourceRef('example.record', '1'),
-                                    'Ready for review', 'The example record changed.')])
+                                    'Ready for review', 'The example record changed.',
+                                    url=reverse('Notifier:preferences'), url_text='Open item')])
         self.open_page('Notifier:feed')
         self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.notifier-title').text, 'Ready for review')
         self.driver.set_window_size(390, 844)
+        link = self.driver.find_element(By.CSS_SELECTOR, '.notifier-action')
+        self.assertTrue(link.is_displayed())
+        self.assertGreaterEqual(link.size['height'], 44)
+        self.assertEqual(link.value_of_css_property('color'), 'rgba(255, 255, 255, 1)')
         self.driver.save_screenshot('/tmp/notifier-review-mobile.png')
 
         # Report elements outside the viewport when a narrow layout fails its width check.

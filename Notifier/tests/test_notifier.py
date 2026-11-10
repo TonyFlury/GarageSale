@@ -1,5 +1,6 @@
 """Verify engine-free collection, opt-in, source privacy, and personal review."""
 from dataclasses import replace
+from datetime import timedelta
 from itertools import repeat
 from unittest.mock import patch
 
@@ -17,6 +18,7 @@ from Notifier.configuration import configuration
 from Notifier.models import Notification, Subscription
 from Notifier.preferences import save_subscription
 from Notifier.registry import Registry, RegistrationConflict, StreamUnavailable
+from Notifier.review import visible_notifications
 
 
 def deny_source(user, source):
@@ -233,6 +235,25 @@ class NotifierTests(TestCase):
         response = self.client.get(reverse('Notifier:feed'))
         self.assertContains(response, '&lt;script&gt;alert(1)&lt;/script&gt;')
         self.assertNotContains(response, '<script>alert(1)</script>')
+
+    def test_review_orders_by_provider_date_then_occurrence_time_oldest_first(self):
+        """Order delayed and batched signals by their supplied dates before pagination and unread filtering."""
+        self.enable()
+        now = timezone.now()
+        self.publish(replace(self.message, occurrence_key='new', occurred_at=now))
+        self.publish(replace(self.message, occurrence_key='old', occurred_at=now - timedelta(days=2)))
+        self.publish(replace(self.message, occurrence_key='batch', occurred_at=now,
+                             sort_at=now - timedelta(days=4)))
+        self.assertEqual([row.occurrence_key for row in visible_notifications(self.user)], ['batch', 'old', 'new'])
+        response = self.client.get(reverse('Notifier:feed'), {'state': 'unread'})
+        self.assertEqual([row.occurrence_key for row in response.context['page_obj']], ['batch', 'old', 'new'])
+
+    def test_naive_provider_ordering_time_is_rejected(self):
+        """Reject ambiguous provider ordering times without storing an occurrence."""
+        self.enable()
+        message = replace(self.message, sort_at=timezone.now().replace(tzinfo=None))
+        self.assertEqual(self.publish(message).items[0].status, 'invalid')
+        self.assertFalse(Notification.objects.exists())
 
     def test_generic_signal_link_is_stored_rendered_and_compatible_with_action(self):
         """Display a provider link and preserve occurrence identity across the compatible interfaces."""

@@ -73,6 +73,7 @@ class Signal:
     action: Action | None = None
     url: str = ''
     url_text: str = ''
+    sort_at: datetime | None = None
 
 
 @dataclass(frozen=True)
