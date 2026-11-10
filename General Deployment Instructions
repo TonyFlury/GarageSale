@@ -114,7 +114,69 @@ if you have a new database :
         not transfer contributors, event configuration or credentials.
         Full instructions: GarageSale/TEMPLATE_TRANSFER.md
 
-2c) Demonstration data - TRIAL SITES ONLY. DO NOT RUN ON THE LIVE SITE:
+2c) Diary calendar template transfer - SITES WITH DIARY ENABLED:
+        Install the approved DjangoTaskCalendar package before this step.
+        Apply its migrations with the project's normal migration command.
+        Complete the access policy setup in step 2a.
+        Check the configured Diary groups:
+
+        python manage.py validate_diary_configuration
+
+        Use transfer_diary_templates to export and import Diary calendar templates.
+        This command is separate from the communication template command in step 2b.
+        Use the site's project directory, virtual environment, and database credentials.
+        Diary 0.1.9.3 treats command-line access as administrative authorization.
+        Its transfer command does not accept an --actor argument.
+        The current DIARY_MANAGER setting selects the Officer group.
+
+        Export the selected template to a new file on the source site:
+
+        python manage.py transfer_diary_templates export deployment-diary-template.json --template "Garage Sale calendar"
+
+        Replace the template name when the deployment uses a different template.
+        Without --template, the export contains every template's latest approved version.
+        Export does not overwrite an existing file.
+        The file includes milestone declarations, task ownership, date rules, and dependencies.
+        Person assignments use email addresses instead of source user IDs.
+        The file does not contain event Diaries, task completion records, or user accounts.
+
+        Copy the file to the destination site through the normal file-transfer process.
+        Validate the file before import:
+
+        python manage.py transfer_diary_templates import deployment-diary-template.json --dry-run
+        python manage.py transfer_diary_templates import deployment-diary-template.json
+
+        Use this command instead of loaddata for Diary template imports.
+        The command checks ownership, milestone declarations, and dependency cycles.
+        Identical approved versions remain unchanged.
+        Conflicting content stops the import.
+        Review conflicts before adding --new-version to both import commands.
+        Existing milestone labels and descriptions must match the file.
+        Add --person-map SOURCE_EMAIL=LOCAL_EMAIL when an assigned person's destination email differs.
+
+        Import the approved template before creating events.
+        Its name must match the DIARY_TEMPLATE_NAME setting.
+        Event creation supplies dates for the template's required task milestones.
+        Existing event Diaries remain unchanged after template import.
+        Full integration instructions: GarageSale/DIARY_INTEGRATION.md.
+        Package command documentation: Diary/README.md in the DjangoTaskCalendar source repository.
+
+2d) Demonstration data - TRIAL SITES ONLY. DO NOT RUN ON THE LIVE SITE:
+        Complete migrations and access policy setup before importing the example Diary template.
+        Use the trial site's project directory, virtual environment, and database credentials.
+        Import the example calendar template before creating a demonstration event:
+
+        python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json --dry-run
+        python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json
+
+        This example creates the approved template named Garage Sale calendar.
+        It contains eight tasks assigned to ExecMember, with booking milestones and task dependencies.
+        Set DIARY_TEMPLATE_NAME to Garage Sale calendar for these demonstrations.
+        Resolve import conflicts as described in step 2c.
+        A new event receives its Diary through the normal event creation service.
+        Import alone does not create a Diary for an existing event.
+        Use ensure_event_diary(event, user) for existing-event setup as documented in GarageSale/DIARY_INTEGRATION.md.
+
         After migrations, ensure the trial site's current event is configured:
         its Use from date must be before today and its event date must not have
         passed. Creating a future event does not automatically make it current:
@@ -137,6 +199,8 @@ if you have a new database :
         they do not reset the data. Ensure trial media files are served so the
         generated logos appear. Transfer templates first for PDF/email demos.
         Full instructions: Contributors/TEAM_DEMO.md
+
+        Language review limit: The new Diary deployment instructions have not received a full ASD-STE100 Issue 9 dictionary review.
 
 3) Credentials files :
     Using the files app on the python anywhere website

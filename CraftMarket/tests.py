@@ -7,6 +7,7 @@ import io
 from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core import mail
 from django.test import Client, RequestFactory, TestCase, override_settings
 from urllib.parse import urlsplit
@@ -21,6 +22,7 @@ import GarageSale.models
 from GarageSale.tests.common import IdentifyMixin, SeleniumCommonMixin, SmartHTMLTestMixins
 
 from GarageSale.tests.browser_labels import BrowserTestLabelMixin
+from GarageSale.tests.access_helpers import grant_workflow_permissions
 from GarageSale.models import EventData, CommunicationTemplate
 from Contributors.models import Contributor, ContributorEvent, ContributorHistory
 from .rsvp import invitation_url
@@ -44,6 +46,7 @@ class TestCraftMarketTeamPages(BrowserTestLabelMixin, IdentifyMixin, SmartHTMLTe
     screenshot_sub_directory = 'TestCraftMarketSpreadsheet'
 
     def setUp(self):
+        """Create independent browser fixtures, including retained Craft Market permission identities."""
         super().setUp()
         today = timezone.localdate()
         self.event = EventData.objects.create(event_date=today + timedelta(days=30), use_from=today - timedelta(days=1))
@@ -53,11 +56,16 @@ class TestCraftMarketTeamPages(BrowserTestLabelMixin, IdentifyMixin, SmartHTMLTe
         self.view_user = get_user_model().objects.create_user(
             email='market-viewer@example.com', password='test-password', is_verified=True,
         )
+        content_type, _ = ContentType.objects.get_or_create(app_label='CraftMarket', model='marketer')
+        for action in ('view', 'change'):
+            Permission.objects.get_or_create(content_type=content_type, codename=f'{action}_marketer',
+                                             defaults={'name': f'Can {action} marketer'})
         permissions = Permission.objects.filter(content_type__app_label='CraftMarket')
         self.view_user.user_permissions.add(permissions.get(codename='view_marketer'))
         self.manage_user.user_permissions.add(
             permissions.get(codename='view_marketer'), permissions.get(codename='change_marketer'),
         )
+        grant_workflow_permissions(self.manage_user)
         self.marketers = [Contributor.objects.create(
             contributor_type='Marketer', contributor_name=name, contact_name=f'Contact {index}',
             email=f'trader{index}@example.com', phone=f'0712345678{index}',
@@ -160,11 +168,18 @@ class TestCraftMarketTeamPages(BrowserTestLabelMixin, IdentifyMixin, SmartHTMLTe
         self.assertFalse(field.is_enabled())
 
     def test_manager_toolbar_actions_require_selection(self):
+        """Keep all declared market actions disabled until a trader selection makes them eligible."""
         actions = self.selenium.find_elements(By.CSS_SELECTOR, '#toolbar button[name="toolbar_action"]')
-        self.assertEqual({button.get_attribute('value') for button in actions}, {'invite', 'confirm', 'reject', 'send_email'})
+        self.assertEqual({button.get_attribute('value') for button in actions},
+                         {'invite', 'confirm', 'reject', 'send_email', 'generate_pdf',
+                          'record_fee', 'cancel_booking', 'reinstate_booking',
+                          'lifecycle_hide', 'lifecycle_restore', 'lifecycle_delete'})
         self.assertTrue(all(not button.is_enabled() for button in actions))
         self.selected(self.marketers[0])
-        self.assertTrue(all(button.is_enabled() for button in actions))
+
+        # This trader has contact history but no accepted booking or hidden record, so recovery and deletion remain unavailable.
+        enabled = {button.get_attribute('value') for button in actions if button.is_enabled()}
+        self.assertEqual(enabled, {'invite', 'confirm', 'reject', 'send_email', 'generate_pdf', 'lifecycle_hide'})
         self.selected(self.marketers[0])
         self.assertTrue(all(not button.is_enabled() for button in actions))
 
@@ -605,10 +620,13 @@ class MarketeerRSVP(BrowserTestLabelMixin, ContributorPortalFixtures, SmartHTMLT
         )
 
     def enter_portal(self, email=None):
+        """Submit the trader email and wait for the next response before reading shared page elements."""
         field = self.visible('div.form input[type="email"]')
         field.clear()
         field.send_keys(email or self.marketer.email)
-        self.visible('div.buttons input[type="submit"]').click()
+        button = self.visible('div.buttons input[type="submit"]')
+        button.click()
+        WebDriverWait(self.selenium, 10).until(EC.staleness_of(button))
 
     def choose_response(self, answer):
         self.visible(f'input[name="{answer}"]').click()

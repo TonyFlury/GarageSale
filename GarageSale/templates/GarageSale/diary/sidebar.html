@@ -1,0 +1,27 @@
+{% load static %}
+{# HOST-003: Diary page links use the normal team sidebar and current manager access. #}
+<nav class="diary diary-host-sidebar" aria-label="Diary pages">
+    <div class="sidebar entry direct tooltip diary-host-sidebar-entry" item="{% url 'Diary:personal-diary' %}">
+        <a class="diary-host-personal" href="{% url 'Diary:personal-diary' %}">
+            <img class="sidebar icon diary-host-sidebar-icon" alt="" id="diary-personal-icon" src="{% static 'GarageSale/images/icons/navigation/diary-svgrepo-com.svg' %}">
+            <label class="diary-host-sidebar-label" for="diary-personal-icon">My Diary</label>
+        </a>
+        <span class="tooltiptext right arrow diary-host-sidebar-tooltip">My Diary</span>
+    </div>
+    {% if request.diary_host_manager %}
+        <div class="sidebar entry direct tooltip diary-host-sidebar-entry" item="{% url 'Diary:manager-diary' %}">
+            <a class="diary-host-manager" href="{% url 'Diary:manager-diary' %}">
+                <img class="sidebar icon diary-host-sidebar-icon" alt="" id="diary-manager-icon" src="{% static 'GarageSale/images/icons/menu/team-3-svgrepo-com.svg' %}">
+                <label class="diary-host-sidebar-label" for="diary-manager-icon">Manager Diary</label>
+            </a>
+            <span class="tooltiptext right arrow diary-host-sidebar-tooltip">Manager Diary</span>
+        </div>
+        <div class="sidebar entry direct tooltip diary-host-sidebar-entry" item="{% url 'Diary:template-list' %}">
+            <a class="diary-host-templates" href="{% url 'Diary:template-list' %}">
+                <img class="sidebar icon diary-host-sidebar-icon" alt="" id="diary-templates-icon" src="{% static 'GarageSale/images/icons/menu/news-svgrepo-com.svg' %}">
+                <label class="diary-host-sidebar-label" for="diary-templates-icon">Templates</label>
+            </a>
+            <span class="tooltiptext right arrow diary-host-sidebar-tooltip">Templates</span>
+        </div>
+    {% endif %}
+</nav>

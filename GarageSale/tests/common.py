@@ -262,7 +262,7 @@ class IdentifyMixin(StaticLiveServerTestCase):
 
     @contextmanager
     def identify_as_guest(self, guest_user='test_user@test.com'):
-        """Context manager to Authenticate the user as a guest"""
+        """Create or find a guest, authenticate the browser, and remove its session after use."""
         user_model: Type[UserExtended | AbstractUser] = get_user_model()
         try:
             inst = user_model.objects.get(email=guest_user)
@@ -271,6 +271,7 @@ class IdentifyMixin(StaticLiveServerTestCase):
 
         if inst is None:
             inst = user_model.objects.create_guest_user(guest_user)
+        self.force_login(inst, self.get_test_url())
         try:
             yield inst
         finally:

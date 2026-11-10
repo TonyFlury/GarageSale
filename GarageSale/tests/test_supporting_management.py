@@ -3,7 +3,9 @@ from datetime import date
 from tempfile import TemporaryDirectory
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group, Permission
+from django.apps import apps
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -101,7 +103,18 @@ class SupportingManagementTests(TestCase):
         choices = list(response.context["form"].fields["supporting_organisations"].choices)
         self.assertEqual(choices, [(self.second.pk, self.second.name), (self.first.pk, self.first.name)])
 
+    @override_settings(DIARY_TASK_OWNER_ROLES=())
     def test_create_and_edit_event_save_selection_and_order(self):
+        """Preserve charity selection and order when event creation also prepares its configured Diary."""
+
+        # HOST-001: This isolated fixture supplies a manager to prepare the approved template used during event creation.
+        if apps.is_installed('Diary'):
+            from Diary.api import Actor, DiaryAPI
+            managers, _ = Group.objects.get_or_create(name=settings.DIARY_MANAGER)
+            self.user.groups.add(managers)
+            actor = Actor(f'user:{self.user.pk}', frozenset({settings.DIARY_MANAGER}))
+            template = DiaryAPI(actor=actor).create_template(name=settings.DIARY_TEMPLATE_NAME)
+            template.save_version(entries=(), predecessors={}, expected_version_key=None)
         response = self.client.post(reverse("TeamPages:EventCreate"), event_data([self.second, self.first]))
         self.assertEqual(response.status_code, 302, response.context["form"].errors if response.status_code == 200 else "")
         self.assertRedirects(response, reverse("TeamPages:EventList"))

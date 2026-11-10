@@ -92,3 +92,44 @@ Sponsor/CraftMarket records. Keep the source archive branch separate.
 
 For GitHub review, open this integration branch against master and preserve merge
 ancestry. The original feature branches remain available independently.
+
+## Diary integration merge: November 10, 2026
+
+This merge adds `integration/event-calendar` to `master` and preserves both branch histories.
+Git merged the branches without unresolved conflicts.
+Diary remains the separate `django-task-calendar` distribution. This merge contains only its Garage Sale integration.
+
+The host creates event Diaries through the public package API and stores their UUIDs.
+It supplies event milestone dates, trusted page context, team navigation, and CSS overrides for the Diary toolbar and navigator.
+The technical document `GarageSale/DIARY_INTEGRATION.md` describes the implementation and package boundary.
+
+Validation exposed outdated tests and two application defects outside the Diary integration.
+The technical function `Accounts.views.views.upload_transactions` now redirects with only the URL's supported record identifiers.
+The technical template `Location/templates/widgets/create_location.html` now submits an empty ownership override instead of the string `None`.
+Ordinary location creation therefore retains the authenticated owner.
+
+The host tests now follow Diary 0.1.9.3 milestone and administrative command interfaces.
+Other test corrections cover current permissions, the `Fee Pending` booking state, toolbar eligibility, guest authentication, date handling, and current form markup.
+Location browser tests complete both form sections and close the confirmation dialog.
+They supply fixed coordinates without testing Google's external map service.
+
+Validation results:
+
+- Django system checks pass.
+- The migration check reports no missing model migrations.
+- All nine contributor spreadsheet JavaScript tests pass.
+- The separate Diary browser integration test passes on desktop and mobile layouts.
+- All 646 project Django tests pass in the complete regression run.
+- The seven portal browser tests also pass after the navigation-wait correction.
+
+The validation environment uses Python 3.12, Django 5.0, Diary 0.1.9.3, and PostgreSQL 12.22.
+Browser runs use installed Chrome and Firefox with headless options and explicit desktop window sizes.
+Each database run uses a newly named PostgreSQL test database and temporary media.
+The test runner removes those databases after each run. Application data remains unchanged.
+Temporary Jest tooling resides outside the repository and changes no project dependencies.
+
+Deployment still requires the approved Diary package, migrations, access-policy setup, template transfer, and static file collection.
+Follow `General Deployment Instructions` before deployment.
+This validation does not replace rehearsal against a restored deployment database and matching media.
+
+Language review limit: The added text has not received a full ASD-STE100 Issue 9 dictionary review.

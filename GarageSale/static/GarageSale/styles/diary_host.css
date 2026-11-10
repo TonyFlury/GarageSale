@@ -1,0 +1,55 @@
+/* HOST-003: Preserve the normal team header while containing its toolbar on narrow Diary pages. */
+.diary.diary-host-topbar { max-width: none; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; }
+.diary.diary-host-topbar *, .diary.diary-host-topbar *::before, .diary.diary-host-topbar *::after { box-sizing: content-box; }
+.diary.diary-host-topbar .ToolBar { box-sizing: border-box; max-width: 100%; }
+.diary.diary-host-sidebar { max-width: none; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; }
+.diary.diary-host-sidebar .diary-host-sidebar-label { margin: 0; font-weight: inherit; }
+
+/* HOST-003: Task overview pages fill the host content area instead of sizing to their text. */
+.diary.diary-personal, .diary.diary-manager { box-sizing: border-box; width: 100%; max-width: none; min-width: 0; margin-inline: 0; }
+.diary.diary-personal .diary-task-panel { box-sizing: border-box; width: 100%; max-width: none; margin-inline: 0; }
+.diary .diary-personal-status-links { display: inline-flex; max-width: 100%; vertical-align: middle; margin-top: 1rem; }
+.diary .diary-personal-result-count { display: inline-block; vertical-align: middle; margin: 1rem 0 0 1rem; }
+
+/* HOST-003: Align Diary field labels with the form controls. */
+.diary .diary-field-label { text-align: left; }
+
+/* HOST-003: Use Diary 0.1.9.3 toolbar hooks for host icons, labels, and hover text. */
+.diary .diary-graph-toolbar {
+    --diary-toolbar-icon-size: 1.5rem;
+    --diary-toolbar-label-display: none;
+    --diary-toolbar-button-width: auto;
+}
+.diary .diary-toolbar-add {
+    --diary-toolbar-icon: url("/static/GarageSale/images/icons/create-note-alt-svgrepo-com.svg");
+    --diary-toolbar-label: "Add task";
+    --diary-toolbar-tooltip: "Add task";
+}
+.diary .diary-toolbar-save {
+    --diary-toolbar-icon: url("/static/GarageSale/images/icons/save-svgrepo-com.svg");
+    --diary-toolbar-label: "Save template";
+    --diary-toolbar-tooltip: "Save template";
+    background: #eee;
+    color: var(--diary-text);
+}
+.diary .diary-toolbar-settings {
+    --diary-toolbar-icon: url("/static/GarageSale/images/icons/settings-gear.svg");
+    --diary-toolbar-label: "Settings";
+    --diary-toolbar-tooltip: "Settings";
+}
+.diary .diary-toolbar-help {
+    --diary-toolbar-icon: url("/static/GarageSale/images/icons/help-circle-svgrepo-com.svg");
+    --diary-toolbar-label: "Help";
+    --diary-toolbar-tooltip: "Help";
+}
+
+/* HOST-003: Size the editor root against the host content area without the package width cap. */
+.diary.diary-template-editor { box-sizing: border-box; width: 95%; max-width: none; min-width: 0; }
+
+/* HOST-003: Cap the navigator viewport at 80% of the visible browser height. */
+.diary .diary-graph-viewport {
+    box-sizing: border-box;
+    min-height: 0;
+    max-height: 80vh;
+    max-height: 80dvh;
+}

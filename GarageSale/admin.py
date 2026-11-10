@@ -14,6 +14,9 @@ Testable Statements :
 """
 from django.contrib import admin
 from django import forms
+from django.apps import apps
+from django.db import transaction
+from django.http import HttpResponseServerError
 
 from Sponsors.models import Sponsor
 from user_management.models import TeamMember
@@ -92,11 +95,31 @@ class EventAdminForm(forms.ModelForm):
 
 @admin.register(EventData)
 class SettingsAdmin(admin.ModelAdmin):
+    """Maintain event records and prepare an initial Diary when the configured application is enabled."""
+
     form = EventAdminForm
     list_display = ['event_date']
     date_hierarchy = 'event_date'
     inlines = [OrganisationsInline,SponsorsInline, LocationInline]
     exclude = ['supporting_organisations']
+
+    def add_view(self, request, form_url='', extra_context=None):
+        """Return a generic HTTP 500 after a logged Diary failure rolls back admin event creation."""
+        from GarageSale.diary_integration import DiaryIntegrationError
+        try:
+            return super().add_view(request, form_url=form_url, extra_context=extra_context)
+        except DiaryIntegrationError:
+            return HttpResponseServerError('Internal server error.')
+
+    @transaction.atomic
+    def save_model(self, request, obj, form, change):
+        """Save a new admin event and its initial Diary atomically without recreating diaries during edits."""
+        super().save_model(request, obj, form, change)
+
+        # Disabled deployments must not import Diary. Existing event edits preserve their saved calendars.
+        if not change and apps.is_installed('Diary'):
+            from GarageSale.diary_integration import ensure_event_diary
+            ensure_event_diary(obj, request.user)
 
 class TemplateAttachmentInline(admin.TabularInline):
     extra = 0

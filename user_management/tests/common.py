@@ -124,7 +124,7 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
         path = urlparse(self.selenium.current_url).path
         args = parse_qs(urlparse(self.selenium.current_url).query)
         self.assertEqual(reverse('user_management:input_short_code',
-                                 kwargs={'short_code_entry': user_v.pk}), path)
+                                 kwargs={'short_code_id': user_v.pk}), path)
         self.assertEqual(args['next'], [urlparse(self.get_test_url()).path])
         # Verify that the email on the forms is the same as the email on the GuestVerifier record
         form_email = self.selenium.find_element(By.NAME, 'email').get_attribute('value')
@@ -137,7 +137,7 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
         # Confirm simple attributes - email destination and subject.
         msg: EmailMultiAlternatives| EmailMessage = mail.outbox[0]
         self.assertEqual(msg.to, [user_email])
-        self.assertEqual(msg.subject, 'Brantham Garage Sale v2: Guest Account One time code')
+        self.assertEqual(msg.subject, 'Brantham Garage Sale: Guest Account One time code')
 
         # Verify that the correct code is sent in the email.
         for alt in msg.alternatives:
@@ -164,7 +164,7 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
                     code = code_div.strong.string
 
                     if m := re.match(pattern, code):
-                        self.assertEqual(m.group(code), user_v.short_code)
+                        self.assertEqual(m.group('code'), user_v.short_code)
                     else:
                         self.fail(f'Could not match email content : \'{pattern}\' != \'{code}\'')
 
@@ -212,7 +212,7 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
 
         # Check the session expiry time is correct - allow a one-second margin
         expire_ts = self.selenium.get_cookie('sessionid').get('expiry')
-        expire_dt = datetime.fromtimestamp(expire_ts)
+        expire_dt = datetime.fromtimestamp(expire_ts, tz=timezone.get_current_timezone())
         self.assertTrue((timezone.now() - expire_dt) < timedelta(seconds=1))
 
     def test_040_incorrect_guest_code(self):
@@ -266,8 +266,8 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
 
         path = urlparse(self.selenium.current_url).path
         self.assertEqual(reverse('user_management:guest_error',
-                                 kwargs={'short_code_entry': user_v.pk}), path)
-        error_div = self.selenium.find_element(By.CLASS_NAME, "pre-forms")
+                                 kwargs={'short_code_id': user_v.pk}), path)
+        error_div = self.selenium.find_element(By.CLASS_NAME, "pre-form")
         self.assertIsNotNone(error_div)
 
         self.assertEqual(error_div.text.strip(),
@@ -301,15 +301,15 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
         except GuestVerifier.MultipleObjectsReturned:
             self.fail('Multiple Guest Verifier object found')
 
-        # Force the model to think it is an hour later than it is.
+        # Advance the aware clock beyond the short code lifetime without changing the server's time zone.
         with unittest.mock.patch('user_management.models.timezone.now',
-                                 new=lambda: datetime.now() + timedelta(minutes=90)):
+                                 return_value=timezone.now() + timedelta(minutes=90)):
             self.selenium.find_element(By.ID, "id_short_code").send_keys(user_v.short_code)
             self.selenium.find_element(By.ID, 'id_Continue').click()
             WebDriverWait(self.selenium,
                           webpage_timeout).until(lambda driver: driver.find_element(By.TAG_NAME, "body"))
 
-            error_div = self.selenium.find_element(By.CLASS_NAME, "pre-forms")
+            error_div = self.selenium.find_element(By.CLASS_NAME, "pre-form")
             self.assertIsNotNone(error_div)
 
             self.assertEqual(error_div.text, 'Your existing short code expired')
@@ -320,7 +320,7 @@ class TestUserAccessCommon(SeleniumCommonMixin, StaticLiveServerTestCase):
         email, password = 'test_user@test.com', 'okoboje'
 
         model: Type[UserExtended | AbstractBaseUser] = get_user_model()
-        model.objects.create_user(email=email, password=password)
+        model.objects.create_user(email=email, password=password, is_verified=True)
 
         test_url = self.get_test_url()
         self.selenium.get(test_url)

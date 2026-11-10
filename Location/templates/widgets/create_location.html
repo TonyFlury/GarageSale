@@ -6,7 +6,8 @@
     <div class="form">
     <form method=POST action='{{action}}' name='CreateLocation' id="CreateLocation">
             {% csrf_token %}
-            <input type="hidden" id="on_behalf" name="on_behalf" value="{{ on_behalf }}">
+            {# An absent ownership override must retain the authenticated user's location ownership. #}
+            <input type="hidden" id="on_behalf" name="on_behalf" value="{{ on_behalf|default_if_none:'' }}">
             {% if on_behalf != None %}
                 <h3>Creating a location</h3>
             {% endif %}

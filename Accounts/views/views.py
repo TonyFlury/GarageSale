@@ -48,6 +48,7 @@ register('Upload Transactions', 'Account:upload_transactions', static('Accounts/
 @login_required( redirect_field_name='next', login_url=reverse_lazy('user_management:login') )
 @permission_required('Accounts.upload_transaction', raise_exception=True)
 def upload_transactions(request):
+    """Validate uploaded bank transactions and redirect to their account or recorded upload errors."""
     if request.method == 'GET':
         form = Upload()
         return TemplateResponse(request, 'Transactions/upload_transactions.html', {'form': form, 'data_type': 'transactions', 'action': 'upload'})
@@ -134,10 +135,12 @@ def upload_transactions(request):
                             UploadError.objects.create(transaction=instance[0], upload_history=history_inst,
                                                        error_message= f'Unknown category {category}')
 
+                # Error redirects accept record identifiers, while presentation metadata belongs in the destination context.
                 if history_inst.errors.count():
-                    return redirect(reverse('Account:UploadErrorList', kwargs={'account_id':account.id, 'upload_id':history_inst.pk, 'data_type': 'transactions', 'action': 'uploadErrors'}))
+                    return redirect(reverse('Account:UploadErrorList', kwargs={'account_id': account.id,
+                                                                             'upload_id': history_inst.pk}))
 
-            return redirect(reverse('Account:TransactionList', kwargs={'account_id':account.id, 'data_type': 'transactions', 'action': 'list'}))
+            return redirect(reverse('Account:TransactionList', kwargs={'account_id': account.id}))
         else:
             return TemplateResponse(request, 'Transactions/upload_transactions.html', {'form': form, 'data_type': 'transactions', 'action': 'upload'})
     else:

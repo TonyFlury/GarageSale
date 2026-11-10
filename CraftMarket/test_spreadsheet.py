@@ -153,11 +153,15 @@ class MarketSpreadsheetTests(TestCase):
                          [self.marketer])
 
     def test_status_chooser_does_not_change_status_and_offers_optional_email(self):
+        """Offer invitation and fee-pending acceptance without changing the status before confirmation."""
         for status in ("Invited", "Confirmed"):
+
+            # Acceptance retains legacy Confirmed templates but now records the unpaid fee state.
             if status == "Confirmed":
                 self.record_status("Invited")
             before = ContributorEvent.objects.count()
-            view = self.action(status, selected_filters=["contacted"])
+            target = 'Fee Pending' if status == 'Confirmed' else status
+            view = self.action(target, selected_filters=["contacted"])
             self.assertIn('type="checkbox" name="delivery" value="send_email"', view.modal_html)
             self.assertIn('name="confirm_action" value="1"', view.modal_html)
             self.assertNotIn('Save ', view.modal_html)
@@ -168,10 +172,14 @@ class MarketSpreadsheetTests(TestCase):
 
     @patch("CraftMarket.spreadsheet.CommunicationTemplate.send_email", return_value=1)
     def test_optional_email_does_not_run_when_saving_without_email(self, send):
+        """Accept an invitation as Fee Pending without sending email or recording a payment."""
         for status in ("Invited", "Confirmed"):
-            self.action(status, "without_email", template=self.templates[status])
+
+            # The legacy acceptance template does not establish that the pitch fee was paid.
+            target = 'Fee Pending' if status == 'Confirmed' else status
+            self.action(target, "without_email", template=self.templates[status])
             latest = self.marketer.contributorevent_set.latest("pk")
-            self.assertEqual(latest.status, status)
+            self.assertEqual(latest.status, target)
             self.assertEqual(latest.event, self.event)
             self.assertEqual(latest.user, self.user)
         send.assert_not_called()
@@ -187,8 +195,12 @@ class MarketSpreadsheetTests(TestCase):
 
     @patch("CraftMarket.spreadsheet.CommunicationTemplate.send_email", return_value=1)
     def test_status_and_general_email_use_separate_template_categories(self, send):
+        """Use legacy acceptance templates for Fee Pending and keep general email independent."""
         for status in ("Invited", "Confirmed"):
-            self.action(status, "send_email", self.templates[status])
+
+            # Acceptance selects the legacy template while preserving the unpaid fee state.
+            target = 'Fee Pending' if status == 'Confirmed' else status
+            self.action(target, "send_email", self.templates[status])
         self.action(None, "send_email", self.templates["Newsletter"])
         self.assertEqual(send.call_count, 3)
         self.assertEqual(ContributorEvent.objects.count(), 2)
@@ -218,6 +230,7 @@ class MarketSpreadsheetTests(TestCase):
 
     @patch("CraftMarket.spreadsheet.CommunicationTemplate.send_email", return_value=1)
     def test_rsvp_requires_email_and_records_response_against_invited_event(self, send):
+        """Require the invited email and record acceptance without inferring payment."""
         from urllib.parse import urlsplit
         from django.urls import resolve
         self.action("Invited", "without_email")
@@ -236,7 +249,7 @@ class MarketSpreadsheetTests(TestCase):
         # A submitted ID must never select another trader.
         response = post({'form_section': 'accept_reject', 'RSVP_Yes': 'yes', 'marketer_id': self.other.pk})
         self.assertEqual(response.context_data['form_section'], 'accept')
-        self.assertEqual(self.marketer.contributorevent_set.latest('pk').status, 'Confirmed')
+        self.assertEqual(self.marketer.contributorevent_set.latest('pk').status, 'Fee Pending')
         self.assertFalse(self.other.contributorevent_set.exists())
         self.assertEqual(send.call_count, 1)
         self.assertIn('error', post({'form_section': 'accept_reject', 'RSVP_Yes': 'yes'}).context_data)
@@ -306,7 +319,8 @@ class MarketSpreadsheetTests(TestCase):
         self.assertEqual(ContributorEvent.objects.count(), 1)
 
     def test_invalid_and_stale_status_transitions_do_not_save(self):
-        view = self.action("Confirmed", "without_email")
+        """Reject acceptance before invitation and repeated invitation without adding history."""
+        view = self.action("Fee Pending", "without_email")
         self.assertIn("must have status Invited", view.modal_html)
         self.assertFalse(ContributorEvent.objects.exists())
         self.action("Invited", "without_email")

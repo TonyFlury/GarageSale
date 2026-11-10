@@ -1,6 +1,7 @@
+"""Verify browser access management with independently prepared authorization fixtures."""
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import override_settings
 from django.urls import reverse
@@ -12,7 +13,19 @@ from Contributors.tests.retained_tables import RetainedTablesCleanupMixin
 
 @override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'], TEST_SERVER=False)
 class TeamAccessBrowserTests(RetainedTablesCleanupMixin, StaticLiveServerTestCase):
+    """Exercise team access without relying on groups left by earlier tests."""
+
+    def setUp(self):
+        """Prepare the officer's required capabilities without relying on earlier tests or deployment data."""
+        super().setUp()
+        group, _ = Group.objects.get_or_create(name='Officer')
+        group.permissions.add(
+            Permission.objects.get(content_type__app_label='user_management', codename='manage_team_access'),
+            Permission.objects.get(content_type__app_label='GarageSale', codename='access_team_pages'),
+        )
+
     def test_officer_can_review_and_assign_access_on_desktop_and_mobile(self):
+        """Review and save memberships through desktop and mobile browser layouts."""
         officer = get_user_model().objects.create_user('browser-officer@example.com', 'password', is_verified=True)
         officer.groups.add(Group.objects.get(name='Officer'))
         person = get_user_model().objects.create_user('browser-person@example.com', 'password', first_name='Jamie', last_name='Example')

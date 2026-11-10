@@ -16,7 +16,10 @@ from GarageSale.tests.common import SeleniumCommonMixin
 
 
 class UploadMixin(SeleniumCommonMixin):
+    """Submit bank files and verify saved transactions or visible validation errors."""
+
     def _upload_data(self, data, expect_invalid=False, expect_error_count=0, remove=None):
+        """Upload test data and return saved records, or verify expected file validation errors."""
         remove = remove or set()
         with TestFileContent(content=data, remove=remove) as f:
             self.selenium.get(self.live_server_url + reverse('Account:upload_transactions'))
@@ -32,7 +35,7 @@ class UploadMixin(SeleniumCommonMixin):
             if expect_invalid:
                 try:
                     WebDriverWait(self.selenium, timeout=5).until(
-                        lambda _: self.selenium.find_element(By.ID, 'id_file_error').is_displayed())
+                        lambda _: self.selenium.find_element(By.CSS_SELECTOR, 'form .errorlist').is_displayed())
                 except TimeoutException:
                     self.fail('No error message displayed for invalid upload')
                 return None

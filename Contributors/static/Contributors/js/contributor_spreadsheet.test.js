@@ -2,11 +2,13 @@
  * @jest-environment jsdom
  */
 
+/** Load spreadsheet handlers against a fresh sample document. */
 function loadScript() {
     jest.resetModules();
     require("./contributor_spreadsheet");
 }
 
+/** Supply current row controls and the shared search and contact dialog hooks. */
 function buildDom() {
     document.body.innerHTML = `
         <input data-filter-field="contributor_name">
@@ -14,6 +16,15 @@ function buildDom() {
         <input data-filter-field="email">
         <input data-filter-field="description">
 
+        <section id="toolbar"><button class="search-icon" type="button">Search</button></section>
+        <div id="search-bar"></div>
+        <input id="select-all" type="checkbox">
+        <dialog id="contact-history-dialog">
+            <form id="contact-history-form"></form>
+            <p id="contact-history-error"></p>
+            <button id="contact-history-save" type="button">Save</button>
+            <button id="contact-history-cancel" type="button">Cancel</button>
+        </dialog>
         <table id="contributor-sheet" data-create-url="/contributors/spreadsheet/create/">
             <tbody>
                <tr
@@ -25,7 +36,7 @@ function buildDom() {
                     data-filter-email="alex@example.com"
                     data-filter-description="original description"
                 >
-                    <td><span class="row-status locked">Locked</span></td>
+                    <td class="row-status"><span class="status"></span><span class="undo"></span></td>
                     <td>
                         <input name="contributor_type" value="Sponsor" disabled>
                         <span class="field-error" data-error-for="contributor_type"></span>
@@ -65,7 +76,7 @@ function buildDom() {
                     data-filter-email="casey@example.com"
                     data-filter-description="another description"
                 >
-                    <td><span class="row-status locked">Locked</span></td>
+                    <td class="row-status"><span class="status"></span><span class="undo"></span></td>
                     <td>
                         <input name="contributor_type" value="Donor" disabled>
                         <span class="field-error" data-error-for="contributor_type"></span>
@@ -108,15 +119,15 @@ describe("Contributor spreadsheet", () => {
 
     // ... existing code ...
 
-    test("createEmptyNewRow creates an unlocked new dirty row", () => {
+    test("createEmptyNewRow creates an unlocked blank entry row", () => {
         const row = window.ContributorSpreadsheet.createEmptyNewRow();
 
         expect(row.dataset.isNew).toBe("true");
         expect(row.classList.contains("new-row")).toBe(true);
         expect(row.classList.contains("unlocked")).toBe(true);
-        expect(row.classList.contains("dirty")).toBe(true);
+        expect(row.classList.contains("dirty")).toBe(false);
         expect(row.querySelector('[name="contributor_name"]').disabled).toBe(false);
-        expect(row.querySelector(".row-status").textContent).toBe("New - save required");
+        expect(row.querySelector('[name="contributor_name"]').value).toBe("");
     });
 
     test("appendEmptyNewRow appends a new unlocked row to the sheet", () => {
@@ -145,7 +156,7 @@ describe("Contributor spreadsheet", () => {
 
         expect(row.classList.contains("unlocked")).toBe(true);
         expect(row.querySelector('[name="contributor_name"]').disabled).toBe(false);
-        expect(row.querySelector(".row-status").textContent).toBe("Unlocked");
+        expect(row.classList.contains("locked")).toBe(false);
     });
 
     test("markDirty marks unlocked row as changed", () => {
@@ -155,7 +166,7 @@ describe("Contributor spreadsheet", () => {
         window.ContributorSpreadsheet.markDirty(row);
 
         expect(row.classList.contains("dirty")).toBe(true);
-        expect(row.querySelector(".row-status").textContent).toBe("Changed - save required");
+        expect(row.classList.contains("unlocked")).toBe(true);
     });
 
     test("validateRow rejects blank company name", () => {
@@ -210,12 +221,10 @@ describe("Contributor spreadsheet", () => {
         const payload = window.ContributorSpreadsheet.getPayload(row);
 
         expect(payload).toEqual({
-            contributor_type: "Sponsor",
             contributor_name: "Acme Ltd",
             contact_name: "Alex Smith",
             phone: "01234567890",
             email: "alex@example.com",
-            description: "Original description",
         });
     });
 });

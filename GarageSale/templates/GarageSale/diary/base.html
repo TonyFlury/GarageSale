@@ -1,0 +1,31 @@
+{% extends "team_pages_base.html" %}
+{% load static %}
+{# HOST-003: The host supplies the team shell while Diary supplies its reusable page content. #}
+{% block Title %}{% block diary_title %}Diary{% endblock %}{% endblock %}
+{% block PageStyles %}
+    {{ block.super }}
+    {% block diary_styles %}<link rel="stylesheet" href="{% static 'Diary/styles/diary.css' %}">{% endblock %}
+    {% block diary_extra_styles %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'GarageSale/styles/diary_host.css' %}">
+    {% block diary_head %}{% endblock %}
+{% endblock %}
+{% block TopBar %}<div class="diary diary-host-topbar">{{ block.super }}</div>{% endblock %}
+{% block sidebar %}
+    {{ block.super }}
+    {% include 'GarageSale/diary/sidebar.html' %}
+{% endblock %}
+{% block breadcrumb %}
+    <a href="{% url 'TeamPages:Root' %}">Team Page</a> / Diary
+{% endblock %}
+{% block SnappableSections %}
+    {% block diary_messages %}
+        {% for message in messages %}
+            <p class="diary diary-notice{% if 'diary-task-created' in message.tags %} diary-create-success{% endif %}" role="status">{{ message }}</p>
+        {% endfor %}
+    {% endblock %}
+    {% block diary_content %}{% endblock %}
+{% endblock %}
+{% block PageScripts %}
+    {{ block.super }}
+    {% block diary_scripts %}{% endblock %}
+{% endblock %}

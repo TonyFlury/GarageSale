@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.apps import apps
 from django.urls import path, include, reverse_lazy
 from django.conf import settings
 from django.conf.urls.static import static
@@ -45,7 +46,7 @@ urlpatterns = [
         path('view/<int:pk>/', general_views.NominationView.as_view(), name='NominationView'),
     ])),
     path('location/', include('Location.urls')),
-    path('team_page/', include('team_pages.urls', 'TeamPages')),
+    path('team_page/', include('GarageSale.team_urls', 'TeamPages')),
     path('news/', include('News.urls')),
     path('user/', include('user_management.urls')),
 #    path('billboard/', include('Billboard.urls')),
@@ -63,6 +64,10 @@ urlpatterns = [
     path("GoogleDrive/", include('GoogleDrive.urls', namespace='GoogleDrive') ),
 
 ]
+
+# HOST-003: Host routes supply trusted context and the team shell without importing Diary when it is disabled.
+if apps.is_installed('Diary'):
+    urlpatterns.append(path('diary/', include('GarageSale.diary_urls')))
 
 
 if settings.DEBUG:

@@ -102,6 +102,7 @@ class TeamNavigationTests(TestCase):
         self.assertNotContains(self.client.get(reverse('home')), "id='id_team'")
 
     def test_data_and_statistics_tiles_require_location_view(self):
+        """Show report links within the accessible Overview group for authorized location viewers."""
         for app, codename in [('Location', 'view_location')]:
             with self.subTest(permission=codename):
                 permission = Permission.objects.get(content_type__app_label=app, codename=codename)
@@ -115,7 +116,7 @@ class TeamNavigationTests(TestCase):
                 response = self.client.get(reverse('TeamPages:Root'))
                 self.assertContains(response, 'Event participation')
                 self.assertContains(response, reverse('EventDashboard'))
-                self.assertContains(response, '<h4>Overview</h4>')
+                self.assertContains(response, 'class="team-overview" aria-label="Overview"')
                 self.assertContains(response, reverse('Location:EventAdBoard'))
 
     def test_report_tiles_remain_hidden_without_report_permission(self):

@@ -19,18 +19,26 @@ from GarageSale.tests.common import SeleniumCommonMixin
 
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException, ElementNotVisibleException, NoSuchElementException, \
-    TimeoutException
+    TimeoutException, StaleElementReferenceException
 
 
 class SeleniumProxy(webdriver.Chrome):
+    """Find nomination controls with optional scrolling across page navigation."""
+
     def __init__(self, *args, **kwargs):
+        """Start Chrome with the browser options supplied by the test class."""
         super().__init__(*args, **kwargs)
 
     def find_element(self, *args, auto_scroll=True, **kwargs):
+        """Find a control and resolve it again when navigation replaces it during scrolling."""
         e = super().find_element(*args, **kwargs)
 
+        # Scrolling helps clicks, but navigation can replace the selected element before the script runs.
         if auto_scroll:
-            self.execute_script('arguments[0].scrollIntoView({block: "center", inline: "center"})', e)
+            try:
+                self.execute_script('arguments[0].scrollIntoView({block: "center", inline: "center"})', e)
+            except StaleElementReferenceException:
+                return super().find_element(*args, **kwargs)
 
         return e
 
@@ -165,12 +173,16 @@ class NominationSeleniumTests(SeleniumCommonMixin):
         return detail_url
 
     def _submit_rejection(self, reason):
+        """Submit a rejection and wait for the completed list navigation before further assertions."""
         # self._dump_page_source('initial-rejection-page.html')
         self.selenium.find_element(By.CSS_SELECTOR, "form#nomination_details input[type=button][value='Reject Nomination']").click()
 
         WebDriverWait(self.selenium, 10).until(lambda driver: driver.find_element(By.ID, 'rejection_reason').is_displayed())
         self.selenium.find_element(By.ID, 'rejection_reason').send_keys(reason)
         self.selenium.find_element(By.CSS_SELECTOR, "dialog[id='rejection_reason_dialog'] input[type='submit'][value='Reject Nomination']").click()
+        destination = self.live_server_url + reverse('NominationsList')
+        WebDriverWait(self.selenium, 10).until(lambda driver: driver.current_url == destination)
+        WebDriverWait(self.selenium, 10).until(lambda driver: driver.execute_script('return document.readyState') == 'complete')
 
     @override_settings(TEST_SERVER=False)
     def test_public_nomination_create_and_success(self):

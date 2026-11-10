@@ -74,6 +74,7 @@ class AccountUploadTests(UploadMixin, SmartHTMLTestMixins, IdentifyMixin, Seleni
             self._upload_data(content, expect_error_count=1)
 
     def test_930_invalid_upload_missing_columns(self):
+        """Show the missing column in the form error list without saving uploaded records."""
         with self.identify_via_login(user=self.treasurer, password='wibble'):
             content = self.data_module.test_data(**{'sort_code': self.account.sort_code,
                                                     'account_number': self.account.account_number})
@@ -82,7 +83,7 @@ class AccountUploadTests(UploadMixin, SmartHTMLTestMixins, IdentifyMixin, Seleni
                     self._upload_data(content, expect_invalid=True, remove={test_case})
                     self.screenshot(f'{test_case}.png')
 
-                    error_div = self.selenium.find_element(By.ID, 'id_file_error')
+                    error_div = self.selenium.find_element(By.CSS_SELECTOR, 'form .errorlist')
                     self.assertIn(f'Missing columns {test_case}', error_div.text)
                     Transaction.objects.all().delete()
                     UploadHistory.objects.all().delete()
@@ -99,7 +100,7 @@ class AccountUploadTests(UploadMixin, SmartHTMLTestMixins, IdentifyMixin, Seleni
 
             self._upload_data(content, expect_invalid=True)
             self.screenshot(f'duplicated.png')
-            error_div = self.selenium.find_element(By.ID, 'id_file_error')
+            error_div = self.selenium.find_element(By.CSS_SELECTOR, 'form .errorlist')
             self.assertIn(f'Transactions already uploaded for {self.account.bank_name} between {range_start.strftime('%d/%m/%Y')} and {range_end.strftime('%d/%m/%Y')}', error_div.text)
             self.assertEqual(UploadHistory.objects.count(), 1)
             self.assertEqual(Transaction.objects.count(), 2)

@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from selenium.webdriver.support.expected_conditions import WebDriverOrWebElement
 
 from GarageSale.tests.common import SeleniumCommonMixin, IdentifyMixin
-from user_management.tests.common import TestUserAccessCommon
+from user_management.tests import common as access_common
 from django.shortcuts import reverse
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from datetime import datetime
@@ -12,6 +12,7 @@ from datetime import datetime
 import selenium.webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from GarageSale.models import EventData
 from Location.models import Location
@@ -19,33 +20,41 @@ from Location.models import Location
 class LocationMixin(SeleniumCommonMixin):
     """Helper Functions to Test Location stuff"""
 
+    def create_booking_event(self):
+        """Create an active event with both booking windows open for location form tests."""
+        today = datetime.today().date()
+        return EventData.objects.create(event_date=today + timedelta(days=90), use_from=today,
+            open_billboard_bookings=today, close_billboard_bookings=today + timedelta(days=89),
+            open_sales_bookings=today, close_sales_bookings=today + timedelta(days=89))
+
     def _check_location_view(self, inst_set):
-        tick, cross = "\u2705", "\u274E"
+        """Verify saved locations and their record-specific navigation controls."""
+        tick, cross = "\u2705", "\u274C"
 
         # Confirm that the correct Location appears on the view page :
         inst:Location
         for inst in inst_set:
             # Check that the forms exists.
-            form = self.selenium.find_element(By.XPATH, f'//div[@class="forms" and @location_id="{inst.ext_id()}"]')
+            form = self.selenium.find_element(By.CSS_SELECTOR, f'.location[location_id="{inst.ext_id()}"]')
             self.assertIsNotNone(form)
 
             loc_type_div = form.find_element(By.XPATH, './/div[@class="location_type"]')
             self.assertIsNotNone(loc_type_div)
 
             # Check that the correct Icons are displayed for Ad Board and Sale Event
-            ad_board_span = loc_type_div.find_element(By.XPATH, './/span[@class="location_type_ad_board"]')
+            ad_board_span = loc_type_div.find_element(By.CSS_SELECTOR, '.location_type_ad_board')
             self.assertIsNotNone(ad_board_span)
             expected = f'Ad Board : {tick if inst.ad_board else cross}'
             self.assertEqual(expected, ad_board_span.text)
 
-            sale_event_span = loc_type_div.find_element(By.XPATH, './/span[@class="location_type_sale"]')
+            sale_event_span = loc_type_div.find_element(By.CSS_SELECTOR, '.location_type_sale')
             self.assertIsNotNone(sale_event_span)
             expected = f'Sale : {tick if inst.sale_event else cross}'
             self.assertEqual(expected, sale_event_span.text)
 
 
             # Confirm that address displayed is the one on the instance
-            address = form.find_element(By.XPATH, './/div[@class="address"]')
+            address = form.find_element(By.CSS_SELECTOR, '.address-details')
             self.assertEqual(address.text,
                              f'{inst.house_number}, {inst.street_name}\n'
                              f'{inst.town}\n'
@@ -57,12 +66,12 @@ class LocationMixin(SeleniumCommonMixin):
             for button_name, view_name in [('Edit', 'update'), ('Delete', 'delete')]:
                 dest_url = reverse(f"Location:{view_name}",
                                    kwargs={'ext_id': inst.ext_id()})
-                button = form.find_element(By.XPATH, f'//input[@type="button" and @value="{button_name}" '
-                                                     f'and @dest_url="{dest_url}"]')
+                button = form.find_element(By.CSS_SELECTOR, f'input[type="button"][value="{button_name}"]')
+                self.assertIn(dest_url, button.get_attribute('onclick'))
                 self.assertIsNotNone(button, f'{button_name} button does not exist on the Location:View for inst {inst.ext_id}.')
 
     def _create_location(self, **location_data):
-        """Helper function to create a test location with suitable defaults"""
+        """Complete both form sections with fixed coordinates without calling the external map service."""
         location_data.setdefault('id_ad_board', True)
         location_data.setdefault('id_sale_event', True)
         location_data.setdefault('id_house_number', '1')
@@ -74,9 +83,16 @@ class LocationMixin(SeleniumCommonMixin):
         self.fill_form( f'{self.live_server_url}{reverse("Location:create")}',
                                 **location_data)
 
+        self.selenium.find_element(By.CSS_SELECTOR, '#section1 button').click()
+        self.selenium.execute_script("document.getElementById('id_lng_lat').value = JSON.stringify(arguments[0]);",
+                                     {'lat': 51.965, 'lng': 1.065})
         self.selenium.find_element(By.ID,"id_SaveButton").click()
 
-        WebDriverWait(self.selenium, 10).until(lambda d: d.find_element(By.TAG_NAME,'body'))
+        dialog = WebDriverWait(self.selenium, 10).until(EC.visibility_of_element_located((By.ID, 'location_detail')))
+        self.assertIn('Location successfully recorded', dialog.text)
+        dialog.find_element(By.CSS_SELECTOR, '#dialog_close img').click()
+        destination = self.live_server_url + reverse('Location:view')
+        WebDriverWait(self.selenium, 10).until(lambda driver: driver.current_url == destination)
 
 
 class LocationCreate(LocationMixin, SeleniumCommonMixin, IdentifyMixin, StaticLiveServerTestCase):
@@ -91,10 +107,9 @@ class LocationCreate(LocationMixin, SeleniumCommonMixin, IdentifyMixin, StaticLi
     screenshot_sub_directory = 'location_create_function'
 
     def setUp(self):
-        self.event = EventData( event_date=datetime.today() + timedelta(days=90),
-                          use_from=datetime.today()).save()
-
+        """Prepare the browser and a current event with explicit booking dates."""
         super().setUp()
+        self.event = self.create_booking_event()
 
     def tearDown(self):
         super().tearDown()
@@ -116,7 +131,6 @@ class LocationCreate(LocationMixin, SeleniumCommonMixin, IdentifyMixin, StaticLi
                 self.assertIsNotNone(element, f'{field} element does not exist on the Location:create for inst {self.selenium.current_url}')
 
             for button_id, button_type, name in [('id_CancelButton', 'button','Cancel'),
-                                            ('id_ResetButton', 'reset', 'Reset'),
                                                  ('id_SaveButton','submit','Save')]:
                 element = self.selenium.find_element(By.XPATH, f'//input[@type="{button_type}" and @id="{button_id}" and @value="{name}"]')
                 self.assertIsNotNone(element, f'{button_id} button does not exist on the Location:create for inst {self.selenium.current_url}')
@@ -202,7 +216,6 @@ class LocationCreate(LocationMixin, SeleniumCommonMixin, IdentifyMixin, StaticLi
                 self.assertIsNotNone(element, f'{field} element does not exist on the Location:create for inst {self.selenium.current_url}')
 
             for button_id, button_type, name in [('id_CancelButton', 'button','Cancel'),
-                                            ('id_ResetButton', 'reset', 'Reset'),
                                                  ('id_SaveButton','submit','Save')]:
                 element = self.selenium.find_element(By.XPATH, f'//input[@type="{button_type}" and @id="{button_id}" and @value="{name}"]')
                 self.assertIsNotNone(element, f'{button_id} button does not exist on the Location:create for inst {self.selenium.current_url}')
@@ -242,9 +255,9 @@ class LocationView(LocationMixin, SeleniumCommonMixin, IdentifyMixin, StaticLive
     screenshot_sub_directory = 'location_create_function'
 
     def setUp(self):
+        """Prepare the browser and a current event for guest and member visibility checks."""
         super().setUp()
-        self._event_inst:EventData = EventData( event_date=datetime.today() + timedelta(days=90),
-                          use_from=datetime.today()).save()
+        self._event_inst = self.create_booking_event()
 
     def tearDown(self):
         super().tearDown()
@@ -270,7 +283,7 @@ class LocationView(LocationMixin, SeleniumCommonMixin, IdentifyMixin, StaticLive
             self._check_location_view(inst)
 
 
-class TestLocationCreateAccess(TestUserAccessCommon):
+class TestLocationCreateAccess(access_common.TestUserAccessCommon):
     """Test that the User Access Mixin correctly protects access to the location_create page"""
     screen_shot_sub_directory = 'location_create_access'
 
@@ -282,7 +295,7 @@ class TestLocationCreateAccess(TestUserAccessCommon):
         return f"{self.live_server_url}/location/create"
 
 
-class TestLocationViewAccess(TestUserAccessCommon):
+class TestLocationViewAccess(access_common.TestUserAccessCommon):
     """Test that the User Access Mixin correctly protects access to the location_view page"""
     screen_shot_sub_directory = 'location_view_access'
 
