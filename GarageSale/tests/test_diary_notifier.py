@@ -150,6 +150,7 @@ class DiaryNotifierTests(TestCase):
         for name in ('task_dependency_changed', 'task_ownership_changed'):
             self.subscribe(self.member, name)
             getattr(signals, name).send(sender=sender, user=self.manager.email, task=key,
+                                        diary_key=self.diary.key, template_version_key=None,
                                         **{'task-name': 'Prepare the event'})
         self.assertSetEqual(set(Notification.objects.values_list('stream_key', flat=True)),
                             {'diary.task_dependency_changed', 'diary.task_ownership_changed'})
@@ -163,18 +164,50 @@ class DiaryNotifierTests(TestCase):
         self.assertNotContains(self.client.get(reverse('Notifier:feed')), 'Original source')
         self.assertEqual(Notification.objects.count(), 1)
 
-    def test_ambiguous_task_keys_are_skipped_without_guessing_an_event(self):
-        """Reject repeated task identities because the package signal has no Diary identifier."""
+    def test_shared_task_keys_use_the_signal_diary_without_cross_event_content(self):
+        """Collect copied task identities separately through the source Diary supplied by each committed signal."""
         self.subscribe(self.member, 'task_created')
         key = self.add_task()
         other = self.api.create_diary(name='Another event', without_template=True)
-        EventData.objects.create(event_date=date(2031, 6, 23), use_from=date(2030, 1, 1), diary_key=other.key)
+        other_event = EventData.objects.create(event_date=date(2031, 6, 23), use_from=date(2030, 1, 1), diary_key=other.key)
         from Diary.api import DiaryInstance
         second = DiaryInstance(actor=Actor(self.actor.reference, self.actor.groups, frozenset({other.key})), key=other.key)
-        with self.assertLogs('GarageSale.diary_notifier', level='WARNING'), self.captureOnCommitCallbacks(execute=True):
+        with patch.object(diary_notifier, 'service_client', wraps=diary_notifier.service_client) as client, self.captureOnCommitCallbacks(execute=True):
             second.add_entry(spec=EntrySpec('Copied task', 'once', fixed_date=date(2031, 6, 20), entry_key=key))
-        self.assertEqual(Notification.objects.count(), 1)
-        self.assertEqual(Notification.objects.get().data['diary_key'], str(self.diary.key))
+        client.assert_called_once_with({other.key})
+        records = {record.data['diary_key']: record for record in Notification.objects.all()}
+        self.assertEqual(len(records), 2)
+        self.assertEqual(records[str(self.diary.key)].title, 'Prepare the event')
+        self.assertEqual(records[str(other.key)].title, 'Copied task')
+        self.assertEqual(records[str(other.key)].source['identifier'], f'{other_event.pk}:{other.key}:{key}')
+        self.subscribe(self.member, 'task_note_added')
+        with self.captureOnCommitCallbacks(execute=True):
+            self.diary.add_note(entry_key=key, text='First event progress')
+        note = Notification.objects.get(stream_key='diary.task_note_added')
+        self.assertEqual(note.source['identifier'], f'{self.event.pk}:{self.diary.key}:{key}')
+        self.assertEqual(note.title, 'Prepare the event')
+
+    def test_missing_or_invalid_diary_keys_do_not_use_a_task_only_fallback(self):
+        """Reject old or malformed payloads even when a matching task exists in one linked Diary."""
+        from Diary.signals import task_created
+        key = self.add_task()
+        self.subscribe(self.member, 'task_created')
+        for diary_key in (None, 'invalid', uuid4()):
+            with self.subTest(diary_key=diary_key), self.assertLogs('GarageSale.diary_notifier', level='WARNING'):
+                task_created.send(sender=type('CalendarEntry', (), {}), user=self.manager.email,
+                                  task=key, diary_key=diary_key)
+        self.assertFalse(Notification.objects.exists())
+
+    def test_task_in_another_diary_cannot_replace_the_supplied_source(self):
+        """Reject a missing task in the supplied Diary instead of using a different linked Diary."""
+        from Diary.signals import task_created
+        key = self.add_task()
+        other = self.api.create_diary(name='Empty event', without_template=True)
+        EventData.objects.create(event_date=date(2031, 6, 23), use_from=date(2030, 1, 1), diary_key=other.key)
+        self.subscribe(self.member, 'task_created')
+        with self.assertLogs('GarageSale.diary_notifier', level='WARNING'):
+            task_created.send(sender=type('CalendarEntry', (), {}), user=self.manager.email, task=key, diary_key=other.key)
+        self.assertFalse(Notification.objects.exists())
 
     def test_host_event_permission_is_required_in_addition_to_diary_membership(self):
         """Prevent a stream subscription from expanding source application permissions."""

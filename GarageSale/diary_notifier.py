@@ -27,35 +27,34 @@ def service_client(keys):
     return DiaryAPI(actor=actor)
 
 
-def task_matches(task_key):
-    """Find host Diary matches through public reads without inspecting dependency models."""
+def resolve_task(diary_key, task_key):
+    """Resolve the supplied Diary and task pair through one host link and public package reads."""
     from GarageSale.models import EventData
-    events = list(EventData.objects.exclude(diary_key=None).values_list('pk', 'diary_key'))
-    client = service_client(key for _, key in events)
-    matches = []
-    for event_id, diary_key in events:
-        try:
-            data = client.diary(key=diary_key).read()
-        except (ObjectDoesNotExist, PermissionDenied, ValidationError):
-            continue
-        for entry in data['entries']:
-
-            # Template entry keys can recur across Diaries, so every matching source must be considered.
-            if str(entry['entry_key']) == str(task_key):
-                matches.append((event_id, diary_key, {**entry, 'diary_name': data['name']}))
-    return matches
-
-
-def resolve_task(task_key):
-    """Return one unambiguous host task or skip an unsupported signal with a safe diagnostic."""
-    key = UUID(str(task_key))
-    matches = task_matches(key)
-
-    # The package omits Diary identity. Guessing between copied task keys could expose another event's content.
-    if len(matches) != 1:
-        logger.warning('Diary notification skipped: task=%s host_matches=%s', key, len(matches))
+    try:
+        diary_key, task_key = UUID(str(diary_key)), UUID(str(task_key))
+    except (ValueError, TypeError):
+        logger.warning('Diary notification skipped: missing or invalid source keys')
         return None
-    return matches[0]
+    events = list(EventData.objects.filter(diary_key=diary_key).values_list('pk', flat=True)[:2])
+
+    # A missing or duplicate host link cannot identify one event for the supplied Diary.
+    if len(events) != 1:
+        logger.warning('Diary notification skipped: diary=%s task=%s host_matches=%s', diary_key, task_key, len(events))
+        return None
+    try:
+        data = service_client({diary_key}).diary(key=diary_key).read()
+    except (ObjectDoesNotExist, PermissionDenied, ValidationError):
+        logger.warning('Diary notification skipped: source Diary unavailable: diary=%s task=%s', diary_key, task_key)
+        return None
+
+    # Only this Diary's task can supply content, even when another Diary contains the same task UUID.
+    entry = next((entry for entry in data['entries'] if str(entry['entry_key']) == str(task_key)), None)
+
+    # A missing task must not cause a search of other event Diaries.
+    if entry is None:
+        logger.warning('Diary notification skipped: task unavailable: diary=%s task=%s', diary_key, task_key)
+        return None
+    return events[0], diary_key, {**entry, 'diary_name': data['name']}
 
 
 def task_source(event_id, diary_key, entry):
@@ -86,13 +85,13 @@ def source_is_visible(user, source):
     return True
 
 
-def receive_task_event(sender, *, event_name, user, task, **kwargs):
+def receive_task_event(sender, *, event_name, user, task, diary_key=None, **kwargs):
     """Translate one committed instance event without reading subscriptions or selecting delivery engines."""
 
     # Template editing also emits package signals. Only actual Diary tasks belong in this host progress feed.
     if getattr(sender, '__name__', '') != 'CalendarEntry':
         return
-    match = resolve_task(task)
+    match = resolve_task(diary_key, task)
 
     # Missing or ambiguous source identity must never produce a notification for a guessed event.
     if match is None:

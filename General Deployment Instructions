@@ -125,7 +125,7 @@ if you have a new database :
         Use transfer_diary_templates to export and import Diary calendar templates.
         This command is separate from the communication template command in step 2b.
         Use the site's project directory, virtual environment, and database credentials.
-        Diary 0.1.10.1 treats command-line access as administrative authorization.
+        Diary 0.1.10.2 treats command-line access as administrative authorization.
         Its transfer command does not accept an --actor argument.
         The current DIARY_MANAGER setting selects the Officer group.
 
@@ -203,7 +203,7 @@ if you have a new database :
         Language review limit: The new Diary deployment instructions have not received a full ASD-STE100 Issue 9 dictionary review.
 
 2e) Notifier personal review:
-        Install django-task-calendar version 0.1.10.1 from the approved dependency source.
+        Install django-task-calendar version 0.1.10.2 from the approved dependency source.
         Apply the Notifier migration with the normal migrate command.
         Complete the access policy procedure in step 2a.
         Collect the Notifier static files with the normal collectstatic command.
@@ -215,8 +215,8 @@ if you have a new database :
         Enable each required Diary stream.
         Save each changed stream separately.
         Only later committed task events produce notifications.
-        Review source identity limitations before enabling multiple event Diaries.
-        Shared template task UUIDs can prevent collection with the installed signal contract.
+        Confirm that task signals include diary_key and task from version 0.1.10.2.
+        The adapter uses this pair to distinguish copied tasks across event Diaries.
         Full instructions and provider examples: Notifier/README.md.
         These new instructions have not received a full ASD-STE100 Issue 9 dictionary review.
 

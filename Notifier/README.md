@@ -233,7 +233,7 @@ Large histories will require a later query and retention design.
 
 ## Garage Sale Diary adapter
 
-The installed dependency is `django-task-calendar==0.1.10.1`.
+The installed dependency is `django-task-calendar==0.1.10.2`.
 The host adapter is `GarageSale.diary_notifier`.
 Garage Sale registers it during startup when Diary and Notifier are installed.
 The adapter uses public Diary signals and public Diary read APIs.
@@ -254,24 +254,25 @@ All eligible subscribers can enable each stream.
 The Notifier checks `GarageSale.view_eventdata` and current package task visibility for each recipient.
 A stored source identifies its original event, Diary, and task.
 
+### Source identity
+
+Version `0.1.10.2` supplies `diary_key` and `task` in instance task signals.
+Template signals supply `template_version_key` and have no instance `diary_key`.
+Template copies can retain the same task UUID across different Diaries.
+The adapter resolves the supplied Diary and task pair through public reads.
+It reads only the source Diary linked by the host event record.
+Shared task UUIDs therefore do not prevent notification collection across event Diaries.
+Missing or invalid keys, missing tasks, and missing or duplicate host links produce a warning without collection.
+The adapter does not search other Diaries when the supplied pair is unavailable.
+Payloads from the older package without `diary_key` do not provide sufficient source identity.
+
 ### Package limitations and open decisions
 
-Version `0.1.10.1` supplies the task UUID but omits the Diary UUID.
-Template copies can retain the same task UUID across different Diaries.
-The adapter searches Diaries linked to host events through public reads.
-It accepts a signal only when exactly one linked Diary contains the task UUID.
-It logs a warning and skips missing or ambiguous matches.
-Consequently, multiple event Diaries with shared template task identifiers can prevent progress notification collection.
-The adapter does not guess the originating event.
-
-Proposed package improvement: Include the Diary UUID and a stable occurrence UUID in every task signal.
-This change requires a separate Diary package release.
-The host does not implement this proposal inside the dependency.
-
-The current package also omits a stable occurrence identifier and the previous owner.
+The current package still omits a stable occurrence identifier and the previous owner.
 The adapter gives each received callback a new occurrence UUID.
 Replayed package callbacks can therefore produce separate notifications.
 Ownership notifications describe the current task without separate previous-owner removal messages.
+Proposed package improvement: Include a stable occurrence UUID in each task signal to support replay deduplication.
 
 Scheduled reminders, task-date evaluation, previous-owner messages, and durable callback retries remain outside this implementation.
 They require separate design and implementation work.
@@ -284,12 +285,16 @@ The technical test class `NotifierBrowserTests` checks opt-in and review forms i
 Browser tests require the technical environment variable `DIARY_CHROMEDRIVER`.
 Tests use a separate PostgreSQL database.
 
-The November 10, 2026 regression run passed all 684 project tests.
+The initial November 10, 2026 regression run passed all 684 project tests.
 A separate run passed 44 navigation and Diary integration tests, including the existing Diary browser check.
 All nine contributor spreadsheet JavaScript tests passed.
 The technical command `manage.py makemigrations --check --dry-run` reported no changes.
 No migration was applied to application data.
 No deployed service changed during verification.
+
+The scoped signal update passed 74 Notifier and Diary integration tests with package version `0.1.10.2`.
+This run included both browser workflows and copied task identities across event Diaries.
+The adapter rejected missing source keys and tasks outside the supplied Diary.
 
 ## Language review
 
