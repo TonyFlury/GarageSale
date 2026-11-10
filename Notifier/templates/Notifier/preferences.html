@@ -1,4 +1,5 @@
 {% extends 'Notifier/base.html' %}
+{% load static %}
 {% block notifier_content %}
 <h1>Notification settings</h1>
 <section class="notifier-channel-settings" aria-labelledby="notifier-channel-heading">
@@ -11,11 +12,34 @@
     {% for section in group.sections %}
     <fieldset class="notifier-channel"><legend>{{ section.stream.label }}</legend>
         <p>{{ section.stream.description }}</p>
-        {{ section.form.as_p }}
+        {{ section.form.non_field_errors }}
+        <p class="notifier-channel-toggle">{{ section.form.enabled.errors }}{{ section.form.enabled }} {{ section.form.enabled.label_tag }}</p>
+
+        {# Only channels with declared settings need an options group. #}
+        {% if section.stream.fields %}
+        <fieldset class="notifier-channel-options"{% if not section.form.channel_enabled %} disabled{% endif %}>
+        {% for field in section.form %}
+
+            {# Enablement remains outside the disabled options so users can turn the channel on. #}
+            {% if field.name != 'enabled' %}
+            <div class="notifier-setting-field">
+                {{ field.errors }}{{ field.label_tag }} {{ field }}
+
+                {# Display explanatory text only when the provider declares it. #}
+                {% if field.help_text %}<p class="notifier-setting-help" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+        </fieldset>
+        {% endif %}
     </fieldset>
     {% endfor %}
     <button class="notifier-save-all" type="submit" aria-label="Save all {{ group.provider.label }} channels">Save all</button>
 </form>
 {% empty %}<p class="notifier-empty">No notification streams are available.</p>{% endfor %}
 </section>
+{% endblock %}
+{% block PageScripts %}
+    {{ block.super }}
+    <script src="{% static 'Notifier/settings.js' %}" defer></script>
 {% endblock %}

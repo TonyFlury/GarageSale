@@ -332,7 +332,8 @@ class NotifierTests(TestCase):
                 fields=(FieldDefinition('days', 'Days', type='integer', default=0, minimum=0),)))
         self.enable()
         response = self.client.post(reverse('Notifier:preferences'), {
-            'provider_key': 'example', 'example.first-days': '-1', 'example.second-days': '-2',
+            'provider_key': 'example', 'example.first-enabled': 'on', 'example.second-enabled': 'on',
+            'example.first-days': '-1', 'example.second-days': '-2',
         })
         self.assertEqual(response.status_code, 400)
         self.assertContains(response, 'Ensure this value is greater than or equal to 0.', count=2, status_code=400)

@@ -22,6 +22,17 @@ class SubscriptionForm(forms.Form):
         if subscription is not None and subscription.schema_version == definition.schema_version:
             self.initial.update(subscription.values)
             self.initial['enabled'] = subscription.enabled
+        self.channel_enabled = self.initial['enabled']
+
+        # Submitted enablement controls editing for this request rather than the previously saved state.
+        if self.is_bound:
+            self.channel_enabled = self.fields['enabled'].clean(self.data.get(self.add_prefix('enabled')))
+        self.fields['enabled'].widget.attrs['class'] = 'notifier-channel-enabled'
+        for field in definition.fields:
+
+            # Disabled channels retain saved settings and ignore forged or omitted option values.
+            if not self.channel_enabled:
+                self.fields[field.key].disabled = True
 
     def setting_values(self):
         """Return normalized application fields after successful form validation."""

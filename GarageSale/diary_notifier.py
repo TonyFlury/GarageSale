@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.utils import timezone
 
-from Notifier.api import ProviderDefinition, Signal, SourceRef, StreamDefinition, get_registry, get_stream
+from Notifier.api import FieldDefinition, ProviderDefinition, Signal, SourceRef, StreamDefinition, get_registry, get_stream
 
 logger = logging.getLogger(__name__)
 EVENTS = (
@@ -116,8 +116,14 @@ def register():
     with registry.provider_registration():
         provider = registry.register_provider(ProviderDefinition('diary', 'Diary', 'Progress on event Diary tasks.'))
         for name, label, text in EVENTS + SCHEDULED_CHANNELS:
+            fields = ()
+
+            # Due reminders need a user-specific lead time. Other channels currently have no additional settings.
+            if name == 'task_due':
+                fields = (FieldDefinition('notice_days', 'Notice Period (days)', type='integer', default=0, minimum=0,
+                    help_text='Days before the due date. Use 0 for the due date itself.'),)
             provider.register_stream(StreamDefinition(key='diary.' + name, label=label, description=text,
-                allowed_groups=(settings.DIARY_USER, settings.DIARY_MANAGER), access_policy=source_is_visible))
+                fields=fields, allowed_groups=(settings.DIARY_USER, settings.DIARY_MANAGER), access_policy=source_is_visible))
     for name, _, _ in EVENTS:
         getattr(signals, name).connect(partial(receive_task_event, event_name=name),
             dispatch_uid='garagesale.notifier.' + name, weak=False)

@@ -29,6 +29,13 @@ Unchecked channels become disabled.
 Every channel must pass validation before any setting changes.
 A storage failure cancels all changes in the group.
 Other provider groups and other users' settings remain unchanged.
+Task Due includes a Notice Period (days) field from its channel definition.
+It accepts whole numbers greater than or equal to zero.
+Zero means the due date itself and is the default.
+Enable Task Due to change the displayed value.
+Select Save all under Diary to save the change.
+Disabling a channel preserves its last saved settings.
+Changing the notice period does not run the background evaluator immediately.
 
 The settings page hides the engine section when no engines exist.
 This implementation has no communication engines, engine registration, or engine settings forms.
@@ -62,6 +69,9 @@ Its source file is `user_management/templatetags/profile_navigation.py`.
 It does not import Notifier models or create profile data.
 
 The technical stylesheet is `user_management/styles/profile.css`.
+The technical script `Notifier/settings.js` controls generated option fields when users enable or disable channels.
+The script uses CSS classes and does not depend on Diary channel names or field names.
+The server independently preserves option values for disabled channels.
 It replaces the two profile templates' embedded presentation rules.
 The existing element identifiers `user_profile` and `bio` remain available.
 The existing image class `member_image` remains available.

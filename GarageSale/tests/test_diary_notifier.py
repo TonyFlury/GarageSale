@@ -105,11 +105,64 @@ class DiaryNotifierTests(TestCase):
                 self.assertContains(response, 'Task Late')
                 self.assertContains(response, 'class="notifier-save-all"', count=1)
                 self.assertEqual(self.client.post(url, {'provider_key': 'diary',
-                    'diary.task_due-enabled': 'on', 'diary.task_late-enabled': 'on'}).status_code, 302)
+                    'diary.task_due-enabled': 'on', 'diary.task_due-notice_days': '0',
+                    'diary.task_late-enabled': 'on'}).status_code, 302)
                 enabled = set(Subscription.objects.filter(user=user, enabled=True).values_list('stream_key', flat=True))
                 self.assertEqual(enabled, {'diary.task_due', 'diary.task_late'})
         self.add_task()
         self.assertFalse(Notification.objects.exists())
+
+    def test_task_due_notice_period_is_generated_from_its_definition_and_saved_per_user(self):
+        """Generate the declared notice field, validate enabled values, and preserve saved values while disabled."""
+        from Notifier.forms import SubscriptionForm
+        definition = self.registry.get_stream('diary.task_due').definition
+        self.assertEqual(definition.fields[0].key, 'notice_days')
+        self.assertEqual(definition.fields[0].minimum, 0)
+        self.assertEqual(definition.fields[0].default, 0)
+        form = SubscriptionForm(definition=definition)
+        self.assertTrue(form.fields['notice_days'].disabled)
+        self.assertEqual(form['notice_days'].value(), 0)
+        self.client.force_login(self.member)
+        url = reverse('Notifier:preferences')
+        data = {'provider_key': 'diary', 'diary.task_due-enabled': 'on', 'diary.task_due-notice_days': '7'}
+        self.assertEqual(self.client.post(url, data).status_code, 302)
+        subscription = Subscription.objects.get(user=self.member, stream_key=definition.key)
+        self.assertEqual(subscription.values, {'notice_days': 7})
+        form = SubscriptionForm(definition=definition, subscription=subscription)
+        self.assertFalse(form.fields['notice_days'].disabled)
+        self.assertEqual(form['notice_days'].value(), 7)
+        self.assertContains(self.client.get(url), 'Notice Period (days)')
+        self.assertEqual(self.client.post(url, {**data, 'diary.task_due-notice_days': '-1'}).status_code, 400)
+        self.assertEqual(self.client.post(url, {**data, 'diary.task_due-notice_days': '1.5'}).status_code, 400)
+        subscription.refresh_from_db()
+        self.assertEqual(subscription.values, {'notice_days': 7})
+        self.assertEqual(self.client.post(url, {'provider_key': 'diary', 'diary.task_due-notice_days': '99'}).status_code, 302)
+        subscription.refresh_from_db()
+        self.assertFalse(subscription.enabled)
+        self.assertEqual(subscription.values, {'notice_days': 7})
+        form = SubscriptionForm(definition=definition, subscription=subscription)
+        self.assertTrue(form.fields['notice_days'].disabled)
+        self.assertEqual(form['notice_days'].value(), 7)
+        self.assertEqual(self.client.post(url, {**data, 'diary.task_due-notice_days': '0'}).status_code, 302)
+        subscription.refresh_from_db()
+        self.assertEqual(subscription.values, {'notice_days': 0})
+        self.assertFalse(Subscription.objects.filter(user=self.other).exists())
+
+    def test_existing_task_due_subscription_uses_default_without_losing_enablement(self):
+        """Read older empty settings as the declared default without resetting an existing enabled subscription."""
+        from Notifier.forms import SubscriptionForm
+        from Notifier.preferences import subscription_is_valid
+        definition = self.registry.get_stream('diary.task_due').definition
+        row = Subscription.objects.create(user=self.member, stream_key=definition.key, enabled=True,
+                                           schema_version=definition.schema_version, values={})
+        form = SubscriptionForm(definition=definition, subscription=row)
+        self.assertTrue(subscription_is_valid(row, definition))
+        self.assertTrue(form.channel_enabled)
+        self.assertEqual(form['notice_days'].value(), 0)
+        self.assertFalse(form.fields['notice_days'].disabled)
+        row.refresh_from_db()
+        self.assertTrue(row.enabled)
+        self.assertEqual(row.values, {})
 
     def test_task_creation_requires_opt_in_and_records_a_bound_host_source(self):
         """Collect committed tasks only for enabled subscribers and preserve their source identity."""

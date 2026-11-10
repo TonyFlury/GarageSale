@@ -229,6 +229,11 @@ Supported field types are `boolean`, `integer`, `text`, and `choice`.
 Declarations supply labels, defaults, validation limits, choices, and help text.
 The Notifier generates forms and validates saved values from these declarations.
 It does not infer scheduling or delivery behavior from field names.
+The technical form `SubscriptionForm` reads current enablement before validating channel-specific option fields.
+The technical script `Notifier/settings.js` updates editable controls when the user changes the enable checkbox.
+The technical classes `notifier-channel-enabled` and `notifier-channel-options` identify those controls and their settings group.
+The technical classes `notifier-setting-field` and `notifier-setting-help` identify each field and its help text.
+The server preserves disabled channels' saved option values independently of browser behavior.
 
 The technical field `schema_version` starts at 1.
 Increase it when saved settings become incompatible.
@@ -284,7 +289,17 @@ They start disabled and use the same Diary group and source access restrictions 
 Registration does not depend on a background task or create subscription rows.
 These two channels have no progress signal receivers.
 The background evaluator remains responsible for generating their notification occurrences.
-This change adds registration and personal enablement settings only.
+Task Due declares the technical field `notice_days` through `FieldDefinition`.
+Its interface label is Notice Period (days).
+Its default is 0, which means the due date itself.
+The field accepts whole numbers of days greater than or equal to zero.
+The generic settings page generates this control from the channel definition.
+It displays the saved value and permits changes while the channel is enabled.
+Disabled channels retain their saved values and ignore submitted option changes.
+Existing subscriptions without `notice_days` use the declared default without losing enablement.
+Saving uses the existing Diary Save all transaction.
+Reminder evaluation remains background work and does not run when settings change.
+The notice-period update passed 80 affected tests, including generic field generation, browser editing, validation, and existing subscription compatibility.
 The registration update passed 78 affected tests against a separate PostgreSQL database.
 
 Diary emits these signals after successful transaction commit.

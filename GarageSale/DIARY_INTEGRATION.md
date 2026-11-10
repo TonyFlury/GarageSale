@@ -470,10 +470,13 @@ Their identifiers remain unchanged.
   The first implementation connects five committed package signals to the engine-free Notifier.
   Startup also registers `diary.task_due` and `diary.task_late` for background reminder evaluation.
   Both channels appear in the Diary settings group before any background task runs.
+  Task Due declares the `notice_days` integer setting with a default of 0 and a minimum of 0.
+  The generic settings form displays its saved value and enables editing when the channel is enabled.
   Implementation: `GarageSale/diary_notifier.py`: `register`, `receive_task_event`, `resolve_task`, `task_source`, and `source_is_visible`.
   Startup: `GarageSale/apps.py`: `GarageSaleConfig.ready`. Navigation: `GarageSale/notifier_integration.py`: `configure_notifier`.
   Verification: `GarageSale/tests/test_diary_notifier.py`: `DiaryNotifierTests`.
   Scheduled channel verification: `test_scheduled_channels_register_without_database_work_or_event_receivers` and `test_due_and_late_settings_share_the_diary_save_all_group`.
+  Notice setting verification: `test_task_due_notice_period_is_generated_from_its_definition_and_saved_per_user` and `test_existing_task_due_subscription_uses_default_without_losing_enablement`.
   Version `0.1.10.2` supplies the source Diary and task key pair.
   The adapter reads only the supplied Diary and preserves the original host event binding.
   The technical test `test_shared_task_keys_use_the_signal_diary_without_cross_event_content` verifies copied task identity isolation.
