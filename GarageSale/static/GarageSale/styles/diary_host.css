@@ -13,3 +13,7 @@
 
 /* HOST-003: Align Diary field labels with the form controls. */
 .diary .diary-field-label { text-align: left; }
+
+/* HOST-003: Keep navigator icons aligned with their visible action labels. */
+.diary .diary-graph-toolbar .diary-button { display: inline-flex; align-items: center; gap: .4rem; }
+.diary .diary-graph-toolbar .diary-host-toolbar-icon { display: inline-block; width: 1.5rem; height: 1.5rem; flex: 0 0 auto; object-fit: contain; }

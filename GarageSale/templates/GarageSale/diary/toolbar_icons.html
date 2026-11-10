@@ -1,0 +1,8 @@
+{% load static %}
+{# HOST-003: Supply host icons without replacing the package toolbar or its controls. #}
+<template class="diary-host-toolbar-icons">
+    <img class="diary-host-toolbar-icon" data-diary-target=".diary-template-add" src="{% static 'GarageSale/images/icons/create-note-alt-svgrepo-com.svg' %}" alt="Add task">
+    <img class="diary-host-toolbar-icon" data-diary-target=".diary-template-save" src="{% static 'GarageSale/images/icons/save-svgrepo-com.svg' %}" alt="Save template">
+    <img class="diary-host-toolbar-icon" data-diary-target=".diary-template-settings" src="{% static 'GarageSale/images/icons/settings-gear.svg' %}" alt="Settings">
+    <img class="diary-host-toolbar-icon" data-diary-target=".diary-template-help" src="{% static 'GarageSale/images/icons/help-circle-svgrepo-com.svg' %}" alt="Help">
+</template>

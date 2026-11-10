@@ -25,4 +25,9 @@
     {% endblock %}
     {% block diary_content %}{% endblock %}
 {% endblock %}
-{% block PageScripts %}{{ block.super }}{% block diary_scripts %}{% endblock %}{% endblock %}
+{% block PageScripts %}
+    {{ block.super }}
+    {% block diary_scripts %}{% endblock %}
+    {% include 'GarageSale/diary/toolbar_icons.html' %}
+    <script src="{% static 'GarageSale/js/diary_toolbar.js' %}" defer></script>
+{% endblock %}
