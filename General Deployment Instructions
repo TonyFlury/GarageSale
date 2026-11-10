@@ -131,7 +131,7 @@ if you have a new database :
 
         Export the selected template to a new file on the source site:
 
-        python manage.py transfer_diary_templates export deployment-diary-template.json --template "Garage Sale calendar"
+        python manage.py transfer_diary_templates export deployment-diary-template.json --template "Garage Sale Task Diary v0.1"
 
         Replace the template name when the deployment uses a different template.
         Without --template, the export contains every template's latest approved version.

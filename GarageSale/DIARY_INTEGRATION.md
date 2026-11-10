@@ -97,7 +97,8 @@ The technical milestone name `event_created` means the event's Use from date in 
 ## Demonstration template
 
 The file `GarageSale/fixtures/diary_demo_template.json` contains the demonstration template named `Garage Sale calendar`.
-This name matches the default `DIARY_TEMPLATE_NAME` setting.
+The project default `DIARY_TEMPLATE_NAME` is `Garage Sale Task Diary v0.1`.
+Set `DIARY_TEMPLATE_NAME` to `Garage Sale calendar` when using this demonstration fixture.
 The template contains eight tasks assigned to the `ExecMember` group.
 It contains preparation tasks, booking tasks, final checks, and an event-day task.
 Dependencies keep later tasks blocked until their preceding tasks are complete.
