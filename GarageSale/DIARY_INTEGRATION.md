@@ -346,6 +346,7 @@ The technical selector `.diary.diary-template-editor` sets the editor width to 9
 Both classes belong to the editor element. The rule removes the package's maximum width limit.
 Diary 0.1.9.3 supplies toolbar icon, label, and tooltip elements with CSS variables for host overrides.
 The host reuses the New and Save image assets for Add task and Save template.
+The Save template button uses a light background to keep the existing black Save icon visible.
 Settings uses a gear image. Help uses the existing question mark image.
 The technical stylesheet `GarageSale/styles/diary_host.css` supplies these overrides without host JavaScript or replacement toolbar templates.
 The package retains its accessible button names through HTML `aria-label` attributes.

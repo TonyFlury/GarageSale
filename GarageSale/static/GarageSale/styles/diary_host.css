@@ -29,6 +29,8 @@
     --diary-toolbar-icon: url("/static/GarageSale/images/icons/save-svgrepo-com.svg");
     --diary-toolbar-label: "Save template";
     --diary-toolbar-tooltip: "Save template";
+    background: #eee;
+    color: var(--diary-text);
 }
 .diary .diary-toolbar-settings {
     --diary-toolbar-icon: url("/static/GarageSale/images/icons/settings-gear.svg");
