@@ -207,8 +207,8 @@ if you have a new database :
         Deploy the shared channel forms and dialog fragment with the updated preferences view.
         Collect GarageSale/styles/smallscreen.css and Notifier/notifier.css for the compact mobile review page.
         Deploy the updated Notifier and profile host templates together.
-        Collect user_management/styles/account_indicator.css for the account badge demonstration.
-        Deploy the updated host template and profile_navigation template tags together.
+        Collect user_management/styles/account_indicator.css and user_management/js/account_menu.js for the account indicator.
+        Deploy the shared account control and account_indicator_tags template library together.
         Apply Notifier migration 0005_remove_severity_preference to remove obsolete severity gates.
         Existing channel subscriptions and notification records remain unchanged.
         Collect the updated Notifier/settings.js script for severity bulk selection.
@@ -225,8 +225,12 @@ if you have a new database :
         Apply the Notifier migration with the normal migrate command.
         Complete the access policy procedure in step 2a.
         Collect the Notifier static files with the normal collectstatic command.
-        Keep NOTIFIER['ENGINES'] equal to an empty list.
-        This release does not include communication engines.
+        Enable Notifier.engines.account_indicator.AccountIndicatorEngine in NOTIFIER['ENGINES'] for unread account counts.
+        Use an empty list when the site does not need an indicator engine.
+        The engine requires no new database migrations or background worker.
+        Restart the application after changing engine configuration.
+        Confirm that the icon and its badge open the user menu.
+        Confirm that Unread notifications appears in that menu only when accessible unread notifications exist.
         Reload the application after these steps.
         Collect the new user_management/styles/profile.css asset for the profile tabs.
         Open User Profile from the account menu.

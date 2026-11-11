@@ -1,8 +1,11 @@
 {% load user_management_tags %}
+{% load account_indicator_tags %}
+{% account_notification_indicator as account_indicator %}
 {% if not request.user.is_authenticated %}
     <li>{% login_form_link request.path %}</li>
     <li>{% register_form_link request.path %}</li>
 {% elif request.user.is_active %}
+    {% if account_indicator %}<li class="account-unread-item"><a class="account-unread-link" href="{{ account_indicator.url }}">Unread notifications ({{ account_indicator.display }})</a></li>{% endif %}
     <li><a href="{% url 'user_management:change_password' %}?redirect={{request.path}}">Change Password</a></li>
     {% if perms.user_management.manage_own_profile or perms.GarageSale.manage_own_team_profile %}
         <li><a href="{% url 'user_management:profile' %}">User Profile</a></li>

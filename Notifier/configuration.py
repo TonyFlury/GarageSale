@@ -1,4 +1,4 @@
-"""Validate engine-free host configuration without database access."""
+"""Validate host configuration without database access."""
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
@@ -32,9 +32,8 @@ def configuration():
     if not isinstance(config.get('BASE_TEMPLATE', ''), str) or not config.get('BASE_TEMPLATE', 'Notifier/document.html'):
         raise ImproperlyConfigured('BASE_TEMPLATE must be a nonempty template name.')
 
-    # This version stores entries and renders a review page without supplying any engines.
-    if config.get('ENGINES', []) != []:
-        raise ImproperlyConfigured('This Notifier version requires ENGINES = [].')
+    from .engines import configured_engine_paths
+    configured_engine_paths()
     limits = {'signals': 500, 'recipient_entries': 5000}
     supplied = config.get('INTAKE_LIMITS', {})
 

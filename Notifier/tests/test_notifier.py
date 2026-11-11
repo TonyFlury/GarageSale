@@ -574,11 +574,12 @@ class NotifierTests(TestCase):
                 self.assertEqual(self.client.post(reverse('Notifier:preferences'), data).status_code, 404)
         self.assertFalse(Subscription.objects.exists())
 
-    def test_empty_engine_configuration_is_valid_and_engines_are_not_implemented(self):
-        """Require no engine package for collection or review and reject unsupported engine configuration."""
+    def test_empty_engine_configuration_is_valid_and_unknown_engines_fail_startup(self):
+        """Permit engine-free collection and reject unknown engine classes during initialization."""
+        from Notifier.engines import validate_engines
         self.assertEqual(configuration()['signals'], 500)
         with self.settings(NOTIFIER={'ENGINES': ['unimplemented.engine']}), self.assertRaises(ImproperlyConfigured):
-            configuration()
+            validate_engines()
 
     @override_settings(NOTIFIER={'ENGINES': []})
     def test_generic_installation_does_not_assume_host_profile_authorization(self):

@@ -3,7 +3,6 @@
 {% load user_management_tags %}
 {% load user_info from user_management_tags %}
 {% load event_data_tags %}
-{% load profile_navigation %}
 
 {% block additionalScripts%}
     {{ block.super }}
@@ -19,7 +18,6 @@ Brantham Garage Sale - Home Page
 
 {% block additionalStyles %}
     {{ block.super }}
-<link rel="stylesheet" href="{% static 'user_management/styles/account_indicator.css' %}?v=demo-1">
 <link rel="stylesheet" href="{% static 'GarageSale/styles/scrollablePanel.css' %}">
     {% block PageStyles %}
     {% endblock %}
@@ -47,18 +45,7 @@ Brantham Garage Sale - Home Page
             <span id="user_name" class="account-greeting">{%  user_info %}</span>
             <a href="mailto:Trustees@BranthamGarageSale.org.uk"><img id=Email class="Button Animate browser" src="{% static 'GarageSale/images/icons/email-open-svgrepo-com.svg' %}" ></a>
             <a href="https://www.facebook.com/BranthamGarageSale"><img id=Facebook class="Button Animate browser" src="{% static 'GarageSale/images/icons/facebook-color-svgrepo-com.svg' %}"></a>
-            {% account_notification_indicator request.user as account_indicator %}
-            <span id=user_management class="Button dropdown account-indicator">
-                    <img id=Account class="Button Animate dropbtn" src="{% static 'user_management/images/icons/user-svgrepo-com.svg' %}" >
-                    {% if account_indicator %}
-                    <a class="account-indicator-badge account-indicator-{{ account_indicator.severity }}" href="{{ account_indicator.url }}" aria-label="{{ account_indicator.label }}" title="{{ account_indicator.label }}">{{ account_indicator.display }}</a>
-                    {% endif %}
-                        <span class="dropdown-content">
-                          <ul>
-                              {% User_menu  register="/register" login="/login" logoff="/logoff" %}
-                          </ul>
-                        </span>
-            </span>
+            {% include 'user_management/account_control.html' %}
         </span>
     <script>
         function toggleBurger() {

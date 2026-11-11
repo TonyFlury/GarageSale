@@ -18,3 +18,5 @@ class GarageSaleConfig(AppConfig):
         if apps.is_installed('Notifier'):
             from .notifier_integration import configure_notifier
             configure_notifier()
+            from .account_indicator_integration import configure_account_indicator
+            configure_account_indicator()

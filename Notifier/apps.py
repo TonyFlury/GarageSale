@@ -3,7 +3,7 @@ from django.apps import AppConfig
 
 
 class NotifierConfig(AppConfig):
-    """Declare Notifier models and validate its engine-free configuration."""
+    """Declare Notifier models and initialize optional configured engines."""
 
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'Notifier'
@@ -11,4 +11,6 @@ class NotifierConfig(AppConfig):
     def ready(self):
         """Validate host configuration without clearing providers registered by other applications."""
         from .configuration import configuration
+        from .engines import validate_engines
         configuration()
+        validate_engines()

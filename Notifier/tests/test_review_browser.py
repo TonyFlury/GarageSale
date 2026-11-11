@@ -11,6 +11,7 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 from django.utils import timezone
 from selenium import webdriver
+from selenium.webdriver import ActionChains
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
@@ -238,3 +239,106 @@ class NotifierBrowserTests(StaticLiveServerTestCase):
         self.assertTrue(Subscription.objects.get(user=self.user, stream_key=due.key).enabled)
         self.assertFalse(Subscription.objects.get(user=self.user, stream_key=other.key).enabled)
         self.assertEqual(Subscription.objects.get(user=self.user, stream_key=due.key).values, {'notice_days': 7})
+
+    def prepare_indicator_notifications(self):
+        """Collect one notification per severity through the registered stream APIs."""
+        provider = self.registry.providers['browser']
+        warning = provider.register_stream(StreamDefinition('browser.warning', 'Warning', severity='warning'))
+        for stream in (self.stream, warning, self.secondary_stream):
+            save_subscription(self.user, stream.definition, enabled=True, values={})
+            stream.publish([Signal(stream.key, timezone.now(), SourceRef('example.record', stream.key), 'Example', 'Review')])
+        return warning
+
+    def check_indicator_menu_navigation(self):
+        """Open and close the menu through icon and badge clicks before following its unread link."""
+        self.open_page('user_management:profile')
+        self.check_account_icon_alignment()
+        badge = self.driver.find_element(By.CSS_SELECTOR, '.account-indicator-badge')
+        self.assertEqual(badge.text, '3')
+        self.assertEqual(badge.tag_name, 'span')
+        icon_button = self.driver.find_element(By.CSS_SELECTOR, '.account-menu-toggle')
+        self.assertEqual(icon_button.value_of_css_property('outline-width'), '3px')
+        self.assertEqual(icon_button.value_of_css_property('outline-color'), 'rgba(224, 0, 0, 1)')
+        self.assertEqual(icon_button.value_of_css_property('outline-offset'), '-3px')
+        marker = self.driver.find_element(By.CSS_SELECTOR, '.account-urgency-marker')
+        self.assertEqual(marker.text, '!')
+        self.assertEqual(marker.value_of_css_property('color'), 'rgba(224, 0, 0, 1)')
+        self.assertEqual(icon_button.value_of_css_property('background-color'), 'rgba(0, 0, 0, 0)')
+        self.assertEqual(self.driver.find_element(By.ID, 'Account').value_of_css_property('filter'), 'none')
+        self.assertIn('account-overlay-urgent', icon_button.get_attribute('class'))
+        original_url = self.driver.current_url
+        toggle = self.driver.find_element(By.CSS_SELECTOR, '.account-menu-toggle')
+        toggle.click()
+        self.assertEqual(self.driver.current_url, original_url)
+        self.assertEqual(toggle.get_attribute('aria-expanded'), 'true')
+        self.assertTrue(self.driver.find_element(By.CSS_SELECTOR, '.account-unread-link').is_displayed())
+        toggle.click()
+        self.assertFalse(self.driver.find_element(By.CSS_SELECTOR, '.account-unread-link').is_displayed())
+        ActionChains(self.driver).move_to_element(badge).click().perform()
+        self.assertEqual(toggle.get_attribute('aria-expanded'), 'true')
+        self.assertEqual(self.driver.current_url, original_url)
+        self.driver.find_element(By.CSS_SELECTOR, '.account-unread-link').click()
+        self.wait.until(expected_conditions.url_contains('state=unread'))
+
+    def check_account_icon_alignment(self):
+        """Keep the original account icon size and align it with adjacent toolbar icons."""
+        icon = self.driver.find_element(By.ID, 'Account')
+        adjacent = self.driver.find_element(By.ID, 'Email')
+        button = self.driver.find_element(By.CSS_SELECTOR, '.account-menu-toggle')
+        self.assertEqual(button.size['height'], 40)
+        self.assertAlmostEqual(icon.rect['y'], adjacent.rect['y'], delta=1)
+
+    def check_indicator_severity_states(self, warning):
+        """Check warning and information presentation after higher-severity notifications become read."""
+        Notification.objects.filter(user=self.user, stream_key=self.stream.key).update(read_at=timezone.now())
+        self.driver.set_window_size(390, 844)
+        self.open_page('user_management:profile')
+
+        badge = self.driver.find_element(By.CSS_SELECTOR, '.account-indicator-badge')
+        self.assertEqual(badge.text, '2')
+        self.assertIn('account-indicator-warning', badge.get_attribute('class'))
+        self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, '.account-urgency-marker'))
+        self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.account-menu-toggle').value_of_css_property('outline-style'), 'none')
+        self.assertEqual(badge.value_of_css_property('border-top-width'), '0px')
+        self.assertEqual(badge.value_of_css_property('background-color'), 'rgba(163, 33, 33, 1)')
+        Notification.objects.filter(user=self.user, stream_key=warning.key).update(read_at=timezone.now())
+        self.open_page('user_management:profile')
+
+        badge = self.driver.find_element(By.CSS_SELECTOR, '.account-indicator-badge')
+        self.assertIn('account-indicator-information', badge.get_attribute('class'))
+        self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, '.account-urgency-marker'))
+        self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.account-menu-toggle').value_of_css_property('outline-style'), 'none')
+        self.assertEqual(badge.value_of_css_property('background-color'), 'rgba(240, 180, 41, 1)')
+        self.assertEqual(badge.value_of_css_property('color'), 'rgba(17, 17, 17, 1)')
+
+    def check_indicator_count_cap(self):
+        """Keep a large total exact in accessible text while displaying 99+ on mobile."""
+        self.secondary_stream.publish([Signal(f'count:{index}', timezone.now(), SourceRef('example.record', str(index)),
+                                             'Example', 'Review') for index in range(100)])
+        self.open_page('user_management:profile')
+        self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, '.account-indicator-badge').text, '99+')
+        self.assertIn('101 unread notifications', self.driver.find_element(By.CSS_SELECTOR, '.account-menu-toggle').get_attribute('aria-label'))
+        Notification.objects.filter(user=self.user, stream_key=self.stream.key).update(read_at=None)
+        self.open_page('user_management:profile')
+        marker = self.driver.find_element(By.CSS_SELECTOR, '.account-urgency-marker')
+        badge = self.driver.find_element(By.CSS_SELECTOR, '.account-indicator-badge')
+        self.assertEqual(badge.text, '99+')
+        self.assertLessEqual(marker.rect['x'] + marker.rect['width'], badge.rect['x'])
+        self.assertTrue(self.driver.execute_script('return document.documentElement.scrollWidth <= innerWidth'))
+
+    def check_empty_account_menu(self):
+        """Retain ordinary account navigation without an overlay or unread entry after all items become read."""
+        Notification.objects.filter(user=self.user).update(read_at=timezone.now())
+        self.open_page('user_management:profile')
+        self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, '.account-indicator-badge'))
+        self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, '.account-unread-link'))
+        self.driver.find_element(By.CSS_SELECTOR, '.account-menu-toggle').click()
+        self.assertTrue(self.driver.find_element(By.LINK_TEXT, 'Change Password').is_displayed())
+
+    def test_indicator_opens_menu_and_only_the_unread_menu_link_navigates(self):
+        """Preserve account menu clicks while displaying exact severity states, totals, and the 99+ cap."""
+        warning = self.prepare_indicator_notifications()
+        self.check_indicator_menu_navigation()
+        self.check_indicator_severity_states(warning)
+        self.check_indicator_count_cap()
+        self.check_empty_account_menu()

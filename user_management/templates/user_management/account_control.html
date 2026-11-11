@@ -1,0 +1,10 @@
+{% load static account_indicator_tags user_management_tags %}
+{% account_notification_indicator as account_indicator %}
+<span id="user_management" class="Button dropdown account-indicator {{ account_control_class }}">
+    <button class="account-menu-toggle{% if account_indicator %} account-overlay account-overlay-{{ account_indicator.severity }}{% endif %}" type="button" aria-expanded="false" aria-controls="account-user-menu" aria-label="User menu{% if account_indicator %}, {{ account_indicator.label }}{% endif %}"{% if account_indicator %} title="{{ account_indicator.label }}"{% endif %}>
+        <img id="Account" class="Button Animate dropbtn" src="{% static 'user_management/images/icons/user-svgrepo-com.svg' %}" alt="">
+        {% if account_indicator.severity == 'urgent' %}<span class="account-urgency-marker" aria-hidden="true">!</span>{% endif %}
+        {% if account_indicator %}<span class="account-indicator-badge account-indicator-{{ account_indicator.severity }}" aria-hidden="true">{{ account_indicator.display }}</span>{% endif %}
+    </button>
+    <span id="account-user-menu" class="dropdown-content account-menu-content"><ul>{% User_menu register="/register" login="/login" logoff="/logoff" %}</ul></span>
+</span>

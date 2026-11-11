@@ -166,7 +166,7 @@ AUTH_USER_MODEL = "user_management.UserExtended"
 
 # Notification collection and personal review do not require delivery engines.
 NOTIFIER = {
-    'ENGINES': [],
+    'ENGINES': ['Notifier.engines.account_indicator.AccountIndicatorEngine'],
     'BASE_TEMPLATE': 'GarageSale/notifier/base.html',
     'ACCESS_PERMISSIONS': ('Notifier.use_notifier', 'GarageSale.manage_own_team_profile', 'user_management.manage_own_profile'),
 }

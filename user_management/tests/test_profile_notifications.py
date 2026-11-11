@@ -6,7 +6,7 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 from PIL import Image
@@ -16,7 +16,7 @@ from Notifier.models import Notification, Subscription
 from Notifier.preferences import save_subscription
 from Notifier.registry import Registry
 from user_management.models import TeamMember
-from user_management.templatetags.profile_navigation import account_notification_indicator
+from user_management.account_indicators import account_indicator_for
 
 
 class ProfileNotificationTests(TestCase):
@@ -48,23 +48,40 @@ class ProfileNotificationTests(TestCase):
         save_subscription(user, self.stream.definition, enabled=True, values={})
         self.stream.publish([Signal(str(user.pk), timezone.now(), SourceRef('example.record', str(user.pk)), title, title)])
 
+    def indicator_for_user(self, user):
+        """Read a fresh request summary after a settings, read-state, or permission change."""
+        request = RequestFactory().get('/')
+        request.user = user
+        return account_indicator_for(request)
+
     def test_account_indicator_counts_only_personal_visible_unread_notifications(self):
         """Hide foreign, read, disabled, and unauthorized notifications from the demonstration account badge."""
         self.collect_for(self.other, 'Another account notification')
         self.collect_for(self.user, 'Personal notification')
-        indicator = account_notification_indicator(self.user)
+        indicator = self.indicator_for_user(self.user)
         self.assertEqual(indicator['count'], 1)
         self.assertEqual(indicator['url'], reverse('Notifier:feed') + '?state=unread')
         response = self.client.get(reverse('user_management:profile'))
         self.assertContains(response, 'account-indicator-badge account-indicator-information')
-        self.assertContains(response, 'aria-label="1 unread notification (Information)"')
+        self.assertContains(response, '1 unread notification: 0 urgent, 0 warning, 1 information')
         Subscription.objects.filter(user=self.user).update(enabled=False)
-        self.assertIsNone(account_notification_indicator(self.user))
+        self.assertIsNone(self.indicator_for_user(self.user))
         Subscription.objects.filter(user=self.user).update(enabled=True)
         Notification.objects.filter(user=self.user).update(read_at=timezone.now())
-        self.assertIsNone(account_notification_indicator(self.user))
+        self.assertIsNone(self.indicator_for_user(self.user))
         self.user.user_permissions.clear()
-        self.assertIsNone(account_notification_indicator(get_user_model().objects.get(pk=self.user.pk)))
+        self.assertIsNone(self.indicator_for_user(get_user_model().objects.get(pk=self.user.pk)))
+
+    def test_disabling_engines_preserves_unread_records_and_the_ordinary_menu(self):
+        """Hide the indicator and unread menu link when engines are absent without deleting notifications."""
+        self.collect_for(self.user, 'Personal notification')
+        with self.settings(NOTIFIER={'ENGINES': []}):
+            response = self.client.get(reverse('user_management:profile'))
+        self.assertContains(response, 'account-menu-toggle')
+        self.assertContains(response, 'Change Password')
+        self.assertNotContains(response, 'class="account-indicator-badge')
+        self.assertNotContains(response, 'class="account-unread-link"')
+        self.assertTrue(Notification.objects.filter(user=self.user, read_at__isnull=True).exists())
 
     def test_personal_information_retains_bio_picture_and_id_card_actions(self):
         """Present both profile sections while retaining existing personal information and ID card links."""

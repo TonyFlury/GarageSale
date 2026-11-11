@@ -1,6 +1,12 @@
 .account-indicator { position: relative; display: inline-block; }
-.account-indicator .account-indicator-badge { position: absolute; inset-block-start: -5px; inset-inline-end: 0; z-index: 2; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 20px; min-height: 20px; padding: 1px 4px; border: 2px solid #fff; border-radius: 999px; background: #234f75; color: #fff; font: bold 12px/1.1 sans-serif; text-decoration: none; box-shadow: 0 1px 3px #0005; }
-.account-indicator .account-indicator-urgent { background: #a32121; }
-.account-indicator .account-indicator-warning { background: #805b00; }
-.account-indicator .account-indicator-badge:hover { text-decoration: underline; }
-.account-indicator .account-indicator-badge:focus-visible { outline: 3px solid #3333dd; outline-offset: 3px; }
+.account-indicator .account-menu-toggle { position: relative; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 40px; height: 40px; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; vertical-align: baseline; }
+.account-indicator .account-overlay { border-radius: .35rem; background: transparent; }
+.account-indicator .account-overlay-urgent { outline: 3px solid #e00000; outline-offset: -3px; }
+.account-indicator .account-urgency-marker { position: absolute; inset-block-start: 2px; inset-inline-start: 3px; z-index: 3; pointer-events: none; color: #e00000; font: 900 16px/1 sans-serif; }
+.account-indicator .account-indicator-badge { position: absolute; inset-block-start: 0; inset-inline-end: 0; z-index: 2; pointer-events: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 20px; min-height: 20px; padding: 2px 4px; border: 0; border-radius: 999px; background: #f0b429; color: #111; font: bold 12px/1.1 sans-serif; }
+.account-indicator .account-indicator-urgent { background: #a32121; color: #fff; }
+.account-indicator .account-indicator-warning { background: #a32121; color: #fff; }
+.account-indicator.dropdown:hover .account-menu-content { display: none; }
+.account-indicator.dropdown.account-menu-open .account-menu-content { display: block; }
+.account-indicator .account-menu-content { right: 0; max-width: calc(100vw - 1rem); }
+.account-indicator .account-menu-toggle:focus-visible { outline: 3px solid #3333dd; outline-offset: 3px; }

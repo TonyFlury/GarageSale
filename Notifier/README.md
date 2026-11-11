@@ -1,7 +1,7 @@
 # Notifier: first implementation
 
-Status: Implemented for personal review without communication engines.
-Date: November 10, 2026.
+Status: Implemented for personal review with an optional account indicator engine.
+Date: November 11, 2026.
 
 ## Scope and technical names
 
@@ -13,10 +13,11 @@ A notification is an accepted occurrence stored for one user.
 
 The Notifier collects signals and supplies a personal review page.
 The technical setting `NOTIFIER` contains `ENGINES`, optional `INTAKE_LIMITS`, optional `BASE_TEMPLATE`, and optional `ACCESS_PERMISSIONS` fields.
-This version requires `ENGINES: []`.
-It does not supply an engine interface, engine registration, email delivery, or scheduled delivery.
-Future engines can use collected occurrences without requiring providers to select delivery methods.
-Their callable interface and collation rules remain design decisions.
+The optional `ENGINES` list contains engine class paths. An empty list remains supported.
+Configured engines expose unique stable keys and initialize without database access.
+The `get_engine` function in `Notifier.api` returns an enabled engine or None.
+The account indicator engine supplies counts. It does not render user interface elements.
+Email delivery remains future work. Its engine can own both collation and presentation.
 
 ## Installation and access
 
@@ -38,8 +39,8 @@ Notification settings groups channels under their registered provider headings.
 The user interface calls each technical stream a channel.
 Channel settings uses the existing registered field declarations and personal subscriptions.
 Each group has one Save all button for all its eligible channels.
-The settings page hides the engine section because this version has no engines.
-Future engine registration and engine settings forms remain separate implementation work.
+The settings page has no separate engine section because the account indicator declares no personal engine settings.
+Other engine integrations and personal engine settings forms remain future work.
 
 Profile navigation accepts existing own-profile authorization without requiring an additional Notifier permission grant.
 An unavailable tab has no destination link and includes an explanatory hover label.
@@ -486,20 +487,57 @@ The scoped signal update passed 74 Notifier and Diary integration tests with pac
 This run included both browser workflows and copied task identities across event Diaries.
 The adapter rejected missing source keys and tasks outside the supplied Diary.
 
-## Account indicator demonstration
+## Account notification indicator engine
 
-This preview adds an unread count overlay to the existing account icon.
-The `account_notification_indicator` template tag lives in `user_management/templatetags/profile_navigation.py`.
-It reads the authorized personal review list and uses its highest severity for the badge color.
-The badge links to unread notifications and includes an accessible label and hover text.
-It remains absent when no authorized unread notifications exist.
-The current account menu remains available.
-The `.account-indicator` class anchors the overlay.
-The `.account-indicator-badge`, `.account-indicator-urgent`, and `.account-indicator-warning` classes control its appearance.
-The stylesheet is `user_management/styles/account_indicator.css`.
-The tag calculates the count during page rendering. It does not update an already open page.
-This demonstration calls Notifier directly and registers no engine.
-The proposed generic indicator registration API remains future work.
+Garage Sale enables `Notifier.engines.account_indicator.AccountIndicatorEngine` in `NOTIFIER['ENGINES']`.
+Use an empty engine list to omit the indicator while retaining notification collection and review.
+`AccountIndicatorEngine.summary_for(user)` returns exact Urgent, Warning, and Information unread counts through `UnreadCounts`.
+The engine uses current personal channel settings, account permissions, and source access checks.
+It supplies no markup, colors, count caps, or CSS classes.
+
+`GarageSale/account_indicator_integration.py` connects the engine to the user-management contract.
+Its `configure_account_indicator` function registers the adapter during application startup without database operations.
+The host adapter supplies counts and the unread destination through `AccountIndicatorSummary`.
+Neither the engine nor user management imports the other application's implementation.
+
+`user_management/account_indicators.py` supplies `register_account_indicator(key, provider)` for one optional provider.
+A provider accepts the current user and returns `AccountIndicatorSummary` or None.
+The summary contains nonnegative integer counts and a local destination URL.
+`indicator_summary_for(request)` caches the result once per request, including empty results.
+Absent or failed providers leave the ordinary account menu available.
+The `account_notification_indicator` template tag uses this contract from `user_management/templatetags/account_indicator_tags.py`.
+
+User management renders the total unread count at the icon's top-right corner.
+Totals above 99 display as `99+`. Accessible text and hover text retain exact counts and the severity breakdown.
+An Urgent count produces a red count badge with white text and a red outline around the account icon.
+The Urgent outline is 3 pixels wide and uses bright red `#e00000`.
+The `.account-urgency-marker` class adds a red exclamation mark at the top-left only for Urgent notifications.
+The marker is decorative because the accessible account label already includes exact severity counts.
+The icon background remains transparent and its original graphic remains unchanged.
+An inset outline preserves the original 40-pixel icon control size and baseline alignment for every severity.
+Warnings without Urgent notifications produce a red count badge with white text and no icon border.
+Information alone produces an amber count badge with black text and no icon border.
+A zero total produces no overlay and no unread menu entry.
+
+Clicking the icon or overlay opens the existing user menu. Neither action navigates to notifications.
+The conditional `Unread notifications` menu link opens the unread review page.
+Clicking the button again, selecting outside the menu, or pressing Escape closes the menu.
+The shared `user_management/account_control.html` component preserves the existing account actions in both host toolbar templates.
+`user_management/js/account_menu.js` supplies the account disclosure behavior independently of Notifier.
+
+The `.account-indicator` class anchors the overlay. `.account-menu-toggle` identifies its button.
+The `.account-menu-open` and `.account-menu-content` classes identify the menu state and content.
+The `.account-indicator-badge`, `.account-indicator-urgent`, and `.account-indicator-warning` classes control overlay presentation.
+The `.account-overlay`, `.account-overlay-urgent`, and `.account-overlay-warning` classes apply severity to the icon button itself.
+The count badge remains at the top-right of that icon overlay.
+The `.account-indicator-information` class identifies the default amber state.
+The `.account-unread-item` and `.account-unread-link` classes identify the optional unread destination.
+Presentation rules live in `user_management/styles/account_indicator.css`.
+The summary refreshes on page requests. An already open page does not receive live updates.
+
+Verification: `AccountIndicatorEngineTests` covers collation, access checks, startup, and engine absence.
+`AccountIndicatorTests` covers the generic contract, presentation rules, count caps, request caching, and provider failure.
+`NotifierBrowserTests.test_indicator_opens_menu_and_only_the_unread_menu_link_navigates` covers menu clicks and visual severity states.
 
 ## Language review
 
