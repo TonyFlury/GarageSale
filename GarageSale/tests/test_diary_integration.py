@@ -324,7 +324,7 @@ class EventDiaryIntegrationTests(TestCase):
     def test_demo_template_import_creates_event_tasks_with_booking_dates(self):
         """Validate the portable demonstration template and create tasks with host booking dates and dependencies."""
         fixture = Path(__file__).resolve().parents[1] / 'fixtures' / 'diary_demo_template.json'
-        options = {'actor': self.manager.get_username(), 'stdout': StringIO()}
+        options = {'stdout': StringIO()}
         call_command('transfer_diary_templates', 'import', str(fixture), dry_run=True, **options)
         call_command('transfer_diary_templates', 'import', str(fixture), **options)
         call_command('transfer_diary_templates', 'import', str(fixture), **options)
@@ -370,11 +370,13 @@ class EventDiaryIntegrationTests(TestCase):
         dates = self.client_for(EventData.objects.get()).read()['milestones']
         self.assertEqual({name: value.isoformat() for name, value in dates.items()}, mappings)
 
-    def test_unused_requirements_log_all_unavailable_event_sources(self):
-        """Reject all unavailable declarations even when no task uses them and preserve an existing event."""
+    def test_required_milestones_log_all_unavailable_event_sources(self):
+        """Reject every unavailable milestone referenced by template tasks and preserve the unprepared event."""
         self.api.define_milestones(definitions={'sales_bookings_open': 'Sales bookings open',
                                               'unmapped_date': 'Unsupported date'})
-        self.template.save_version(entries=(self.spec,), predecessors={}, expected_version_key=self.version.key,
+        entries = (self.spec, EntrySpec('Sales open', 'source', milestone_name='sales_bookings_open'),
+                   EntrySpec('Unmapped source', 'source', milestone_name='unmapped_date'))
+        self.template.save_version(entries=entries, predecessors={}, expected_version_key=self.version.key,
             milestone_names=('event_date', 'sales_bookings_open', 'unmapped_date'))
         event = EventData.objects.create(event_date=date(2027, 6, 27), use_from=date(2027, 1, 1))
         with self.assertLogs('GarageSale.diary_integration', level='ERROR') as logged, self.assertRaises(DiaryIntegrationError):
@@ -396,8 +398,8 @@ class EventDiaryIntegrationTests(TestCase):
             with self.assertLogs('GarageSale.diary_integration', level='ERROR'), self.assertRaises(DiaryIntegrationError):
                 event_diary_definition(event, self.manager)
 
-    def test_host_template_save_delegates_declared_milestones_to_package(self):
-        """Save package forms through host navigation, preserving required declarations that no task uses."""
+    def test_host_template_save_uses_package_derived_milestones(self):
+        """Let the package derive required milestones from tasks and ignore obsolete manual selections."""
         self.api.define_milestones(definitions={'event_created': 'Event created'})
         self.select_template('Event preparation')
         page = self.client.get(reverse('Diary:template-edit'))
@@ -412,7 +414,7 @@ class EventDiaryIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('Diary:template-edit'))
         data = self.api.template(name='Event preparation').editor_data()
-        self.assertEqual([item['name'] for item in data['milestones']], ['event_created', 'event_date'])
+        self.assertEqual([item['name'] for item in data['milestones']], ['event_date'])
 
     def test_clean_navigation_and_forged_task_selection(self):
         """Keep identifiers out of links and reject a task selected from another event's diary."""

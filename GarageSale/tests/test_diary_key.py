@@ -7,7 +7,7 @@ from Diary import api
 from GarageSale.models import EventData
 
 
-@override_settings(DIARY_MANAGER='Officer', DIARY_USER='ExecMember')
+@override_settings(DIARY_MANAGER='Officer', DIARY_USER='ExecMember', DIARY_TASK_OWNER_ROLES=())
 class EventDiaryKeyTests(TestCase):
     """Check the host event reference without depending on Diary database model definitions."""
 

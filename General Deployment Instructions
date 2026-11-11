@@ -115,7 +115,10 @@ if you have a new database :
         Full instructions: GarageSale/TEMPLATE_TRANSFER.md
 
 2c) Diary calendar template transfer - SITES WITH DIARY ENABLED:
-        Install the approved DjangoTaskCalendar package before this step.
+        Install DjangoTaskCalendar 0.1.11.1 before this step.
+        Collect its static assets through the normal collectstatic command.
+        The existing host URLs support List, Day, Week, and Month presentations.
+        This package update requires no new host routes or database migrations.
         Apply its migrations with the project's normal migration command.
         Complete the access policy setup in step 2a.
         Check the configured Diary groups:
@@ -125,13 +128,12 @@ if you have a new database :
         Use transfer_diary_templates to export and import Diary calendar templates.
         This command is separate from the communication template command in step 2b.
         Use the site's project directory, virtual environment, and database credentials.
-        Replace SOURCE_MANAGER_USERNAME with an active Diary manager's username on the source site.
-        Replace TARGET_MANAGER_USERNAME with an active Diary manager's username on the destination site.
+        The transfer command no longer accepts --actor.
         The current DIARY_MANAGER setting selects the Officer group.
 
         Export the selected template to a new file on the source site:
 
-        python manage.py transfer_diary_templates export deployment-diary-template.json --actor SOURCE_MANAGER_USERNAME --template "Garage Sale calendar"
+        python manage.py transfer_diary_templates export deployment-diary-template.json --template "Garage Sale calendar"
 
         Replace the template name when the deployment uses a different template.
         Without --template, the export contains every template's latest approved version.
@@ -143,8 +145,8 @@ if you have a new database :
         Copy the file to the destination site through the normal file-transfer process.
         Validate the file before import:
 
-        python manage.py transfer_diary_templates import deployment-diary-template.json --actor TARGET_MANAGER_USERNAME --dry-run
-        python manage.py transfer_diary_templates import deployment-diary-template.json --actor TARGET_MANAGER_USERNAME
+        python manage.py transfer_diary_templates import deployment-diary-template.json --dry-run
+        python manage.py transfer_diary_templates import deployment-diary-template.json
 
         Use this command instead of loaddata for Diary template imports.
         The command checks ownership, milestone declarations, and dependency cycles.
@@ -156,7 +158,7 @@ if you have a new database :
 
         Import the approved template before creating events.
         Its name must match the DIARY_TEMPLATE_NAME setting.
-        Event creation supplies dates for every declared required milestone.
+        Event creation supplies dates for milestones referenced by approved template tasks.
         Existing event Diaries remain unchanged after template import.
         Full integration instructions: GarageSale/DIARY_INTEGRATION.md.
         Package command documentation: Diary/README.md in the DjangoTaskCalendar source repository.
@@ -164,11 +166,10 @@ if you have a new database :
 2d) Demonstration data - TRIAL SITES ONLY. DO NOT RUN ON THE LIVE SITE:
         Complete migrations and access policy setup before importing the example Diary template.
         Use the trial site's project directory, virtual environment, and database credentials.
-        Replace TRIAL_MANAGER_USERNAME with an active Diary manager's username on the trial site.
         Import the example calendar template before creating a demonstration event:
 
-        python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json --actor TRIAL_MANAGER_USERNAME --dry-run
-        python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json --actor TRIAL_MANAGER_USERNAME
+        python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json --dry-run
+        python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json
 
         This example creates the approved template named Garage Sale calendar.
         It contains eight tasks assigned to ExecMember, with booking milestones and task dependencies.

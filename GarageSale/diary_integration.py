@@ -71,7 +71,7 @@ def event_diary_definition(event, user):
         field = MILESTONE_FIELDS[name]
         value = getattr(event, field)
 
-        # Required declarations need date objects even when no template task uses them.
+        # Every milestone required by the package needs a date object from the mapped host field.
         if type(value) is not date:
             unavailable.append(f'{name}: event field {field} has no valid date')
             continue

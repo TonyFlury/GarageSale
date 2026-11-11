@@ -1,7 +1,7 @@
 # Garage Sale integration with Diary
 
 Status: Event creation and host-framed Diary pages are implemented. Dashboard integration and closure policy remain open.
-Date: 4 November 2026.
+Date: November 11, 2026.
 
 ## Scope and technical names
 
@@ -10,7 +10,7 @@ Garage Sale creates a Diary during event creation. This confirmed behavior belon
 Garage Sale treats Diary as an independently supplied dependency with the Python import name `Diary`.
 This integration branch excludes Diary Python source, migrations, static files, and implementation history.
 It contains host-owned template adaptations for the external Diary UI.
-The installed distribution is `django-task-calendar` version `0.1.9.3`.
+The installed distribution is `django-task-calendar` version `0.1.11.1`.
 The separate DjangoTaskCalendar repository contains its source, migrations, and documentation.
 
 ## Dependency boundary and current implementation
@@ -87,8 +87,10 @@ Diary does not calculate replacement values for those source fields.
 | `sale_bookings_open` or `open_sales_bookings` | `open_sales_bookings` |
 | `sale_bookings_close` or `close_sales_bookings` | `close_sales_bookings` |
 
-The host supplies dates for every milestone declared by the chosen approved template.
-Unused declarations also require dates. Required values must be `datetime.date` objects.
+The package derives required milestones from the approved template's task date rules.
+The host supplies dates for each required milestone through `DiaryTemplateVersion.required_milestones()`.
+Unused milestone definitions do not require event dates.
+Required values must be `datetime.date` objects.
 Unsupported names and missing dates stop creation and produce a detailed error log.
 The technical milestone name `event_created` means the event's Use from date in this integration.
 
@@ -104,13 +106,13 @@ The template uses the five milestone names in the first five rows of the mapping
 It does not require `event_created`. Other templates can declare that milestone to use the event's Use from date.
 The fixture includes explicit `Diary.templatemilestone` records for its required dates.
 
-Use an active member of the configured `DIARY_MANAGER` group as the import actor.
-Replace `MANAGER_USERNAME` with that person's username.
+Run the transfer command through the site's authorized deployment environment.
+The package no longer accepts an `--actor` option for this command.
 Validate the file before import.
 
 ```bash
-python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json --actor MANAGER_USERNAME --dry-run
-python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json --actor MANAGER_USERNAME
+python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json --dry-run
+python manage.py transfer_diary_templates import GarageSale/fixtures/diary_demo_template.json
 ```
 
 Use `transfer_diary_templates` instead of `loaddata` to check ownership and dependencies.
@@ -221,6 +223,32 @@ flowchart TD
 ```
 
 ## Host-owned Diary pages
+
+### Package 0.1.11.1 calendar presentations
+
+The existing personal and manager routes support List, Day, Week, and Month presentations.
+The package owns their templates, filters, navigation, and session preferences.
+Garage Sale retains its current-event scope and normal team-page wrapper.
+This update needs no new host routes, model fields, or database migrations.
+
+The package remembers presentation choices separately for personal and manager pages.
+Saved preferences do not select an event or grant access.
+The host still derives scope from the current event on each request.
+
+Calendar task buttons use the existing host POST selection action.
+The package supplies signed return state through the technical field `calendar_return`.
+Host selection and task saves retain that state through package dispatch hooks.
+The Back to calendar link restores the selected presentation without exposing task or Diary UUIDs in browser URLs.
+The host must not decode the return token or treat it as an access grant.
+
+Collect `Diary/scripts/task_calendar.js` and the package's updated `Diary/styles/diary.css` during deployment.
+The existing wrapper already includes the package script block and stylesheet.
+No additional host JavaScript or CSS override is required for these presentations.
+
+Verification: `GarageSale/tests/test_diary_calendar_integration.py`: `DiaryCalendarIntegrationTests`.
+Browser verification: `HostDiaryBrowserTests.test_package_calendar_presentations_keep_host_shell_and_clean_task_navigation`.
+
+### Existing host scope and form handling
 
 `GarageSale/diary_urls.py` owns fixed Diary HTML routes under `/diary/`.
 Each host page subclasses a Diary package view through `DiaryHostContextMixin` in `GarageSale/views/diary_views.py`.
@@ -425,8 +453,8 @@ Their identifiers remain unchanged.
   Implementation: `GarageSale/diary_integration.py`: `MILESTONE_FIELDS`, `event_diary_definition`, and `ensure_event_diary`.
   Storage: `GarageSale/models.py`: `EventData.diary_key`. Migration: `GarageSale/migrations/0026_eventdata_diary_key.py`: `Migration`.
   Verification: `EventDiaryIntegrationTests.test_bookings_and_activation_date_values_come_from_event_fields` and `test_creation_rejects_unsupported_milestones_without_partial_event`.
-  Required dates and logging: `EventDiaryIntegrationTests.test_unused_requirements_log_all_unavailable_event_sources` and `test_required_milestone_rejects_non_date_values`.
-  Delegated editor verification: `EventDiaryIntegrationTests.test_host_template_save_delegates_declared_milestones_to_package`.
+  Required dates and logging: `EventDiaryIntegrationTests.test_required_milestones_log_all_unavailable_event_sources` and `test_required_milestone_rejects_non_date_values`.
+  Delegated editor verification: `EventDiaryIntegrationTests.test_host_template_save_uses_package_derived_milestones`.
   UUID verification: `GarageSale/tests/test_diary_key.py`: `EventDiaryKeyTests.test_event_stores_the_api_key_without_a_foreign_key`.
 
 - [x] **HOST-003: Trusted host scope, clean URLs, and team-page presentation.**
@@ -457,6 +485,8 @@ Their identifiers remain unchanged.
   Styling: `GarageSale/static/GarageSale/styles/diary_host.css`: `.diary-host-topbar` and `.diary-host-sidebar`.
   Verification: `GarageSale/tests/test_diary_integration.py`: `EventDiaryIntegrationTests` selection, privacy, CSRF, redirect, and cross-tab tests.
   Browser verification: `GarageSale/tests/browser_diary_integration.py`: `HostDiaryBrowserTests.test_diary_screens_keep_team_shell_and_template_editor_scripts`.
+  Calendar verification: `GarageSale/tests/test_diary_calendar_integration.py`: `DiaryCalendarIntegrationTests`.
+  Calendar browser verification: `HostDiaryBrowserTests.test_package_calendar_presentations_keep_host_shell_and_clean_task_navigation`.
 
 - [ ] **HOST-004: Dashboard Diary counts.**
   Remaining: Connect compact Late, Ready, and Blocked counts to the personal task filters through the selected event's trusted context.
@@ -470,6 +500,13 @@ Milestone changes and their impact review remain outside the supported V1 host w
 Reminders are not added by this integration change.
 
 ## Verification of the dependency boundary
+
+The 0.1.11.1 integration check passed 39 tests against a disposable PostgreSQL database.
+The check covered event creation, template transfer, milestone validation, UUID storage, trusted scope, and existing host form handling.
+New checks covered all four presentations, role preferences, current-event changes, and signed return navigation after task saves.
+Chrome checks covered desktop and mobile calendar layouts, task selection, and the Back to calendar link.
+The normal Django configuration check also passed.
+The check changed no package source or application data.
 
 The technical test `EventDiaryKeyTests.test_event_stores_the_api_key_without_a_foreign_key` passed against a separate PostgreSQL database.
 Diary was supplied from a temporary directory outside the Garage Sale checkout.
