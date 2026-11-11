@@ -203,6 +203,25 @@ if you have a new database :
         Language review limit: The new Diary deployment instructions have not received a full ASD-STE100 Issue 9 dictionary review.
 
 2e) Notifier personal review:
+        Apply Notifier migration 0007_email_channel_preferences for separate email channel selections.
+        Existing enabled subscriptions retain their email channel selection.
+        New channels start with email unchecked.
+        This migration does not enable global email delivery.
+        Collect GarageSale/styles/style.css for the shared styled-checkbox appearance.
+        Deploy the updated base template to use its versioned stylesheet URL.
+        Collect Notifier/settings.js and Notifier/notifier.css for independent severity controls.
+        Apply Notifier migration 0006_email_engine before enabling the email worker.
+        Enable Notifier.engines.email.EmailEngine in NOTIFIER['ENGINES'] for optional email delivery.
+        Check NOTIFIER_EMAIL for the public origin, sender, subject, local time, weekday, and item limit.
+        Collect the updated Notifier/settings.js and Notifier/notifier.css files.
+        Deploy Notifier/email templates and the shared email settings form.
+        Configure the hosting scheduler to run python manage.py notifier_email --due every minute.
+        Email starts disabled for each user.
+        Enable email in personal notification settings before expecting delivery.
+        Use python manage.py notifier_email --user person@example.org for an explicit manual digest.
+        The worker does not retry failed or interrupted deliveries.
+        Complete behavior and deployment details: Notifier/EMAIL_ENGINE.md.
+        These email instructions have not received a full ASD-STE100 Issue 9 dictionary review.
         Collect Notifier/settings_dialog.js and Notifier/settings-gear.svg for the mobile settings dialog.
         Deploy the shared channel forms and dialog fragment with the updated preferences view.
         Collect GarageSale/styles/smallscreen.css and Notifier/notifier.css for the compact mobile review page.
@@ -226,8 +245,9 @@ if you have a new database :
         Complete the access policy procedure in step 2a.
         Collect the Notifier static files with the normal collectstatic command.
         Enable Notifier.engines.account_indicator.AccountIndicatorEngine in NOTIFIER['ENGINES'] for unread account counts.
-        Use an empty list when the site does not need an indicator engine.
-        The engine requires no new database migrations or background worker.
+        Remove the indicator class when the site does not need account counts.
+        Use an empty engine list when the site does not need any notification engines.
+        The account indicator requires no additional database migrations or background worker.
         Restart the application after changing engine configuration.
         Confirm that the icon and its badge open the user menu.
         Confirm that Unread notifications appears in that menu only when accessible unread notifications exist.

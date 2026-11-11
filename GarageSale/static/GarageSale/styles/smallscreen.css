@@ -304,7 +304,10 @@ img#Burger{
     .notifier .notifier-settings-icon { width: 24px; height: 24px; }
     .notifier .notifier-mobile-back { display: inline-flex; align-items: center; min-height: 44px; }
     .notifier .notifier-unread-option { display: flex; align-items: center; gap: .4rem; grid-column: 1 / -1; min-height: 44px; }
-    .notifier .notifier-settings-dialog { box-sizing: border-box; width: calc(100vw - 1rem); max-width: 36rem; max-height: calc(100dvh - 1rem); padding: 0; border: 1px solid #687777; border-radius: .5rem; background: #fff; color: #222; overflow-y: auto; }
+    .notifier .notifier-settings-dialog { box-sizing: border-box; width: calc(100vw - 1rem); max-width: 36rem; max-height: calc(100dvh - 1rem); padding: 0; border: 1px solid #687777; border-radius: .5rem; background: #fff; color: #222; overflow-y: auto; scroll-padding-block-start: 5rem; }
+
+    /* Keep focused controls below the fixed dialog heading when the browser scrolls them into view. */
+    .notifier .notifier-settings-dialog :is(input, select, button, textarea) { scroll-margin-block: 5rem 1rem; }
     .notifier .notifier-settings-dialog::backdrop { background: #0008; }
     .notifier .notifier-dialog-header { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .65rem; border-bottom: 1px solid #c1cccc; background: #fff; }
     .notifier .notifier-dialog-heading { margin: 0; font-size: 1.2rem; }

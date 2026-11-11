@@ -721,3 +721,50 @@ div.panel  {
 }
 
 div#Content a > img {vertical-align: middle;}
+
+/* Reuse the rounded checkbox appearance without requiring Location page markup. */
+input.styled-checkbox[type='checkbox'] {
+    appearance: none;
+    -webkit-appearance: none;
+    box-sizing: border-box;
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: 42px;
+    height: 26px;
+    margin: .2rem .35rem .2rem 0;
+    padding: 0;
+    border: 1px solid #d9d9d9;
+    border-radius: 16px;
+    background: #e4e4e4;
+    vertical-align: middle;
+    cursor: pointer;
+}
+input.styled-checkbox[type='checkbox']::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #d9d9d9;
+    border-radius: 50%;
+    background: #b0b0b0;
+}
+
+/* Selected controls retain the existing green track and blue thumb. */
+input.styled-checkbox[type='checkbox']:checked { background: #55d069; }
+input.styled-checkbox[type='checkbox']:checked::before { left: 16px; background: #3333dd; }
+
+/* A centered thumb identifies a severity group with mixed channel choices. */
+input.styled-checkbox[type='checkbox']:indeterminate { background: #c3c9ef; }
+input.styled-checkbox[type='checkbox']:indeterminate::before { left: 8px; background: #3333dd; }
+input.styled-checkbox[type='checkbox']:hover { box-shadow: 0 0 5px #0005; }
+input.styled-checkbox[type='checkbox']:focus-visible { outline: 3px solid #3333dd; outline-offset: 3px; }
+input.styled-checkbox[type='checkbox']:disabled { opacity: .55; cursor: default; }
+
+/* Preserve visible selection in operating-system high contrast modes. */
+@media (forced-colors: active) {
+    input.styled-checkbox[type='checkbox'] { appearance: auto; -webkit-appearance: auto; }
+    input.styled-checkbox[type='checkbox']::before { content: none; }
+}

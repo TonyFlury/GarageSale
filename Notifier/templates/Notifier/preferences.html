@@ -3,8 +3,9 @@
 {% block notifier_content %}
 <h1>Notification settings</h1>
 {% include 'Notifier/_channel_settings.html' %}
+{% include 'Notifier/_email_settings.html' %}
 {% endblock %}
 {% block PageScripts %}
     {{ block.super }}
-    <script src="{% static 'Notifier/settings.js' %}?v=severity-bulk-2" defer></script>
+    <script src="{% static 'Notifier/settings.js' %}?v=email-channels-1" defer></script>
 {% endblock %}

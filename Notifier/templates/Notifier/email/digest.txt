@@ -1,0 +1,17 @@
+{% autoescape off %}Notifications — {{ date|date:'j F Y' }}
+{% if kind == 'initial' %}This is a one-off catch-up of your unread notifications after enabling email.
+{% elif kind == 'transition' %}This is a one-off digest of outstanding unread notifications after switching to Immediate delivery.
+{% elif kind == 'manual' %}This digest was triggered manually.
+{% endif %}
+{% if total %}Showing {{ shown }} of {{ total }} unread notifications.
+{% for item in items %}{% ifchanged item.severity %}
+{{ item.severity_label }}
+{% endifchanged %}{% ifchanged item.channel_key %}{{ item.channel }}
+{% endifchanged %}- {% if item.reminder %}Reminder: {% endif %}{{ item.title }}{% if item.date %} — Due {{ item.date|date:'j M Y' }}{% endif %}
+  {{ item.url }}
+{% endfor %}{% else %}There are no unread notifications.
+{% endif %}{% if more %}
+{{ more }} more unread notifications are available on the website.
+{% endif %}
+View all unread notifications: {{ review_url }}
+{% endautoescape %}

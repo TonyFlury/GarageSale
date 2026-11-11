@@ -11,7 +11,7 @@ from .preferences import eligible_for_stream, subscription_is_valid
 from .registry import get_registry
 
 
-def visible_notifications(user, *, unread=False, severity='', channel=''):
+def visible_notifications(user, *, unread=False, severity='', channel='', notification_ids=None):
     """Return only this user's currently eligible entries without deleting hidden history."""
     subscriptions = {row.stream_key: row for row in Subscription.objects.filter(user=user)}
 
@@ -19,6 +19,10 @@ def visible_notifications(user, *, unread=False, severity='', channel=''):
     rank = Case(When(severity='urgent', then=Value(0)), When(severity='warning', then=Value(1)),
                 default=Value(2), output_field=IntegerField())
     records = Notification.objects.filter(user=user).order_by(rank, Coalesce('sort_at', 'occurred_at'), 'created_at', 'pk')
+
+    # Engine validation must never widen a supplied candidate set to other personal notifications.
+    if notification_ids is not None:
+        records = records.filter(pk__in=notification_ids)
 
     # The unread filter changes presentation without changing stored review state.
     if unread:
@@ -34,6 +38,15 @@ def visible_notifications(user, *, unread=False, severity='', channel=''):
 
     # A stored entry must pass current source access checks before pagination or rendering.
     return [record for record in records.iterator() if notification_is_visible(user, record, subscriptions)]
+
+
+def valid_notifications_for(*, user, notification_ids=None):
+    """Return current authorized unread candidates in web order without changing history or delivery state.
+
+    Omit notification_ids to seed an engine from all personal unread notifications.
+    An empty candidate list returns no records. Foreign, read, disabled, and inaccessible records remain excluded.
+    """
+    return visible_notifications(user, unread=True, notification_ids=notification_ids)
 
 
 def notification_is_visible(user, record, subscriptions=None):

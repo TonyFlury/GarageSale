@@ -122,13 +122,14 @@ class ProfileNotificationTests(TestCase):
         self.assertContains(response, 'profile-tab-active')
         self.assertNotContains(response, 'Another biography')
 
-    def test_settings_show_grouped_channels_and_omit_empty_delivery_section(self):
-        """Save only this account's provider group and omit settings for nonexistent delivery engines."""
+    def test_settings_show_grouped_channels_and_optional_email_policy(self):
+        """Save only this account's provider group and expose the configured email policy."""
         url = reverse('Notifier:preferences')
         response = self.client.get(url)
         self.assertContains(response, 'Channel settings')
         self.assertNotContains(response, 'Delivery settings')
-        self.assertNotContains(response, 'notifier-engine-settings')
+        self.assertContains(response, 'notifier-engine-settings')
+        self.assertContains(response, 'Enable email notifications')
         self.assertFalse(Subscription.objects.exists())
         self.assertEqual(self.client.post(url, {'provider_key': 'profile',
             self.stream.key + '-enabled': 'on', 'user_id': self.other.pk}).status_code, 302)

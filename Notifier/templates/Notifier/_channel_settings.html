@@ -2,17 +2,26 @@
 <h2 id="notifier-channel-heading">Channel settings</h2>
 <p>Select a severity to select all matching channels. You can then change individual channels.</p>
 <p>Urgent channels start selected unless you saved a different selection. Select Save all to apply your changes.</p>
+{% if email_form %}<p class="notifier-channel-delivery-help">Enabled channels appear in your icon and notification list.
+Select Include in email separately. Email delivery also requires Enable email notifications below.</p>{% endif %}
 {% for group in groups %}
 <form class="notifier-settings notifier-provider-settings" method="post" action="{% url 'Notifier:preferences' %}">
     {% csrf_token %}<input type="hidden" name="provider_key" value="{{ group.provider.key }}">
     {% if settings_dialog %}<input type="hidden" name="display" value="dialog">{% endif %}
     <h3 class="notifier-provider-heading">{{ group.provider.label }}</h3>
-    <fieldset class="notifier-severity-controls"><legend>Select channels by severity</legend>
+    <fieldset class="notifier-severity-controls"><legend>Icon and notification list: select channels by severity</legend>
     {% for severity in group.severities %}
-        <label class="notifier-severity-toggle"><input class="notifier-severity-bulk" type="checkbox" data-notifier-severity="{{ severity.key }}"{% if severity.checked %} checked{% endif %}> {{ severity.label }}</label>
+        <label class="notifier-severity-toggle"><input class="notifier-severity-bulk styled-checkbox" type="checkbox" data-notifier-severity="{{ severity.key }}"{% if severity.checked %} checked{% endif %}> {{ severity.label }}</label>
     {% endfor %}
     <button class="notifier-save-all" type="submit" aria-label="Save all {{ group.provider.label }} channels">Save all</button>
     </fieldset>
+    {% if group.email_channels_available %}
+    <fieldset class="notifier-severity-controls notifier-email-severity-controls"><legend>Email: select channels by severity</legend>
+    {% for severity in group.severities %}
+        <label class="notifier-severity-toggle"><input class="notifier-email-severity-bulk styled-checkbox" type="checkbox" data-notifier-severity="{{ severity.key }}" data-notifier-delivery="email"{% if severity.email_checked %} checked{% endif %}> {{ severity.label }}</label>
+    {% endfor %}
+    </fieldset>
+    {% endif %}
     <noscript><p class="notifier-severity-help">Use individual channel checkboxes when JavaScript is unavailable.</p></noscript>
     <div class="notifier-provider-channels">
     {% for section in group.sections %}
@@ -21,6 +30,9 @@
         <p>{{ section.stream.description }}</p>
         {{ section.form.non_field_errors }}
         <p class="notifier-channel-toggle">{{ section.form.enabled.errors }}{{ section.form.enabled }} {{ section.form.enabled.label_tag }}</p>
+        {% if section.email_form %}
+        <p class="notifier-channel-email-toggle">{{ section.email_form.enabled.errors }}{{ section.email_form.enabled }} {{ section.email_form.enabled.label_tag }}</p>
+        {% endif %}
 
         {# Only channels with declared settings need an options group. #}
         {% if section.stream.fields %}

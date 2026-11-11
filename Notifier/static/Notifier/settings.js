@@ -1,11 +1,34 @@
 /** Connect each generated channel form to its own enable control. */
 function initializeNotifierSettings() {
+    document.querySelectorAll('.notifier-email-settings').forEach(function bindEmail(form) {
+        /** Keep disabled policy controls consistent with personal email opt-in. */
+        const enabled = form.querySelector('.notifier-email-enabled');
+        const frequency = form.querySelector('.notifier-email-frequency');
+        const weekday = form.querySelector('.notifier-email-weekday');
+        const options = form.querySelector('.notifier-email-options');
+
+        /** Preserve inactive values while preventing their submission. */
+        function updateEmailOptions() {
+            options.disabled = !enabled.checked;
+            frequency.disabled = !enabled.checked;
+            weekday.disabled = !enabled.checked || frequency.value !== 'weekly';
+        }
+        enabled.addEventListener('change', updateEmailOptions);
+        frequency.addEventListener('change', updateEmailOptions);
+        updateEmailOptions();
+    });
     document.querySelectorAll('.notifier-provider-settings').forEach(function bindSeverityControls(form) {
         /** Apply severity selections to channels in this provider and summarize individual exceptions. */
-        form.querySelectorAll('.notifier-severity-bulk').forEach(function bindSeverity(control) {
+        form.querySelectorAll('.notifier-severity-bulk, .notifier-email-severity-bulk').forEach(function bindSeverity(control) {
             /** Connect one severity checkbox to its matching channel checkboxes. */
             const severity = control.dataset.notifierSeverity;
-            const channels = Array.from(form.querySelectorAll('.notifier-channel[data-notifier-severity="' + severity + '"] .notifier-channel-enabled'));
+            let channelSelector = '.notifier-channel-enabled';
+
+            // Email bulk controls change only email choices, leaving collection and icon counts unchanged.
+            if (control.dataset.notifierDelivery === 'email') {
+                channelSelector = '.notifier-channel-email-enabled';
+            }
+            const channels = Array.from(form.querySelectorAll('.notifier-channel[data-notifier-severity="' + severity + '"] ' + channelSelector));
 
             /** Show all, none, or some matching channels without imposing another enablement rule. */
             function updateSummary() {

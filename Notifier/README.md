@@ -1,6 +1,6 @@
 # Notifier: first implementation
 
-Status: Implemented for personal review with an optional account indicator engine.
+Status: Implemented for personal review with optional account indicator and email engines.
 Date: November 11, 2026.
 
 ## Scope and technical names
@@ -17,7 +17,8 @@ The optional `ENGINES` list contains engine class paths. An empty list remains s
 Configured engines expose unique stable keys and initialize without database access.
 The `get_engine` function in `Notifier.api` returns an enabled engine or None.
 The account indicator engine supplies counts. It does not render user interface elements.
-Email delivery remains future work. Its engine can own both collation and presentation.
+The email engine controls collection, presentation, and delivery.
+Email policies, public validation, scheduler commands, and deployment instructions: [EMAIL_ENGINE.md](EMAIL_ENGINE.md).
 
 ## Installation and access
 
@@ -39,8 +40,14 @@ Notification settings groups channels under their registered provider headings.
 The user interface calls each technical stream a channel.
 Channel settings uses the existing registered field declarations and personal subscriptions.
 Each group has one Save all button for all its eligible channels.
-The settings page has no separate engine section because the account indicator declares no personal engine settings.
-Other engine integrations and personal engine settings forms remain future work.
+The email engine provides personal opt-in, frequency, and weekday controls.
+Each channel also has an independent Include in email checkbox.
+Channel enablement controls collection, icon counts, and web review.
+Email delivery requires channel enablement, email channel selection, and global email opt-in.
+Separate email severity controls select or clear matching email channel choices.
+The provider's Save all buttons save both channel choices and provider options together.
+The account indicator declares no personal engine settings.
+An installation without the email engine has no email settings section.
 
 Profile navigation accepts existing own-profile authorization without requiring an additional Notifier permission grant.
 An unavailable tab has no destination link and includes an explanatory hover label.
@@ -490,7 +497,8 @@ The adapter rejected missing source keys and tasks outside the supplied Diary.
 ## Account notification indicator engine
 
 Garage Sale enables `Notifier.engines.account_indicator.AccountIndicatorEngine` in `NOTIFIER['ENGINES']`.
-Use an empty engine list to omit the indicator while retaining notification collection and review.
+Remove the indicator class to omit its counts while retaining other engines.
+Use an empty engine list to omit all engines while retaining notification collection and review.
 `AccountIndicatorEngine.summary_for(user)` returns exact Urgent, Warning, and Information unread counts through `UnreadCounts`.
 The engine uses current personal channel settings, account permissions, and source access checks.
 It supplies no markup, colors, count caps, or CSS classes.

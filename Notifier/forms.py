@@ -42,7 +42,7 @@ class SubscriptionForm(forms.Form):
         # Submitted enablement controls editing for this request rather than the previously saved state.
         if self.is_bound:
             self.channel_enabled = self.fields['enabled'].clean(self.data.get(self.add_prefix('enabled')))
-        self.fields['enabled'].widget.attrs['class'] = 'notifier-channel-enabled'
+        self.fields['enabled'].widget.attrs['class'] = 'notifier-channel-enabled styled-checkbox'
         for field in definition.fields:
 
             # Disabled channels retain saved settings and ignore forged or omitted option values.

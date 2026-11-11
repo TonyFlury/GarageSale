@@ -227,6 +227,11 @@ def accept_recipient(index, definition, signal, recipient_id, source, digest, *,
     notification, created = Notification.objects.get_or_create(user=user, stream_key=definition.key,
         occurrence_key=signal.occurrence_key, defaults=notification_defaults(definition, signal, source, digest))
 
+    # Newly accepted records enter engine queues in the same transaction. Repeated occurrences do not enqueue twice.
+    if created:
+        from .dispatch import notify_engines
+        notify_engines(notification)
+
     # Reusing an identity must never replace content already collected for the user.
     if not created and notification.content_hash != digest and not keep_existing:
         return ItemResult(index, 'invalid', recipient_id, reason='occurrence_conflict')

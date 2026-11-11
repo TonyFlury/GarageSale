@@ -1,4 +1,4 @@
-"""Provide an engine-free personal review page and stream preferences."""
+"""Provide personal review, stream preferences, and optional email settings."""
 from functools import wraps
 from datetime import date
 from operator import itemgetter
@@ -16,7 +16,8 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
 from .forms import ReviewFilterForm, SubscriptionForm
-from .models import Subscription
+from .models import EmailPreference, Subscription
+from .engines import get_engine
 from .preferences import can_use, eligible_for_stream, save_subscription
 from .registry import get_registry
 from .review import mark_read, visible_notifications
@@ -103,7 +104,7 @@ def read_notification(request, identifier):
     return redirect(reverse('Notifier:feed') + '?' + query)
 
 
-def provider_sections(user, provider_key, subscriptions, *, data=None):
+def provider_sections(user, provider_key, subscriptions, *, data=None, email_channels=None):
     """Build forms for one provider's channels that are currently available to the user."""
     sections = []
     for reference in get_registry().streams.values():
@@ -113,7 +114,14 @@ def provider_sections(user, provider_key, subscriptions, *, data=None):
         if reference.provider_key != provider_key or not eligible_for_stream(user, definition):
             continue
         form = SubscriptionForm(data, definition=definition, subscription=subscriptions.get(definition.key))
-        sections.append({'stream': definition, 'form': form,
+        email_channel_form = None
+
+        # An absent email engine exposes no email controls or default choices.
+        if email_channels is not None:
+            from .email.forms import EmailChannelForm
+            email_channel_form = EmailChannelForm(data, stream_key=definition.key,
+                enabled=email_channels.get(definition.key, False))
+        sections.append({'stream': definition, 'form': form, 'email_form': email_channel_form,
             'severity_label': {'urgent': 'Urgent', 'warning': 'Warning', 'information': 'Information'}[definition.severity]})
     return sections
 
@@ -121,6 +129,12 @@ def provider_sections(user, provider_key, subscriptions, *, data=None):
 def preference_groups(user, *, selected=None, data=None):
     """Group eligible channel forms by their registered provider without creating default subscriptions."""
     subscriptions = {row.stream_key: row for row in Subscription.objects.filter(user=user)}
+    email_channels = None
+
+    # Read email choices once for the whole page, only when that optional engine exists.
+    if get_engine('email') is not None:
+        from .email.channels import channel_choices
+        email_channels = channel_choices(user)
     groups = []
     for provider in get_registry().providers.values():
         bound = None
@@ -128,7 +142,7 @@ def preference_groups(user, *, selected=None, data=None):
         # Submitted values must bind only the selected provider's group.
         if selected == provider.definition.key:
             bound = data
-        sections = provider_sections(user, provider.definition.key, subscriptions, data=bound)
+        sections = provider_sections(user, provider.definition.key, subscriptions, data=bound, email_channels=email_channels)
 
         # Providers with no eligible channels must not expose an empty settings group.
         if sections:
@@ -140,8 +154,14 @@ def preference_groups(user, *, selected=None, data=None):
 
                 # Empty severity groups must not offer controls that change no channels.
                 if matching:
-                    severities.append({'key': key, 'label': label, 'checked': all(matching)})
-            groups.append({'provider': provider.definition, 'sections': sections, 'severities': severities})
+
+                    # Email summaries reflect only their own choices, including inactive channels retained for later use.
+                    email_matching = [section['email_form']['enabled'].value() for section in sections
+                        if section['stream'].severity == key and section['email_form'] is not None]
+                    severities.append({'key': key, 'label': label, 'checked': all(matching),
+                        'email_checked': bool(email_matching) and all(email_matching)})
+            groups.append({'provider': provider.definition, 'sections': sections, 'severities': severities,
+                'email_channels_available': email_channels is not None})
     return groups
 
 
@@ -152,6 +172,69 @@ def save_preference_group(user, sections):
         form = section['form']
         save_subscription(user, section['stream'], enabled=form.cleaned_data['enabled'], values=form.setting_values())
 
+        # Both selections belong to the same Save all operation and must commit or roll back together.
+        if section['email_form'] is not None:
+            from .email.channels import save_channel_choice
+            save_channel_choice(user, section['stream'], enabled=section['email_form'].cleaned_data['enabled'])
+
+
+def channel_forms_are_valid(sections):
+    """Validate every channel and optional email choice before any provider group is saved."""
+    results = []
+    for section in sections:
+        results.append(section['form'].is_valid())
+
+        # Hosts without the email engine retain the existing channel-only validation path.
+        if section['email_form'] is not None:
+            results.append(section['email_form'].is_valid())
+    return all(results)
+
+
+def email_settings_form(user, data=None):
+    """Build optional engine settings without creating personal preference records."""
+
+    # An installation without the email engine must not expose its settings or query its tables.
+    if get_engine('email') is None:
+        return None
+    from .email.forms import EmailPreferenceForm
+    return EmailPreferenceForm(data, preference=EmailPreference.objects.filter(user=user).first())
+
+
+def render_preferences(request, groups, dialog, *, email_form=None, status=200, saved=False):
+    """Render the same channel and engine settings in full pages and mobile dialogs."""
+
+    # Invalid bound forms must retain their submitted values and validation errors.
+    if email_form is None:
+        email_form = email_settings_form(request.user)
+    template = 'Notifier/preferences.html'
+
+    # Dialog requests use the existing fragment contract for asynchronous saves.
+    if dialog:
+        template = 'Notifier/settings_fragment.html'
+    return render_review(request, template, {'groups': groups, 'settings_dialog': dialog,
+        'settings_saved': saved, 'email_form': email_form}, status=status)
+
+
+def save_email_settings(request, dialog):
+    """Validate one personal email policy and queue work without sending email in the request."""
+    form = email_settings_form(request.user, request.POST)
+
+    # Forged engine submissions cannot enable an unconfigured engine.
+    if form is None:
+        raise Http404('Engine unavailable.')
+
+    # Invalid policies must leave both preferences and queued deliveries unchanged.
+    if not form.is_valid():
+        return render_preferences(request, preference_groups(request.user), dialog, email_form=form, status=400)
+    from .email.preferences import save_email_preference
+    save_email_preference(request.user, **form.cleaned_data)
+
+    # Mobile saves retain the open editor with fresh controls.
+    if dialog:
+        return render_preferences(request, preference_groups(request.user), True, saved=True)
+    messages.success(request, 'Email notification settings saved.')
+    return redirect('Notifier:preferences')
+
 
 @personal_access_required
 def preferences(request):
@@ -159,15 +242,14 @@ def preferences(request):
     selected = request.POST.get('provider_key')
     groups = preference_groups(request.user, selected=selected, data=request.POST)
     dialog = request.GET.get('display') == 'dialog' or request.POST.get('display') == 'dialog'
-    template = 'Notifier/preferences.html'
 
-    # The optional fragment uses the same authorization, forms, and save operation as the full settings page.
-    if dialog:
-        template = 'Notifier/settings_fragment.html'
+    # Engine settings use their own validated policy without changing any channel subscriptions.
+    if request.method == 'POST' and request.POST.get('engine_key') == 'email':
+        return save_email_settings(request, dialog)
 
     # GET requests only present declarations and must not create default preference rows.
     if request.method != 'POST':
-        return render_review(request, template, {'groups': groups, 'settings_dialog': dialog})
+        return render_preferences(request, groups, dialog)
 
     # Match only a provider group already selected through current eligibility checks.
     group = next((item for item in groups if item['provider'].key == selected), None)
@@ -175,18 +257,17 @@ def preferences(request):
     # A forged or unavailable provider cannot create or modify saved preferences.
     if group is None:
         raise Http404('Provider unavailable.')
-    valid = [section['form'].is_valid() for section in group['sections']]
+    valid = channel_forms_are_valid(group['sections'])
 
     # Every channel must validate before any setting in the selected group changes.
-    if all(valid):
+    if valid:
         save_preference_group(request.user, group['sections'])
 
         # Dialog saves retain the open editor and return fresh forms without redirecting the underlying review page.
         if dialog:
-            return render_review(request, template, {'groups': preference_groups(request.user),
-                'settings_dialog': True, 'settings_saved': True})
+            return render_preferences(request, preference_groups(request.user), True, saved=True)
         messages.success(request, 'Notification settings saved.')
         return redirect('Notifier:preferences')
 
     # Invalid settings remain visible for correction without changing the saved group.
-    return render_review(request, template, {'groups': groups, 'settings_dialog': dialog}, status=400)
+    return render_preferences(request, groups, dialog, status=400)

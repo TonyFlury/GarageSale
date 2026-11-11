@@ -166,7 +166,7 @@ AUTH_USER_MODEL = "user_management.UserExtended"
 
 # Notification collection and personal review do not require delivery engines.
 NOTIFIER = {
-    'ENGINES': ['Notifier.engines.account_indicator.AccountIndicatorEngine'],
+    'ENGINES': ['Notifier.engines.account_indicator.AccountIndicatorEngine', 'Notifier.engines.email.EmailEngine'],
     'BASE_TEMPLATE': 'GarageSale/notifier/base.html',
     'ACCESS_PERMISSIONS': ('Notifier.use_notifier', 'GarageSale.manage_own_team_profile', 'user_management.manage_own_profile'),
 }
@@ -285,6 +285,17 @@ APPS_SETTINGS = {
                     'EmailFrom': 'sponsorship@branthamgaragesale.org.uk'}
 }
 APPS_SETTINGS |= google_drive_info.uploads
+
+# Email is opt-in. The email engine uses the same configured sender as user management.
+NOTIFIER_EMAIL = {
+    'DIGEST_TIME': '22:00',
+    'DEFAULT_WEEKDAY': 4,
+    'MAX_ITEMS': 20,
+    'SUBJECT': 'Brantham Garage Sale notifications',
+    'BASE_URL': 'https://www.branthamgaragesale.org.uk',
+    'FROM_EMAIL': APPS_SETTINGS['user_management']['EMAIL_SENDER'],
+    'TIME_ZONE': 'Europe/London',
+}
 
 GOOGLE_MAP_SETTINGS = GoogleMap_credentials.GOOGLE_MAP_SETTINGS
 

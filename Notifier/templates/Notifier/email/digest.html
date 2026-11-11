@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Notifications</title></head><body>
+<h1>Notifications — {{ date|date:'j F Y' }}</h1>
+{% if kind == 'initial' %}<p>This is a one-off catch-up of your unread notifications after enabling email.</p>
+{% elif kind == 'transition' %}<p>This is a one-off digest of outstanding unread notifications after switching to Immediate delivery.</p>
+{% elif kind == 'manual' %}<p>This digest was triggered manually.</p>{% endif %}
+{% if total %}<p>Showing {{ shown }} of {{ total }} unread notifications.</p>
+{% for item in items %}
+{% ifchanged item.severity %}<h2>{{ item.severity_label }}</h2>{% endifchanged %}
+{% ifchanged item.channel_key %}<h3>{{ item.channel }}</h3>{% endifchanged %}
+<p>{% if item.reminder %}<strong>Reminder:</strong> {% endif %}<a href="{{ item.url }}">{{ item.title }}</a>{% if item.date %} — Due {{ item.date|date:'j M Y' }}{% endif %}</p>
+{% endfor %}{% else %}<p>There are no unread notifications.</p>{% endif %}
+{% if more %}<p>{{ more }} more unread notifications are available on the website.</p>{% endif %}
+<p><a href="{{ review_url }}">View all unread notifications</a></p>
+</body></html>

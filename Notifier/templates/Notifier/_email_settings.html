@@ -1,0 +1,22 @@
+{% if email_form %}
+<section class="notifier-engine-settings">
+    <h2 class="notifier-engine-heading">Email notifications</h2>
+    <p class="notifier-email-help">Email is disabled by default. Enabling email sends a one-off digest of your unread notifications.
+        Changing to Immediate also sends a one-off digest of outstanding notifications.</p>
+    <form method="post" action="{% url 'Notifier:preferences' %}" class="notifier-settings notifier-provider-settings notifier-email-settings">
+        {% csrf_token %}
+        <input type="hidden" name="engine_key" value="email">
+        {% if settings_dialog %}<input type="hidden" name="display" value="dialog">{% endif %}
+        {{ email_form.non_field_errors }}
+        <p class="notifier-email-enable-control">{{ email_form.enabled }} {{ email_form.enabled.label_tag }}{{ email_form.enabled.errors }}</p>
+        <fieldset class="notifier-email-options"{% if not email_form.enabled.value %} disabled{% endif %}>
+            <legend class="notifier-email-options-heading">Delivery policy</legend>
+            <p class="notifier-email-frequency-control">{{ email_form.frequency.label_tag }} {{ email_form.frequency }}{{ email_form.frequency.errors }}</p>
+            <p class="notifier-email-weekday-control">{{ email_form.weekly_day.label_tag }} {{ email_form.weekly_day }}{{ email_form.weekly_day.errors }}</p>
+            <p class="notifier-email-help">The day applies to weekly delivery. Daily and weekly digests contain unread notifications.
+                Previously emailed items show a Reminder label.</p>
+        </fieldset>
+        <button type="submit" class="notifier-save-email">Save email settings</button>
+    </form>
+</section>
+{% endif %}
